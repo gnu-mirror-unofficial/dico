@@ -1,0 +1,504 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% $Id$
+%% Source file for generating Gjdict online help.
+%% Syntax: look for word -syntax- at the bottom of this file
+%% This file uses EUC encoding for 16-bit chars
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%title About gjdict
+
+This is gjdict -- GNU Japanese Dictionary version 1.0.
+.PP
+Copyright (C) 1998-2008 Sergey Poznyakoff.
+.PP
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+.PP
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+.PP
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%title Bushu search shell
+%xref Bushu search method
+The Bushu search shell is designed to find a kanji by it's radical and
+stroke count.
+.PP
+The shell has the following layout:
+.LP 
+ +-----------++---------++-------------+   +--+ +--+
+ |RAD_STROKES|| RADICAL || NUM_STROKES |   |¼¡| |Á°|
+ +-----------++---------++-------------+   +--+ +--+
+
+ ===================================================
+ ================ Radical selection ================
+ ===================================================
+.PP
+To search for a kanji:
+.IP 1.
+Enter the number of strokes in the radical in the field
+RAD_STROKES. Then the `Radical selection' widgets will
+show all radicals that have that number of strokes. 
+.IP 2.
+Select your radical from the set of `Radical selection'
+widgets. The selected radical will be displayed in the
+RADICAL widget.
+.IP 3.
+In the NUM_STROKES field enter the number of additional
+strokes the kanji has, i.e. total number of 
+strokes minus number of strokes in the radical.
+.IP 4.
+Use ¼¡  widget to display next matching kanji and Á°
+widget to display previously found one.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%title Four-corner search shell
+
+This shell allows you to look up a kanji using "4-corner method".
+%xref Four corner method
+.PP
+Each widget in the upper line represents one of the 10 stroke shapes.
+The eleventh (blank) widget means the repetition of the first shape.
+.PP
+The four widgets in the center stand for four parts of a kanji. The active
+part (i.e. the one which gets the input) is shaded.
+.PP
+To construct a 4-corner code of a kanji, ...
+
+.PP
+Use ¼¡  widget to display next matching kanji and Á°
+widget to display previously found one.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%title SKIP search shell
+%xref SKIP codes
+This search shell allows you to find a kanji using SKIP coding.
+.PP
+To find a kanji:
+Select the kanji form description from the upper row of command widgets.
+This supplies the first digit of SKIP code.
+.PP
+If the character in question can be divided into two distinct parts, then
+select one of the following and enter in the 2nd and 3rd input widgets
+the number of strokes each part has:
+.PP
+.TS
+center;
+c l
+c l.
+Command	the character consists of
+È¬	left and right parts
+Æó	upper and lower parts
+²ó	enclosing and internal parts
+.TE
+.PP
+then keep pressing either ¼¡ or Á° untill you have found the
+character.
+.PP
+If your character matches none of the above descriptions then select the
+¡© command widget. This enables the commands in the right column.
+Now select the command that matches best your kanji:
+.PP
+.TS
+center;
+c l.
+²¼	the kanji has a horizontal line at the top
+¾å	the kanji has a horizontal line at the bottom
+Ãæ	the kanji has a vertical line through
+¡©	none of the above matches my kanji
+.TE
+.PP
+and enter TOTAL number of strokes the character has in the 2nd input
+widget.
+.PP
+Keep pressing either ¼¡ or Á° untill you have found the
+character.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%title Bushu search method
+The radical (bushu) search method is a widely used method for searching
+characters.
+.PP
+Each character is deemed to consist of a radical (key) and
+additional strokes. There exist 214 radicals which are grouped by the number
+of strokes. Each radical is given its number. Now, the code of a character
+consists of two numbers usually separated with a dot. First number is the
+radical number, second one represents the number of additional strokes.
+
+.PP
+For example: º£ consists of ¿Í (rad.9) plus 2 additional strokes:
+its code is therefore 9.2; ¸ì is ¸À (rad.149) plus 7 strokes:
+the code is 149.7.
+.PP
+To find a character:
+.IP 1.
+Determine which of its parts is the radical (It is not a trivial task, there
+are pitfalls there: see below).
+.IP 2.
+Count the number of strokes in the radical, look it up in the radical table
+and write down its number.
+.IP 3.
+Count the number of strokes in the non-radical part of the character and
+write it down.
+.PP
+The radical itself can occupy various parts of the character.
+It can:
+.IP 1.
+be placed to the left as in:
+½Á, Äõ (radical 85), or ºå, ¸Â (radical 170)
+.IP 2.
+be placed to the right as in Å¡, ·´ (radical 163).
+.IP 2.
+be above as in °ò, ²® (radical 140)
+.IP 3.
+be placed below. Examples: ¼Ñ, Á³.
+.IP 4.
+enclose the rest of the caracter. Examples: °Ï, Ô¡ or
+ïÞ, ïå (radical 169)
+.PP
+To find the radical the following method could be used:
+.IP 1.
+Check whether the whole kanji in question can be used as a radical.
+For example, ¶â has 8 strokes and is itself  radical #167. So, the
+code of this kanji is 167.0.
+.IP 2.
+Decide whether the character consists of an enclosing structure and an
+internal structure. For example, ¹ñ contains Óø as the enclosing
+structure. The character Óø is the radical #31. Thus, the code for  
+¹ñ is 31.5.
+.IP 3.
+If the character contains two radicals arranged horizontally, the leftmost
+one should be taken as its radical. For example, ÌÀ contains two elements
+each of which can be used as a radical. The leftmost one is Æü (rad.72),
+so the code is 72.4.
+.IP 4.
+If the leftmost element is not the radical or the character could not be found
+using leftmost element as a radical, then try the rightmost one.
+Example: Å¿ - radical ÊÇ (#181), the code is 181.10.
+.IP 5.
+If the character can be split into upper and lower parts, the upper one
+is the radical. For example: ÅÐ - radical is â¢ (#105),
+code is 105.7.
+.IP 6.
+If the character could not be found using its upper element as its radical,
+then try to use the lower one.
+Example: Ãé - radical is ¿´ (#61), not Ãæ.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%title Four corner method
+The Four Corner System has been used for many years in China  and  Japan  for 
+classifying  kanji.  In  China  it  is  losing popularity in favour of PinYin 
+ordering.  Some Japanese dictionaries,  such as the  Morohashi  Daikanwajiten 
+have a Four Corner Index. 
+.PP
+The following overview of the system has been condensed from the article "The 
+Four Corner System:  an introduction with exercises" by  Dr  Urs  App,  which 
+appeared in the Electronic Bodhidharma No 2,  February 1992, published by the 
+International Research Institute for Zen Buddhism,  Hanazono  College.  (More 
+examples will be added from that article in due course.) 
+.PP
+1. Stroke shapes are divided into ten classes:
+.TS
+center;
+c l l.
+0	LID	Ðµ 
+1	HORIZONTAL LINE	°ì 
+2	VERTICAL LINE	¡Ã 
+3	DOT	Ð¦ 
+4	CROSS	½½
+5	SKEWER	¥­
+6	BOX	¸ý 
+7	ANGLE	ÒÌ 
+8	HACHI	È¬ 
+9	CHIISAI	¾® 
+.TE
+.PP
+2. The Four Digits are derived from the Four Corners in a Z-shaped order. 
+.LP
+	A    B  
+        
+	C    D
+.LP
+                 7  1     7  7             
+ for example:     ¸¶       ·î   
+                 2  9     2  2
+.PP
+Some examples: »Å 2421  ¹Ô 2122  Îò 7121  µû 2733  »ì 0762  Æ± 7722  ¶¶ 4292
+
+.PP
+3.  A shape is only used once.  If it fills several corners, it is counted as 
+zero in subsequent corners. 
+.PP
+.br
+Some examples:
+¸ý 6000
+¼ó 8060
+Ê¬ 8022
+Âç 2003
+ÏÂ 2690
+ÉÊ 6066
+µþ 0096
+.PP                                                         
+4.  When the upper or lower half of a character consists of only one  (single 
+or composite) shape,  it is,  rergardless of its position,  counted as a left 
+corner. The right corner is counted as zero. 
+.PP
+Some examples: Î© 0010  Í³ 5060  Àã 1017  Êý 0022  Äí 0024  »å 2090  ¼ê 2050
+.PP
+5.  When there is no additional element to the four sides of  the  characters 
+¸ý,  Ìç,  ò¨ (and sometimes ¹Ô), whatever is inside these characters is taken for the lower two corners. 
+.PP
+Some examples: Ìä 7760  ¼ü 6080  Ô¢ 6015  ÌÜ 6010  ³« 7744  ÌÌ 1060  îò 2110
+.PP
+6.  The analysis is based on the block-style handwritten kaisho (Ü´½ñ)  shape of characters. 
+.PP
+(This needs attention, as ¸Í is 3027, not 1027.  The top stroke is treated as 
+a Ð¦.) 
+.PP
+7. Some points to note when analysing shapes: 
+.PP
+.BH "Shape 0"
+
+When the horizontal line below a DOT shape (number 3) is connected to another 
+stroke at its right-hand end (as in Õß ¸Í,  etc.) it is not counted as a  LID (number 0) but as a DOT. 
+.PP
+Examples: °Â 3040  ¿À 3520  µ§ 3222
+.PP
+.BH "Shape 6"
+Characters  such  as »® and Õù where one of the strokes of the square extends 
+beyond it,  are not considered to be square (number 6)  shapes,  but  corners 
+(number 7). 
+.PP
+Examples: ³î 7710  ½ê 3222  »® 7710  ´Û 8377 µ¹ 3010
+
+.BH "Shape 7"
+
+Only the cornered end of corner shapes (number 7) is counted as 7. 
+.PP
+Examples: ¶è 7171  ¶Ô 7222 ¶ç 2762¡¡È¿ 7124
+
+.BH "Shape 8"
+
+Strokes that cross other strokes are not counted as shape number 8 (È¬). 
+.PP
+Examples: Èþ 8043  ´Ø 7743  Âç 4003  ¼º 8043  ¹Õ 2143  Àí 9043
+.BH "Shape 9"
+
+Shapes resembling shape 9, but featuring two strokes in the middle (as in the 
+top part of ¶È or ÁÑ) or two strokes on one side
+(as in ¿å or the bottom part  of Êé) are not considered as
+9 shapes. 
+.PP
+Examples: Êé 4433  ¶È 3290  ÁÑ 3214
+.PP
+8. Some points to note when choosing corners. 
+.BP
+when a corner is occupied by more than one independant or parallel strokes, 
+the one that extend furthest to the left or right is  taken  as  the  corner, 
+regardless of how high or low it is. 
+.PP
+examples: Èó 1111  Ðë 2124  ¼À 0013  Äë 0022  ¼Ò 3421  ÌÔ 4721
+.BP
+if there is another shape above (or, at the bottom of the character, below) 
+the  leftmost  or  rightmost  stroke  of  a  character,  that  shape is given 
+preference and is taken as the corner. 
+.PP
+examples: »¡ 3090  ¹¬ 4040  á¶ 6020  ½÷ 4040  ã¹ 3521  Â¶ 4480
+.BP
+when two composite stroke shapes are interwoven and each could be  regarded 
+as a corner,  the shape that is higher is taken as the upper corner,  and the 
+lower stroke as lower corner. 
+.BP
+when a stroke that slopes downwards to the left or right  is  supported  by 
+another stroke, the latter is taken as the corner. 
+.PP
+examples: ±° 2740  Î¢ 0073  ¾Ë 1962  é° 4464  ·Ô 4410  Èï 3424
+.BP
+a left slanting stroke on the upper left is taken for the left corner only; 
+for the right corner one takes a stroke more to the right. 
+.PP
+examples: ¿È 2740  Ì¶ 2350  ³û 6752  Åª 2762  ½Ü 2762  Åç 2772
+.PP
+9. Shape variations: (Dr App includes several pages of examples) 
+.PP
+10. The fifth corner:
+.PP
+In  order to differentiate between the several characters with the same code, 
+an optional "fifth corner" is sometimes used. This is, loosely, a shape above 
+the fourth corner which has not been used in any other shape. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%title SKIP codes
+%euc
+[Jeffrey Friedl provided the following summary of the SKIP codes. See Halpern 
+for a full description.] 
+.PP
+Look at the character in question and decide if it can visually be divided 
+.TS
+center;
+l l.
+1)	into  left  and  right  sides  
+2)	into upper and lower halves 
+3)	into an enclosing structure and an internal structure 
+4)	none of the above. 
+.TE
+.PP
+For 1,2,  and 3,  count the strokes in the left/upper/enclosing part, and the 
+number left in the right/lower/internal part.  Write the three  numbers  (the 
+#1-#3  from  above plus the two stroke counts) seperated by dashes and that's 
+the code. 
+.PP
+examples:
+ ²ó  3-3-3
+ ²¬  3-2-6
+ »ß  3-2-2 (strange - the last two strokes are the "enclosure").
+ »°  2-1-2
+ ¶Á  2-11-9
+ È¬  1-1-1
+ ³¹  1-3-9
+.PP
+For #4 above, then choose the first true from:
+.TS
+center;
+l l.
+1)	has a horizontal line at the top (as in ²¼)
+2)	has a horizontal line at the bottom (as in Ë´)
+3)	has a vertical line through (as in Ãæ)
+4)	none (for example ²Ð, À®, ¿Í, ½÷)
+.TE
+.PP
+Write  the  total  stroke  count between the #4 (from the first list) and the 
+number from the second (with intervening dashes). That's the code. 
+.PP
+example codes:
+ ²Ð  4-4-4
+ À®  4-6-4
+ ¿Í  4-2-4
+ ½÷  4-3-4
+ Ãæ  4-4-3
+ Ë´  4-3-2
+ ²¼  4-3-1
+
+.PP
+Some codes aren't  as  concise  as  would  be  nice...  some  have  over  100 
+characters  with  the  same code.  However,  it is generally a rather concise 
+method. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%title Help shell
+%xref Help history shell
+%xref Resources
+The help shell provides on-line help for Gjdict.
+.PP
+The left part of the shell is occupied by the list of help topics to select
+from. The selected topic is displayed in the text widget to the right of the
+list. Below this widget there is a list of cross-references for this topic.
+.PP
+The shell has following command widgets:
+.TS
+l l.
+Close	Close the shell
+Back	Move to the previously visited topic
+Forward	Return to the next visited topic when you hav used `Back'.
+History	Display history list.
+.TE
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%title Help history shell
+%xref Help shell
+%xref Resources
+The help shell displays a list of the help topics visited so far. You can pick
+any one of them and press `Select' command to re-visit it.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%title Kana input shell
+%xref Inputting kana words
+The shell makes it possible for you to enter the kana word just picking up
+the kana characters from the gojuon table. The additional commands are:
+.TS
+center;
+c l.
+¢«	backspace
+¢Î	hiragana/katakana toggle
+¡«	nigori. Also small ¤¢¡¢¤¨¡¢¤¦¡¢¤¨¡¢¤ª¡¢¤Ä chars.
+¡¬	`pa' column
+.TE
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%title Inputting kana words
+
+To input kana word in the kana input widget simply enter the word in Hepburn
+romanization. It will be converted to kana on the fly.
+.PP
+The following points should be observed:
+.BP
+Use `-' (dash) to enter -- (long vowel) mark in katakana.
+.BP
+To enter ¤ó char input "n " (`n' followed by space).
+.BP
+Ctrl-K switches to katakana input, Ctrl-H switches to hiragana input
+.BP
+Ctrl-T toggles input mode between hiragana and katakana
+.PP
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%title Cross-reference shell
+The cross-reference shell displays the list of dictionary entries that use
+the kanji found. To go to an entry select it with your mouse and press
+`Select' button.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%title Resources
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%eof
+
+-syntax-----------------------------------------------------------------------
+This is the description of gjdict's online help source file.
+See utils/helpcmp.pl for details.
+
+  The source file is a sequence of help topics. Each topic contains a text
+and help compiler directives. Topic text can contain ascii 8-bit characters 
+intermixed with 16-bit characters in EUC. It can (and probably should) contain
+nroff formatting directives. Current version of helpcmp.pl uses `tmac.gjdict'
+macro package, refer to it for the details.
+
+  The directives of the help compiler start with `%' in the first column.
+There are following directives:
+
+
+1.	%title TEXT
+  This begins a topic and assigns TEXT as topic's title.
+
+2.	%xref TITLE
+  Adds a cross-reference to the topic named TITLE
+
+3.	%euc
+  Reserved for future use.
+
+4.	%%
+  Introduces a single-line comment
+
+5.	%eof
+  Marks logical end of file. Any file contents that follows this marker
+is ignored just like the text you are reading is.
+
+6.	%include FILENAME
+  Includes the contents of the file named FILENAME in the current
+position.
+	
+------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Local variables: 
+%% buffer-file-coding-system: japanese-iso-8bit-unix 
+%% End: 

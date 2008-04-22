@@ -1,0 +1,54 @@
+/* -* c -*- */
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <getopt.h>
+#include <X11/Xatom.h>
+#include <X11/Xos.h>
+#include <X11/Intrinsic.h>
+#include <X11/StringDefs.h>
+#include <X11/Shell.h>
+#include <Xaw.h>
+#include <X11/Composite.h>
+
+#include <gjdict.h>
+#include <client.h>
+
+extern OptionsRec optrec;
+
+OPTIONS_BEGIN(gnu,"gjdictd",[<Japanese dictionary.>])
+
+OPTION(server,, HOST,
+       [<IP address or host name of the Gjdict server.>])
+BEGIN
+   optrec.server = optarg;
+END
+
+OPTION(port,, PORT,
+       [<Connect to this PORT.>])
+BEGIN
+   optrec.port = optarg;
+END
+
+OPTION(transcript,,,
+       [<Write session transcript on stdout.>])
+BEGIN
+   optrec.transcript = 1;
+END
+
+OPTION(verbose,,,
+       [<Set verbosity level.>])
+BEGIN
+   optrec.verbose = optarg;
+END
+
+OPTIONS_END
+
+void
+get_options (int argc, char *argv[])
+{
+    GETOPT(argc, argv)
+}

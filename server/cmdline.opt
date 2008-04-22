@@ -1,0 +1,95 @@
+/* -* c -*- */
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <getopt.h>
+#include <stdarg.h>
+#include <limits.h>
+#include <gjdictd.h>
+#include <server.h>
+
+OPTIONS_BEGIN(gnu,"gjdictd",[<Japanese dictionary daemon.>])
+
+OPTION(console-logging, c,,
+       [<Output diagnostic to stderr>])
+BEGIN
+   console_log++;
+END
+
+OPTION(dictionary-dir, d, DIR,
+       [<Set directory where dictionary files are located.>])
+BEGIN
+   dictpath = optarg;
+END
+
+OPTION(foreground, f,,
+       [<Operate in foreground.>])
+BEGIN
+   foreground = 1;
+END
+
+OPTION(ip-address,, IP,
+       [<Listen on this IP address.>])
+BEGIN
+   ipaddr = get_ipaddr(optarg);
+END
+
+OPTION(max-children,, NUMBER,
+       [<Set maximum number of simultaneous connections.>])
+BEGIN
+   char *p;
+   unsigned long n = strtoul(optarg, &p, 10);
+   if (*p) 
+	die(1, L_ERR|L_CONS, 0, "not a number (%s)", optarg);
+   if (n > UINT_MAX)	
+	die(1, L_ERR|L_CONS, 0, "number out of range (%s)", optarg);
+   max_children = n;
+END
+
+OPTION(port, p, PORT,
+       [<Set port to listen on.>])
+BEGIN
+   portstr = optarg;
+END
+
+OPTION(single-process, s,,
+       [<Single-process mode.>])
+BEGIN
+   single_user++;
+END
+
+OPTION(timeout, t, TIME,
+       [<Set inactivity timeout.>])
+BEGIN
+   set_inactivity_timeout(optarg);
+END
+
+OPTION(verbose, v,,
+       [<Increase verbosity level.>])
+BEGIN
+   verbose++;
+END
+
+OPTION(debug, x, LEVEL-SPEC,
+       [<Set debug verbosity level.>])
+BEGIN
+   set_debug_level(optarg);
+END
+
+OPTION(inetd, i,,
+       [<Operate in inetd mode>])
+BEGIN
+   inetd = 1;
+END
+
+OPTIONS_END
+
+void
+get_options (int argc, char *argv[])
+{
+    GETOPT(argc, argv)
+}

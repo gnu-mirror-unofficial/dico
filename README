@@ -1,0 +1,7 @@
+This is an experimental Japanese dictionary program that uses
+Jim Breen's dictionaries 'kanjidic' and 'edict' (both available
+from his site http://www.csse.monash.edu.au/~jwb/j_jmdict.html).
+ 
+The program was inspired and greatly affected by Philip Brown's
+Kdrill.
+

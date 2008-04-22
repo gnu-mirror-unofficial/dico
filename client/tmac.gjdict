@@ -1,0 +1,90 @@
+..	\" $Id$
+..	\" Nroff macros for compiling online help
+..	\" ===============================================
+..	\" rs - current indentation
+.nr rs 0
+.in \n(rs
+..	\" pd - inter-paragraph vertical gap
+.nr pd 1
+
+..	\" ====================================
+.de LP	\" blocked para start
+.sp \\n(pd
+.in \\n(rs
+.ta 2m
+..
+.de PP	\" normal para start
+.LP
+.ti +2m
+..
+.de IP	\" indented paragraph with hanging text
+.MP "\\fR\\$1\\fP" "\\$2"
+..
+.de SH	\" Section Heading
+.if n .sp 2
+\\.ds sh \\$1
+.if t .sp 15p
+.ne 2
+.ps +2
+.ft HB
+.in \\n(rs
+\\$1\\ \\ \\$2
+.ps -2
+.ft R
+.if n .sp
+.if t .sp 6p
+.NS
+..
+.de CH	\" Centered Heading
+.if n .sp 2
+\\.ds sh \\$1
+.if t .sp 15p
+.ne 2
+.ps +2
+.ft HB
+.in \\n(rs
+.ce
+\\$1\\ \\ \\$2
+.ps -2
+.ft R
+.if n .sp
+.if t .sp 6p
+.NS
+..
+.de BH	\" bulleted header
+.if n .sp 2
+\\.ds sh \\$1
+.if t .sp 15p
+.ne 2
+.ps +2
+.ft HB
+.in \\n(rs
+o \\$1\\ \\ \\$2
+.ps -2
+.ft R
+.if n .sp
+.if t .sp 6p
+.NS
+..
+.de NS	\" turn off line space after heading
+.it 1 on
+.nr sd 1
+..
+.de on
+.nr sd 1
+..
+.de BP	\" bulleted paragraph
+.MP "\\fRo\\fP" "4"
+..
+.de MP
+.sp \\n(pd
+.ie \\$2 .nr xi \\$2-\\n(ip
+.el .nr xi 4
+.in \\n(rs+\\n(xi+\\n(ip
+.ta \\n(xi
+.ti -\\n(xi
+.ft H
+\&\\$1\t\c
+\.if \\w'\\$1'u-\\n(xim .br
+.ft R
+..

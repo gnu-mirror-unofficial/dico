@@ -1,0 +1,277 @@
+MKFONTDIR=@MKFONTDIR@
+BDFTOPCF=@BDFTOPCF@
+GZIP=@GZIP@
+
+fontdir=@fontdir@
+font_DATA=bushu.pcf.gz
+
+install-data-hook:
+	$(MKFONTDIR) $(fontdir)
+
+CLEANFILES=bushu.pcf
+
+GLYPHS=\
+ 1.xbm\
+ 2.xbm\
+ 3.xbm\
+ 4.xbm\
+ 5.xbm\
+ 6.xbm\
+ 7.xbm\
+ 8.xbm\
+ 9.xbm\
+ 11.xbm\
+ 12.xbm\
+ 13.xbm\
+ 14.xbm\
+ 15.xbm\
+ 16.xbm\
+ 17.xbm\
+ 18.xbm\
+ 19.xbm\
+ 20.xbm\
+ 21.xbm\
+ 22.xbm\
+ 23.xbm\
+ 24.xbm\
+ 25.xbm\
+ 26.xbm\
+ 27.xbm\
+ 28.xbm\
+ 29.xbm\
+ 30.xbm\
+ 31.xbm\
+ 32.xbm\
+ 33.xbm\
+ 34.xbm\
+ 35.xbm\
+ 36.xbm\
+ 37.xbm\
+ 38.xbm\
+ 39.xbm\
+ 40.xbm\
+ 41.xbm\
+ 42.xbm\
+ 43.xbm\
+ 44.xbm\
+ 45.xbm\
+ 46.xbm\
+ 47.xbm\
+ 48.xbm\
+ 49.xbm\
+ 50.xbm\
+ 51.xbm\
+ 52.xbm\
+ 53.xbm\
+ 54.xbm\
+ 55.xbm\
+ 56.xbm\
+ 57.xbm\
+ 58.xbm\
+ 59.xbm\
+ 60.xbm\
+ 61.xbm\
+ 62.xbm\
+ 63.xbm\
+ 64.xbm\
+ 65.xbm\
+ 66.xbm\
+ 67.xbm\
+ 68.xbm\
+ 69.xbm\
+ 70.xbm\
+ 71.xbm\
+ 72.xbm\
+ 73.xbm\
+ 74.xbm\
+ 75.xbm\
+ 76.xbm\
+ 77.xbm\
+ 78.xbm\
+ 79.xbm\
+ 80.xbm\
+ 81.xbm\
+ 82.xbm\
+ 83.xbm\
+ 84.xbm\
+ 85.xbm\
+ 86.xbm\
+ 87.xbm\
+ 88.xbm\
+ 89.xbm\
+ 90.xbm\
+ 91.xbm\
+ 92.xbm\
+ 93.xbm\
+ 94.xbm\
+ 95.xbm\
+ 96.xbm\
+ 97.xbm\
+ 98.xbm\
+ 99.xbm\
+ 100.xbm\
+ 101.xbm\
+ 102.xbm\
+ 103.xbm\
+ 104.xbm\
+ 105.xbm\
+ 106.xbm\
+ 107.xbm\
+ 108.xbm\
+ 109.xbm\
+ 110.xbm\
+ 111.xbm\
+ 112.xbm\
+ 113.xbm\
+ 114.xbm\
+ 115.xbm\
+ 116.xbm\
+ 117.xbm\
+ 118.xbm\
+ 119.xbm\
+ 120.xbm\
+ 121.xbm\
+ 122.xbm\
+ 123.xbm\
+ 124.xbm\
+ 125.xbm\
+ 126.xbm\
+ 127.xbm\
+ 128.xbm\
+ 129.xbm\
+ 130.xbm\
+ 131.xbm\
+ 132.xbm\
+ 133.xbm\
+ 134.xbm\
+ 135.xbm\
+ 136.xbm\
+ 137.xbm\
+ 138.xbm\
+ 139.xbm\
+ 140.xbm\
+ 141.xbm\
+ 142.xbm\
+ 143.xbm\
+ 144.xbm\
+ 145.xbm\
+ 146.xbm\
+ 147.xbm\
+ 148.xbm\
+ 149.xbm\
+ 150.xbm\
+ 151.xbm\
+ 152.xbm\
+ 153.xbm\
+ 154.xbm\
+ 155.xbm\
+ 156.xbm\
+ 157.xbm\
+ 158.xbm\
+ 159.xbm\
+ 160.xbm\
+ 161.xbm\
+ 162.xbm\
+ 163.xbm\
+ 164.xbm\
+ 165.xbm\
+ 166.xbm\
+ 167.xbm\
+ 168.xbm\
+ 169.xbm\
+ 170.xbm\
+ 171.xbm\
+ 172.xbm\
+ 173.xbm\
+ 174.xbm\
+ 175.xbm\
+ 176.xbm\
+ 177.xbm\
+ 178.xbm\
+ 179.xbm\
+ 180.xbm\
+ 181.xbm\
+ 182.xbm\
+ 183.xbm\
+ 184.xbm\
+ 185.xbm\
+ 186.xbm\
+ 187.xbm\
+ 188.xbm\
+ 189.xbm\
+ 190.xbm\
+ 191.xbm\
+ 192.xbm\
+ 193.xbm\
+ 194.xbm\
+ 195.xbm\
+ 196.xbm\
+ 197.xbm\
+ 198.xbm\
+ 199.xbm\
+ 200.xbm\
+ 201.xbm\
+ 202.xbm\
+ 203.xbm\
+ 204.xbm\
+ 205.xbm\
+ 206.xbm\
+ 207.xbm\
+ 208.xbm\
+ 209.xbm\
+ 210.xbm\
+ 211.xbm\
+ 212.xbm\
+ 213.xbm\
+ 214.xbm\
+ 215.xbm\
+ 216.xbm\
+ 217.xbm\
+ 218.xbm\
+ 219.xbm\
+ 220.xbm\
+ 221.xbm\
+ 222.xbm\
+ 223.xbm\
+ 224.xbm\
+ 225.xbm\
+ 226.xbm\
+ 227.xbm\
+ 228.xbm\
+ 229.xbm\
+ 230.xbm\
+ 231.xbm\
+ 232.xbm\
+ 233.xbm\
+ 234.xbm\
+ 235.xbm\
+ 236.xbm\
+ 237.xbm\
+ 238.xbm\
+ 239.xbm\
+ 240.xbm\
+ 241.xbm\
+ 242.xbm\
+ 243.xbm\
+ 244.xbm\
+ 245.xbm
+
+bushu.bdf: $(GLYPHS) Makefile.am
+	PATH=${PATH}:$(top_srcdir)/utils \
+	  awk -f $(top_srcdir)/utils/mkbushufont.awk \
+             -v CHARS=`ls $(GLYPHS) | wc -l` \
+             -v HEADER=header -v FOOTER=footer $(GLYPHS) > $@-t; \
+	if test -s $@-t; then \
+	  cp $@-t $@; \
+	fi; \
+	rm -f $@-t
+
+
+bushu.pcf: bushu.bdf
+	$(BDFTOPCF) -o$@ $< 
+
+bushu.pcf.gz: bushu.pcf
+	$(GZIP) -c $< > $@
+
+
+EXTRA_DIST = bushu.bdf bushu.pcf.gz header footer $(GLYPHS)

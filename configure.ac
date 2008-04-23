@@ -16,20 +16,17 @@ dnl Process this file with -*- autoconf -*- to produce a configure script.
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 AC_INIT([gjdict], 1.0.90, [gray@gnu.org.ua])
-AC_CONFIG_SRCDIR([server/dict.c])
+AC_CONFIG_SRCDIR([dictd/main.c])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([1.9 tar-ustar])
 
 dnl Checks for programs.
+AC_PROG_CC
+gl_EARLY	
+AC_PROG_CPP
 AC_PROG_AWK
 AC_PROG_YACC
-AC_PROG_CC
-AC_PROG_CPP
-dnl AC_PROG_LEX
-AC_PROG_INSTALL
-dnl AC_PROG_LN_S
-AC_PROG_MAKE_SET
 AC_PROG_RANLIB
 
 dnl Checks for libraries.
@@ -55,9 +52,10 @@ dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_SETVBUF_REVERSED
 AC_TYPE_SIGNAL
-AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(gethostname select socket strdup strerror strtol getopt_long)
+AC_CHECK_FUNCS(gethostname select socket strdup strerror strtol)
 
+gl_INIT
+				   
 # Check for Berkeley DB
 db_path=
 db_version=4
@@ -209,7 +207,6 @@ AH_BOTTOM([
 /* Provide placeholders for future i18n framework */
 #define N_(s) s
 #define _(s) s
-#define gettext(s) s
 
 typedef unsigned char Uchar;
 typedef unsigned short Ushort;
@@ -248,9 +245,10 @@ esac
 AC_CONFIG_FILES([Makefile
                  include/Makefile
                  utils/Makefile
+		 gnu/Makefile
                  lib/Makefile
+                 dictd/Makefile
                  makedict/Makefile
-                 server/Makefile
                  client/Makefile
                  fonts/Makefile])
 AC_OUTPUT

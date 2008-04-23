@@ -25,11 +25,11 @@ makedict_SOURCES=\
  makedict.c\
  romaji.c\
  utils.c
- 
 
-LDADD=../lib/libgjdict.a @DB_LIBS@
+
+LDADD=../gnu/libgnu.a ../lib/libgjdict.a @DB_LIBS@
 AM_CFLAGS=-DDICTPATH=\"$(dictdir)\" -DINPUTDICTPATH=\"$(inputdictpath)\"
-INCLUDES=-I$(top_srcdir)/include @DB_INCLUDES@
+INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu @DB_INCLUDES@
 
 SUFFIXES=.opt .c
 

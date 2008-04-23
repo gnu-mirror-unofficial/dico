@@ -1,4 +1,4 @@
-INCLUDES = -I${top_srcdir}/include
+INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/gnu
 
 noinst_LIBRARIES=libgjdict.a 
 
@@ -6,7 +6,7 @@ libgjdict_a_SOURCES=\
  diag.c\
  iputil.c\
  jiscvt.c\
- xmalloc.c
+ xalloc-die.c
 
 noinst_HEADERS=\
  cursor.xbm\

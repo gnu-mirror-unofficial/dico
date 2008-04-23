@@ -9,41 +9,42 @@
 #endif
 
 #define DICT_DB "dict.db"
-#define JIS_TREE "jis.db"
-#define UNICODE_TREE "unicode.db"
-#define CORNER_TREE "corner.db"
-#define FREQ_TREE "freq.db"
-#define NELSON_TREE "nelson.db"
-#define HALPERN_TREE "halpern.db"
-#define GRADE_TREE "grade.db"
-#define PINYIN_TREE "pinyin.db"
-#define D_ENGLISH_TREE "english.db"
-#define KANJI_TREE "kanji.db"
-#define WORDS_TREE "words.db"
-#define BUSHU_TREE "bushu.db"
-#define SKIP_TREE "skip.db"
-#define XREF_TREE "xref.db"
-#define D_YOMI_TREE "yomi.db"
-#define D_ROMAJI_TREE "romaji.db"
+#define JIS_INDEX_NAME "jis.db"
+#define UNICODE_INDEX_NAME "unicode.db"
+#define CORNER_INDEX_NAME "corner.db"
+#define FREQ_INDEX_NAME "freq.db"
+#define NELSON_INDEX_NAME "nelson.db"
+#define HALPERN_INDEX_NAME "halpern.db"
+#define GRADE_INDEX_NAME "grade.db"
+#define PINYIN_INDEX_NAME "pinyin.db"
+#define ENGLISH_INDEX_NAME "english.db"
+#define KANJI_INDEX_NAME "kanji.db"
+#define WORDS_INDEX_NAME "words.db"
+#define BUSHU_INDEX_NAME "bushu.db"
+#define SKIP_INDEX_NAME "skip.db"
+#define XREF_INDEX_NAME "xref.db"
+#define YOMI_INDEX_NAME "yomi.db"
+#define ROMAJI_INDEX_NAME "romaji.db"
 
-enum {
-    TreeJis,
-    TreeUnicode,
-    TreeCorner,
-    TreeFreq,
-    TreeNelson,
-    TreeHalpern,
-    TreeGrade,
-    TreeBushu,
-    TreeSkip,
-    TreePinyin,
-    TreeEnglish,
-    TreeKanji,
-    TreeXref,
-    TreeWords,
-    TreeYomi,
-    TreeRomaji,
-    TreeLast          
+enum index_id {
+    index_jis,
+    index_unicode,
+    index_corner,
+    index_freq,
+    index_nelson,
+    index_halpern,
+    index_grade,
+    index_bushu,
+    index_skip,
+    index_pinyin,
+    index_english,
+    index_kanji,
+    index_xref,
+    index_words,
+    index_yomi,
+    index_romaji,
+
+    MAX_INDEX
 };
 
 typedef struct {
@@ -56,13 +57,7 @@ typedef struct {
     Ushort pos;
 } Xref;
 
-typedef long Offset;
-
 /* Dictionary entry structure.
- * Offsets are binary offsets to the strings in text datafile.
- * Offset 0 means there is no string.
- * All strings are zero-terminated (16-bit terminate with two 
- * zeroes.
  */
  
 typedef struct translation {
@@ -78,6 +73,12 @@ typedef struct translation {
     Uchar grade_level;		/* akin to  school class level */
 
     int refcnt;                 /* Number of references to this kanji */ 
+    
+    /* Offsets of the string values.  These point to the memory after
+       DictEntry structure (see DICT_.*_PTR macros, below).  
+       Offset 0 means there is no string.
+       All strings are zero-terminated (16-bit terminate with two 
+       zeroes. */
     
     size_t english;		/* english translation string. */
     size_t yomi;	        /* kana, actually */

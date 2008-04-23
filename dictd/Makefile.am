@@ -14,15 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-dictdir=@dictdir@
-inputdictpath=@inputdictpath@
+bin_PROGRAMS=dictd
+dictd_SOURCES=\
+ cmdline.c\
+ main.c
+noinst_HEADERS=dictd.h
 
-ACLOCAL_AMFLAGS = -I m4
+LDADD=../lib/libgjdict.a @DB_LIBS@
+INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu @DB_INCLUDES@
 
-SUBDIRS=include utils gnu lib dictd makedict
-#FIXME: add these when ready client fonts
+SUFFIXES=.opt .c
 
-dict:
-	$(top_builddir)/makedict/makedict -cv -o$(dictdir) -d$(inputdictpath)
+.opt.c:
+	m4 -s $(top_srcdir)/utils/getopt.m4 $< | sed '1d' > $@
 
-distcleancheck_listfiles = find . -type f -not -name 'bushu.pcf.gz' -print
+BUILT_SOURCES=cmdline.c 
+EXTRA_DIST=cmdline.opt 

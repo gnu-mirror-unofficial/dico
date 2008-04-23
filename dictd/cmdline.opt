@@ -1,4 +1,4 @@
-/* This file is part of Gjdict.                  -* c -*-
+/* This file is part of Gjdict.
    Copyright (C) 1998-2000, 2008 Sergey Poznyakoff
 
    This program is free software; you can redistribute it and/or modify
@@ -14,59 +14,45 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <makedict.h>
+#include <dictd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <getopt.h>
 #include <gettext.h>
-#include <gjdict.h>
-#include <stdarg.h>
-#include <limits.h>
 
-OPTIONS_BEGIN(gnu,"makedict",
-              [<Create binary dictionary for use with gjdictd.>])
+OPTIONS_BEGIN(gnu,"dictd",
+              [<A DICT daemon.>])
 
-OPTION(compile, c,,
-       [<Compile dictionaries using default values.>])
+OPTION(config,,FILE,
+       [<Read this configuration file.>])
 BEGIN
+   /* FIXME */
 END
 
-OPTION(dictionary-directory, d, DIR,
-       [<Set input dictionary path.>])
+OPTION(foreground, f,,
+       [<Operate in foreground.>])
 BEGIN
-   dictdir = optarg;
+   foreground = 1;
 END
 
-OPTION(kanjidic, k, FILE,
-       [<Set name for kanjidic file.>])
+OPTION(console-logging,,,
+       [<Output diagnostic to stderr.>])
 BEGIN
-   kanjidict = optarg;
+   log_to_stderr = 1;
 END
 
-OPTION(edict, e, FILE,
-       [<Set name for edict file.>])
+OPTION(single-process, s,,
+       [<Single-process mode.>])
 BEGIN
-   edict = optarg;
+   single_process = 1;
 END
 
-OPTION(output-directory, o, DIR
-       [<Set output directory name.>])
+OPTION(debug, x, LEVEL-SPEC,
+       [<Set debug verbosity level.>])
 BEGIN
-   outdir = optarg;
-END
-
-OPTION(verbose, v,,
-       [<Increase verbosity level.>])
-BEGIN
-   verbose++;
-END
-
-OPTION(verbose,v,,
-       [<Increase verbosity level>])
-BEGIN
-   verbose++;
+   /*set_debug_level(optarg);*/;
 END
 
 OPTIONS_END

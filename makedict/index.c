@@ -528,52 +528,52 @@ romaji_iter(struct dbidx *idx, unsigned num, DictEntry *ep)
 
 struct dbidx dbidx[] = {
     /* JIS codes */
-    { JIS_TREE, get_Jindex, cmp_Ushort },
+    { JIS_INDEX_NAME, get_Jindex, cmp_Ushort },
 
     /* Unicode */
-    { UNICODE_TREE, get_Uindex, cmp_Ushort  },
+    { UNICODE_INDEX_NAME, get_Uindex, cmp_Ushort  },
 
     /* Four-corner index */
-    { CORNER_TREE, get_Qindex, cmp_Ushort },
+    { CORNER_INDEX_NAME, get_Qindex, cmp_Ushort },
 
     /* Frequency */
-    { FREQ_TREE, get_frequency, cmp_Ushort },
+    { FREQ_INDEX_NAME, get_frequency, cmp_Ushort },
 
     /* Nelson dictionary index */
-    { NELSON_TREE, get_Nindex, cmp_Ushort },
+    { NELSON_INDEX_NAME, get_Nindex, cmp_Ushort },
 
     /* Halpern dictionary index */
-    { HALPERN_TREE, get_Hindex, cmp_Ushort },
+    { HALPERN_INDEX_NAME, get_Hindex, cmp_Ushort },
 
     /* Jouyou grade level */
-    { GRADE_TREE, get_grade_level, cmp_Uchar },
+    { GRADE_INDEX_NAME, get_grade_level, cmp_Uchar },
 
     /* Radical */
-    { BUSHU_TREE, get_bushu, cmp_bushu }, 
+    { BUSHU_INDEX_NAME, get_bushu, cmp_bushu }, 
     
     /* SKIP code */
-    { SKIP_TREE, get_skip, cmp_unsigned },
+    { SKIP_INDEX_NAME, get_skip, cmp_unsigned },
 
     /* Pinyin */
-    { PINYIN_TREE, get_pinyin, cmp_ci_string, pinyin_iter },
+    { PINYIN_INDEX_NAME, get_pinyin, cmp_ci_string, pinyin_iter },
 
     /* English translation index */
-    { D_ENGLISH_TREE,  get_english, cmp_ci_string, english_iter },
+    { ENGLISH_INDEX_NAME,  get_english, cmp_ci_string, english_iter },
 
     /* Kanji/kana text index */
-    { KANJI_TREE, get_kanji, cmp_cw_string  },
+    { KANJI_INDEX_NAME, get_kanji, cmp_cw_string  },
 
     /* Cross-reference of kanji */
-    { XREF_TREE, get_kanji, cmp_xref, xref_iter },
+    { XREF_INDEX_NAME, get_kanji, cmp_xref, xref_iter },
     
     /* Cross-reference of the words in translations */
-    { WORDS_TREE,  get_english, cmp_ci_string, words_iter },
+    { WORDS_INDEX_NAME,  get_english, cmp_ci_string, words_iter },
 
     /* Readings */
-    { D_YOMI_TREE, get_yomi, cmp_cw_string, yomi_iter },
+    { YOMI_INDEX_NAME, get_yomi, cmp_cw_string, yomi_iter },
 
     /* Readings in romaji */
-    { D_ROMAJI_TREE, get_yomi, cmp_ci_string, romaji_iter },
+    { ROMAJI_INDEX_NAME, get_yomi, cmp_ci_string, romaji_iter },
 
     { NULL },
 };
@@ -699,7 +699,7 @@ update_kanji_ref_count(DB *dbp, Ushort kanji, unsigned count)
 {
     int rc;
     DictEntry *ep;
-    DB *jisdb = dbidx[TreeJis].dbp;
+    DB *jisdb = dbidx[index_jis].dbp;
     DBT key, pkey;
     DBT content;
 
@@ -726,7 +726,7 @@ void
 count_xref(DB *dbp)
 {
     int rc;
-    struct dbidx *idx = dbidx + TreeXref;
+    struct dbidx *idx = dbidx + index_xref;
     DB *idbp = idx->dbp;
     DBC *cursor;
     DBT key;

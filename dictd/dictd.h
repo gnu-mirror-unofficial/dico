@@ -13,52 +13,16 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
-
+#include <stdlib.h>
+#include <stdio.h>
 #include <gjdict.h>
 
-void
-xmalloc_die()
-{
-    die(1, L_CRIT, 0, "Not enough memory");
-}
+extern int foreground;     /* Run in foreground mode */
+extern int single_process; /* Single process mode */
+extern int log_to_stderr;  /* Log to stderr */
 
-void *
-xmalloc(size_t size)
-{
-    void *p = malloc(size);
-    if (!p)
-	xmalloc_die();
-    return p;
-}
-
-void *
-xzalloc(size_t size)
-{
-    void *p = xmalloc(size);
-    memset(p, 0, size);
-    return p;
-}
-
-void *
-xcalloc(size_t nmemb, size_t size)
-{
-    void *p = calloc(nmemb, size);
-    if (!p)
-	xmalloc_die();
-    return p;
-}
-
-void *
-xrealloc(void *ptr, size_t size)
-{
-    void *p = realloc(ptr, size);
-    if (!p)
-	xmalloc_die();
-    return p;
-}
-
-
-
+void get_options(int argc, char *argv[]);

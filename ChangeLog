@@ -1,3 +1,16 @@
+2008-04-23  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Use gnulib. Remove old server. Start to write dictd.
+	
+	* bootstrap, bootstrap.conf, gnulib.modules: New files.
+	* dictd/.gitignore, dictd/Makefile.am, dictd/cmdline.opt: New files.
+	* lib/xmalloc.c: remove.
+	* dictd/dictd.h, dictd/main.c: New file.
+	* include/gjdictd.h: Delete.
+	* lib/xalloc-die.c: New file.
+	
+	* server/*: Remove.
+
 2008-04-22  Sergey Poznyakoff  <gray@gnu.org.ua>
 
 	Finish new makedict.

@@ -32,14 +32,7 @@
 #define obstack_chunk_alloc xmalloc
 #define obstack_chunk_free free
 #include <obstack.h>
-
-#define NUM_FIRST_INDEX TreePinyin-TreeJis+1
-#define NUM_SECOND_INDEX TreeLast-TreeEnglish
-/* for reading in kanjidic lines */
-
-#define MAX_TOKEN_SIZE 256
-#define MAXWORDSIZE 32
-#define MAXPINYIN 7 /* maximum pinyin syllable length */
+#include <xalloc.h>
 
 #define HIRAGANA_BYTE 0x24
 #define KATAKANA_BYTE 0x25

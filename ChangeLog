@@ -1,3 +1,17 @@
+2008-04-26  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Implement configuration framework for dictd.
+	
+	* configure.ac: Add AC_PROG_LEX
+	* dictd/Makefile.am: Add config-gram.y and config-lex.l.
+	* dictd/config-gram.y, dictd/config-lex.l: New files.
+	* dictd/cmdline.opt: Implement the --config option. New options
+	--trace-gram and --trace-lex.
+	* dictd/dictd.h: Add new protos.
+	* dictd/main.c (main): Call config_parse.
+	* include/gjdict.h (vlogmsg): New proto.
+	* lib/diag.c (vlogmsg): New function.
+
 2008-04-23  Sergey Poznyakoff  <gray@gnu.org.ua>
 
 	Use gnulib. Remove old server. Start to write dictd.

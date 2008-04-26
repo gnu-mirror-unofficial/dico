@@ -31,6 +31,7 @@ typedef void (*gjdict_log_printer_t) (int /* lvl */,
 void _stderr_log_printer(int, int, int, const char *, va_list);
 
 void set_log_printer(gjdict_log_printer_t prt);
+void vlogmsg(int lvl, int errcode, const char *fmt, va_list ap);
 void logmsg(int lvl, int errcode, const char *fmt, ...);
 void die(int exitcode, int lvl, int errcode, char *fmt, ...);
 

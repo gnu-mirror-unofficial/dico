@@ -28,7 +28,7 @@ OPTIONS_BEGIN(gnu,"dictd",
 OPTION(config,,FILE,
        [<Read this configuration file.>])
 BEGIN
-   /* FIXME */
+   config_file = optarg;
 END
 
 OPTION(foreground, f,,
@@ -53,6 +53,18 @@ OPTION(debug, x, LEVEL-SPEC,
        [<Set debug verbosity level.>])
 BEGIN
    /*set_debug_level(optarg);*/;
+END
+
+OPTION(trace-grammar,,,
+       [<Trace parsing of the config file.>])
+BEGIN
+   config_gram_trace(1);
+END
+
+OPTION(trace-lex,,,
+       [<Trace config file lexer.>])
+BEGIN
+   config_lex_trace(1);
 END
 
 OPTIONS_END

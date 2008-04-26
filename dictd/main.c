@@ -19,13 +19,14 @@
 int foreground;     /* Run in foreground mode */
 int single_process; /* Single process mode */
 int log_to_stderr;  /* Log to stderr */
+char *config_file = SYSCONFIG "/dictd.conf" ;
 
 
 int
 main(int argc, char **argv)
 {
     set_program_name(argv[0]);
-
+    config_lex_trace(0);
     get_options(argc, argv);
-    
+    config_parse(config_file);
 }

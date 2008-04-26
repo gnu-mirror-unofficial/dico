@@ -74,6 +74,12 @@ set_log_printer(gjdict_log_printer_t prt)
 }
 
 void
+vlogmsg(int lvl, int errcode, const char *fmt, va_list ap)
+{
+    _log_printer(lvl, 0, errcode, fmt, ap);
+}
+
+void
 logmsg(int lvl, int errcode, const char *fmt, ...)
 {
     va_list ap;

@@ -27,6 +27,7 @@ gl_EARLY
 AC_PROG_CPP
 AC_PROG_AWK
 AC_PROG_YACC
+AC_PROG_LEX
 AC_PROG_RANLIB
 
 dnl Checks for libraries.

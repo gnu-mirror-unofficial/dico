@@ -1,2 +1,8 @@
 dictd
 cmdline.c
+config-gram.c
+config-gram.h
+config-gram.output
+config-lex.c
+lex.yy.c
+y.tab.c

@@ -1,6 +1,8 @@
 # List of gnulib modules needed for Gjdictd.
 # A module name per line. Empty lines and comments are ignored.
 
+inttostr
+inttypes
 getline
 getopt
 gettext-h
@@ -8,6 +10,9 @@ malloc
 obstack
 realloc
 regex
+size_max
 snprintf
+strtoimax
+strtoumax
 vasprintf
 xalloc

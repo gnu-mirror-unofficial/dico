@@ -1,3 +1,23 @@
+2008-04-27  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Finish configuration framework. Some minor issues still remain,
+	though.
+	
+	* lib/list.c, lib/xlat.c: New files.
+	* lib/Makefile.am: Add list.c and xlat.c
+	* dictd/config-gram.y: Remove unneeded productions.  Implement C
+	code. 
+	* dictd/config-lex.l: Remove NUMBER.
+	* dictd/dictd.h: Add more includes and new prototypes.
+	* dictd/main.c: Add configuration structures.
+	* gnulib.modules: More modules.
+	* include/gjdict.h: Add prototypes for list and xlat functions.
+
+	* lib/bushu.dat, lib/diag.c, lib/iputil.c, lib/jiscvt.c: Add
+	copyleft headers.
+	* lib/list.c (dict_iterator_remove_current)
+	(dict_iterator_set_data): New functions.
+	
 2008-04-26  Sergey Poznyakoff  <gray@gnu.org.ua>
 
 	Implement configuration framework for dictd.

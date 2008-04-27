@@ -18,16 +18,32 @@
 #include <dictd.h>
 #include <config-gram.h>
 
+static struct config_keyword config_keywords;
+static struct config_keyword *cursect;
+static dict_list_t *sections;
+int config_error_count;    
+
+void *target_ptr(struct config_keyword *kwp);
+void stmt_begin(struct config_keyword *kwp, config_value_t tag);
+void stmt_end(void);
+struct config_keyword *find_keyword(const char *ident);
+
+void process_ident(struct config_keyword *kwp, config_value_t *value);
+ 
 %}
 
 %union {
     char *string;
-    unsigned long number;
+    config_value_t value;
+    dict_list_t *list;
+    struct config_keyword *kw;
 }
 
 %token <string> IDENT STRING QSTRING MSTRING
-%token <number> NUMBER
 %type <string> string slist
+%type <value> value tag
+%type <list> values list
+%type <kw> ident
 
 %%
 
@@ -42,21 +58,51 @@ stmt    : simple
         | block
         ;
 
-simple  : IDENT value ';'
-        | IDENT MSTRING
+simple  : ident value ';'
+          {
+	      process_ident($1, &$2);
+	  }
+        | ident MSTRING
+          {
+	      config_value_t value;
+	      value.type = TYPE_STRING;
+	      value.v.string = $2;
+	      process_ident($1, &value);
+	  }
         ;
 
-block   : IDENT tag '{' stmtlist '}' opt_sc
+block   : ident tag { stmt_begin($<kw>1, $<value>2); } '{' stmtlist '}' opt_sc
+          {
+	      stmt_end();
+	  }
+        ;
+
+ident   : IDENT
+          {
+	      $$ = find_keyword($1);
+	      if (!$$) 
+		  config_error(&locus, 0, _("Unknown keyword"));
+	  }
         ;
 
 tag     : /* empty */
+         {
+	     $$.type = TYPE_STRING;
+	     $$.v.string = NULL;
+	 }
         | value
         ;
 
-value   : NUMBER
-        | string
+value   : string
+          {
+	      $$.type = TYPE_STRING;
+	      $$.v.string = $1;
+	  }
         | list
-        | addr
+          {
+	      $$.type = TYPE_LIST;
+	      $$.v.list = $1;
+	  }
         ;
 
 string  : STRING
@@ -84,16 +130,26 @@ slist0  : QSTRING QSTRING
         ;
 
 list    : '(' values ')'
+          {
+	      $$ = $2;
+	  }
         | '(' values ',' ')'
+          {
+	      $$ = $2;
+	  }
         ;
 
 values  : value
+          {
+	      $$ = dict_list_create();
+	      dict_list_append($$, config_value_dup(&$1));
+	  }
         | values ',' value
+          {
+	      dict_list_append($1, config_value_dup(&$3));
+	      $$ = $1;
+	  }
         ;
-
-addr    : STRING ':' NUMBER
-        | STRING ':' STRING
-        ; 
 
 opt_sc  : /* empty */
         | ';'
@@ -118,6 +174,13 @@ config_error(gd_locus_t *locus, int errcode, const char *fmt, ...)
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
     va_end(ap);
+    config_error_count++;
+}
+
+void
+config_set_keywords(struct config_keyword *kwd)
+{
+    config_keywords.kwd = kwd;
 }
 
 int
@@ -126,8 +189,12 @@ config_parse(const char *name)
     int rc;
     if (config_lex_begin(name))
 	return 1;
+    cursect = &config_keywords;
+    dict_list_destroy(&sections, NULL, NULL);
     rc = yyparse();
     config_lex_end();
+    if (config_error_count)
+	rc = 1;
     return rc;
 }
 
@@ -136,3 +203,445 @@ config_gram_trace(int n)
 {
     yydebug = n;
 }
+
+
+
+void *
+target_ptr(struct config_keyword *kwp)
+{
+    char *base;
+    
+    if (kwp->varptr)
+	base = (char*) kwp->varptr + kwp->offset;
+    else if (cursect && cursect->callback_data)
+	base = (char*) cursect->callback_data + kwp->offset;
+    else
+	base = NULL;
+    return base;
+}
+    
+void
+stmt_begin(struct config_keyword *kwp, config_value_t tag)
+{
+    void *target;
+
+    if (!sections)
+	sections = dict_list_create();
+    dict_list_push(sections, cursect);
+    if (kwp) {
+	target = target_ptr(kwp);
+	cursect = kwp;
+	if (kwp->callback)
+	    kwp->callback(callback_section_begin,
+			  &locus, /* FIXME */
+			  target,
+			  &tag,
+			  &kwp->callback_data);
+    } else
+	/* install "ignore-all" section */
+	cursect = kwp;
+}
+
+void
+stmt_end()
+{
+    if (cursect && cursect->callback)
+	cursect->callback(callback_section_end,
+			  &locus, /* FIXME */
+			  NULL,
+			  NULL,
+			  &cursect->callback_data);
+    cursect = dict_list_pop(sections);
+}
+
+int
+fake_callback(enum cfg_callback_command cmd,
+	      gd_locus_t *locus,
+	      void *varptr,
+	      config_value_t *value,
+	      void *cb_data)
+{
+    return 0;
+}
+
+static struct config_keyword fake = {
+    "*",
+    cfg_void,
+    NULL,
+    0,
+    fake_callback,
+    NULL,
+    &fake
+};
+
+struct config_keyword *
+find_keyword(const char *ident)
+{
+    struct config_keyword *kwp;
+
+    if (cursect && cursect != &fake) {
+	for (kwp = cursect->kwd; kwp->ident; kwp++)
+	    if (strcmp(kwp->ident, ident) == 0)
+		return kwp;
+    } else {
+	return &fake;
+    }
+    return NULL;
+}
+
+int
+string_to_signed(intmax_t *sval, const char *string,
+		 intmax_t minval, intmax_t maxval)
+{
+    intmax_t t;
+    char *p;
+    
+    t = strtoimax(string, &p, 0);
+    if (*p) {
+	config_error(&locus, 0, "cannot convert `%s' to number",
+		     string);
+	return 1;
+    } else if (t < minval || t > maxval) {
+	config_error(&locus, 0,
+		     "%s: value out of allowed range %"PRIiMAX"..%"PRIiMAX,
+		     string, minval, maxval);
+	return 1;
+    }
+    *sval = t;
+    return 0;
+}
+    
+int
+string_to_unsigned(uintmax_t *sval, const char *string, uintmax_t maxval)
+{
+    uintmax_t t;
+    char *p;
+    
+    t = strtoumax(string, &p, 0);
+    if (*p) {
+	config_error(&locus, 0, "cannot convert `%s' to number",
+		     string);
+	return 1;
+    } else if (t > maxval) {
+	config_error(&locus, 0,
+		     "%s: value out of allowed range 0..%"PRIuMAX,
+		     string, maxval);
+	return 1;
+    }
+    *sval = t;
+    return 0;
+}
+
+static int
+string_to_bool(const char *string, int *pval)
+{
+    if (strcmp(string, "yes") == 0
+	|| strcmp(string, "true") == 0
+	|| strcmp(string, "t") == 0
+	|| strcmp(string, "1") == 0)
+	*pval = 1;
+    else if (strcmp(string, "no") == 0
+	     || strcmp(string, "false") == 0
+	     || strcmp(string, "nil") == 0
+	     || strcmp(string, "0") == 0)
+	*pval = 0;
+    else {
+	config_error(&locus, 0,
+		     "%s: not a valid boolean value",
+		     string);
+	return 1;
+    }
+    return 0;
+}
+
+static int
+string_to_host(struct in_addr *in, const char *string)
+{
+    if (inet_aton(string, in) == 0) {
+	struct hostent *hp;
+
+	hp = gethostbyname(string);
+	if (hp == NULL)
+	    return 1;
+	memcpy(in, hp->h_addr, sizeof(struct in_addr));
+    }
+    return 0;
+}
+
+static int
+string_to_sockaddr(sockaddr_union_t *s, const char *string)
+{
+    if (string[0] == '/') {
+	if (strlen(string) >= sizeof(s->s_un.sun_path)) {
+	    config_error(&locus, 0,
+			 _("%s: UNIX socket name too long"),
+			 string);
+	    return 1;
+	}
+	s->s_un.sun_family = AF_UNIX;
+	strcpy(s->s_un.sun_path, string);
+    } else {
+	char *p = strchr(string, ':');
+	char *host;
+	size_t len;
+	struct sockaddr_in sa;
+	struct servent *serv;
+
+	sa.sin_family = AF_INET;
+	if (!p) {
+	    config_error(&locus, 0,
+			 _("%s: not a valid socket address"),
+			 string);
+	    return 1;
+	}
+	len = p - string;
+	host = xmalloc(len + 1);
+	memcpy(host, string, len);
+	host[len] = 0;
+	
+	if (string_to_host(&sa.sin_addr, host)) {
+	    config_error(&locus, 0,
+			 "%s: not a valid IP address or hostname", host);
+	    free(host);
+	    return 1;
+	}
+	free(host);
+
+	p++;
+	serv = getservbyname(p, "tcp");
+	if (serv != NULL)
+	    sa.sin_port = serv->s_port;
+	else {
+	    unsigned long l;
+	    char *q;
+	    
+	    /* Not in services, maybe a number? */
+	    l = strtoul(p, &q, 0);
+
+	    if (*p || l > USHRT_MAX) {
+		config_error(&locus, 0,
+			     "%s: not a valid port number", p);
+		return 1;
+	    }
+	    sa.sin_port = htons(l);
+	}
+	s->s_in = sa;
+    }
+    return 0;
+}
+
+static int
+string_convert(void *target, enum config_data_type type, const char *string)
+{
+    uintmax_t uval;
+    intmax_t sval;
+	
+    switch (type) {
+    case cfg_void:
+	abort();
+	    
+    case cfg_string:
+	*(char**)target = string;
+	break;
+	    
+    case cfg_short:
+	if (string_to_signed(&sval, string, SHRT_MIN, SHRT_MAX) == 0)
+	    *(short*)target = sval;
+	else
+	    return 1;
+	break;
+	    
+    case cfg_ushort:
+	if (string_to_unsigned(&uval, string, USHRT_MAX) == 0)
+	    *(unsigned short*)target = uval;
+	else
+	    return 1;
+	break;
+	    
+    case cfg_bool:
+	return string_to_bool(string, (int*)target);
+	    
+    case cfg_int:
+	if (string_to_signed(&sval, string, INT_MIN, INT_MAX) == 0)
+	    *(int*)target = sval;
+	else
+	    return 1;
+	break;
+	    
+    case cfg_uint:
+	if (string_to_unsigned(&uval, string, UINT_MAX) == 0)
+	    *(unsigned int*)target = uval;
+	else
+	    return 1;
+	break;
+	    
+    case cfg_long:
+	if (string_to_signed(&sval, string, LONG_MIN, LONG_MAX) == 0)
+	    *(long*)target = sval;
+	else
+	    return 1;
+	break;
+	    
+    case cfg_ulong:
+	if (string_to_unsigned(&uval, string, ULONG_MAX) == 0)
+	    *(unsigned long*)target = uval;
+	else
+	    return 1;
+	break;
+	    
+    case cfg_size:
+	if (string_to_unsigned(&uval, string, SIZE_MAX) == 0)
+	    *(size_t*)target = uval;
+	else
+	    return 1;
+	break;
+	    
+    case cfg_intmax:
+	return string_to_signed((intmax_t*)target, string,
+				INTMAX_MIN, INTMAX_MAX);
+	    
+    case cfg_uintmax:
+	return string_to_unsigned((uintmax_t*)target, string, UINTMAX_MAX);
+	    
+    case cfg_time:
+	/*FIXME: Use getdate */
+	if (string_to_unsigned(&uval, string, (time_t)-1) == 0)
+	    *(time_t*)target = uval;
+	else
+	    return 1;
+	break;
+
+    case cfg_ipv4:
+	if (inet_aton(string, (struct in_addr *)target)) {
+	    config_error(&locus, 0, "%s: not a valid IP address", string);
+	    return 1;
+	}
+	break;
+	
+    case cfg_host:
+	if (string_to_host((struct in_addr *)target, string)) {
+	    config_error(&locus, 0,
+			 "%s: not a valid IP address or hostname", string);
+	    return 1;
+	}
+	break;    
+	    
+    case cfg_sockaddr:
+	return string_to_sockaddr((sockaddr_union_t*)target, string);
+	
+	/* FIXME: */
+    case cfg_cidr:
+	    
+    case cfg_callback:
+    case cfg_section:
+	config_error(&locus, 0, "INTERNAL ERROR at %s:%d", __FILE__,
+		     __LINE__);
+	abort();
+    }
+    return 0;
+}
+
+size_t config_type_size[] = {
+    0                        /* cfg_void */,
+    sizeof(char*)            /* cfg_string */,
+    sizeof(short)            /* cfg_short */,
+    sizeof(unsigned short)   /* cfg_ushort */,
+    sizeof(int)              /* cfg_int */,
+    sizeof(unsigned int)     /* cfg_uint */,
+    sizeof(long)             /* cfg_long */,
+    sizeof(unsigned long)    /* cfg_ulong */,
+    sizeof(size_t)           /* cfg_size */,
+/*    cfg_off,*/
+    sizeof(uintmax_t)        /* cfg_uintmax */,
+    sizeof(intmax_t)         /* cfg_intmax */,
+    sizeof(time_t)           /* cfg_time */,
+    sizeof(int)              /* cfg_bool */,
+    sizeof(struct in_addr)   /* cfg_ipv4 */,
+    0                        /* FIXME: cfg_cidr */,
+    sizeof(struct in_addr)   /* cfg_host */, 
+    sizeof(sockaddr_union_t) /* cfg_sockaddr */,
+    0                        /* cfg_callback */,
+    0                        /* cfg_section */
+};
+
+void
+process_ident(struct config_keyword *kwp, config_value_t *value)
+{
+    void *target;
+
+    if (!kwp)
+	return;
+
+    target = target_ptr(kwp);
+
+    if (kwp->callback)
+	kwp->callback(callback_set_value,
+		      &locus, /* FIXME */
+		      target,
+		      value,
+		      &kwp->callback_data);
+    else if (value->type == TYPE_LIST) {
+	if (CFG_IS_LIST(kwp->type)) {
+	    dict_iterator_t *itr = dict_iterator_create(value->v.list);
+	    enum config_data_type type = CFG_TYPE(kwp->type);
+	    int num = 1;
+	    void *p;
+	    dict_list_t *list = dict_list_create();
+	    
+	    for (p = dict_iterator_first(itr); p;
+		 p = dict_iterator_next(itr), num++) {
+		config_value_t *vp = p;
+		size_t size;
+
+		if (type >= ARRAY_SIZE(config_type_size)
+		    || (size = config_type_size[type]) == 0) {
+		    config_error(&locus, 0,
+				 "INTERNAL ERROR at %s:%d: unhandled data type %d",
+				 __FILE__, __LINE__, type);
+		    abort();
+		}
+		
+		if (vp->type != TYPE_STRING)
+		    config_error(&locus, 0,
+				 "%s: incompatible data type in list item #%d",
+				 kwp->ident, num);
+		else {
+		    if (string_convert(target, type, vp->v.string) == 0) {
+			void *ptr = xmalloc(size);
+			memcpy(ptr, target, size);
+			dict_list_append(list, ptr);
+		    }
+		}
+	    }
+	    dict_iterator_destroy(&itr);
+	    *(dict_list_t**)target = list;
+	} else {
+	    config_error(&locus, 0, "incompatible data type for `%s'",
+			 kwp->ident);
+	    return;
+	}
+    } else if (CFG_IS_LIST(kwp->type)) {
+	dict_list_t *list = dict_list_create();
+	enum config_data_type type = CFG_TYPE(kwp->type);
+	size_t size;
+	void *ptr;
+	
+	if (type >= ARRAY_SIZE(config_type_size)
+	    || (size = config_type_size[type]) == 0) {
+	    config_error(&locus, 0,
+			 "INTERNAL ERROR at %s:%d: unhandled data type %d",
+			 __FILE__, __LINE__, type);
+	    abort();
+	}
+	ptr = xmalloc(size);
+	if (string_convert(ptr, type, value->v.string)) {
+	    free(ptr);
+	    dict_list_destroy(&list, NULL, NULL);
+	    return;
+	}
+	dict_list_append(list, ptr);
+	*(dict_list_t**)target = list;
+    } else
+	string_convert(target, CFG_TYPE(kwp->type), value->v.string);
+}
+

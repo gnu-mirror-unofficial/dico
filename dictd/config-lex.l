@@ -31,8 +31,7 @@ gd_locus_t locus;
 static ino_t source_inode;
 static struct obstack stk;
     
-static int number(void);
-static int string(void);
+static int string(const char*, size_t);
 static void multiline_begin(char *);
 static void multiline_add(char *);
 static void multiline_finish(void);
@@ -194,14 +193,10 @@ ID [a-zA-Z_][a-zA-Z_0-9-]+
 "//".*    /* end-of-file comment */;
         /* Identifiers */
 ^[ \t]*{ID}          return ident();
-         /* Numbers */
-0[0-7]*                     { return number(); }
-0x[0-9a-fA-F][0-9a-fA-F]+   { return number(); }
-[1-9][0-9]*                 { return number(); }
          /* Strings */
-[a-zA-Z0-9_\.-]+            { return string(); }
+[a-zA-Z0-9_\./:-]+    { return string(yytext, yyleng); }
          /* Quoted strings */
-\"[^\\"\n]*\"         { return string(); }
+\"[^\\"\n]*\"         { return string(yytext + 1, yyleng - 2); }
 \"[^\\"\n]*\\.        { BEGIN(STR);
                         line_begin();
 		        line_add_unescape_last(yytext + 1, yyleng - 1); }
@@ -318,16 +313,9 @@ config_lex_end()
 }
 
 int
-number()
+string(const char *str, size_t len)
 {
-    yylval.number = strtoul(yytext, NULL, 0);
-    return NUMBER;
-}
-
-int
-string()
-{
-    obstack_grow(&stk, yytext + 1, yyleng - 2);
+    obstack_grow(&stk, str, len);
     obstack_1grow(&stk, 0);
     yylval.string = obstack_finish(&stk);
     return STRING; 
@@ -483,4 +471,10 @@ config_lex_trace(int n)
     yy_flex_debug = n;
 }
 
-
+config_value_t *
+config_value_dup(config_value_t *input)
+{
+    config_value_t *ptr = obstack_alloc(&stk, sizeof(*ptr));
+    *ptr = *input;
+    return ptr;
+}

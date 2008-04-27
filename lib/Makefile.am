@@ -6,7 +6,9 @@ libgjdict_a_SOURCES=\
  diag.c\
  iputil.c\
  jiscvt.c\
- xalloc-die.c
+ list.c\
+ xalloc-die.c\
+ xlat.c
 
 noinst_HEADERS=\
  cursor.xbm\

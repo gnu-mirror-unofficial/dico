@@ -1,6 +1,4 @@
-/* $Id$
- */
-/*  Gjdict
+/*  This file is part of Gjdict.
  *  Copyright (C) 1998, 2008 Sergey Poznyakoff
  *
  *  This program is free software; you can redistribute it and/or modify

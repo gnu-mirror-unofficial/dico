@@ -34,7 +34,7 @@ struct list {
 
 struct iterator {
     struct iterator *next;
-    dict_list_t *list;
+    dict_list_t list;
     struct list_entry *cur;
     int advanced;
 };
@@ -70,7 +70,7 @@ dict_list_destroy(struct list **plist, dict_list_iterator_t user_free,
 }
 
 void *
-dict_iterator_current(dict_iterator_t *ip)
+dict_iterator_current(dict_iterator_t ip)
 {
     if (!ip)
 	return NULL;
@@ -78,7 +78,7 @@ dict_iterator_current(dict_iterator_t *ip)
 }
 
 static void
-dict_iterator_attach(dict_iterator_t *itr, dict_list_t *list)
+dict_iterator_attach(dict_iterator_t itr, dict_list_t list)
 {
     itr->list = list;
     itr->cur = NULL;
@@ -87,10 +87,10 @@ dict_iterator_attach(dict_iterator_t *itr, dict_list_t *list)
     list->itr = itr;	
 }
 
-static dict_iterator_t *
-dict_iterator_detach(dict_iterator_t *iter)
+static dict_iterator_t 
+dict_iterator_detach(dict_iterator_t iter)
 {
-    dict_iterator_t *cur, *prev;
+    dict_iterator_t cur, prev;
     
     for (cur = iter->list->itr, prev = NULL;
 	 cur;
@@ -107,10 +107,10 @@ dict_iterator_detach(dict_iterator_t *iter)
     return cur;
 }
 
-dict_iterator_t *
-dict_iterator_create(dict_list_t *list)
+dict_iterator_t 
+dict_iterator_create(dict_list_t list)
 {
-    dict_iterator_t *itr;
+    dict_iterator_t itr;
     
     if (!list)
 	return NULL;
@@ -120,9 +120,9 @@ dict_iterator_create(dict_list_t *list)
 }
 
 void
-dict_iterator_destroy(dict_iterator_t **ip)
+dict_iterator_destroy(dict_iterator_t *ip)
 {
-    dict_iterator_t *itr;
+    dict_iterator_t itr;
     
     if (!ip || !*ip)
 	return;
@@ -133,7 +133,7 @@ dict_iterator_destroy(dict_iterator_t **ip)
 }
 		
 void *
-dict_iterator_first(dict_iterator_t *ip)
+dict_iterator_first(dict_iterator_t ip)
 {
     if (!ip)
 	return NULL;
@@ -143,7 +143,7 @@ dict_iterator_first(dict_iterator_t *ip)
 }
 
 void *
-dict_iterator_next(dict_iterator_t *ip)
+dict_iterator_next(dict_iterator_t ip)
 {
     if (!ip || !ip->cur)
 	return NULL;
@@ -154,19 +154,19 @@ dict_iterator_next(dict_iterator_t *ip)
 }	
 
 void
-dict_iterator_remove_current(dict_iterator_t *ip)
+dict_iterator_remove_current(dict_iterator_t ip)
 {
     dict_list_remove(ip->list, ip->cur->data, NULL);
 }
 
 void
-dict_iterator_set_data(dict_iterator_t *ip, void *data)
+dict_iterator_set_data(dict_iterator_t ip, void *data)
 {
     ip->cur->data = data;
 }
 
 static void
-_iterator_advance(dict_iterator_t *ip, struct list_entry *e)
+_iterator_advance(dict_iterator_t ip, struct list_entry *e)
 {
     for (; ip; ip = ip->next) {
 	if (ip->cur == e) {
@@ -280,7 +280,7 @@ dict_list_pop(struct list *list)
 void
 dict_list_iterate(struct list *list, dict_list_iterator_t func, void *data)
 {
-    dict_iterator_t itr;
+    struct iterator itr;
     void *p;
 	
     if (!list)

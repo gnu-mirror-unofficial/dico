@@ -20,7 +20,7 @@
 
 static struct config_keyword config_keywords;
 static struct config_keyword *cursect;
-static dict_list_t *sections;
+static dict_list_t sections;
 int config_error_count;    
 
 void *target_ptr(struct config_keyword *kwp);
@@ -35,7 +35,7 @@ void process_ident(struct config_keyword *kwp, config_value_t *value);
 %union {
     char *string;
     config_value_t value;
-    dict_list_t *list;
+    dict_list_t list;
     struct config_keyword *kw;
 }
 
@@ -298,12 +298,12 @@ string_to_signed(intmax_t *sval, const char *string,
     
     t = strtoimax(string, &p, 0);
     if (*p) {
-	config_error(&locus, 0, "cannot convert `%s' to number",
+	config_error(&locus, 0, _("cannot convert `%s' to number"),
 		     string);
 	return 1;
     } else if (t < minval || t > maxval) {
 	config_error(&locus, 0,
-		     "%s: value out of allowed range %"PRIiMAX"..%"PRIiMAX,
+		     _("%s: value out of allowed range %"PRIiMAX"..%"PRIiMAX),
 		     string, minval, maxval);
 	return 1;
     }
@@ -319,12 +319,12 @@ string_to_unsigned(uintmax_t *sval, const char *string, uintmax_t maxval)
     
     t = strtoumax(string, &p, 0);
     if (*p) {
-	config_error(&locus, 0, "cannot convert `%s' to number",
+	config_error(&locus, 0, _("cannot convert `%s' to number"),
 		     string);
 	return 1;
     } else if (t > maxval) {
 	config_error(&locus, 0,
-		     "%s: value out of allowed range 0..%"PRIuMAX,
+		     _("%s: value out of allowed range 0..%"PRIuMAX),
 		     string, maxval);
 	return 1;
     }
@@ -347,7 +347,7 @@ string_to_bool(const char *string, int *pval)
 	*pval = 0;
     else {
 	config_error(&locus, 0,
-		     "%s: not a valid boolean value",
+		     _("%s: not a valid boolean value"),
 		     string);
 	return 1;
     }
@@ -401,7 +401,7 @@ string_to_sockaddr(sockaddr_union_t *s, const char *string)
 	
 	if (string_to_host(&sa.sin_addr, host)) {
 	    config_error(&locus, 0,
-			 "%s: not a valid IP address or hostname", host);
+			 _("%s: not a valid IP address or hostname"), host);
 	    free(host);
 	    return 1;
 	}
@@ -420,7 +420,7 @@ string_to_sockaddr(sockaddr_union_t *s, const char *string)
 
 	    if (*p || l > USHRT_MAX) {
 		config_error(&locus, 0,
-			     "%s: not a valid port number", p);
+			     _("%s: not a valid port number"), p);
 		return 1;
 	    }
 	    sa.sin_port = htons(l);
@@ -513,7 +513,7 @@ string_convert(void *target, enum config_data_type type, const char *string)
 
     case cfg_ipv4:
 	if (inet_aton(string, (struct in_addr *)target)) {
-	    config_error(&locus, 0, "%s: not a valid IP address", string);
+	    config_error(&locus, 0, _("%s: not a valid IP address"), string);
 	    return 1;
 	}
 	break;
@@ -521,7 +521,7 @@ string_convert(void *target, enum config_data_type type, const char *string)
     case cfg_host:
 	if (string_to_host((struct in_addr *)target, string)) {
 	    config_error(&locus, 0,
-			 "%s: not a valid IP address or hostname", string);
+			 _("%s: not a valid IP address or hostname"), string);
 	    return 1;
 	}
 	break;    
@@ -534,7 +534,7 @@ string_convert(void *target, enum config_data_type type, const char *string)
 	    
     case cfg_callback:
     case cfg_section:
-	config_error(&locus, 0, "INTERNAL ERROR at %s:%d", __FILE__,
+	config_error(&locus, 0, _("INTERNAL ERROR at %s:%d"), __FILE__,
 		     __LINE__);
 	abort();
     }
@@ -582,11 +582,11 @@ process_ident(struct config_keyword *kwp, config_value_t *value)
 		      &kwp->callback_data);
     else if (value->type == TYPE_LIST) {
 	if (CFG_IS_LIST(kwp->type)) {
-	    dict_iterator_t *itr = dict_iterator_create(value->v.list);
+	    dict_iterator_t itr = dict_iterator_create(value->v.list);
 	    enum config_data_type type = CFG_TYPE(kwp->type);
 	    int num = 1;
 	    void *p;
-	    dict_list_t *list = dict_list_create();
+	    dict_list_t list = dict_list_create();
 	    
 	    for (p = dict_iterator_first(itr); p;
 		 p = dict_iterator_next(itr), num++) {
@@ -596,32 +596,33 @@ process_ident(struct config_keyword *kwp, config_value_t *value)
 		if (type >= ARRAY_SIZE(config_type_size)
 		    || (size = config_type_size[type]) == 0) {
 		    config_error(&locus, 0,
-				 "INTERNAL ERROR at %s:%d: unhandled data type %d",
+				 _("INTERNAL ERROR at %s:%d: "
+				   "unhandled data type %d"),
 				 __FILE__, __LINE__, type);
 		    abort();
 		}
 		
 		if (vp->type != TYPE_STRING)
 		    config_error(&locus, 0,
-				 "%s: incompatible data type in list item #%d",
+				 _("%s: incompatible data type in list item #%d"),
 				 kwp->ident, num);
 		else {
-		    if (string_convert(target, type, vp->v.string) == 0) {
-			void *ptr = xmalloc(size);
-			memcpy(ptr, target, size);
+		    void *ptr = xmalloc(size);
+		    if (string_convert(ptr, type, vp->v.string) == 0) 
 			dict_list_append(list, ptr);
-		    }
+		    else
+			free(ptr);
 		}
 	    }
 	    dict_iterator_destroy(&itr);
-	    *(dict_list_t**)target = list;
+	    *(dict_list_t*)target = list;
 	} else {
-	    config_error(&locus, 0, "incompatible data type for `%s'",
+	    config_error(&locus, 0, _("incompatible data type for `%s'"),
 			 kwp->ident);
 	    return;
 	}
     } else if (CFG_IS_LIST(kwp->type)) {
-	dict_list_t *list = dict_list_create();
+	dict_list_t list = dict_list_create();
 	enum config_data_type type = CFG_TYPE(kwp->type);
 	size_t size;
 	void *ptr;
@@ -629,7 +630,7 @@ process_ident(struct config_keyword *kwp, config_value_t *value)
 	if (type >= ARRAY_SIZE(config_type_size)
 	    || (size = config_type_size[type]) == 0) {
 	    config_error(&locus, 0,
-			 "INTERNAL ERROR at %s:%d: unhandled data type %d",
+			 _("INTERNAL ERROR at %s:%d: unhandled data type %d"),
 			 __FILE__, __LINE__, type);
 	    abort();
 	}
@@ -640,7 +641,7 @@ process_ident(struct config_keyword *kwp, config_value_t *value)
 	    return;
 	}
 	dict_list_append(list, ptr);
-	*(dict_list_t**)target = list;
+	*(dict_list_t*)target = list;
     } else
 	string_convert(target, CFG_TYPE(kwp->type), value->v.string);
 }

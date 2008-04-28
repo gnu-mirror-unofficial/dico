@@ -222,6 +222,20 @@ typedef unsigned int Uint;
 #endif
 ])
 
+AC_ARG_VAR([LOG_FACILITY],
+	   [Default syslog facility])
+if test -n "$LOG_FACILITY"; then
+   case $LOG_FACILITY in
+   USER|DAEMON|AUTH|AUTHPRIV|MAIL|CRON|LOCAL[[0-7]])
+      LOG_FACILITY=LOG_$LOG_FACILITY;;
+   LOG_USER|LOG_DAEMON|LOG_AUTH|LOG_AUTHPRIV|LOG_MAIL|LOG_CRON|LOG_LOCAL[[0-7]])
+      ;;
+   *) AC_MSG_ERROR([Invalid value of LOG_FACILITY]);;
+   esac
+   AC_DEFINE_UNQUOTED([LOG_FACILITY],$LOG_FACILITY,
+                      [Default syslog facility.])
+fi		      
+	
 AC_ARG_VAR([SCROLL_WHEN_NEEDED],
            [Override the value of XawtextScrollWhenNeeded constant. In libXaw
             version 1.0.3, scrollVertical is boolean and the value whenNeeded

@@ -41,6 +41,10 @@ extern int single_process; /* Single process mode */
 extern int log_to_stderr;  /* Log to stderr */
 extern char *config_file;
 
+#ifndef LOG_FACILITY
+# define LOG_FACILITY LOG_LOCAL1
+#endif
+
 #define MODE_DAEMON 0
 #define MODE_INETD  1
 
@@ -63,19 +67,6 @@ extern gd_locus_t locus;
 
 
 /* Configuration file stuff */
-
-void config_error(gd_locus_t *locus, int errcode, const char *fmt, ...)
-    GD_PRINTFLIKE(3,4);
-int config_lex_begin(const char *name);
-void config_lex_end(void);
-int config_parse(const char *name);
-void config_gram_trace(int);
-void config_lex_trace(int);
-void line_begin(void);
-void line_add(char *text, size_t len);
-void line_add_unescape_last(char *text, size_t len);
-void line_finish(void);
-char *line_finish0(void);
 
 enum config_data_type {
     cfg_void,
@@ -117,7 +108,7 @@ enum cfg_callback_command {
 typedef struct {
     int type;
     union {
-	dict_list_t *list;
+	dict_list_t list;
 	const char *string;
     } v;
 } config_value_t;
@@ -153,6 +144,81 @@ typedef union {
     struct sockaddr_un s_un;
 } sockaddr_union_t;
 
+int yylex(void);
+int yyerror(char *); 
+
+void config_error(gd_locus_t *locus, int errcode, const char *fmt, ...)
+    GD_PRINTFLIKE(3,4);
+int config_lex_begin(const char *name);
+void config_lex_end(void);
+void config_set_keywords(struct config_keyword *kwd);
+int config_parse(const char *name);
+void config_gram_trace(int);
+void config_lex_trace(int);
+void line_begin(void);
+void line_add(char *text, size_t len);
+void line_add_unescape_last(char *text, size_t len);
+void line_finish(void);
+char *line_finish0(void);
+
+
+/* Line buffer */
+typedef struct _line_buffer *linebuf_t;
+enum line_buffer_type { lb_in, lb_out };
+typedef struct stream *stream_t;
+
+int linebuf_create(linebuf_t *s, stream_t stream,
+		   enum line_buffer_type type, size_t size);
+void linebuf_destroy(linebuf_t *s);
+void linebuf_drop(linebuf_t s);
+
+int linebuf_grow(linebuf_t s, const char *ptr, size_t size);
+size_t linebuf_read(linebuf_t s, char *ptr, size_t size);
+int linebuf_readline(linebuf_t s, char *ptr, size_t size);
+int linebuf_write(linebuf_t s, char *ptr, size_t size);
+int linebuf_writelines(linebuf_t s);
+size_t linebuf_level(linebuf_t s);
+char *linebuf_data(linebuf_t s);
+int linebuf_flush(linebuf_t s);
+
+
+/* Streams */
+
+stream_t fd_stream_create(int ifd, int oufd);
+
+int stream_create(stream_t *pstream,
+		  void *data, 
+		  int (*readfn) (void *, char *, size_t, size_t *),
+		  int (*writefn) (void *, char *, size_t, size_t *),
+		  int (*closefn) (void *));
+
+int stream_set_error_string(stream_t stream,
+			    const char *(*error_string) (void *, int));
+
+int stream_set_buffer(stream_t stream, enum line_buffer_type type,
+		      size_t size);
+
+int stream_read_unbuffered(stream_t stream, char *buf, size_t size,
+			   size_t *pread);
+int stream_write_unbuffered(stream_t stream, char *buf, size_t size,
+			    size_t *pwrite);
+
+int stream_read(stream_t stream, char *buf, size_t size, size_t *pread);
+int stream_readln(stream_t stream, char *buf, size_t size, size_t *pread);
+int stream_getline(stream_t stream, char **pbuf, size_t *psize, size_t *pread);
+int stream_write(stream_t stream, char *buf, size_t size);
+int stream_writeln(stream_t stream, char *buf, size_t size);
+
+const char *stream_strerror(stream_t stream, int rc);
+int stream_last_error(stream_t stream);
+void stream_clearerr(stream_t stream);
+int stream_eof(stream_t stream);
+
+
+int stream_flush(stream_t stream);
+int stream_close(stream_t stream);
+void stream_destroy(stream_t *stream);
+
 
 /* */
 
@@ -170,5 +236,6 @@ typedef struct dictd_handler {
 typedef struct dictd_dictionary {
     char *name;
     char *descr;
+    char *info;
     dictd_handler_t *handler;
 } dictd_dictionary_t;

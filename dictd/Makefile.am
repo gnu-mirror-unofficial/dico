@@ -19,7 +19,11 @@ dictd_SOURCES=\
  cmdline.c\
  config-gram.y\
  config-lex.l\
- main.c
+ fdio.c\
+ linebuf.c\
+ main.c\
+ stream.c
+
 noinst_HEADERS=dictd.h config-gram.h
 
 AM_CFLAGS = -DSYSCONFIG=\"$(sysconfdir)\"

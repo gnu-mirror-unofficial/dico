@@ -12,6 +12,7 @@ realloc
 regex
 size_max
 snprintf
+strerror
 strtoimax
 strtoumax
 vasprintf

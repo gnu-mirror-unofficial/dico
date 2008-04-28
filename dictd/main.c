@@ -32,24 +32,25 @@ unsigned int max_children;
 
 /* Syslog parameters: */ 
 const char *log_tag; 
-int log_facility;
+int log_facility = LOG_FACILITY;
+int log_print_severity;
 
 /* Server information (for SHOW INFO command) */
 const char *server_info;
 
 /* List of sockets to listen on for the requests */
-dict_list_t /* of struct sockaddr */ *listen_addr;
+dict_list_t /* of struct sockaddr */ listen_addr;
 
 /* Run as this user */
 struct passwd *user;
 /* Retain these supplementary groups when switching to the user privileges. */
-dict_list_t /* of gid_t */ *group_list;
+dict_list_t /* of gid_t */ group_list;
 
 /* List of configured dictionary handlers */
-dict_list_t /* of dictd_handler_t */ *handler_list;
+dict_list_t /* of dictd_handler_t */ handler_list;
 
 /* List of configured dictionaries */
-dict_list_t /* of dictd_dictionary_t */ *dictionary_list;
+dict_list_t /* of dictd_dictionary_t */ dictionary_list;
 
 
 /* Configuration */
@@ -315,6 +316,7 @@ struct config_keyword kwd_handler[] = {
 struct config_keyword kwd_dictionary[] = {
     { "name", cfg_string, NULL, offsetof(dictd_dictionary_t, name) },
     { "description", cfg_string, NULL, offsetof(dictd_dictionary_t, descr) },
+    { "info", cfg_string, NULL, offsetof(dictd_dictionary_t, info) },
     { "handler", cfg_string, NULL, offsetof(dictd_dictionary_t, handler),
       set_dict_handler },
     { NULL }
@@ -327,8 +329,9 @@ struct config_keyword keywords[] = {
     { "server-info", cfg_string, &server_info,  },
     { "max-children", cfg_uint, &max_children, 0 },
     { "log-tag", cfg_string, &log_tag, 0 },
-    { "listen", cfg_sockaddr|CFG_LIST, &listen_addr,  },
     { "log-facility", cfg_string, NULL, 0, set_log_facility },
+    { "log-print-severity", cfg_bool, &log_print_severity, 0 },
+    { "listen", cfg_sockaddr|CFG_LIST, &listen_addr,  },
     { "dictionary", cfg_section, NULL, 0, set_dictionary, NULL,
       kwd_dictionary },
     { "handler", cfg_section, NULL, 0, set_handler, NULL,
@@ -336,6 +339,44 @@ struct config_keyword keywords[] = {
     { NULL }
 };
 	    
+
+void
+syslog_log_printer(int lvl, int exitcode, int errcode,
+                   const char *fmt, va_list ap)
+{
+    char *s;
+    int prio = LOG_INFO;
+    static struct {
+        char *prefix;
+        int priority;
+    } loglevels[] = {
+        { "Debug",  LOG_DEBUG },
+        { "Info",   LOG_INFO },
+        { "Notice", LOG_NOTICE },
+        { "Warning",LOG_WARNING },
+        { "Error",  LOG_ERR },
+        { "CRIT",   LOG_CRIT },
+        { "ALERT",  LOG_ALERT },
+        { "EMERG",  LOG_EMERG },
+    };
+    char buf[512];
+    int level = 0;
+
+    if (lvl & L_CONS)
+        _stderr_log_printer(lvl, exitcode, errcode, fmt, ap);
+
+    s    = loglevels[lvl & L_MASK].prefix;
+    prio = loglevels[lvl & L_MASK].priority;
+
+    if (log_print_severity)
+	level += snprintf(buf + level, sizeof(buf) - level, "%s: ", s);
+    level += vsnprintf(buf + level, sizeof(buf) - level, fmt, ap);
+    if (errcode)
+        level += snprintf(buf + level, sizeof(buf) - level, ": %s",
+                          strerror(errcode));
+    syslog(prio, "%s", buf);
+}
+
 
 int
 main(int argc, char **argv)
@@ -345,5 +386,13 @@ main(int argc, char **argv)
     config_lex_trace(0);
     get_options(argc, argv);
     config_set_keywords(keywords);
-    config_parse(config_file);
+    if (config_parse(config_file))
+	exit(1);
+    
+    if (!log_to_stderr) {
+	openlog(log_tag, LOG_PID, LOG_FACILITY);
+	set_log_printer(syslog_log_printer);
+    }
+
+    return 0;
 }

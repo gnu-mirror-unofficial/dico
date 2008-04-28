@@ -1,3 +1,26 @@
+2008-04-28  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Add stream I/O framework.
+	
+	* README-hacking: New file.
+	* dictd/fdio.c, dictd/linebuf.c, dictd/stream.c: New files.
+	* dictd/Makefile.am (dictd_SOURCES): Add new files.
+
+	* include/gjdict.h (dict_list_t, dict_iterator_t): Change
+	definitions. All uses updated.
+	* lib/list.c: Likewise.
+	
+	* dictd/config-gram.y: Reflect changes to dict_list_t. Add missing
+	gettext markers.
+	
+	* gnulib.modules: Add strerror.
+	* configure.ac (LOG_FACILITY): New configuration variable.
+	* dictd/dictd.h (LOG_FACILITY): New define.
+	Reflect changes to dict_list_t.
+	Add linebuf and stream prototypes and declarations.
+	(dictd_dictionary_t): New field `info'.
+	* dictd/main.c: Reflect changes to dict_list_t.
+
 2008-04-27  Sergey Poznyakoff  <gray@gnu.org.ua>
 
 	Finish configuration framework. Some minor issues still remain,

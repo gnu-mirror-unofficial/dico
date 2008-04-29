@@ -1,5 +1,13 @@
 2008-04-29  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Minor changes.
+	
+	* lib/utf8.c: New file.
+	* lib/Makefile.am (libgjdict_a_SOURCES): Add utf8.c.
+	* gnulib.modules: Add c-strcase
+	* makedict/Makefile.am (LDADD) Swap libgjdict.a and libgnu.a. Add
+	libextra.a. 
+
 	Implement daemon and inetd modes.
 	
 	* dictd/dictd.c, dictd/server.c: New files.

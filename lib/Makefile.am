@@ -8,7 +8,8 @@ libgjdict_a_SOURCES=\
  jiscvt.c\
  list.c\
  xlat.c\
- userprivs.c
+ userprivs.c\
+ utf8.c
 
 libextra_a_SOURCES=xalloc-die.c
 

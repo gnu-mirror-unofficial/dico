@@ -27,7 +27,7 @@ makedict_SOURCES=\
  utils.c
 
 
-LDADD=../gnu/libgnu.a ../lib/libgjdict.a @DB_LIBS@
+LDADD=../lib/libgjdict.a  ../gnu/libgnu.a ../lib/libextra.a @DB_LIBS@
 AM_CFLAGS=-DDICTPATH=\"$(dictdir)\" -DINPUTDICTPATH=\"$(inputdictpath)\"
 INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu @DB_INCLUDES@
 

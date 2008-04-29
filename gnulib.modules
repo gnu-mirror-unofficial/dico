@@ -1,6 +1,7 @@
 # List of gnulib modules needed for Gjdictd.
 # A module name per line. Empty lines and comments are ignored.
 
+c-strcase
 inttostr
 inttypes
 getline

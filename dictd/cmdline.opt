@@ -37,7 +37,7 @@ BEGIN
    foreground = 1;
 END
 
-OPTION(console-logging,,,
+OPTION(stderr,,,
        [<Output diagnostic to stderr.>])
 BEGIN
    log_to_stderr = 1;

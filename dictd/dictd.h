@@ -19,6 +19,7 @@
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
@@ -34,16 +35,27 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <signal.h>
+
 #include <gjdict.h>
 
 extern int foreground;     /* Run in foreground mode */
 extern int single_process; /* Single process mode */
 extern int log_to_stderr;  /* Log to stderr */
 extern char *config_file;
+extern char *pidfile_name;
+extern dict_list_t listen_addr;
+extern uid_t user_id;
+extern gid_t group_id;
+extern dict_list_t /* of gid_t */ group_list;
+extern unsigned int max_children;
+extern unsigned int shutdown_timeout;
 
 #ifndef LOG_FACILITY
 # define LOG_FACILITY LOG_LOCAL1
 #endif
+
+#define DICT_PORT 2628
 
 #define MODE_DAEMON 0
 #define MODE_INETD  1
@@ -56,14 +68,6 @@ typedef struct {
 } gd_locus_t;
 
 extern gd_locus_t locus;
-
-#ifndef GD_ARG_UNUSED
-# define GD_ARG_UNUSED __attribute__ ((__unused__))
-#endif
-
-#ifndef GD_PRINTFLIKE
-# define GD_PRINTFLIKE(fmt,narg) __attribute__ ((__format__ (__printf__, fmt, narg)))
-#endif
 
 
 /* Configuration file stuff */
@@ -120,11 +124,6 @@ typedef int (*config_callback_fn) (
     config_value_t *   /* value */,
     void *             /* cb_data */
     );
-
-#ifndef offsetof
-# define offsetof(s,f) ((size_t)&((s*)0)->f)
-#endif
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
 struct config_keyword {
     const char *ident;
@@ -192,8 +191,8 @@ int stream_create(stream_t *pstream,
 		  int (*writefn) (void *, char *, size_t, size_t *),
 		  int (*closefn) (void *));
 
-int stream_set_error_string(stream_t stream,
-			    const char *(*error_string) (void *, int));
+void stream_set_error_string(stream_t stream,
+			     const char *(*error_string) (void *, int));
 
 int stream_set_buffer(stream_t stream, enum line_buffer_type type,
 		      size_t size);
@@ -220,6 +219,10 @@ int stream_close(stream_t stream);
 void stream_destroy(stream_t *stream);
 
 
+/* Server */
+void open_sockets();
+
+
 /* */
 
 enum dictd_handler_type {
@@ -239,3 +242,6 @@ typedef struct dictd_dictionary {
     char *info;
     dictd_handler_t *handler;
 } dictd_dictionary_t;
+
+int dictd_loop(stream_t stream);
+int dictd_inetd(void);

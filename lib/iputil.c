@@ -21,11 +21,17 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/un.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <unistd.h>
-#include <stdlib.h>
+
+#include <intprops.h>
+#include <inttostr.h>
+
 #include <gjdict.h>
 
 /*
@@ -100,4 +106,80 @@ str2port(char *str)
     }
 
     return port;
+}
+
+static size_t
+mu_stpcpy (char **pbuf, size_t *psize, const char *src)
+{
+    size_t slen = strlen (src);
+    if (pbuf == NULL || *pbuf == NULL)
+	return slen;
+    else {
+	char *buf = *pbuf;
+	size_t size = *psize;
+	if (size > slen)
+	    size = slen;
+	memcpy (buf, src, size);
+	*psize -= size;
+	*pbuf += size;
+	if (*psize)
+	    **pbuf = 0;
+	else
+	    (*pbuf)[-1] = 0;
+	return size;
+    }
+}
+
+#define S_UN_NAME(sa, salen) \
+  ((salen < offsetof (struct sockaddr_un,sun_path)) ? "" : (sa)->sun_path)
+
+void
+sockaddr_to_str (const struct sockaddr *sa, int salen,
+		 char *bufptr, size_t buflen,
+		 size_t *plen)
+{
+    char buf[INT_BUFSIZE_BOUND (uintmax_t)]; /* FIXME: too much */
+    size_t len = 0;
+    switch (sa->sa_family) {
+    case AF_INET:
+    {
+	struct sockaddr_in s_in = *(struct sockaddr_in *)sa;
+	len += mu_stpcpy (&bufptr, &buflen, inet_ntoa(s_in.sin_addr));
+	len += mu_stpcpy (&bufptr, &buflen, ":");
+	len += mu_stpcpy (&bufptr, &buflen, umaxtostr(ntohs (s_in.sin_port),
+						      buf));
+	break;
+    }
+
+    case AF_UNIX:
+    {
+	struct sockaddr_un *s_un = (struct sockaddr_un *)sa;
+	if (S_UN_NAME(s_un, salen)[0] == 0)
+	    len += mu_stpcpy (&bufptr, &buflen, "anonymous socket");
+	else {
+	    len += mu_stpcpy (&bufptr, &buflen, "socket ");
+	    len += mu_stpcpy (&bufptr, &buflen, s_un->sun_path);
+	}
+	break;
+    }
+
+    default:
+	len += mu_stpcpy (&bufptr, &buflen, "{Unsupported family: ");
+	len += mu_stpcpy (&bufptr, &buflen, umaxtostr (sa->sa_family, buf));
+	len += mu_stpcpy (&bufptr, &buflen, "}");
+    }
+    if (plen)
+	*plen = len + 1;
+}
+
+char *
+sockaddr_to_astr (const struct sockaddr *sa, int salen)
+{
+    size_t size;
+    char *p;
+    
+    sockaddr_to_str(sa, salen, NULL, 0, &size);
+    p = xmalloc(size);
+    sockaddr_to_str(sa, salen, p, size, NULL);
+    return p;
 }

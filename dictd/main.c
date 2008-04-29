@@ -23,12 +23,16 @@ int single_process; /* Single process mode */
 int log_to_stderr;  /* Log to stderr */
 /* Location of the default configuration file */
 char *config_file = SYSCONFIG "/dictd.conf" ; 
+/* Location of the pidfile */
+char *pidfile_name = "/var/run/dictd.pid";
 
 /* Operation mode */
 int mode = MODE_DAEMON;
 
 /* Maximum number of children in allowed in daemon mode. */
 unsigned int max_children;
+/* Wait this number of seconds for all subprocesses to terminate. */
+unsigned int shutdown_timeout = 5;
 
 /* Syslog parameters: */ 
 const char *log_tag; 
@@ -42,7 +46,8 @@ const char *server_info;
 dict_list_t /* of struct sockaddr */ listen_addr;
 
 /* Run as this user */
-struct passwd *user;
+uid_t user_id;
+gid_t group_id;
 /* Retain these supplementary groups when switching to the user privileges. */
 dict_list_t /* of gid_t */ group_list;
 
@@ -61,16 +66,20 @@ set_user(enum cfg_callback_command cmd,
 	 config_value_t *value,
 	 void *cb_data)
 {
+    struct passwd *pw;
+    
     if (value->type != TYPE_STRING) {
 	config_error(locus, 0, _("expected scalar value buf found list"));
 	return 1;
     }
     
-    user = getpwnam(value->v.string);
-    if (!user) {
+    pw = getpwnam(value->v.string);
+    if (!pw) {
 	config_error(locus, 0, _("%s: no such user"), value->v.string);
 	return 1;
     }
+    user_id = pw->pw_uid;
+    group_id = pw->pw_gid;
     return 0;
 }
 
@@ -331,6 +340,8 @@ struct config_keyword keywords[] = {
     { "log-tag", cfg_string, &log_tag, 0 },
     { "log-facility", cfg_string, NULL, 0, set_log_facility },
     { "log-print-severity", cfg_bool, &log_print_severity, 0 },
+    { "pidfile", cfg_string, &pidfile_name, },
+    { "shutdown-timeout", cfg_uint, &shutdown_timeout },
     { "listen", cfg_sockaddr|CFG_LIST, &listen_addr,  },
     { "dictionary", cfg_section, NULL, 0, set_dictionary, NULL,
       kwd_dictionary },
@@ -394,5 +405,14 @@ main(int argc, char **argv)
 	set_log_printer(syslog_log_printer);
     }
 
+    switch (mode) {
+    case MODE_DAEMON:
+	return dictd_server(argc, argv);
+
+    case MODE_INETD:
+	return dictd_inetd();
+    }
+
+	
     return 0;
 }

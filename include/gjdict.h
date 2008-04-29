@@ -1,8 +1,23 @@
 #ifndef __gjdict_h
 #define __gjdict_h
 
+#include <sys/types.h>
 #include <stdlib.h>
 #include <stdarg.h>
+
+#ifndef offsetof
+# define offsetof(s,f) ((size_t)&((s*)0)->f)
+#endif
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
+
+#ifndef GD_ARG_UNUSED
+# define GD_ARG_UNUSED __attribute__ ((__unused__))
+#endif
+
+#ifndef GD_PRINTFLIKE
+# define GD_PRINTFLIKE(fmt,narg) __attribute__ ((__format__ (__printf__, fmt, narg)))
+#endif
+
 
 typedef unsigned long UINT4;
 typedef UINT4 IPADDR;
@@ -32,8 +47,10 @@ void _stderr_log_printer(int, int, int, const char *, va_list);
 
 void set_log_printer(gjdict_log_printer_t prt);
 void vlogmsg(int lvl, int errcode, const char *fmt, va_list ap);
-void logmsg(int lvl, int errcode, const char *fmt, ...);
-void die(int exitcode, int lvl, int errcode, char *fmt, ...);
+void logmsg(int lvl, int errcode, const char *fmt, ...)
+    GD_PRINTFLIKE(3,4);
+void die(int exitcode, int lvl, int errcode, char *fmt, ...)
+    GD_PRINTFLIKE(4,5);
 
 char * ip_hostname(IPADDR ipaddr);
 IPADDR get_ipaddr(char *host);
@@ -93,9 +110,17 @@ int xlat_string(struct xlat_tab *tab, const char *string, size_t len,
 int xlat_c_string(struct xlat_tab *tab, const char *string, int flags,
 		  int *result);
 
+
+struct sockaddr;
+void sockaddr_to_str(const struct sockaddr *sa, int salen,
+		     char *bufptr, size_t buflen,
+		     size_t *plen);
+char *sockaddr_to_astr(const struct sockaddr *sa, int salen);
+
 #endif
     
-
+
+int switch_to_privs (uid_t uid, gid_t gid, dict_list_t retain_groups);
 
 
 

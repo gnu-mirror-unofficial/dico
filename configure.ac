@@ -53,7 +53,9 @@ dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_SETVBUF_REVERSED
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS(gethostname select socket strdup strerror strtol)
+AC_CHECK_FUNCS(gethostname select socket strdup strerror strtol \
+               setegid setregid setresgid seteuid setreuid \
+	       sysconf getdtablesize)
 
 gl_INIT
 				   
@@ -212,8 +214,6 @@ AH_BOTTOM([
 typedef unsigned char Uchar;
 typedef unsigned short Ushort;
 typedef unsigned int Uint;
-
-#define PIDFILE "/var/run/gjdictd.pid"
 
 #if defined (SETVBUF_REVERSED)
 # define SETVBUF(str,buf,mode,size) setvbuf(str,mode,buf,size)

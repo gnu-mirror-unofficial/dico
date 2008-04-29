@@ -1,3 +1,32 @@
+2008-04-29  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Implement daemon and inetd modes.
+	
+	* dictd/dictd.c, dictd/server.c: New files.
+	* dictd/Makefile.am (dictd_SOURCES): Add dictd.c and server.c
+	(LDADD): Swap libgjdict.a and libgnu.a. Add libextra.a.
+	* lib/userprivs.c: New file.
+	* lib/Makefile.am (noinst_LIBRARIES): Add libextra.a
+	(libgjdict_a_SOURCES): Add userprivs.c; remove xalloc-die.c.
+	(libextra_a_SOURCES): Add xalloc-die.c.
+	* lib/iputil.c (sockaddr_to_str, sockaddr_to_astr): New functions.
+	* configure.ac: Check for setegid, setregid, setresgid, seteuid,
+	setreuid, sysconf, getdtablesize.
+	(PIDFILE): Remove define.
+	* dictd/cmdline.opt (console-logging): Rename to stderr.
+	* dictd/dictd.h: Update.
+	* dictd/main.c (pidfile_name, shutdown_timeout): New globals.
+	(user): Replace with :
+	(user_id, group_id): New variables.
+	(keywords): New configuration file statements `pidfile' and
+	`shutdown-timeout'.
+	(main): Call dictd driver appropriate for the current mode.
+	* dictd/stream.c (stream_set_error_string): Change type to void.
+	* include/gjdict.h (offsetof, GD_ARG_UNUSED, GD_PRINTFLIKE): New
+	defines (move from ../dictd/dictd.h).
+	(logmsg, die): Mark with GD_PRINTFLIKE.
+	(sockaddr_to_str, sockaddr_to_astr, switch_to_privs): New protos.
+
 2008-04-28  Sergey Poznyakoff  <gray@gnu.org.ua>
 
 	Add stream I/O framework.

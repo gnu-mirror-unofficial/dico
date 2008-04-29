@@ -19,9 +19,11 @@ dictd_SOURCES=\
  cmdline.c\
  config-gram.y\
  config-lex.l\
+ dictd.c\
  fdio.c\
  linebuf.c\
  main.c\
+ server.c\
  stream.c
 
 noinst_HEADERS=dictd.h config-gram.h
@@ -30,7 +32,7 @@ AM_CFLAGS = -DSYSCONFIG=\"$(sysconfdir)\"
 AM_YFLAGS = -dtv
 AM_LFLAGS = -dvp
 
-LDADD= ../gnu/libgnu.a ../lib/libgjdict.a @DB_LIBS@
+LDADD=../lib/libgjdict.a  ../gnu/libgnu.a ../lib/libextra.a @DB_LIBS@
 INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu @DB_INCLUDES@
 
 config-lex.c: config-gram.h

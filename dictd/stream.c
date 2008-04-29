@@ -46,7 +46,7 @@ stream_create(stream_t *pstream,
     return 0;
 }
 
-int
+void
 stream_set_error_string(stream_t stream,
 			const char *(*error_string) (void *, int))
 {

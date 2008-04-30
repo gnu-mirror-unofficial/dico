@@ -72,6 +72,8 @@ dictd_show_database_info(stream_t str, const char *dbname)
 	stream_printf(str, "112 information for %s\r\n", dbname);
 	if (dict->info)
 	    stream_write_multiline(str, dict->info);
+	else
+	    stream_writez(str, "No information available.\r\n");
 	stream_writez(str, "\r\n.\r\n");
 	stream_writez(str, "250 ok\r\n");    
     }
@@ -82,7 +84,7 @@ void
 dictd_show_databases(stream_t str)
 {
     size_t count = dict_list_count(dictionary_list);
-    stream_printf(str, "110 %lu database(s) configured\r\n",
+    stream_printf(str, "110 %lu databases present\r\n",
 		  (unsigned long) count);
     dict_list_iterate(dictionary_list, _show_database, str);
     stream_writez(str, ".\r\n");
@@ -107,27 +109,27 @@ dictd_show(stream_t str, int argc, char **argv)
     if (c_strcasecmp(argv[1], "DB") == 0
 	|| c_strcasecmp(argv[1], "DATABASES") == 0) {
 	if (argc != 2) {
-	    stream_writez(str, "500 wrong number of arguments\r\n");
+	    stream_writez(str, "501 wrong number of arguments\r\n");
 	    return;
 	}
 	dictd_show_databases(str);
     } else if (c_strcasecmp(argv[1], "STRAT") == 0
 	       || c_strcasecmp(argv[1], "STRATEGIES") == 0) {
 	if (argc != 2) {
-	    stream_writez(str, "500 wrong number of arguments\r\n");
+	    stream_writez(str, "501 wrong number of arguments\r\n");
 	    return;
 	}
 	/* FIXME */
-	stream_writez(str, "500 command is not yet implemented, sorry\r\n");
+	stream_writez(str, "502 command is not yet implemented, sorry\r\n");
     } else if (c_strcasecmp(argv[1], "INFO") == 0) {
 	if (argc != 3) {
-	    stream_writez(str, "500 wrong number of arguments\r\n");
+	    stream_writez(str, "501 wrong number of arguments\r\n");
 	    return;
 	}
 	dictd_show_database_info(str, argv[2]);
     } else if (c_strcasecmp(argv[1], "SERVER") == 0) {
 	if (argc != 2) {
-	    stream_writez(str, "500 wrong number of arguments\r\n");
+	    stream_writez(str, "501 wrong number of arguments\r\n");
 	    return;
 	}
 	dictd_show_server(str);
@@ -135,12 +137,19 @@ dictd_show(stream_t str, int argc, char **argv)
 	stream_writez(str, "500 unknown command\r\n");
 }
 
+void
+dictd_client(stream_t str, int argc, char **argv)
+{
+    logmsg(L_INFO, 0, "Client info: %s", argv[1]);
+    stream_writez(str, "250 ok\r\n");
+}
+
 
 struct dictd_command command_tab[] = {
     { "DEFINE", 3, 3, },
     { "MATCH", 4, 4, },
     { "SHOW", 2, 3, dictd_show },
-    { "CLIENT", 2, 2, },
+    { "CLIENT", 2, 2, dictd_client },
     { "STATUS", 1, 1, },
     { "HELP", 1, 1, dictd_help },
     { "QUIT", 1, 1, dictd_quit },
@@ -167,9 +176,9 @@ dictd_handle_command(stream_t str, int argc, char **argv)
     if (!cmd) 
 	stream_writez(str, "500 unknown command\r\n");
     else if (!(cmd->minargs <= argc && argc <= cmd->maxargs)) 
-	stream_writez(str, "500 wrong number of arguments\r\n");
+	stream_writez(str, "501 wrong number of arguments\r\n");
     else if (!cmd->handler)
-	stream_writez(str, "500 command is not yet implemented, sorry\r\n");
+	stream_writez(str, "502 command is not yet implemented, sorry\r\n");
     else
 	cmd->handler(str, argc, argv);
 }

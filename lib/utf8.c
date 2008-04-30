@@ -1508,6 +1508,84 @@ MY_UNICASE_INFO *uni_plane[256]={
     NULL,    NULL,    NULL,    NULL,    NULL,    NULL,    NULL, planeFF
 };
 
+
+size_t
+utf8_char_width(const unsigned char *p)
+{
+  if (*p <= 0x7f)
+    return 1;
+  if (0xc2 <= *p && *p <= 0xdf)
+    return 2;
+  if (0xe0 <= *p && *p <= 0xef)
+    return 3;
+  if (0xf0 <= *p && *p <= 0xf4)
+    return 4;
+  return 0;
+}
+
+size_t
+utf8_strlen (const char *s)
+{
+  size_t len = 0;
+  size_t n;
+
+  while (*s && (n = utf8_char_width(s)) != 0)
+    {
+      len++;
+      s += n;
+    }
+  return len;
+}
+
+size_t
+utf8_strbytelen (const char *s)
+{
+  size_t len = 0;
+  size_t n;
+
+  while (*s && (n = utf8_char_width(s)) != 0)
+    {
+      len += n;
+      s += n;
+    }
+  return len;
+}
+
+
+static int
+utf8_iter0(struct utf8_iterator *itr)
+{
+  size_t n = utf8_char_width(itr->curptr);
+  if (n == 0)
+    return 1;
+  itr->curwidth = n;
+  return 0;
+}
+
+int
+utf8_iter_end_p(struct utf8_iterator *itr)
+{
+  return *itr->curptr == 0;
+}
+
+int
+utf8_iter_first(struct utf8_iterator *itr, unsigned char *ptr)
+{
+  itr->string = ptr;
+  itr->curptr = ptr;
+  return utf8_iter0(itr);
+}
+
+int
+utf8_iter_next(struct utf8_iterator *itr)
+{
+  if (*itr->curptr == 0)
+    return -1;
+  itr->curptr += itr->curwidth;
+  return utf8_iter0(itr);
+}
+
+
 /* Stores the UTF-8 representation of the Unicode character wc in r[0..5].
    Returns the number of bytes stored, or -1 if wc is out of range.  */
 int
@@ -1588,7 +1666,7 @@ utf8_mbtowc_internal (void *data, int (*read) (void*), unsigned int *pwc)
 	  return -1;
 	}
       
-      *pwc = ((unsigned long) (s[0] & 0x0f) << 12)   |
+      *pwc = ((unsigned long) (s[0] & 0x0f) << 12) |
 	      ((unsigned long) (s[1] ^ 0x80) << 6) |
 	       (unsigned long) (s[2] ^ 0x80);
 
@@ -1610,7 +1688,7 @@ utf8_mbtowc_internal (void *data, int (*read) (void*), unsigned int *pwc)
 	  return -1;
 	}
       
-      *pwc = ((unsigned long) (s[0] & 0x07) << 18)    |
+      *pwc = ((unsigned long) (s[0] & 0x07) << 18)  |
 	      ((unsigned long) (s[1] ^ 0x80) << 12) |
               ((unsigned long) (s[2] ^ 0x80) << 6)  |
                (unsigned long) (s[3] ^ 0x80);
@@ -1621,6 +1699,7 @@ utf8_mbtowc_internal (void *data, int (*read) (void*), unsigned int *pwc)
   return -1;
 }
 
+
 struct tstring
 {
   unsigned char *ptr;
@@ -1642,19 +1721,21 @@ utf8_mbtowc (unsigned int *pwc, unsigned char *r, size_t len)
 {
   struct tstring ts;
   ts.ptr = r;
-  ts.len = len;
+  ts.len = len ? len : utf8_char_width(r);
   return utf8_mbtowc_internal (&ts, _next_char_from_string, pwc);
 }
 
+
+
 unsigned
-utf8_toupper (unsigned wc)
+utf8_wc_toupper (unsigned wc)
 {
   int plane = (wc >> 8) & 0xFF;
   return uni_plane[plane] ? uni_plane[plane][wc & 0xFF].toupper : wc;
 }
 
 int
-utf8_str_toupper (char *s, size_t len)
+utf8_toupper (char *s, size_t len)
 {
   while (len > 0)
     {
@@ -1662,7 +1743,7 @@ utf8_str_toupper (char *s, size_t len)
       int rc = utf8_mbtowc (&wc, (unsigned char *)s, len);
       if (rc <= 0)
 	return 1;
-      if (rc != utf8_wctomb (s, utf8_toupper (wc)))
+      if (rc != utf8_wctomb (s, utf8_wc_toupper (wc)))
 	return 1;
       s += rc;
       len -= rc;
@@ -1671,14 +1752,14 @@ utf8_str_toupper (char *s, size_t len)
 }
 
 unsigned
-utf8_tolower (unsigned wc)
+utf8_wc_tolower (unsigned wc)
 {
   int plane = (wc >> 8) & 0xFF;
   return uni_plane[plane] ? uni_plane[plane][wc & 0xFF].tolower : wc;
 }
 
 int
-utf8_str_tolower (char *s, size_t len)
+utf8_tolower (char *s, size_t len)
 {
   while (len > 0)
     {
@@ -1686,7 +1767,7 @@ utf8_str_tolower (char *s, size_t len)
       int rc = utf8_mbtowc (&wc, (unsigned char *)s, len);
       if (rc <= 0)
 	return 1;
-      if (rc != utf8_wctomb (s, utf8_tolower (wc)))
+      if (rc != utf8_wctomb (s, utf8_wc_tolower (wc)))
 	return 1;
       s += rc;
       len -= rc;
@@ -1694,28 +1775,9 @@ utf8_str_tolower (char *s, size_t len)
   return 0;
 }
 
-size_t
-utf8_strlen (const char *s)
-{
-  size_t len = 0;
-  size_t nbytes = strlen (s);
-
-  while (nbytes > 0)
-    {
-      unsigned wc;
-      int rc = utf8_mbtowc (&wc, (unsigned char *)s, nbytes);
-      if (rc <= 0)
-	break;
-      s += rc;
-      nbytes -= rc;
-      len++;
-    }
-  return len;
-}
-
 
 size_t
-mbutf8_strlen (const unsigned *s)
+utf8_wc_strlen (const unsigned *s)
 {
   size_t len = 0;
   while (*s++)
@@ -1724,15 +1786,15 @@ mbutf8_strlen (const unsigned *s)
 }
 
 unsigned *
-mbutf8_strdup (const unsigned *s)
+utf8_wc_strdup (const unsigned *s)
 {
-  size_t len = mbutf8_strlen (s) + 1;
+  size_t len = utf8_wc_strlen (s) + 1;
   unsigned *clone = xcalloc (len, sizeof s[0]);
   return memcpy (clone, s, len);
 }
 
 size_t
-mbutf8_hash_string (const unsigned *ws, size_t n_buckets)
+utf8_wc_hash_string (const unsigned *ws, size_t n_buckets)
 {
   size_t value = 0;
   unsigned wc;
@@ -1747,7 +1809,7 @@ mbutf8_hash_string (const unsigned *ws, size_t n_buckets)
 }
 
 int
-mbutf8_strcmp (const unsigned *a, const unsigned *b)
+utf8_wc_strcmp (const unsigned *a, const unsigned *b)
 {
   while (*a == *b)
     {
@@ -1765,7 +1827,7 @@ mbutf8_strcmp (const unsigned *a, const unsigned *b)
 
 
 int
-mb_to_utf8 (const unsigned *wordbuf, size_t wordlen, char *s, size_t size)
+utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char *s, size_t size)
 {
   size_t i;
   size_t wbc;

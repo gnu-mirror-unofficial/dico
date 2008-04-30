@@ -17,6 +17,7 @@
 bin_PROGRAMS=dictd
 dictd_SOURCES=\
  cmdline.c\
+ commands.c\
  config-gram.y\
  config-lex.l\
  dictd.c\

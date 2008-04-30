@@ -19,6 +19,7 @@
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,7 +39,9 @@
 #include <signal.h>
 
 #include <gjdict.h>
+#include <c-strcase.h>
 
+extern int mode;
 extern int foreground;     /* Run in foreground mode */
 extern int single_process; /* Single process mode */
 extern int log_to_stderr;  /* Log to stderr */
@@ -50,6 +53,11 @@ extern gid_t group_id;
 extern dict_list_t /* of gid_t */ group_list;
 extern unsigned int max_children;
 extern unsigned int shutdown_timeout;
+extern char *hostname;
+extern const char *program_version;
+extern char *initial_banner_text;
+extern int got_quit;
+extern char *help_text;
 
 #ifndef LOG_FACILITY
 # define LOG_FACILITY LOG_LOCAL1
@@ -159,6 +167,8 @@ void line_add(char *text, size_t len);
 void line_add_unescape_last(char *text, size_t len);
 void line_finish(void);
 char *line_finish0(void);
+int quote_char(int c);
+int unquote_char(int c);
 
 
 /* Line buffer */
@@ -218,9 +228,9 @@ int stream_flush(stream_t stream);
 int stream_close(stream_t stream);
 void stream_destroy(stream_t *stream);
 
-
-/* Server */
-void open_sockets();
+/* Dictd-specific streams */
+int stream_writez(stream_t str, char *buf);
+int stream_printf(stream_t str, const char *fmt, ...);
 
 
 /* */
@@ -245,3 +255,15 @@ typedef struct dictd_dictionary {
 
 int dictd_loop(stream_t stream);
 int dictd_inetd(void);
+
+
+typedef void (*dictd_cmd_fn) (stream_t str, int argc, char **argv);
+
+struct dictd_command {
+    const char *keyword;
+    int minargs;
+    int maxargs;
+    dictd_cmd_fn handler;
+};
+
+void dictd_handle_command(stream_t str, int argc, char **argv);

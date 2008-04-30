@@ -49,6 +49,12 @@ BEGIN
    single_process = 1;
 END
 
+OPTION(inetd, i,,
+       [<Inetd mode.>])
+BEGIN
+   mode = MODE_INETD;
+END
+
 OPTION(debug, x, LEVEL-SPEC,
        [<Set debug verbosity level.>])
 BEGIN

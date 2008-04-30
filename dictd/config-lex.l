@@ -352,6 +352,18 @@ unquote_char(int c)
     return c;
 }
 
+int
+quote_char(int c)
+{
+    char *p;
+
+    for (p = quote_transtab; *p; p += 2) {
+	if (p[1] == c)
+	    return p[0];
+    }
+    return c;
+}
+
 void
 line_add(char *text, size_t len)
 {

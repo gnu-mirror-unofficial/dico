@@ -18,3 +18,4 @@ strtoimax
 strtoumax
 vasprintf
 xalloc
+xgethostname

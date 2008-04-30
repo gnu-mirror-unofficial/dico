@@ -122,5 +122,36 @@ char *sockaddr_to_astr(const struct sockaddr *sa, int salen);
 
 int switch_to_privs (uid_t uid, gid_t gid, dict_list_t retain_groups);
 
+
+size_t utf8_char_width(const unsigned char *p);
+size_t utf8_strlen (const char *s);
+size_t utf8_strbytelen (const char *s);
 
+struct utf8_iterator {
+    char *string;
+    char *curptr;
+    unsigned curwidth;
+};
+
+#define utf8_iter_isascii(itr) \
+ ((itr).curwidth == 1 && isascii((itr).curptr[0]))
+
+int utf8_iter_end_p(struct utf8_iterator *itr);
+int utf8_iter_first(struct utf8_iterator *itr, unsigned char *ptr);
+int utf8_iter_next(struct utf8_iterator *itr);
+
+int utf8_mbtowc_internal (void *data, int (*read) (void*), unsigned int *pwc);
+int utf8_wctomb (unsigned char *r, unsigned int wc);
+
+unsigned utf8_wc_toupper (unsigned wc);
+int utf8_toupper (char *s, size_t len);
+unsigned utf8_wc_tolower (unsigned wc);
+int utf8_tolower (char *s, size_t len);
+size_t utf8_wc_strlen (const unsigned *s);
+unsigned *utf8_wc_strdup (const unsigned *s);
+size_t utf8_wc_hash_string (const unsigned *ws, size_t n_buckets);
+int utf8_wc_strcmp (const unsigned *a, const unsigned *b);
+int utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char *s,
+		     size_t size);
+    
 

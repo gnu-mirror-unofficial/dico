@@ -1,3 +1,34 @@
+2008-04-30  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Implement RFC 2229 dialog.
+	
+	* dictd/commands.c: New file.
+	* dictd/Makefile.am (dictd_SOURCES): Add commands.c
+	* dictd/cmdline.opt: New option `--inetd' (`-i')
+	* dictd/config-lex.l (quote_char): New function.
+	* dictd/dictd.c: Implement RFC 2229 dialog.
+	(tokenize_input, stream_writez)
+	(stream_printf, output_capabilities, initial_banner): New
+	functions.
+	* dictd/dictd.h (mode, hostname, program_version)
+	(initial_banner_text, got_quit, help_text): New globals.
+	(quote_char, unquote_char): New functions.
+	(stream_writez, stream_printf): New functions.
+	(dictd_cmd_fn, struct dictd_command): New data types.
+	(dictd_handle_command): New function.
+	* dictd/main.c (hostname, initial_banner_text, help_text): New
+	globals.
+	(initial-banner-text, help-text, hostname): New config statements.
+	* dictd/server.c (dictd_server): Refuse to restart if the
+	configuration file name is not a full file name.
+	* gnulib.modules: Add xgethostname.
+	* include/gjdict.h: Add utf8 prototypes and declarations.
+	* lib/utf8.c (utf8_char_width, utf8_strlen, utf8_strbytelen)
+	(utf8_iter_end_p, utf8_iter_first, utf8_iter_next): New functions.
+	Normalize the namespace.
+	* utils/getopt.m4 (GETOPT): Exit if an invalid option is given.
+	(program_version): Make global.
+
 2008-04-29  Sergey Poznyakoff  <gray@gnu.org.ua>
 
 	Minor changes.

@@ -251,7 +251,6 @@ stop_children()
 }
 
 
-const char *program_version = "dictd (" PACKAGE_STRING ")";
 
 /* Check whether pidfile NAME exists and if so, whether its PID is still
    active. Exit if it is. */
@@ -449,7 +448,11 @@ dictd_server(int argc, char **argv)
 	logmsg(L_WARN, 0, _("gjdict started without full file name"));
 	logmsg(L_WARN, 0, _("restart (SIGHUP) will not work"));
 	signal(SIGHUP, sig_stop);
-    } else
+    } else if (config_file[0] != '/') {
+	logmsg(L_WARN, 0, _("configuration file is not given with a full file name"));
+	logmsg(L_WARN, 0, _("restart (SIGHUP) will not work"));
+	signal(SIGHUP, sig_stop);
+    } else	
 	signal(SIGHUP, sig_restart);
 
     if (!foreground) {

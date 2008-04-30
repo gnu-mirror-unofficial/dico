@@ -17,6 +17,7 @@
 #include <dictd.h>
 #include <pwd.h>
 #include <grp.h>
+#include <xgethostname.h>
 
 int foreground;     /* Run in foreground mode */
 int single_process; /* Single process mode */
@@ -41,6 +42,15 @@ int log_print_severity;
 
 /* Server information (for SHOW INFO command) */
 const char *server_info;
+
+/* This host name */
+char *hostname;
+
+/* Text of initial banner. By default == program_version */
+char *initial_banner_text;
+
+/* Alternative help text. Default - see dictd_help (commands.c) */
+char *help_text;
 
 /* List of sockets to listen on for the requests */
 dict_list_t /* of struct sockaddr */ listen_addr;
@@ -343,6 +353,9 @@ struct config_keyword keywords[] = {
     { "pidfile", cfg_string, &pidfile_name, },
     { "shutdown-timeout", cfg_uint, &shutdown_timeout },
     { "listen", cfg_sockaddr|CFG_LIST, &listen_addr,  },
+    { "initial-banner-text", cfg_string, &initial_banner_text },
+    { "help-text", cfg_string, &help_text },
+    { "hostname", cfg_string, &hostname },
     { "dictionary", cfg_section, NULL, 0, set_dictionary, NULL,
       kwd_dictionary },
     { "handler", cfg_section, NULL, 0, set_handler, NULL,
@@ -394,6 +407,7 @@ main(int argc, char **argv)
 {
     set_program_name(argv[0]);
     log_tag = program_name;
+    hostname = xgethostname();
     config_lex_trace(0);
     get_options(argc, argv);
     config_set_keywords(keywords);

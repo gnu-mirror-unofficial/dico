@@ -153,6 +153,8 @@ define([<GETOPT>],[<
     {
       switch (c)
         {
+        default:
+	   exit(1);
 	undivert(4)
         }
     }
@@ -165,7 +167,7 @@ divert(0)
 void print_help(void);
 void print_usage(void);
 divert(5)
-static const char *program_version = [<$1>];
+const char *program_version = [<$1>];
 static char doc[] = N_("[<$3>]");
 static char args_doc[] = N_("[<$4>]");
 const char *program_bug_address = "<" PACKAGE_BUGREPORT ">";
@@ -442,7 +444,7 @@ define([<OPTIONS_BEGIN>],
 define([<OPTIONS_END>],[<
 ifelse(GETOPT_STYLE,[<gnu>],[<
          GROUP([<Other options>])
-         OPTION([<help>],?,,[<Give this help list>])
+         OPTION([<help>],h,,[<Give this help list>])
          BEGIN
 		print_help ();
                 exit (0);

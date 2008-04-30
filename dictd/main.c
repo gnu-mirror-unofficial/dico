@@ -363,7 +363,24 @@ struct config_keyword keywords[] = {
     { NULL }
 };
 	    
+
+static int
+cmp_dict_name(const void *item, const void *data)
+{
+    const dictd_dictionary_t *db = item;
+    if (!db->name)
+	return 1;
+    return strcmp(db->name, (const char*)data);
+}    
 
+dictd_dictionary_t *
+find_dictionary(const char *name)
+{
+    return dict_list_locate(dictionary_list, (void*) name,
+			    cmp_dict_name);
+}
+
+
 void
 syslog_log_printer(int lvl, int exitcode, int errcode,
                    const char *fmt, va_list ap)

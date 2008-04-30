@@ -122,6 +122,26 @@ stream_printf(stream_t str, const char *fmt, ...)
     return len;
 }
 
+void
+stream_write_multiline(stream_t str, const char *text)
+{
+    struct utf8_iterator itr;
+    size_t len = 0;
+    
+    for (utf8_iter_first(&itr, (unsigned char *)text);
+	 !utf8_iter_end_p(&itr);
+	 utf8_iter_next(&itr)) {
+	if (utf8_iter_isascii(itr) && *itr.curptr == '\n') {
+	    stream_writeln(str, itr.curptr - len, len);
+	    len = 0;
+	} else
+	    len += itr.curwidth;
+    }
+    if (len)
+	stream_writeln(str, itr.curptr - len, len);
+}
+
+
 static void
 output_capabilities(stream_t str)
 {

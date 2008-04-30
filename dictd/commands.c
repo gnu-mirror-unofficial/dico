@@ -44,31 +44,102 @@ STATUS                       -- display timing information\n\
 HELP                         -- display this help information\n\
 QUIT                         -- terminate connection\n";
     char *text = help_text ? help_text : default_help_text;
-    struct utf8_iterator itr;
-    size_t len = 0;
     
     stream_writez(str, "113 help text follows\r\n");
-    for (utf8_iter_first(&itr, (unsigned char *)text);
-	 !utf8_iter_end_p(&itr);
-	 utf8_iter_next(&itr)) {
-	if (utf8_iter_isascii(itr) && *itr.curptr == '\n') {
-	    stream_writeln(str, itr.curptr - len, len);
-	    len = 0;
-	} else
-	    len += itr.curwidth;
-    }
-    if (len)
-	stream_writeln(str, itr.curptr - len, len);
+    stream_write_multiline(str, text);
     stream_writez(str, "\r\n.\r\n");
     stream_writez(str, "250 ok\r\n");    
 }
 
+static int
+_show_database(void *item, void *data)
+{
+    dictd_dictionary_t *dict = item;
+    stream_t str = data;
+
+    stream_printf(str, "%s \"%s\"\r\n",
+		  dict->name, dict->descr); /* FIXME: Quote descr. */
+    return 0;
+}
+
+void
+dictd_show_database_info(stream_t str, const char *dbname)
+{
+    dictd_dictionary_t *dict = find_dictionary(dbname);
+    if (!dict) 
+	stream_writez(str, "550 invalid database, use SHOW DB for list\r\n");
+    else {
+	stream_printf(str, "112 information for %s\r\n", dbname);
+	if (dict->info)
+	    stream_write_multiline(str, dict->info);
+	stream_writez(str, "\r\n.\r\n");
+	stream_writez(str, "250 ok\r\n");    
+    }
+}
+
+
+void
+dictd_show_databases(stream_t str)
+{
+    size_t count = dict_list_count(dictionary_list);
+    stream_printf(str, "110 %lu database(s) configured\r\n",
+		  (unsigned long) count);
+    dict_list_iterate(dictionary_list, _show_database, str);
+    stream_writez(str, ".\r\n");
+    stream_writez(str, "250 ok\r\n");    
+}
+
+void
+dictd_show_server(stream_t str)
+{
+    stream_writez(str, "114 server information\r\n");
+    /* FIXME: (For logged in users) show:
+       dictd (gjdict 1.0.90) on Linux 2.6.18, Trurl.gnu.org.ua up 81+01:33:49, 12752570 forks (6554.7/hour)
+    */
+    stream_write_multiline(str, server_info);
+    stream_writez(str, "\r\n.\r\n");
+    stream_writez(str, "250 ok\r\n");    
+}
+
+void
+dictd_show(stream_t str, int argc, char **argv)
+{
+    if (c_strcasecmp(argv[1], "DB") == 0
+	|| c_strcasecmp(argv[1], "DATABASES") == 0) {
+	if (argc != 2) {
+	    stream_writez(str, "500 wrong number of arguments\r\n");
+	    return;
+	}
+	dictd_show_databases(str);
+    } else if (c_strcasecmp(argv[1], "STRAT") == 0
+	       || c_strcasecmp(argv[1], "STRATEGIES") == 0) {
+	if (argc != 2) {
+	    stream_writez(str, "500 wrong number of arguments\r\n");
+	    return;
+	}
+	/* FIXME */
+	stream_writez(str, "500 command is not yet implemented, sorry\r\n");
+    } else if (c_strcasecmp(argv[1], "INFO") == 0) {
+	if (argc != 3) {
+	    stream_writez(str, "500 wrong number of arguments\r\n");
+	    return;
+	}
+	dictd_show_database_info(str, argv[2]);
+    } else if (c_strcasecmp(argv[1], "SERVER") == 0) {
+	if (argc != 2) {
+	    stream_writez(str, "500 wrong number of arguments\r\n");
+	    return;
+	}
+	dictd_show_server(str);
+    } else
+	stream_writez(str, "500 unknown command\r\n");
+}
 
 
 struct dictd_command command_tab[] = {
     { "DEFINE", 3, 3, },
     { "MATCH", 4, 4, },
-    { "SHOW", 2, 3, },
+    { "SHOW", 2, 3, dictd_show },
     { "CLIENT", 2, 2, },
     { "STATUS", 1, 1, },
     { "HELP", 1, 1, dictd_help },

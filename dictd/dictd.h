@@ -58,6 +58,8 @@ extern const char *program_version;
 extern char *initial_banner_text;
 extern int got_quit;
 extern char *help_text;
+extern dict_list_t dictionary_list;
+extern const char *server_info;
 
 #ifndef LOG_FACILITY
 # define LOG_FACILITY LOG_LOCAL1
@@ -231,6 +233,7 @@ void stream_destroy(stream_t *stream);
 /* Dictd-specific streams */
 int stream_writez(stream_t str, char *buf);
 int stream_printf(stream_t str, const char *fmt, ...);
+void stream_write_multiline(stream_t str, const char *text);
 
 
 /* */
@@ -255,6 +258,7 @@ typedef struct dictd_dictionary {
 
 int dictd_loop(stream_t stream);
 int dictd_inetd(void);
+dictd_dictionary_t *find_dictionary(const char *name);
 
 
 typedef void (*dictd_cmd_fn) (stream_t str, int argc, char **argv);

@@ -1,5 +1,13 @@
 2008-04-30  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Preliminary implementation of "SHOW" commands.
+	
+	* dictd/commands.c: Preliminary implementation of "SHOW" commands.
+	* dictd/dictd.c (stream_write_multiline): New function.
+	* dictd/dictd.h (dictionary_list, server_info): New declarations.
+	(stream_write_multiline, find_dictionary): New prototype.
+	* dictd/main.c (find_dictionary): New function. 
+
 	Implement RFC 2229 dialog.
 	
 	* dictd/commands.c: New file.

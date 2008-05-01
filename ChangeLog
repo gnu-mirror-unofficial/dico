@@ -1,3 +1,27 @@
+2008-05-01  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Redo command handling. Improve daemon help output. Control
+	inactivity timeouts.
+	
+	* dictd/commands.c (dictd_help): Use help strings provided in the
+	command tab.  If help-text (config) begins with a `+', append it
+	to the default help output.
+	(dictd_show): Split into separate functions for each show
+	subcommand:
+	(dictd_show_info, dictd_show_databases, dictd_show_server);
+	(command_tab): Use new structure.
+	(locate_command): Take into account arguments, so that "SHOW INFO"
+	and "SHOW DB" are recognized as different commands (no matter what
+	the amount of whitespace between the keywords).
+	(dictd_show_std_help): New function.
+	* dictd/dictd.c: Handle inactivity timeout.
+	* dictd/dictd.h (struct dictd_command): Rewritten.
+	* dictd/main.c (inactivity_timeout): New variable.
+	(keywords): New statement `inactivity-timeout'.
+	* dictd/server.c (handle_connection): Reset signals in child.
+	* gnulib.modules: Add crypto/md5 and hash.
+	* include/gjdict.h: Move #endif to the end of file.
+
 2008-04-30  Sergey Poznyakoff  <gray@gnu.org.ua>
 
 	Preliminary implementation of "SHOW" commands.

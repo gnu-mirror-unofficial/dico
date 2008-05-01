@@ -53,6 +53,7 @@ extern gid_t group_id;
 extern dict_list_t /* of gid_t */ group_list;
 extern unsigned int max_children;
 extern unsigned int shutdown_timeout;
+extern unsigned int inactivity_timeout;
 extern char *hostname;
 extern const char *program_version;
 extern char *initial_banner_text;
@@ -264,9 +265,10 @@ dictd_dictionary_t *find_dictionary(const char *name);
 typedef void (*dictd_cmd_fn) (stream_t str, int argc, char **argv);
 
 struct dictd_command {
-    const char *keyword;
-    int minargs;
-    int maxargs;
+    char *keyword;
+    int nparam;
+    char *param;
+    char *help;
     dictd_cmd_fn handler;
 };
 

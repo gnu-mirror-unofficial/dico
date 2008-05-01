@@ -117,8 +117,6 @@ void sockaddr_to_str(const struct sockaddr *sa, int salen,
 		     size_t *plen);
 char *sockaddr_to_astr(const struct sockaddr *sa, int salen);
 
-#endif
-    
 
 int switch_to_privs (uid_t uid, gid_t gid, dict_list_t retain_groups);
 
@@ -155,3 +153,5 @@ int utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char *s,
 		     size_t size);
     
 
+#endif
+    

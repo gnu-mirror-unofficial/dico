@@ -34,6 +34,8 @@ int mode = MODE_DAEMON;
 unsigned int max_children;
 /* Wait this number of seconds for all subprocesses to terminate. */
 unsigned int shutdown_timeout = 5;
+/* Inactivity timeout */
+unsigned int inactivity_timeout = 0;
 
 /* Syslog parameters: */ 
 const char *log_tag; 
@@ -352,6 +354,7 @@ struct config_keyword keywords[] = {
     { "log-print-severity", cfg_bool, &log_print_severity, 0 },
     { "pidfile", cfg_string, &pidfile_name, },
     { "shutdown-timeout", cfg_uint, &shutdown_timeout },
+    { "inactivity-timeout", cfg_uint, &inactivity_timeout },
     { "listen", cfg_sockaddr|CFG_LIST, &listen_addr,  },
     { "initial-banner-text", cfg_string, &initial_banner_text },
     { "help-text", cfg_string, &help_text },

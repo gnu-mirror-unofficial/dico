@@ -25,28 +25,21 @@ dictd_quit(stream_t str, int argc, char **argv)
     stream_writez(str, "221 bye\r\n");
 }
 
+void dictd_show_std_help(stream_t str);
+
 void
 dictd_help(stream_t str, int argc, char **argv)
 {
-    static char default_help_text[] = "\
-DEFINE database word         -- look up word in database\n\
-MATCH database strategy word -- match word in database using strategy\n\
-SHOW DB                      -- list all accessible databases\n\
-SHOW DATABASES               -- list all accessible databases\n\
-SHOW STRAT                   -- list available matching strategies\n\
-SHOW STRATEGIES              -- list available matching strategies\n\
-SHOW INFO database           -- provide information about the database\n\
-SHOW SERVER                  -- provide site-specific information\n\
-OPTION MIME                  -- use MIME headers\n\
-CLIENT info                  -- identify client to server\n\
-AUTH user string             -- provide authentication information\n\
-STATUS                       -- display timing information\n\
-HELP                         -- display this help information\n\
-QUIT                         -- terminate connection\n";
-    char *text = help_text ? help_text : default_help_text;
-    
+    const char *text = help_text;
     stream_writez(str, "113 help text follows\r\n");
-    stream_write_multiline(str, text);
+    if (text) {
+	if (text[0] == '+') {
+	    dictd_show_std_help(str);
+	    text++;
+	}
+	stream_write_multiline(str, text);
+    } else
+	dictd_show_std_help(str);
     stream_writez(str, "\r\n.\r\n");
     stream_writez(str, "250 ok\r\n");    
 }
@@ -63,8 +56,9 @@ _show_database(void *item, void *data)
 }
 
 void
-dictd_show_database_info(stream_t str, const char *dbname)
+dictd_show_info(stream_t str, int argc, char **argv)
 {
+    char *dbname = argv[2];
     dictd_dictionary_t *dict = find_dictionary(dbname);
     if (!dict) 
 	stream_writez(str, "550 invalid database, use SHOW DB for list\r\n");
@@ -81,7 +75,7 @@ dictd_show_database_info(stream_t str, const char *dbname)
 
 
 void
-dictd_show_databases(stream_t str)
+dictd_show_databases(stream_t str, int argc, char **argv)
 {
     size_t count = dict_list_count(dictionary_list);
     stream_printf(str, "110 %lu databases present\r\n",
@@ -92,7 +86,7 @@ dictd_show_databases(stream_t str)
 }
 
 void
-dictd_show_server(stream_t str)
+dictd_show_server(stream_t str, int argc, char **argv)
 {
     stream_writez(str, "114 server information\r\n");
     /* FIXME: (For logged in users) show:
@@ -104,40 +98,6 @@ dictd_show_server(stream_t str)
 }
 
 void
-dictd_show(stream_t str, int argc, char **argv)
-{
-    if (c_strcasecmp(argv[1], "DB") == 0
-	|| c_strcasecmp(argv[1], "DATABASES") == 0) {
-	if (argc != 2) {
-	    stream_writez(str, "501 wrong number of arguments\r\n");
-	    return;
-	}
-	dictd_show_databases(str);
-    } else if (c_strcasecmp(argv[1], "STRAT") == 0
-	       || c_strcasecmp(argv[1], "STRATEGIES") == 0) {
-	if (argc != 2) {
-	    stream_writez(str, "501 wrong number of arguments\r\n");
-	    return;
-	}
-	/* FIXME */
-	stream_writez(str, "502 command is not yet implemented, sorry\r\n");
-    } else if (c_strcasecmp(argv[1], "INFO") == 0) {
-	if (argc != 3) {
-	    stream_writez(str, "501 wrong number of arguments\r\n");
-	    return;
-	}
-	dictd_show_database_info(str, argv[2]);
-    } else if (c_strcasecmp(argv[1], "SERVER") == 0) {
-	if (argc != 2) {
-	    stream_writez(str, "501 wrong number of arguments\r\n");
-	    return;
-	}
-	dictd_show_server(str);
-    } else
-	stream_writez(str, "500 unknown command\r\n");
-}
-
-void
 dictd_client(stream_t str, int argc, char **argv)
 {
     logmsg(L_INFO, 0, "Client info: %s", argv[1]);
@@ -146,36 +106,92 @@ dictd_client(stream_t str, int argc, char **argv)
 
 
 struct dictd_command command_tab[] = {
-    { "DEFINE", 3, 3, },
-    { "MATCH", 4, 4, },
-    { "SHOW", 2, 3, dictd_show },
-    { "CLIENT", 2, 2, dictd_client },
-    { "STATUS", 1, 1, },
-    { "HELP", 1, 1, dictd_help },
-    { "QUIT", 1, 1, dictd_quit },
-    { "AUTH", 3, 3, },
-    { "SASLAUTH", 3, 3, },
+    { "DEFINE", 3, "database word", "look up word in database" },
+    { "MATCH", 4, "database strategy word",
+      "match word in database using strategy" },
+    { "SHOW DB", 2, NULL, "list all accessible databases",
+      dictd_show_databases, },
+    { "SHOW DATABASES", 2, NULL, "list all accessible databases",
+      dictd_show_databases, },
+    { "SHOW STRAT", 2, NULL, "list available matching strategies",
+      NULL },
+    { "SHOW STRATEGIES", 2, NULL, "list available matching strategies",
+      NULL },
+    { "SHOW INFO", 3, "database", "provide information about the database",
+      dictd_show_info },
+    { "SHOW SERVER", 2, NULL, "provide site-specific information",
+      dictd_show_server },
+    { "OPTION MIME", 2, NULL, "use MIME headers",
+      NULL }, /* FIXME: capa */
+    { "CLIENT", 2, "info", "identify client to server",
+      dictd_client },
+    { "STATUS", 1, NULL, "display timing information" },
+    { "AUTH", 3, "user string", "provide authentication information",
+      NULL }, /* FIXME: capa */
+#if 0
+    SASLAUTH mechanism initial-response
+    SASLRESP response
+#endif
+    { "HELP", 1, NULL, "display this help information",
+      dictd_help },
+    { "QUIT", 1, NULL, "terminate connection", dictd_quit },
     { NULL }
 };
 
-struct dictd_command *
-locate_command(const char *kw)
+void
+dictd_show_std_help(stream_t str)
 {
     struct dictd_command *p;
+    
+    for (p = command_tab; p->keyword; p++) {
+	int len = strlen(p->keyword);
 
-    for (p = command_tab; p->keyword; p++)
-	if (c_strcasecmp(p->keyword, kw) == 0)
-	    return p;
+	stream_writez(str, p->keyword);
+	if (p->param) {
+	    stream_printf(str, " %s", p->param);
+	    len += strlen(p->param) + 1;
+	}
+	
+	if (len < 31)
+	    len = 31 - len;
+	else
+	    len = 0;
+	stream_printf(str, "%*.*s -- %s\r\n", len, len, "", p->help);
+    }
+}
+
+
+struct dictd_command *
+locate_command(int argc, char **argv)
+{
+    struct dictd_command *p;
+    
+    for (p = command_tab; p->keyword; p++) {
+	int i, off = 0;
+	for (i = 0; i < argc; i++) {
+	    int len = strlen(argv[i]);
+	    if (c_strncasecmp(p->keyword + off, argv[i], len) == 0) {
+		off += len;
+		if (p->keyword[off] == 0)
+		    return p;
+		if (p->keyword[off] == ' ') {
+		    off++;
+		    continue;
+		} else
+		    break;
+	    }
+	}
+    }		
     return NULL;
 }
 
 void
 dictd_handle_command(stream_t str, int argc, char **argv)
 {
-    struct dictd_command *cmd = locate_command(argv[0]);
+    struct dictd_command *cmd = locate_command(argc, argv);
     if (!cmd) 
 	stream_writez(str, "500 unknown command\r\n");
-    else if (!(cmd->minargs <= argc && argc <= cmd->maxargs)) 
+    else if (argc != cmd->nparam) 
 	stream_writez(str, "501 wrong number of arguments\r\n");
     else if (!cmd->handler)
 	stream_writez(str, "502 command is not yet implemented, sorry\r\n");

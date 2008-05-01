@@ -360,6 +360,12 @@ handle_connection(int listenfd)
 	    
 	    close(listenfd);
 	    
+	    signal(SIGTERM, SIG_DFL);
+	    signal(SIGQUIT, SIG_DFL);
+	    signal(SIGINT, SIG_DFL);
+	    signal(SIGCHLD, SIG_DFL);
+	    signal(SIGHUP, SIG_DFL);
+        
 	    str = fd_stream_create(connfd, connfd);
 	    stream_set_buffer(str, lb_in, 512);
 	    stream_set_buffer(str, lb_out, 512);

@@ -2,11 +2,13 @@
 # A module name per line. Empty lines and comments are ignored.
 
 c-strcase
+crypto/md5
 inttostr
 inttypes
 getline
 getopt
 gettext-h
+hash
 malloc
 obstack
 realloc

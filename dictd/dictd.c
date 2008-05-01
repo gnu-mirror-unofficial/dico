@@ -189,17 +189,34 @@ trim(char *buf, size_t len)
 }
 
 int
+get_input_line(stream_t str, char **buf, size_t *size, size_t *rdbytes)
+{
+    int rc;
+    alarm(inactivity_timeout);
+    rc = stream_getline(str, buf, size, rdbytes);
+    alarm(0);
+    return rc;
+}
+
+RETSIGTYPE
+sig_alarm(int sig)
+{
+    exit(1);
+}
+
+int
 dictd_loop(stream_t str)
 {
     char *buf = NULL;
     size_t size = 0;
     size_t rdbytes;
     struct input input;
-    
+
+    signal(SIGALRM, sig_alarm);
     memset(&input, 0, sizeof input);
     initial_banner(str);
     got_quit = 0;
-    while (!got_quit && stream_getline(str, &buf, &size, &rdbytes) == 0) {
+    while (!got_quit && get_input_line(str, &buf, &size, &rdbytes) == 0) {
 	trim(buf, rdbytes);
 	tokenize_input(&input, buf);
 	if (input.argc == 0)

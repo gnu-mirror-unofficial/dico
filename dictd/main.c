@@ -327,6 +327,36 @@ set_dict_handler(enum cfg_callback_command cmd,
     return 0;
 }
 
+int enable_capability(enum cfg_callback_command cmd,
+		      gd_locus_t *locus,
+		      void *varptr,
+		      config_value_t *value,
+		      void *cb_data);
+
+int
+set_capability(void *item, void *data)
+{
+    return enable_capability(callback_set_value,
+			     (gd_locus_t *) data,
+			     NULL,
+			     (config_value_t *) item,
+			     NULL);
+}
+
+int
+enable_capability(enum cfg_callback_command cmd,
+		  gd_locus_t *locus,
+		  void *varptr,
+		  config_value_t *value,
+		  void *cb_data)
+{
+    if (value->type == TYPE_LIST)
+	dict_list_iterate(value->v.list, set_capability, locus);
+    else if (dictd_capa_add(value->v.string)) 
+	config_error(locus, 0, _("unknown capability: %s"), value->v.string);
+    return 0;
+}
+		 
 struct config_keyword kwd_handler[] = {
     { "type", cfg_string, NULL, offsetof(dictd_handler_t, type),
       set_handler_type },
@@ -359,6 +389,7 @@ struct config_keyword keywords[] = {
     { "initial-banner-text", cfg_string, &initial_banner_text },
     { "help-text", cfg_string, &help_text },
     { "hostname", cfg_string, &hostname },
+    { "capability", cfg_string|CFG_LIST, NULL, 0, enable_capability },
     { "dictionary", cfg_section, NULL, 0, set_dictionary, NULL,
       kwd_dictionary },
     { "handler", cfg_section, NULL, 0, set_handler, NULL,
@@ -421,13 +452,33 @@ syslog_log_printer(int lvl, int exitcode, int errcode,
     syslog(prio, "%s", buf);
 }
 
+
+static void
+dictd_xversion(stream_t str, int argc, char **argv)
+{
+    stream_writez(str, "110 ");
+    stream_writez(str, (char*)program_version);
+    stream_write(str, "\r\n", 2);
+}
+    
+static void
+register_xversion()
+{
+    static struct dictd_command cmd = 
+	{ "XVERSION", 1, NULL, "show implementation and version info",
+	  dictd_xversion };
+    dictd_capa_register("xversion", &cmd, NULL, NULL);
+}
 
+
 int
 main(int argc, char **argv)
 {
     set_program_name(argv[0]);
     log_tag = program_name;
     hostname = xgethostname();
+    dictd_init_command_tab();
+    register_xversion();
     config_lex_trace(0);
     get_options(argc, argv);
     config_set_keywords(keywords);

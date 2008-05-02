@@ -1,3 +1,22 @@
+2008-05-03  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Capability framework.
+	
+	* dictd/Makefile.am (dictd_SOURCES): Add capa.c
+	* dictd/capa.c: New file.
+	* dictd/commands.c (command_tab): Remove capability-dependent
+	commands.
+	(command_list): New variable.
+	(dictd_add_command, dictd_init_command_tab): New finctions.
+	(dictd_show_std_help,locate_command): Rewrite using list of
+	commands.
+	* dictd/dictd.c (output_capabilities): Implement.
+	* dictd/dictd.h (dictd_init_command_tab,dictd_add_command)
+	(dictd_capa_register, dictd_capa_add)
+	(dictd_capa_iterate): New protos.
+	* dictd/main.c (keywords): New statement `capability'.
+	(main): Initialize command and capability lists.
+
 2008-05-01  Sergey Poznyakoff  <gray@gnu.org.ua>
 
 	Redo command handling. Improve daemon help output. Control

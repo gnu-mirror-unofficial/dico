@@ -273,3 +273,13 @@ struct dictd_command {
 };
 
 void dictd_handle_command(stream_t str, int argc, char **argv);
+void dictd_init_command_tab(void);
+void dictd_add_command(struct dictd_command *cmd);
+
+/* capa.c */
+void dictd_capa_register(const char *name, struct dictd_command *cmd,
+			 int (*init)(void*), void *closure);
+int dictd_capa_add(const char *name);
+void dictd_capa_iterate(int (*fun)(const char*, int, void *), void *closure);
+
+

@@ -141,12 +141,31 @@ stream_write_multiline(stream_t str, const char *text)
 	stream_writeln(str, itr.curptr - len, len);
 }
 
+struct capa_print {
+    size_t num;
+    stream_t stream;
+};
+
+static int
+print_capa(const char *name, int enabled, void *data)
+{
+    struct capa_print *cp = data;
+    if (enabled) {
+	if (cp->num++)
+	    stream_write(cp->stream, ".", 1);
+	stream_writez(cp->stream, (char*)name);
+    }
+    return 0;
+}
 
 static void
 output_capabilities(stream_t str)
 {
+    struct capa_print cp;
+    cp.num = 0;
+    cp.stream = str;
     stream_write(str, "<", 1);
-    /* FIXME */
+    dictd_capa_iterate(print_capa, &cp);
     stream_write(str, ">", 1);
 }
 

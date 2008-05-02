@@ -16,6 +16,7 @@
 
 bin_PROGRAMS=dictd
 dictd_SOURCES=\
+ capa.c\
  cmdline.c\
  commands.c\
  config-gram.y\

@@ -121,68 +121,98 @@ struct dictd_command command_tab[] = {
       dictd_show_info },
     { "SHOW SERVER", 2, NULL, "provide site-specific information",
       dictd_show_server },
-    { "OPTION MIME", 2, NULL, "use MIME headers",
-      NULL }, /* FIXME: capa */
     { "CLIENT", 2, "info", "identify client to server",
       dictd_client },
     { "STATUS", 1, NULL, "display timing information" },
-    { "AUTH", 3, "user string", "provide authentication information",
-      NULL }, /* FIXME: capa */
-#if 0
-    SASLAUTH mechanism initial-response
-    SASLRESP response
-#endif
     { "HELP", 1, NULL, "display this help information",
       dictd_help },
     { "QUIT", 1, NULL, "terminate connection", dictd_quit },
     { NULL }
 };
 
+dict_list_t /* of struct dictd_command */ command_list;
+
 void
-dictd_show_std_help(stream_t str)
+dictd_add_command(struct dictd_command *cmd)
+{
+    if (!command_list)
+	command_list = dict_list_create();
+    dict_list_append(command_list, cmd);
+}
+
+void
+dictd_init_command_tab()
 {
     struct dictd_command *p;
     
-    for (p = command_tab; p->keyword; p++) {
-	int len = strlen(p->keyword);
-
-	stream_writez(str, p->keyword);
-	if (p->param) {
-	    stream_printf(str, " %s", p->param);
-	    len += strlen(p->param) + 1;
-	}
-	
-	if (len < 31)
-	    len = 31 - len;
-	else
-	    len = 0;
-	stream_printf(str, "%*.*s -- %s\r\n", len, len, "", p->help);
-    }
+    for (p = command_tab; p->keyword; p++) 
+	dictd_add_command(p);
 }
 
+static int
+_print_help(void *item, void *data)
+{
+    struct dictd_command *p = item;
+    stream_t str = data;
+    int len = strlen(p->keyword);
+
+    stream_writez(str, p->keyword);
+    if (p->param) {
+	stream_printf(str, " %s", p->param);
+	len += strlen(p->param) + 1;
+    }
+    
+    if (len < 31)
+	len = 31 - len;
+    else
+	len = 0;
+    stream_printf(str, "%*.*s -- %s\r\n", len, len, "", p->help);
+    return 0;
+}
+
+void
+dictd_show_std_help(stream_t str)
+{
+    dict_list_iterate(command_list, _print_help, str);
+}
+
+
+struct locate_data {
+    int argc;
+    char **argv;
+};
+
+static int
+_cmd_arg_cmp(const void *item, const void *data)
+{
+    const struct dictd_command *p = item;
+    const struct locate_data *datptr = data;
+    int i, off = 0;
+
+    for (i = 0; i < datptr->argc; i++) {
+	int len = strlen(datptr->argv[i]);
+	if (c_strncasecmp(p->keyword + off, datptr->argv[i], len) == 0) {
+	    off += len;
+	    if (p->keyword[off] == 0) 
+		return 0;
+	    if (p->keyword[off] == ' ') {
+		off++;
+		continue;
+	    } else
+		break;
+	}
+    }
+    return 1;
+}
+    
 
 struct dictd_command *
 locate_command(int argc, char **argv)
 {
-    struct dictd_command *p;
-    
-    for (p = command_tab; p->keyword; p++) {
-	int i, off = 0;
-	for (i = 0; i < argc; i++) {
-	    int len = strlen(argv[i]);
-	    if (c_strncasecmp(p->keyword + off, argv[i], len) == 0) {
-		off += len;
-		if (p->keyword[off] == 0)
-		    return p;
-		if (p->keyword[off] == ' ') {
-		    off++;
-		    continue;
-		} else
-		    break;
-	    }
-	}
-    }		
-    return NULL;
+    struct locate_data ld;
+    ld.argc = argc;
+    ld.argv = argv;
+    return dict_list_locate(command_list, &ld, _cmd_arg_cmp);
 }
 
 void

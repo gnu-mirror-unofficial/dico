@@ -20,6 +20,7 @@ dictd_SOURCES=\
  capa.c\
  cmdline.c\
  commands.c\
+ config-format.c\
  config-gram.y\
  config-lex.l\
  dbtext.c\

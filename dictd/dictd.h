@@ -103,7 +103,6 @@ enum config_data_type {
     cfg_cidr,
     cfg_host,
     cfg_sockaddr,
-    cfg_callback,
     cfg_section
 };
 
@@ -139,6 +138,8 @@ typedef int (*config_callback_fn) (
 
 struct config_keyword {
     const char *ident;
+    const char *argname;
+    const char *docstring;
     enum config_data_type type;
     void *varptr;
     size_t offset;
@@ -173,6 +174,10 @@ void line_finish(void);
 char *line_finish0(void);
 int quote_char(int c);
 int unquote_char(int c);
+
+void format_statement_array(FILE *stream, struct config_keyword *kwp,
+			    int level);
+void config_help(void);
 
 
 /* Line buffer */
@@ -258,6 +263,7 @@ typedef struct dictd_dictionary {
     dictd_handler_t *handler;
 } dictd_dictionary_t;
 
+void dictd_server(int argc, char **argv);
 int dictd_loop(stream_t stream);
 int dictd_inetd(void);
 dictd_dictionary_t *find_dictionary(const char *name);

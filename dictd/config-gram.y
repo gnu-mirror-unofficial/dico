@@ -276,6 +276,8 @@ fake_callback(enum cfg_callback_command cmd,
 
 static struct config_keyword fake = {
     "*",
+    NULL,
+    NULL,
     cfg_void,
     NULL,
     0,
@@ -542,7 +544,6 @@ string_convert(void *target, enum config_data_type type, const char *string)
 	/* FIXME: */
     case cfg_cidr:
 	    
-    case cfg_callback:
     case cfg_section:
 	config_error(&locus, 0, _("INTERNAL ERROR at %s:%d"), __FILE__,
 		     __LINE__);
@@ -570,7 +571,6 @@ size_t config_type_size[] = {
     0                        /* FIXME: cfg_cidr */,
     sizeof(struct in_addr)   /* cfg_host */, 
     sizeof(sockaddr_union_t) /* cfg_sockaddr */,
-    0                        /* cfg_callback */,
     0                        /* cfg_section */
 };
 

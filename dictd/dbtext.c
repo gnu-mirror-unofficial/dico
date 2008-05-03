@@ -131,7 +131,7 @@ dbtext_get_groups(void *handle, const char *qgr, const char *key,
 	char **groups = NULL;
 	char *val;
 
-	while (val = find_key(fp, key, &buf, &size)) {
+	while ((val = find_key(fp, key, &buf, &size))) {
 	    if (i == count) {
 		if (count == 0)
 		    count = 10; /* Initial allocation */

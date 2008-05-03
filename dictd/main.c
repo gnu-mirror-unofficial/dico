@@ -359,17 +359,26 @@ enable_capability(enum cfg_callback_command cmd,
 }
 		 
 struct config_keyword kwd_handler[] = {
-    { "type", cfg_string, NULL, offsetof(dictd_handler_t, type),
+    { "type", N_("type"), N_("Type of this handler"),
+      cfg_string, NULL, offsetof(dictd_handler_t, type),
       set_handler_type },
-    { "command", cfg_string, NULL, offsetof(dictd_handler_t, command) },
+    { "command", N_("arg"), N_("Command line."),
+      cfg_string, NULL, offsetof(dictd_handler_t, command) },
     { NULL }
 };
 
 struct config_keyword kwd_dictionary[] = {
-    { "name", cfg_string, NULL, offsetof(dictd_dictionary_t, name) },
-    { "description", cfg_string, NULL, offsetof(dictd_dictionary_t, descr) },
-    { "info", cfg_string, NULL, offsetof(dictd_dictionary_t, info) },
-    { "handler", cfg_string, NULL, offsetof(dictd_dictionary_t, handler),
+    { "name", N_("word"), N_("Dictionary name (a single word)."),
+      cfg_string, NULL, offsetof(dictd_dictionary_t, name) },
+    { "description", N_("arg"),
+      N_("Short description, to be shown in reply to SHOW DB command."),
+      cfg_string, NULL, offsetof(dictd_dictionary_t, descr) },
+    { "info", N_("arg"),
+      N_("Full description of the dictionary, to be shown in reply to "
+	 "SHOW INFO command."),
+      cfg_string, NULL, offsetof(dictd_dictionary_t, info) },
+    { "handler", N_("name"), N_("Name of the handler for this dictionary."),
+      cfg_string, NULL, offsetof(dictd_dictionary_t, handler),
       set_dict_handler },
     { NULL }
 };
@@ -384,8 +393,11 @@ struct user_db_conf {
 struct user_db_conf user_db_cfg;
 
 struct config_keyword kwd_user_db[] = {
-    { "get-password", cfg_string, NULL, offsetof(struct user_db_conf, get_pw) },
-    { "get-groups", cfg_string, NULL, offsetof(struct user_db_conf, get_groups) },
+    { "get-password", N_("arg"), N_("Password file or query."),
+      cfg_string, NULL, offsetof(struct user_db_conf, get_pw) },
+    { "get-groups", N_("arg"),
+      N_("File containing user group information or a query to retrieve it."),
+      cfg_string, NULL, offsetof(struct user_db_conf, get_groups) },
     { NULL }
 };
 
@@ -425,31 +437,70 @@ user_db_config(enum cfg_callback_command cmd,
 }
 
 struct config_keyword keywords[] = {
-    { "user", cfg_string, NULL, 0, set_user  },
-    { "group", cfg_string, NULL, 0, set_supp_group },
-    { "mode", cfg_string, NULL, 0, set_mode },
-    { "server-info", cfg_string, &server_info,  },
-    { "max-children", cfg_uint, &max_children, 0 },
-    { "log-tag", cfg_string, &log_tag, 0 },
-    { "log-facility", cfg_string, NULL, 0, set_log_facility },
-    { "log-print-severity", cfg_bool, &log_print_severity, 0 },
-    { "pidfile", cfg_string, &pidfile_name, },
-    { "shutdown-timeout", cfg_uint, &shutdown_timeout },
-    { "inactivity-timeout", cfg_uint, &inactivity_timeout },
-    { "listen", cfg_sockaddr|CFG_LIST, &listen_addr,  },
-    { "initial-banner-text", cfg_string, &initial_banner_text },
-    { "help-text", cfg_string, &help_text },
-    { "hostname", cfg_string, &hostname },
-    { "capability", cfg_string|CFG_LIST, NULL, 0, enable_capability },
-    { "dictionary", cfg_section, NULL, 0, set_dictionary, NULL,
+    { "user", N_("name"), N_("Run with these user privileges."),
+      cfg_string, NULL, 0, set_user  },
+    { "group", N_("name"),
+      N_("Supplementary group to retain with the user privileges."),
+      cfg_string, NULL, 0, set_supp_group },
+    { "mode", N_("arg: [daemon|inetd]"), N_("Operation mode."),
+      cfg_string, NULL, 0, set_mode },
+    { "server-info", N_("text"),
+      N_("Server description to be shown in reply to SHOW SERVER command."),
+      cfg_string, &server_info,  },
+    { "max-children", N_("arg"),
+      N_("Maximum number of children running simultaneously."),
+      cfg_uint, &max_children, 0 },
+    { "log-tag", N_("arg"),  N_("Tag syslog diagnostics with this tag."),
+      cfg_string, &log_tag, 0 },
+    { "log-facility", N_("arg"),
+      N_("Set syslog facility. Arg is one of the following: user, daemon, "
+	 "auth, authpriv, mail, cron, local0 through local7 "
+	 "(case-insensitive), or a facility number."),
+      cfg_string, NULL, 0, set_log_facility },
+    { "log-print-severity", N_("arg"),
+      N_("Prefix diagnostics messages with their severity."),
+      cfg_bool, &log_print_severity, 0 },
+    { "pidfile", N_("name"),
+      N_("Store PID of the master process in this file."),
+      cfg_string, &pidfile_name, },
+    { "shutdown-timeout", N_("seconds"),
+      N_("Wait this number of seconds for all children to terminate."),
+      cfg_uint, &shutdown_timeout },
+    { "inactivity-timeout", N_("seconds"),
+      N_("Set inactivity timeouit."),
+      cfg_uint, &inactivity_timeout },
+    { "listen", N_("addr"), N_("Listen on these addresses."),
+      cfg_sockaddr|CFG_LIST, &listen_addr,  },
+    { "initial-banner-text", N_("text"),
+      N_("Display this text in the initial 220 banner"),
+      cfg_string, &initial_banner_text },
+    { "help-text", N_("text"),
+      N_("Display this text in reply to the HELP command. If text "
+	 "begins with a +, usual command summary is displayed before it."),
+      cfg_string, &help_text },
+    { "hostname", N_("name"), N_("Override the host name."),
+      cfg_string, &hostname },
+    { "capability", N_("arg"), N_("Request additional capabilities."),
+      cfg_string|CFG_LIST, NULL, 0, enable_capability },
+    { "dictionary", NULL, N_("Define a dictionary database."),
+      cfg_section, NULL, 0, set_dictionary, NULL,
       kwd_dictionary },
-    { "handler", cfg_section, NULL, 0, set_handler, NULL,
+    { "handler", N_("name: string"), N_("Define a dictionary handler."),
+      cfg_section, NULL, 0, set_handler, NULL,
       kwd_handler },
-    { "user-db", cfg_section, &user_db_cfg, 0, user_db_config, NULL,
+    { "user-db", N_("url: string"),
+      N_("Define user database for authentication."),
+      cfg_section, &user_db_cfg, 0, user_db_config, NULL,
       kwd_user_db },
     { NULL }
 };
-	    
+
+void
+config_help()
+{
+    format_statement_array(stdout, keywords, 0);
+}
+
 
 static int
 cmp_dict_name(const void *item, const void *data)
@@ -547,7 +598,7 @@ main(int argc, char **argv)
 
     switch (mode) {
     case MODE_DAEMON:
-	return dictd_server(argc, argv);
+	dictd_server(argc, argv);
 
     case MODE_INETD:
 	return dictd_inetd();

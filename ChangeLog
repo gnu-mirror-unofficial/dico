@@ -1,3 +1,19 @@
+2008-05-04  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Document configuration statements.
+	
+	* dictd/Makefile.am (dictd_SOURCES): Add config-format.c
+	* dictd/config-format.c: New file.
+	* dictd/cmdline.opt: New option `--config-help'.
+	* dictd/config-gram.y: Reflect changes to struct config_keyword.
+	* dictd/dbtext.c: Shut gcc warnings.
+	* dictd/dictd.h (cfg_callback): Remove.
+	(struct config_keyword): New members argname and docstring.
+	(format_statement_array, config_help, dictd_server): New
+	prototypes.
+	* dictd/main.c: Provide docstrings for configuration statements.
+	(config_help): New function.
+
 2008-05-03  Sergey Poznyakoff  <gray@gnu.org.ua>
 
 	Implement AUTH command.

@@ -73,6 +73,13 @@ BEGIN
    config_lex_trace(1);
 END
 
+OPTION(config-help,,,
+       [<Show configuration file summary.>])
+BEGIN
+   config_help();
+   exit(0);
+END   
+
 OPTIONS_END
 
 void

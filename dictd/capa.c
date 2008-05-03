@@ -57,8 +57,8 @@ dictd_capa_add(const char *name)
 	return 1;
     if (cp->cmd)
 	dictd_add_command(cp->cmd);
-    if (cp->init)
-	cp->init(cp->closure);
+    if (cp->init && cp->init(cp->closure))
+	return 1;
     cp->enabled = 1;
     return 0;
 }

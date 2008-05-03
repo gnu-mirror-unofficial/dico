@@ -19,6 +19,8 @@
 #define obstack_chunk_free free
 #include <obstack.h>
 
+char *msg_id;
+
 struct input {
     struct obstack stk;
     char *rootptr;
@@ -190,21 +192,12 @@ initial_banner(stream_t str)
     stream_write(str, " ", 1);
     output_capabilities(str);
     stream_write(str, " ", 1);
-    stream_printf(str, "<%lu.%lu@%s>",
-		  (unsigned long) getpid(),
-		  (unsigned long) time(NULL),
-		  hostname);
+    asprintf(&msg_id, "<%lu.%lu@%s>",
+	     (unsigned long) getpid(),
+	     (unsigned long) time(NULL),
+	     hostname);
+    stream_writez(str, msg_id);
     stream_write(str, "\r\n", 2);
-}
-
-static void
-trim(char *buf, size_t len)
-{
-    if (len > 1 && buf[--len] == '\n') {
-	buf[len] = 0;
-	if (len > 1 && buf[--len] == '\r')
-	    buf[len] = 0;
-    }
 }
 
 int
@@ -236,7 +229,7 @@ dictd_loop(stream_t str)
     initial_banner(str);
     got_quit = 0;
     while (!got_quit && get_input_line(str, &buf, &size, &rdbytes) == 0) {
-	trim(buf, rdbytes);
+	trimnl(buf, rdbytes);
 	tokenize_input(&input, buf);
 	if (input.argc == 0)
 	    continue;

@@ -1,5 +1,30 @@
 2008-05-03  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Implement AUTH command.
+	
+	* dictd/Makefile.am (dictd_SOURCES): Add auth.c, dbtext.c, udb.c.
+	* dictd/auth.c, dictd/dbtext.c, dictd/udb.c: New files.
+	* dictd/capa.c (dictd_capa_add): Fail if init finction returns
+	non-zero.
+	* dictd/dictd.c (msg_id): New global.
+	(initial_banner): Save msg_id for further use.
+	(trim): Move to the library. All uses updated.
+	* dictd/dictd.h (msg_id): New declaration.
+	Add udb prototypes and declarations.
+	* dictd/main.c (user_db): New global.
+	(user_db_config): Call udb_create.
+	(main): Call udb_init and register_auth.
+	* include/gjdict.h (struct dict_assoc): New data type. 
+	(dict_assoc_create, dict_assoc_destroy, dict_assoc_add,
+	dict_assoc_find, dict_assoc_remove): New prototypes.
+	(struct dict_url,dict_url_t): New data types.
+	(dict_url_parse, dict_url_destroy, dict_url_get_arg)
+	(dict_url_full_path): New prototypes.
+	(make_full_file_name, trimnl): New prototypes.
+	* lib/Makefile.am (libgjdict_a_SOURCES): Add assoc.c, url.c,
+	util.c.
+	* lib/assoc.c, lib/url.c, lib/util.c: New files.
+
 	Fix handling of continuation strings in configuration file.
 	
 	* dictd/config-gram.y (stmt_end): Get kw as argument and use it to

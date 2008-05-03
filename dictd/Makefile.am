@@ -16,17 +16,20 @@
 
 bin_PROGRAMS=dictd
 dictd_SOURCES=\
+ auth.c\
  capa.c\
  cmdline.c\
  commands.c\
  config-gram.y\
  config-lex.l\
+ dbtext.c\
  dictd.c\
  fdio.c\
  linebuf.c\
  main.c\
  server.c\
- stream.c
+ stream.c\
+ udb.c
 
 noinst_HEADERS=dictd.h config-gram.h
 

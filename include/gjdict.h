@@ -99,6 +99,22 @@ void dict_iterator_remove_current(dict_iterator_t ip);
 void dict_iterator_set_data(dict_iterator_t ip, void *data);
 
 
+/* Association lists */
+struct dict_assoc {
+    char *key;
+    char *value;
+};
+
+typedef dict_list_t dict_assoc_list_t;
+
+dict_assoc_list_t dict_assoc_create(void);
+void dict_assoc_destroy(dict_assoc_list_t *passoc);
+void dict_assoc_add(dict_assoc_list_t assoc, const char *key, const char *value);
+const char *dict_assoc_find(dict_assoc_list_t assoc, const char *key);
+void dict_assoc_remove(dict_assoc_list_t assoc, const char *key);
+
+
+
 /* Simple translation tables */
 struct xlat_tab {
     char *string;
@@ -111,6 +127,25 @@ int xlat_string(struct xlat_tab *tab, const char *string, size_t len,
 		int flags, int *result);
 int xlat_c_string(struct xlat_tab *tab, const char *string, int flags,
 		  int *result);
+
+
+/* URLs */
+struct dict_url {
+    char *string;
+    char *proto;
+    char *host;
+    char *path;
+    char *user;
+    char *passwd;
+    dict_assoc_list_t args;
+};
+
+typedef struct dict_url *dict_url_t;
+int dict_url_parse(dict_url_t *purl, const char *str);
+void dict_url_destroy(dict_url_t *purl);
+const char *dict_url_get_arg(dict_url_t url, const char *argname);
+char *dict_url_full_path(dict_url_t url);
+
 
 
 struct sockaddr;
@@ -154,6 +189,11 @@ int utf8_wc_strcmp (const unsigned *a, const unsigned *b);
 int utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char *s,
 		     size_t size);
     
+
+
+/* Utility functions */
+char *make_full_file_name(const char *dir, const char *file);
+void trimnl(char *buf, size_t len);
 
 #endif
     

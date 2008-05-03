@@ -61,6 +61,7 @@ extern int got_quit;
 extern char *help_text;
 extern dict_list_t dictionary_list;
 extern const char *server_info;
+extern char *msg_id;
 
 #ifndef LOG_FACILITY
 # define LOG_FACILITY LOG_LOCAL1
@@ -282,4 +283,32 @@ void dictd_capa_register(const char *name, struct dictd_command *cmd,
 int dictd_capa_add(const char *name);
 void dictd_capa_iterate(int (*fun)(const char*, int, void *), void *closure);
 
+/* user db */
+struct udb_def {
+    const char *proto;
+    int (*_db_open) (void **, dict_url_t);
+    int (*_db_close) (void *);
+    int (*_db_get_password) (void *, const char *, const char *, char **);
+    int (*_db_get_groups) (void *, const char *, const char *, char ***);
+};
+
+struct udb_def text_udb_def;
+
+typedef struct dictd_user_db *dictd_user_db_t;
+
+extern dictd_user_db_t user_db;
+
+void udb_init(void);
+int udb_create(dictd_user_db_t *pdb,
+	       const char *urlstr, const char *qpw, const char *qgrp,
+	       gd_locus_t *locus);
+
+int udb_open(dictd_user_db_t db);
+int udb_close(dictd_user_db_t db);
+int udb_get_password(dictd_user_db_t db, const char *key, char **pass);
+int udb_get_groups(dictd_user_db_t db, const char *key, char ***groups);
+void udp_define(struct udb_def *dptr);
+
+/* auth.c */
+void register_auth(void);
 

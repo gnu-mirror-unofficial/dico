@@ -57,6 +57,9 @@ char *help_text;
 /* List of sockets to listen on for the requests */
 dict_list_t /* of struct sockaddr */ listen_addr;
 
+/* User database for AUTH */
+dictd_user_db_t user_db;
+
 /* Run as this user */
 uid_t user_id;
 gid_t group_id;
@@ -408,9 +411,7 @@ user_db_config(enum cfg_callback_command cmd,
 	break;
 	
     case callback_section_end:
-	/* FIXME:
-	   init_user_db(cfg->url, cfg->get_pw, cfg->get_groups, locus);
-	*/
+	udb_create(&user_db, cfg->url, cfg->get_pw, cfg->get_groups, locus);
 	break;
 	
     case callback_set_value:
@@ -418,9 +419,7 @@ user_db_config(enum cfg_callback_command cmd,
 	    config_error(locus, 0, _("URL must be a string"));
 	else if (!value->v.string)
 	    config_error(locus, 0, _("empty URL"));
-	/* FIXME:
-	   init_user_db(value->v.string, NULL, NULL, locus);
-	*/
+	udb_create(&user_db, value->v.string, NULL, NULL, locus);
     }
     return 0;
 }
@@ -532,6 +531,8 @@ main(int argc, char **argv)
     log_tag = program_name;
     hostname = xgethostname();
     dictd_init_command_tab();
+    udb_init();
+    register_auth();
     register_xversion();
     config_lex_trace(0);
     get_options(argc, argv);

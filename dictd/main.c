@@ -253,8 +253,7 @@ set_handler(enum cfg_callback_command cmd,
 	break;
 	
     case callback_set_value:
-	/* Shouldn't happen */
-	abort();
+	config_error(locus, 0, _("invalid use of a block statement"));
     }
     return 0;
 }
@@ -288,8 +287,7 @@ set_dictionary(enum cfg_callback_command cmd,
 	break;
 	
     case callback_set_value:
-	/* Shouldn't happen */
-	abort();
+	config_error(locus, 0, _("invalid use of a block statement"));
     }
     return 0;
 }
@@ -373,6 +371,60 @@ struct config_keyword kwd_dictionary[] = {
     { NULL }
 };
 
+
+struct user_db_conf {
+    char *url;
+    char *get_pw;
+    char *get_groups;
+};
+
+struct user_db_conf user_db_cfg;
+
+struct config_keyword kwd_user_db[] = {
+    { "get-password", cfg_string, NULL, offsetof(struct user_db_conf, get_pw) },
+    { "get-groups", cfg_string, NULL, offsetof(struct user_db_conf, get_groups) },
+    { NULL }
+};
+
+int
+user_db_config(enum cfg_callback_command cmd,
+	       gd_locus_t *locus,
+	       void *varptr,
+	       config_value_t *value,
+	       void *cb_data)
+{
+    struct user_db_conf *cfg = varptr;
+    void **pdata = cb_data;
+    
+    switch (cmd) {
+    case callback_section_begin:
+	if (value->type != TYPE_STRING) 
+	    config_error(locus, 0, _("URL must be a string"));
+	else if (!value->v.string)
+	    config_error(locus, 0, _("empty URL"));
+	else
+	    cfg->url = strdup(value->v.string);
+	*pdata = cfg;
+	break;
+	
+    case callback_section_end:
+	/* FIXME:
+	   init_user_db(cfg->url, cfg->get_pw, cfg->get_groups, locus);
+	*/
+	break;
+	
+    case callback_set_value:
+	if (value->type != TYPE_STRING) 
+	    config_error(locus, 0, _("URL must be a string"));
+	else if (!value->v.string)
+	    config_error(locus, 0, _("empty URL"));
+	/* FIXME:
+	   init_user_db(value->v.string, NULL, NULL, locus);
+	*/
+    }
+    return 0;
+}
+
 struct config_keyword keywords[] = {
     { "user", cfg_string, NULL, 0, set_user  },
     { "group", cfg_string, NULL, 0, set_supp_group },
@@ -394,6 +446,8 @@ struct config_keyword keywords[] = {
       kwd_dictionary },
     { "handler", cfg_section, NULL, 0, set_handler, NULL,
       kwd_handler },
+    { "user-db", cfg_section, &user_db_cfg, 0, user_db_config, NULL,
+      kwd_user_db },
     { NULL }
 };
 	    

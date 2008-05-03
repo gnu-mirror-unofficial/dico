@@ -31,7 +31,6 @@ gd_locus_t locus;
 static ino_t source_inode;
 static struct obstack stk;
     
-static int string(const char*, size_t);
 static void multiline_begin(char *);
 static void multiline_add(char *);
 static void multiline_finish(void);
@@ -194,9 +193,15 @@ ID [a-zA-Z_][a-zA-Z_0-9-]+
         /* Identifiers */
 ^[ \t]*{ID}          return ident();
          /* Strings */
-[a-zA-Z0-9_\./:-]+    { return string(yytext, yyleng); }
+[a-zA-Z0-9_\./:-]+    { line_begin();
+                        line_add(yytext, yyleng);
+                        line_finish();
+                        return STRING; }
          /* Quoted strings */
-\"[^\\"\n]*\"         { return string(yytext + 1, yyleng - 2); }
+\"[^\\"\n]*\"         { line_begin();
+                        line_add(yytext + 1, yyleng - 2);
+                        line_finish();
+                        return QSTRING; }
 \"[^\\"\n]*\\.        { BEGIN(STR);
                         line_begin();
 		        line_add_unescape_last(yytext + 1, yyleng - 1); }
@@ -205,7 +210,7 @@ ID [a-zA-Z_][a-zA-Z_0-9-]+
                         if (yyleng > 1) 
                           line_add(yytext, yyleng - 1); 
                         line_finish();
-		        return STRING; }
+		        return QSTRING; }
          /* Multiline strings */
 "<<"(-" "?)?\\?{ID}[ \t]*#.*\n |
 "<<"(-" "?)?\\?{ID}[ \t]*"//".*\n |
@@ -310,15 +315,6 @@ config_lex_end()
 {
     while (pop_source() == 0)
 	;
-}
-
-int
-string(const char *str, size_t len)
-{
-    obstack_grow(&stk, str, len);
-    obstack_1grow(&stk, 0);
-    yylval.string = obstack_finish(&stk);
-    return STRING; 
 }
 
 int

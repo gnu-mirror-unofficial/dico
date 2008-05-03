@@ -25,7 +25,7 @@ int config_error_count;
 
 void *target_ptr(struct config_keyword *kwp);
 void stmt_begin(struct config_keyword *kwp, config_value_t tag);
-void stmt_end(void);
+void stmt_end(struct config_keyword *kwp);
 struct config_keyword *find_keyword(const char *ident);
 
 void process_ident(struct config_keyword *kwp, config_value_t *value);
@@ -41,6 +41,7 @@ void process_ident(struct config_keyword *kwp, config_value_t *value);
 
 %token <string> IDENT STRING QSTRING MSTRING
 %type <string> string slist
+%type <list> slist0
 %type <value> value tag
 %type <list> values list
 %type <kw> ident
@@ -73,7 +74,7 @@ simple  : ident value ';'
 
 block   : ident tag { stmt_begin($<kw>1, $<value>2); } '{' stmtlist '}' opt_sc
           {
-	      stmt_end();
+	      stmt_end($1);
 	  }
         ;
 
@@ -113,19 +114,28 @@ string  : STRING
 
 slist   : slist0
           {
+	      dict_iterator_t itr = dict_iterator_create($1);
+	      char *p;
+	      line_begin();
+	      for (p = dict_iterator_first(itr); p;
+		   p = dict_iterator_next(itr)) 
+		  line_add(p, strlen(p));
 	      $$ = line_finish0();
+	      dict_iterator_destroy(&itr);
+	      dict_list_destroy(&$1, NULL, NULL);
 	  }
         ;
 
 slist0  : QSTRING QSTRING
           {
-	      line_begin();
-	      line_add($1, strlen($1));
-	      line_add($2, strlen($2));
+	      $$ = dict_list_create();
+	      dict_list_append($$, $1);
+	      dict_list_append($$, $2);
 	  }
-        | slist QSTRING
+        | slist0 QSTRING
           {
-	      line_add($2, strlen($2));
+	      dict_list_append($1, $2);
+	      $$ = $1;
 	  }
         ;
 
@@ -243,12 +253,12 @@ stmt_begin(struct config_keyword *kwp, config_value_t tag)
 }
 
 void
-stmt_end()
+stmt_end(struct config_keyword *kwp)
 {
     if (cursect && cursect->callback)
 	cursect->callback(callback_section_end,
 			  &locus, /* FIXME */
-			  NULL,
+			  kwp ? target_ptr(kwp) : NULL,
 			  NULL,
 			  &cursect->callback_data);
     cursect = dict_list_pop(sections);

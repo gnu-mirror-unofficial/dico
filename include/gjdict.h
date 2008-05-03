@@ -80,6 +80,8 @@ size_t dict_list_count(dict_list_t list);
 void dict_list_append(dict_list_t list, void *data);
 void dict_list_prepend(dict_list_t list, void *data);
 int dict_list_insert_sorted(dict_list_t list, void *data, dict_list_comp_t cmp);
+dict_list_t  dict_list_intersect(dict_list_t a, dict_list_t b,
+				 dict_list_comp_t cmp);
 
 #define dict_list_push dict_list_prepend
 void *dict_list_pop(dict_list_t list);

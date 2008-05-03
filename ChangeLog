@@ -1,5 +1,16 @@
 2008-05-03  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Fix handling of continuation strings in configuration file.
+	
+	* dictd/config-gram.y (stmt_end): Get kw as argument and use it to
+	compute target pointer.
+	(slist,slist0): Fix algorithm for coalescing string parts.
+	* dictd/config-lex.l: Return QSTRING for quoted strings.
+	* dictd/main.c (user-db): New configuration block statement.
+	(set_handler, set_dictionary): Fix handling of callback_set_value.
+	* include/gjdict.h (dict_list_intersect): New prototype.
+	* lib/list.c (dict_list_intersect): New function.
+
 	Capability framework.
 	
 	* dictd/Makefile.am (dictd_SOURCES): Add capa.c

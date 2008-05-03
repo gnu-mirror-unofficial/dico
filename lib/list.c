@@ -334,3 +334,25 @@ dict_list_insert_sorted(struct list *list, void *data, dict_list_comp_t cmp)
     return 0;
 }
 
+/* Computes an intersection of the two lists. The resulting list
+   contains elements from the list A that are also encountered
+   in the list B. Elements are compared using function CMP.
+   The resulting list preserves the ordering of A. */
+dict_list_t 
+dict_list_intersect (dict_list_t a, dict_list_t b, dict_list_comp_t cmp)
+{
+    dict_list_t res;
+    dict_iterator_t itr = dict_iterator_create(a);
+    void *p;
+    
+    if (!itr)
+	return NULL;
+    res = dict_list_create();
+    for (p = dict_iterator_first(itr); p; p = dict_iterator_next(itr)) {
+	if (dict_list_locate(b, p, cmp))
+	    dict_list_append(res, p);
+    }
+    dict_iterator_destroy (&itr);
+    return res;
+}
+

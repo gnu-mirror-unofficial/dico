@@ -246,8 +246,13 @@ void stream_write_multiline(stream_t str, const char *text);
 /* */
 
 enum dictd_handler_type {
-    handler_extern
-    /* FIXME: More types to come */
+    handler_loadable
+    /* FIXME: More types to come:
+       handler_guile,
+       handler_extern
+       etc.
+     */
+    
 };
 
 typedef struct dictd_handler {

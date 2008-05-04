@@ -1,5 +1,11 @@
 2008-05-04  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Minor fixes.
+	
+	* dictd/dictd.h (handler_extern): Replace with
+	handler_loadable. All uses changed.
+	* dictd/main.c (set_handler_type): Bugfix.
+
 	Add preliminary ltdl support.
 	
 	* .gitignore: Add libtool and libltdl

@@ -210,14 +210,14 @@ set_handler_type(enum cfg_callback_command cmd,
 		 void *cb_data)
 {
     static struct xlat_tab tab[] = {
-	{ "extern", handler_extern },
+	{ "loadable", handler_loadable },
 	{ NULL }
     };
     if (value->type != TYPE_STRING) {
 	config_error(locus, 0, _("expected scalar value buf found list"));
 	return 1;
     }
-    if (xlat_c_string(tab, value->v.string, XLAT_ICASE, &log_facility)) {
+    if (xlat_c_string(tab, value->v.string, XLAT_ICASE, varptr)) {
 	config_error(locus, 0, _("unknown handler type"));
 	return 1;
     }
@@ -237,7 +237,7 @@ set_handler(enum cfg_callback_command cmd,
     switch (cmd) {
     case callback_section_begin:
 	han = xzalloc(sizeof(*han));
-	han->type = handler_extern;
+	han->type = handler_loadable;
 	if (value->type != TYPE_STRING) 
 	    config_error(locus, 0, _("tag must be a string"));
 	else if (value->v.string == NULL) 

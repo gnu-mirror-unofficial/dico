@@ -1,5 +1,10 @@
 2008-05-04  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Further fixes.
+	
+	* dictd/Makefile.am (LDADD): Change libgnu.a to libgnu.la
+	* makedict/Makefile.am: Likewise.
+
 	Minor fixes.
 	
 	* dictd/dictd.h (handler_extern): Replace with

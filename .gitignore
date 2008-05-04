@@ -20,5 +20,7 @@ configure
 core
 gnu
 gmon.out
+libltdl
+libtool
 m4
 stamp-h1

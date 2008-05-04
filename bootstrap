@@ -573,6 +573,8 @@ do
     grep '^[	 ]*AM_PROG_LIBTOOL\>' configure.ac >/dev/null ||
       continue
     command='libtoolize -c -f'
+    grep '^[ 	]*AC_LIBLTDL_[CI]' configure.ac >/dev/null &&
+      command="$command --ltdl"
   fi
   echo "$0: $command ..."
   $command || exit

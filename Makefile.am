@@ -19,7 +19,7 @@ inputdictpath=@inputdictpath@
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS=include utils gnu lib dictd makedict
+SUBDIRS=include utils gnu lib libltdl dictd makedict
 #FIXME: add these when ready client fonts
 
 dict:

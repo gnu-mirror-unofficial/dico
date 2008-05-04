@@ -1,5 +1,18 @@
 2008-05-04  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Add preliminary ltdl support.
+	
+	* .gitignore: Add libtool and libltdl
+	* Makefile.am (SUBDIRS): Add libltdl
+	* README-hacking: Update.
+	* bootstrap: Pass --ltdl flag to libtoolize, if necessary.
+	* configure.ac: Use ltdl.
+	
+	* makedict/index.c: Minor changes.
+
+	* doc: New directory
+	* doc/rfc2229.txt: New file.
+
 	Document configuration statements.
 	
 	* dictd/Makefile.am (dictd_SOURCES): Add config-format.c

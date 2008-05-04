@@ -170,7 +170,7 @@ simple_list_iter(struct dbidx *idx, unsigned num, char *p)
 	rc = idx->dbp->put(idx->dbp, NULL, &key, &content, 0);
 	if (rc && rc != DB_KEYEXIST) {
 	    logmsg(L_ERR, 0, "%s: failed to insert entry %s/%u: %s",
-		   idx->name, key.data, num, db_strerror(rc));
+		   idx->name, (char*)key.data, num, db_strerror(rc));
 	}
     }
     return 0;
@@ -332,7 +332,7 @@ words_iter(struct dbidx *idx, unsigned num, DictEntry *ep)
 	rc = idx->dbp->put(idx->dbp, NULL, &key, &content, 0);
 	if (rc && rc != DB_KEYEXIST) {
 	    logmsg(L_ERR, 0, "%s: failed to insert entry %s/%u: %s",
-		   idx->name, key.data, num, db_strerror(rc));
+		   idx->name, (char*)key.data, num, db_strerror(rc));
 	}
     }
     free(buf);
@@ -452,7 +452,7 @@ yomi_generic_iter(struct dbidx *idx, unsigned num, DictEntry *ep,
 	
 	if (rc && rc != DB_KEYEXIST) {
 	    logmsg(L_ERR, 0, "%s: failed to insert entry `%s': %s",
-		   idx->name, key.data, db_strerror(rc));
+		   idx->name, (char*)key.data, db_strerror(rc));
 	}
 
 	if (end) {
@@ -481,7 +481,7 @@ yomi_generic_iter(struct dbidx *idx, unsigned num, DictEntry *ep,
 		free(buf);
 		if (rc && rc != DB_KEYEXIST) {
 		    logmsg(L_ERR, 0, "%s: failed to insert entry `%s': %s",
-			   idx->name, key.data, db_strerror(rc));
+			   idx->name, (char*)key.data, db_strerror(rc));
 		}
 	    } 
 	    text = end;

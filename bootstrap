@@ -570,16 +570,19 @@ for command in \
   'automake --add-missing --copy --force-missing';
 do
   if test "$command" = libtool; then
-    grep '^[	 ]*AM_PROG_LIBTOOL\>' configure.ac >/dev/null ||
+    grep '^[	 ]*LT_INIT\>' configure.ac >/dev/null ||
       continue
     command='libtoolize -c -f'
-    grep '^[ 	]*AC_LIBLTDL_[CI]' configure.ac >/dev/null &&
+    grep '^[	]*LT_WITH_LTDL' configure.ac > /dev/null &&
       command="$command --ltdl"
   fi
   echo "$0: $command ..."
   $command || exit
 done
 
+# FIXME: A kludge to avoid unnecessary data in the distribution.
+test -d libltdl/config && rm -rf libltdl/config
+test -d libltdl/m4 && rm -rf libltdl/m4
 
 # Get some extra files from gnulib, overriding existing files.
 for file in $gnulib_extra_files; do

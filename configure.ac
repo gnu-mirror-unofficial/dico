@@ -19,6 +19,7 @@ AC_INIT([dico], 1.99.90, [gray@gnu.org.ua])
 AC_CONFIG_SRCDIR([dictd/main.c])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_MACRO_DIR(m4)	
 AM_INIT_AUTOMAKE([1.9 gnits tar-ustar std-options])
 
 dnl Checks for programs.
@@ -29,10 +30,11 @@ AC_PROG_AWK
 AC_PROG_YACC
 AC_PROG_LEX
 
-AC_LIBLTDL_INSTALLABLE
-AC_LIBTOOL_DLOPEN
-AM_PROG_LIBTOOL
-AC_CONFIG_SUBDIRS(libltdl)
+LT_PREREQ(2.1a)
+LT_INIT	
+LT_CONFIG_LTDL_DIR([libltdl], [recursive])
+LT_WITH_LTDL
+AC_CONFIG_FILES([libltdl/Makefile])
 
 dnl Checks for libraries.
 AC_CHECK_LIB(socket, socket)
@@ -54,7 +56,6 @@ AC_TYPE_SIZE_T
 AC_HEADER_TIME
 
 dnl Checks for library functions.
-AC_FUNC_MEMCMP
 AC_FUNC_SETVBUF_REVERSED
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS(gethostname select socket strdup strerror strtol \
@@ -214,10 +215,6 @@ AH_BOTTOM([
 /* Provide placeholders for future i18n framework */
 #define N_(s) s
 #define _(s) s
-
-typedef unsigned char Uchar;
-typedef unsigned short Ushort;
-typedef unsigned int Uint;
 
 #if defined (SETVBUF_REVERSED)
 # define SETVBUF(str,buf,mode,size) setvbuf(str,mode,buf,size)

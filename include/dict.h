@@ -26,6 +26,10 @@
 #define YOMI_INDEX_NAME "yomi.db"
 #define ROMAJI_INDEX_NAME "romaji.db"
 
+typedef unsigned char Uchar;
+typedef unsigned short Ushort;
+typedef unsigned int Uint;
+
 enum index_id {
     index_jis,
     index_unicode,

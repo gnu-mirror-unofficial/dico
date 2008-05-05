@@ -38,7 +38,7 @@ AM_CFLAGS = -DSYSCONFIG=\"$(sysconfdir)\"
 AM_YFLAGS = -dtv
 AM_LFLAGS = -dvp
 
-LDADD=../lib/libdico.a  ../gnu/libgnu.la ../lib/libextra.a @DB_LIBS@
+LDADD=../lib/libdico.a  ../gnu/libgnu.a ../lib/libextra.a @DB_LIBS@
 INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu @DB_INCLUDES@
 
 config-lex.c: config-gram.h

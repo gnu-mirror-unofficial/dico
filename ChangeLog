@@ -1,5 +1,15 @@
 2008-05-05  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Change incorporation model of libltdl.
+	
+	* bootstrap, configure.ac: Require latest libtool. Change
+	incorporation model of libltdl.
+	* dictd/Makefile.am, makedict/Makefile.am (LDADD): Revert to using
+	libgnu.a.
+	* README-hacking: Update.
+
+2008-05-05  Sergey Poznyakoff  <gray@gnu.org.ua>
+	
 	Moved to the new project. Namespace cleanup.
 
 2008-05-04  Sergey Poznyakoff  <gray@gnu.org.ua>

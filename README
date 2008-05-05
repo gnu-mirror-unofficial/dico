@@ -1,7 +1,64 @@
-This is an experimental Japanese dictionary program that uses
-Jim Breen's dictionaries 'kanjidic' and 'edict' (both available
-from his site http://www.csse.monash.edu.au/~jwb/kanjidic.html).
+Dico README
+Copyright (C) 2008 Sergey Poznyakoff
+
+* Introduction
+
+This file contains brief information about configuring, testing
+and running Dico. Presently this (and the source files) is the only
+source of documentation about the project. Proper documentation will
+be supplied as soon as the project reaches beta status.
+
+* Overview
+
+Dico is an implementation of DICT server (RFC 2229).  It is fully
+modular: the daemon itself (dictd) provides only the server
+functionality, but it knows nothing about database formats.  Actual
+searches are performed by functions supplied in loadable modules.  A
+single module can serve one or more databases.
+
+At least two modules will be added in the nearest future: a module for
+handling dict.org databases, and a module for lookups in Jim Breen's
+Kanjidic and Edict databases.
+
+* Current state
+
+Dictd provides all the functionality required by RFC 2229, except for
+SASL commands and OPTION MIME.
+
+Database module interface is being worked upon.
+
+* Building
+
+As usual:
+
+ $ ./configure
+ $ make
+
+See INSTALL for the generic configure instructions.
  
-The program was inspired and greatly affected by Philip Brown's
-Kdrill.
+* Bug reporting.		
+
+Send bug reports to <gray@gnu.org.ua>. 
+
+
+* Copyright information:
+
+Copyright (C) 2008 Sergey Poznyakoff
+
+   Permission is granted to anyone to make or distribute verbatim copies
+   of this document as received, in any medium, provided that the
+   copyright notice and this permission notice are preserved,
+   thus giving the recipient permission to redistribute in turn.
+
+   Permission is granted to distribute modified versions
+   of this document, or of portions of it,
+   under the above conditions, provided also that they
+   carry prominent notices stating who last changed them.
+
+
+Local Variables:
+mode: outline
+paragraph-separate: "[ 	]*$"
+version-control: never
+End:
 

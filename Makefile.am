@@ -20,9 +20,9 @@ inputdictpath=@inputdictpath@
 ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS=include utils gnu lib libltdl dictd makedict
-#FIXME: add these when ready client fonts
+#FIXME: add these when ready: client fonts
 
-dict:
-	$(top_builddir)/makedict/makedict -cv -o$(dictdir) -d$(inputdictpath)
+#dict:
+#	$(top_builddir)/makedict/makedict -cv -o$(dictdir) -d$(inputdictpath)
 
-distcleancheck_listfiles = find . -type f -not -name 'bushu.pcf.gz' -print
+#distcleancheck_listfiles = find . -type f -not -name 'bushu.pcf.gz' -print

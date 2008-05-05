@@ -19,7 +19,7 @@ AC_INIT([dico], 1.99.90, [gray@gnu.org.ua])
 AC_CONFIG_SRCDIR([dictd/main.c])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
-AM_INIT_AUTOMAKE([1.9 tar-ustar])
+AM_INIT_AUTOMAKE([1.9 gnits tar-ustar std-options])
 
 dnl Checks for programs.
 AC_PROG_CC
@@ -267,8 +267,7 @@ AC_CONFIG_FILES([Makefile
 		 gnu/Makefile
                  lib/Makefile
                  dictd/Makefile
-                 makedict/Makefile
-                 client/Makefile
-                 fonts/Makefile])
+                 makedict/Makefile])
+
 AC_OUTPUT
 

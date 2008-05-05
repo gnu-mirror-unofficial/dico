@@ -13,7 +13,7 @@
 #include <Xaw.h>
 #include <X11/keysym.h>
 
-#include <gjdict.h>
+#include <dico.h>
 #include <client.h>
 #include <search.h>
 

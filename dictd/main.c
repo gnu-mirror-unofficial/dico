@@ -1,18 +1,18 @@
-/* This file is part of Gjdict.
+/* This file is part of Dico.
    Copyright (C) 1998-2000, 2008 Sergey Poznyakoff
 
-   This program is free software; you can redistribute it and/or modify
+   Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
-   This program is distributed in the hope that it will be useful,
+   Dico is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+   along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <dictd.h>
 #include <pwd.h>
@@ -55,7 +55,7 @@ char *initial_banner_text;
 char *help_text;
 
 /* List of sockets to listen on for the requests */
-dict_list_t /* of struct sockaddr */ listen_addr;
+dico_list_t /* of struct sockaddr */ listen_addr;
 
 /* User database for AUTH */
 dictd_user_db_t user_db;
@@ -64,13 +64,13 @@ dictd_user_db_t user_db;
 uid_t user_id;
 gid_t group_id;
 /* Retain these supplementary groups when switching to the user privileges. */
-dict_list_t /* of gid_t */ group_list;
+dico_list_t /* of gid_t */ group_list;
 
 /* List of configured dictionary handlers */
-dict_list_t /* of dictd_handler_t */ handler_list;
+dico_list_t /* of dictd_handler_t */ handler_list;
 
 /* List of configured dictionaries */
-dict_list_t /* of dictd_dictionary_t */ dictionary_list;
+dico_list_t /* of dictd_dictionary_t */ dictionary_list;
 
 
 /* Configuration */
@@ -122,14 +122,14 @@ set_supp_group(enum cfg_callback_command cmd,
 	       void *cb_data)
 {
     if (!group_list)
-	group_list = dict_list_create();
+	group_list = dico_list_create();
     
     if (value->type == TYPE_LIST)
-	dict_list_iterate(value->v.list, set_supp_group_iter, locus);
+	dico_list_iterate(value->v.list, set_supp_group_iter, locus);
     else {
 	struct group *group = getgrnam(value->v.string);
 	if (group)
-	    dict_list_append(group_list, (void*)group->gr_gid);
+	    dico_list_append(group_list, (void*)group->gr_gid);
 	else {
 	    config_error(locus, 0, _("%s: unknown group"), value->v.string);
 	    return 1;
@@ -249,9 +249,9 @@ set_handler(enum cfg_callback_command cmd,
 	
     case callback_section_end:
 	if (!handler_list)
-	    handler_list = dict_list_create();
+	    handler_list = dico_list_create();
 	han = *pdata;
-	dict_list_append(handler_list, han);
+	dico_list_append(handler_list, han);
 	*pdata = NULL;
 	break;
 	
@@ -283,9 +283,9 @@ set_dictionary(enum cfg_callback_command cmd,
 	
     case callback_section_end:
 	if (!dictionary_list)
-	    dictionary_list = dict_list_create();
+	    dictionary_list = dico_list_create();
 	dict = *pdata;
-	dict_list_append(dictionary_list, dict);
+	dico_list_append(dictionary_list, dict);
 	*pdata = NULL;
 	break;
 	
@@ -305,7 +305,7 @@ cmp_handler_ident(const void *item, const void *data)
 }
 
 int
-set_dict_handler(enum cfg_callback_command cmd,
+set_dico_handler(enum cfg_callback_command cmd,
 		 gd_locus_t *locus,
 		 void *varptr,
 		 config_value_t *value,
@@ -318,7 +318,7 @@ set_dict_handler(enum cfg_callback_command cmd,
 	return 1;
     }
 
-    han = dict_list_locate(handler_list, (void*) value->v.string,
+    han = dico_list_locate(handler_list, (void*) value->v.string,
 			   cmp_handler_ident);
     if (!han) {
 	config_error(locus, 0, _("%s: handler not declared"), value->v.string);
@@ -352,7 +352,7 @@ enable_capability(enum cfg_callback_command cmd,
 		  void *cb_data)
 {
     if (value->type == TYPE_LIST)
-	dict_list_iterate(value->v.list, set_capability, locus);
+	dico_list_iterate(value->v.list, set_capability, locus);
     else if (dictd_capa_add(value->v.string)) 
 	config_error(locus, 0, _("unknown capability: %s"), value->v.string);
     return 0;
@@ -379,7 +379,7 @@ struct config_keyword kwd_dictionary[] = {
       cfg_string, NULL, offsetof(dictd_dictionary_t, info) },
     { "handler", N_("name"), N_("Name of the handler for this dictionary."),
       cfg_string, NULL, offsetof(dictd_dictionary_t, handler),
-      set_dict_handler },
+      set_dico_handler },
     { NULL }
 };
 
@@ -514,7 +514,7 @@ cmp_dict_name(const void *item, const void *data)
 dictd_dictionary_t *
 find_dictionary(const char *name)
 {
-    return dict_list_locate(dictionary_list, (void*) name,
+    return dico_list_locate(dictionary_list, (void*) name,
 			    cmp_dict_name);
 }
 

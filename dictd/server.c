@@ -1,18 +1,18 @@
-/* This file is part of Gjdict.
+/* This file is part of Dico.
    Copyright (C) 2008 Sergey Poznyakoff
 
-   This program is free software; you can redistribute it and/or modify
+   Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
-   This program is distributed in the hope that it will be useful,
+   Dico is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+   along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <dictd.h>
 #include <sys/types.h>
@@ -44,31 +44,31 @@ void
 open_sockets()
 {
     size_t i;
-    dict_iterator_t itr;
+    dico_iterator_t itr;
     sockaddr_union_t *sp;
     struct stat st;
     int t;
     int socklen;
     char *p;
     
-    fdcount = dict_list_count(listen_addr);
+    fdcount = dico_list_count(listen_addr);
     if (fdcount == 0) {
 	/* Provide defaults */
 	struct sockaddr_in *sp = xmalloc(sizeof(*sp));
 	
 	if (!listen_addr)
-	    listen_addr = dict_list_create();
+	    listen_addr = dico_list_create();
 	sp->sin_family = AF_INET;
 	sp->sin_addr.s_addr = INADDR_ANY;
 	sp->sin_port = htons(DICT_PORT);
-	dict_list_append(listen_addr, sp);
+	dico_list_append(listen_addr, sp);
 	fdcount = 1;
     }
     fdtab = xcalloc(fdcount, sizeof fdtab[0]);
     fdmax = 0;
-    itr = dict_iterator_create(listen_addr);
-    for (i = 0, sp = dict_iterator_first(itr); sp;
-	 sp = dict_iterator_next(itr)) {
+    itr = dico_iterator_create(listen_addr);
+    for (i = 0, sp = dico_iterator_first(itr); sp;
+	 sp = dico_iterator_next(itr)) {
 	int fd = socket(address_family_to_domain(sp->s.sa_family),
 			SOCK_STREAM, 0);
 	if (fd == -1) {
@@ -129,7 +129,7 @@ open_sockets()
 	if (fd > fdmax)
 	    fdmax = fd;
     }
-    dict_iterator_destroy(&itr);
+    dico_iterator_destroy(&itr);
     fdcount = i;
 
     if (fdcount == 0)

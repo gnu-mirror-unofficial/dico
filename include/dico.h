@@ -1,5 +1,5 @@
-#ifndef __gjdict_h
-#define __gjdict_h
+#ifndef __dico_h
+#define __dico_h
 
 #include <sys/types.h>
 #include <stdlib.h>
@@ -10,12 +10,12 @@
 #endif
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
-#ifndef GD_ARG_UNUSED
-# define GD_ARG_UNUSED __attribute__ ((__unused__))
+#ifndef DICO_ARG_UNUSED
+# define DICO_ARG_UNUSED __attribute__ ((__unused__))
 #endif
 
-#ifndef GD_PRINTFLIKE
-# define GD_PRINTFLIKE(fmt,narg) __attribute__ ((__format__ (__printf__, fmt, narg)))
+#ifndef DICO_PRINTFLIKE
+# define DICO_PRINTFLIKE(fmt,narg) __attribute__ ((__format__ (__printf__, fmt, narg)))
 #endif
 
 
@@ -38,19 +38,19 @@ typedef UINT4 IPADDR;
 extern const char *program_name;
 void set_program_name(char *name);
 
-typedef void (*gjdict_log_printer_t) (int /* lvl */,
-				      int /* exitcode */,
-				      int /* errcode */,
-				      const char * /* fmt */,
-				      va_list);
+typedef void (*dico_log_printer_t) (int /* lvl */,
+			            int /* exitcode */,
+				    int /* errcode */,
+				    const char * /* fmt */,
+				    va_list);
 void _stderr_log_printer(int, int, int, const char *, va_list);
 
-void set_log_printer(gjdict_log_printer_t prt);
+void set_log_printer(dico_log_printer_t prt);
 void vlogmsg(int lvl, int errcode, const char *fmt, va_list ap);
 void logmsg(int lvl, int errcode, const char *fmt, ...)
-    GD_PRINTFLIKE(3,4);
+    DICO_PRINTFLIKE(3,4);
 void die(int exitcode, int lvl, int errcode, char *fmt, ...)
-    GD_PRINTFLIKE(4,5);
+    DICO_PRINTFLIKE(4,5);
 
 char * ip_hostname(IPADDR ipaddr);
 IPADDR get_ipaddr(char *host);
@@ -66,52 +66,52 @@ void *xrealloc(void *ptr, size_t size);
 
 
 /* Lists */
-typedef struct list *dict_list_t;
-typedef struct iterator *dict_iterator_t;
+typedef struct list *dico_list_t;
+typedef struct iterator *dico_iterator_t;
 
-typedef int (*dict_list_iterator_t)(void *item, void *data);
-typedef int (*dict_list_comp_t)(const void *, const void *);
+typedef int (*dico_list_iterator_t)(void *item, void *data);
+typedef int (*dico_list_comp_t)(const void *, const void *);
 
-dict_list_t dict_list_create(void);
-void dict_list_destroy(dict_list_t *list, dict_list_iterator_t free, void *data);
-void dict_list_iterate(dict_list_t list, dict_list_iterator_t itr, void *data);
-void *dict_list_item(dict_list_t list, size_t n);
-size_t dict_list_count(dict_list_t list);
-void dict_list_append(dict_list_t list, void *data);
-void dict_list_prepend(dict_list_t list, void *data);
-int dict_list_insert_sorted(dict_list_t list, void *data, dict_list_comp_t cmp);
-dict_list_t  dict_list_intersect(dict_list_t a, dict_list_t b,
-				 dict_list_comp_t cmp);
+dico_list_t dico_list_create(void);
+void dico_list_destroy(dico_list_t *list, dico_list_iterator_t free, void *data);
+void dico_list_iterate(dico_list_t list, dico_list_iterator_t itr, void *data);
+void *dico_list_item(dico_list_t list, size_t n);
+size_t dico_list_count(dico_list_t list);
+void dico_list_append(dico_list_t list, void *data);
+void dico_list_prepend(dico_list_t list, void *data);
+int dico_list_insert_sorted(dico_list_t list, void *data, dico_list_comp_t cmp);
+dico_list_t  dico_list_intersect(dico_list_t a, dico_list_t b,
+				 dico_list_comp_t cmp);
 
-#define dict_list_push dict_list_prepend
-void *dict_list_pop(dict_list_t list);
+#define dico_list_push dico_list_prepend
+void *dico_list_pop(dico_list_t list);
 
-void *dict_list_locate(dict_list_t list, void *data, dict_list_comp_t cmp);
-void *dict_list_remove(dict_list_t list, void *data, dict_list_comp_t cmp);
+void *dico_list_locate(dico_list_t list, void *data, dico_list_comp_t cmp);
+void *dico_list_remove(dico_list_t list, void *data, dico_list_comp_t cmp);
 
-void *dict_iterator_current(dict_iterator_t itr);
-dict_iterator_t dict_iterator_create(dict_list_t list);
-void dict_iterator_destroy(dict_iterator_t *ip);
-void *dict_iterator_first(dict_iterator_t ip);
-void *dict_iterator_next(dict_iterator_t ip);
+void *dico_iterator_current(dico_iterator_t itr);
+dico_iterator_t dico_iterator_create(dico_list_t list);
+void dico_iterator_destroy(dico_iterator_t *ip);
+void *dico_iterator_first(dico_iterator_t ip);
+void *dico_iterator_next(dico_iterator_t ip);
 
-void dict_iterator_remove_current(dict_iterator_t ip);
-void dict_iterator_set_data(dict_iterator_t ip, void *data);
+void dico_iterator_remove_current(dico_iterator_t ip);
+void dico_iterator_set_data(dico_iterator_t ip, void *data);
 
 
 /* Association lists */
-struct dict_assoc {
+struct dico_assoc {
     char *key;
     char *value;
 };
 
-typedef dict_list_t dict_assoc_list_t;
+typedef dico_list_t dico_assoc_list_t;
 
-dict_assoc_list_t dict_assoc_create(void);
-void dict_assoc_destroy(dict_assoc_list_t *passoc);
-void dict_assoc_add(dict_assoc_list_t assoc, const char *key, const char *value);
-const char *dict_assoc_find(dict_assoc_list_t assoc, const char *key);
-void dict_assoc_remove(dict_assoc_list_t assoc, const char *key);
+dico_assoc_list_t dico_assoc_create(void);
+void dico_assoc_destroy(dico_assoc_list_t *passoc);
+void dico_assoc_add(dico_assoc_list_t assoc, const char *key, const char *value);
+const char *dico_assoc_find(dico_assoc_list_t assoc, const char *key);
+void dico_assoc_remove(dico_assoc_list_t assoc, const char *key);
 
 
 
@@ -130,21 +130,21 @@ int xlat_c_string(struct xlat_tab *tab, const char *string, int flags,
 
 
 /* URLs */
-struct dict_url {
+struct dico_url {
     char *string;
     char *proto;
     char *host;
     char *path;
     char *user;
     char *passwd;
-    dict_assoc_list_t args;
+    dico_assoc_list_t args;
 };
 
-typedef struct dict_url *dict_url_t;
-int dict_url_parse(dict_url_t *purl, const char *str);
-void dict_url_destroy(dict_url_t *purl);
-const char *dict_url_get_arg(dict_url_t url, const char *argname);
-char *dict_url_full_path(dict_url_t url);
+typedef struct dico_url *dico_url_t;
+int dico_url_parse(dico_url_t *purl, const char *str);
+void dico_url_destroy(dico_url_t *purl);
+const char *dico_url_get_arg(dico_url_t url, const char *argname);
+char *dico_url_full_path(dico_url_t url);
 
 
 
@@ -155,7 +155,7 @@ void sockaddr_to_str(const struct sockaddr *sa, int salen,
 char *sockaddr_to_astr(const struct sockaddr *sa, int salen);
 
 
-int switch_to_privs (uid_t uid, gid_t gid, dict_list_t retain_groups);
+int switch_to_privs (uid_t uid, gid_t gid, dico_list_t retain_groups);
 
 
 size_t utf8_char_width(const unsigned char *p);

@@ -1,4 +1,4 @@
-# List of gnulib modules needed for Gjdictd.
+# List of gnulib modules needed for Dico.
 # A module name per line. Empty lines and comments are ignored.
 
 c-strcase

@@ -1,18 +1,18 @@
-/* This file is part of Gjdict.
+/* This file is part of Dico.
    Copyright (C) 1998-2000, 2008 Sergey Poznyakoff
 
-   This program is free software; you can redistribute it and/or modify
+   Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
-   This program is distributed in the hope that it will be useful,
+   Dico is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+   along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <dictd.h>
 #include <sys/types.h>
@@ -20,9 +20,9 @@
 #include <unistd.h>
 
 static int
-dbtext_open(void **handle, dict_url_t url)
+dbtext_open(void **handle, dico_url_t url)
 {
-    char *dirname = dict_url_full_path(url);
+    char *dirname = dico_url_full_path(url);
     struct stat st;
     if (!dirname) {
 	logmsg(L_ERR, 0, _("cannot get path from URL `%s'"), url->string);
@@ -90,8 +90,8 @@ static int
 dbtext_get_password(void *handle, const char *qpw, const char *key,
 		    char **ppass)
 {
-    dict_url_t url = handle;
-    char *dir = dict_url_full_path(url);
+    dico_url_t url = handle;
+    char *dir = dico_url_full_path(url);
     char *full_name;
     FILE *fp = open_file(dir, qpw, &full_name);
     int rc;
@@ -118,8 +118,8 @@ static int
 dbtext_get_groups(void *handle, const char *qgr, const char *key,
 		  char ***pgroups)
 {
-    dict_url_t url = handle;
-    char *dir = dict_url_full_path(url);
+    dico_url_t url = handle;
+    char *dir = dico_url_full_path(url);
     char *full_name;
     FILE *fp = open_file(dir, qgr, &full_name);
     int rc;

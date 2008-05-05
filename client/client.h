@@ -144,7 +144,7 @@ typedef struct {
 } Config;
 
 
-#include <gjdict.h>
+#include <dico.h>
 #include "options.h"
 
 extern IPADDR server_addr;

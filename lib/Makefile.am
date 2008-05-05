@@ -1,8 +1,8 @@
 INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/gnu
 
-noinst_LIBRARIES=libgjdict.a libextra.a
+noinst_LIBRARIES=libdico.a libextra.a
 
-libgjdict_a_SOURCES=\
+libdico_a_SOURCES=\
  assoc.c\
  diag.c\
  iputil.c\

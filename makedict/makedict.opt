@@ -1,18 +1,18 @@
-/* This file is part of Gjdict.                  -* c -*-
+/* This file is part of Dico.                  -* c -*-
    Copyright (C) 1998-2000, 2008 Sergey Poznyakoff
 
-   This program is free software; you can redistribute it and/or modify
+   Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
-   This program is distributed in the hope that it will be useful,
+   Dico is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+   along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <makedict.h>
 #include <stdlib.h>
@@ -21,7 +21,7 @@
 #include <ctype.h>
 #include <getopt.h>
 #include <gettext.h>
-#include <gjdict.h>
+#include <dico.h>
 #include <stdarg.h>
 #include <limits.h>
 
@@ -59,12 +59,6 @@ END
 
 OPTION(verbose, v,,
        [<Increase verbosity level.>])
-BEGIN
-   verbose++;
-END
-
-OPTION(verbose,v,,
-       [<Increase verbosity level>])
 BEGIN
    verbose++;
 END

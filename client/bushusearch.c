@@ -11,7 +11,7 @@
 #include <X11/Shell.h>
 #include <Xaw.h>
 #include <X11/keysym.h>
-#include <gjdict.h>
+#include <dico.h>
 #include <dict.h>
 #include <bushu.h>
 #include <client.h>

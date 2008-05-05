@@ -1,18 +1,18 @@
-/* This file is part of Gjdict.
+/* This file is part of Dico.
    Copyright (C) 2008 Sergey Poznyakoff
 
-   This program is free software; you can redistribute it and/or modify
+   Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
-   This program is distributed in the hope that it will be useful,
+   Dico is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+   along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <dictd.h>
 
@@ -77,10 +77,10 @@ dictd_show_info(stream_t str, int argc, char **argv)
 void
 dictd_show_databases(stream_t str, int argc, char **argv)
 {
-    size_t count = dict_list_count(dictionary_list);
+    size_t count = dico_list_count(dictionary_list);
     stream_printf(str, "110 %lu databases present\r\n",
 		  (unsigned long) count);
-    dict_list_iterate(dictionary_list, _show_database, str);
+    dico_list_iterate(dictionary_list, _show_database, str);
     stream_writez(str, ".\r\n");
     stream_writez(str, "250 ok\r\n");    
 }
@@ -130,14 +130,14 @@ struct dictd_command command_tab[] = {
     { NULL }
 };
 
-dict_list_t /* of struct dictd_command */ command_list;
+dico_list_t /* of struct dictd_command */ command_list;
 
 void
 dictd_add_command(struct dictd_command *cmd)
 {
     if (!command_list)
-	command_list = dict_list_create();
-    dict_list_append(command_list, cmd);
+	command_list = dico_list_create();
+    dico_list_append(command_list, cmd);
 }
 
 void
@@ -173,7 +173,7 @@ _print_help(void *item, void *data)
 void
 dictd_show_std_help(stream_t str)
 {
-    dict_list_iterate(command_list, _print_help, str);
+    dico_list_iterate(command_list, _print_help, str);
 }
 
 
@@ -212,7 +212,7 @@ locate_command(int argc, char **argv)
     struct locate_data ld;
     ld.argc = argc;
     ld.argv = argv;
-    return dict_list_locate(command_list, &ld, _cmd_arg_cmp);
+    return dico_list_locate(command_list, &ld, _cmd_arg_cmp);
 }
 
 void

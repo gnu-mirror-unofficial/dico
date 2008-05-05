@@ -17,7 +17,7 @@
 #include <Xaw.h>
 #include <X11/Composite.h>
 
-#include <gjdict.h>
+#include <dico.h>
 #include <client.h>
 #include <gjdict.xbm>
 

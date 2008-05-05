@@ -9,7 +9,7 @@
 #include <X11/keysym.h>
 #include <stdlib.h>
 
-#include <gjdict.h>
+#include <dico.h>
 #include <client.h>
 #include <search.h>
 #define obstack_chunk_alloc XtMalloc

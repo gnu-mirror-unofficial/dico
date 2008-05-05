@@ -1,18 +1,18 @@
-/* This file is part of Gjdict.
+/* This file is part of Dico.
    Copyright (C) 2007, 2008 Sergey Poznyakoff
 
-   This program is free software; you can redistribute it and/or modify
+   Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
-   This program is distributed in the hope that it will be useful,
+   Dico is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+   along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -23,16 +23,16 @@
 #include <grp.h>
 #include <errno.h>
 #include <xalloc.h>
-#include <gjdict.h>
+#include <dico.h>
 
 /* Switch to the given UID/GID */
 int
-switch_to_privs (uid_t uid, gid_t gid, dict_list_t retain_groups)
+switch_to_privs (uid_t uid, gid_t gid, dico_list_t retain_groups)
 {
     int rc = 0;
     gid_t *emptygidset;
     size_t size = 1, j = 1;
-    dict_iterator_t itr;
+    dico_iterator_t itr;
     void *gp;
     
     if (uid == 0) {
@@ -41,16 +41,16 @@ switch_to_privs (uid_t uid, gid_t gid, dict_list_t retain_groups)
     }
 
     /* Create a list of supplementary groups */
-    size = dict_list_count(retain_groups);
+    size = dico_list_count(retain_groups);
     size++;
     emptygidset = xcalloc(size, sizeof emptygidset[0]);
     emptygidset[0] = gid ? gid : getegid();
 
-    itr = dict_iterator_create(retain_groups);
-    for (gp = dict_iterator_first(itr); gp;
-	 gp = dict_iterator_next(itr)) 
+    itr = dico_iterator_create(retain_groups);
+    for (gp = dico_iterator_first(itr); gp;
+	 gp = dico_iterator_next(itr)) 
 	emptygidset[j++] = (gid_t) gp;
-    dict_iterator_destroy(&itr);
+    dico_iterator_destroy(&itr);
     
     /* Reset group permissions */
     if (geteuid() == 0 && setgroups(j, emptygidset)) {

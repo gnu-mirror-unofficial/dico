@@ -1,26 +1,26 @@
 %{
-/* This file is part of Gjdict.
+/* This file is part of Dico.
    Copyright (C) 2008 Sergey Poznyakoff
 
-   This program is free software; you can redistribute it and/or modify
+   Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
-   This program is distributed in the hope that it will be useful,
+   Dico is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+   along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <dictd.h>
 #include <config-gram.h>
 
 static struct config_keyword config_keywords;
 static struct config_keyword *cursect;
-static dict_list_t sections;
+static dico_list_t sections;
 int config_error_count;    
 
 void *target_ptr(struct config_keyword *kwp);
@@ -35,7 +35,7 @@ void process_ident(struct config_keyword *kwp, config_value_t *value);
 %union {
     char *string;
     config_value_t value;
-    dict_list_t list;
+    dico_list_t list;
     struct config_keyword *kw;
 }
 
@@ -114,27 +114,27 @@ string  : STRING
 
 slist   : slist0
           {
-	      dict_iterator_t itr = dict_iterator_create($1);
+	      dico_iterator_t itr = dico_iterator_create($1);
 	      char *p;
 	      line_begin();
-	      for (p = dict_iterator_first(itr); p;
-		   p = dict_iterator_next(itr)) 
+	      for (p = dico_iterator_first(itr); p;
+		   p = dico_iterator_next(itr)) 
 		  line_add(p, strlen(p));
 	      $$ = line_finish0();
-	      dict_iterator_destroy(&itr);
-	      dict_list_destroy(&$1, NULL, NULL);
+	      dico_iterator_destroy(&itr);
+	      dico_list_destroy(&$1, NULL, NULL);
 	  }
         ;
 
 slist0  : QSTRING QSTRING
           {
-	      $$ = dict_list_create();
-	      dict_list_append($$, $1);
-	      dict_list_append($$, $2);
+	      $$ = dico_list_create();
+	      dico_list_append($$, $1);
+	      dico_list_append($$, $2);
 	  }
         | slist0 QSTRING
           {
-	      dict_list_append($1, $2);
+	      dico_list_append($1, $2);
 	      $$ = $1;
 	  }
         ;
@@ -151,12 +151,12 @@ list    : '(' values ')'
 
 values  : value
           {
-	      $$ = dict_list_create();
-	      dict_list_append($$, config_value_dup(&$1));
+	      $$ = dico_list_create();
+	      dico_list_append($$, config_value_dup(&$1));
 	  }
         | values ',' value
           {
-	      dict_list_append($1, config_value_dup(&$3));
+	      dico_list_append($1, config_value_dup(&$3));
 	      $$ = $1;
 	  }
         ;
@@ -200,7 +200,7 @@ config_parse(const char *name)
     if (config_lex_begin(name))
 	return 1;
     cursect = &config_keywords;
-    dict_list_destroy(&sections, NULL, NULL);
+    dico_list_destroy(&sections, NULL, NULL);
     rc = yyparse();
     config_lex_end();
     if (config_error_count)
@@ -236,8 +236,8 @@ stmt_begin(struct config_keyword *kwp, config_value_t tag)
     void *target;
 
     if (!sections)
-	sections = dict_list_create();
-    dict_list_push(sections, cursect);
+	sections = dico_list_create();
+    dico_list_push(sections, cursect);
     if (kwp) {
 	target = target_ptr(kwp);
 	cursect = kwp;
@@ -261,7 +261,7 @@ stmt_end(struct config_keyword *kwp)
 			  kwp ? target_ptr(kwp) : NULL,
 			  NULL,
 			  &cursect->callback_data);
-    cursect = dict_list_pop(sections);
+    cursect = dico_list_pop(sections);
 }
 
 int
@@ -592,14 +592,14 @@ process_ident(struct config_keyword *kwp, config_value_t *value)
 		      &kwp->callback_data);
     else if (value->type == TYPE_LIST) {
 	if (CFG_IS_LIST(kwp->type)) {
-	    dict_iterator_t itr = dict_iterator_create(value->v.list);
+	    dico_iterator_t itr = dico_iterator_create(value->v.list);
 	    enum config_data_type type = CFG_TYPE(kwp->type);
 	    int num = 1;
 	    void *p;
-	    dict_list_t list = dict_list_create();
+	    dico_list_t list = dico_list_create();
 	    
-	    for (p = dict_iterator_first(itr); p;
-		 p = dict_iterator_next(itr), num++) {
+	    for (p = dico_iterator_first(itr); p;
+		 p = dico_iterator_next(itr), num++) {
 		config_value_t *vp = p;
 		size_t size;
 
@@ -619,20 +619,20 @@ process_ident(struct config_keyword *kwp, config_value_t *value)
 		else {
 		    void *ptr = xmalloc(size);
 		    if (string_convert(ptr, type, vp->v.string) == 0) 
-			dict_list_append(list, ptr);
+			dico_list_append(list, ptr);
 		    else
 			free(ptr);
 		}
 	    }
-	    dict_iterator_destroy(&itr);
-	    *(dict_list_t*)target = list;
+	    dico_iterator_destroy(&itr);
+	    *(dico_list_t*)target = list;
 	} else {
 	    config_error(&locus, 0, _("incompatible data type for `%s'"),
 			 kwp->ident);
 	    return;
 	}
     } else if (CFG_IS_LIST(kwp->type)) {
-	dict_list_t list = dict_list_create();
+	dico_list_t list = dico_list_create();
 	enum config_data_type type = CFG_TYPE(kwp->type);
 	size_t size;
 	void *ptr;
@@ -647,11 +647,11 @@ process_ident(struct config_keyword *kwp, config_value_t *value)
 	ptr = xmalloc(size);
 	if (string_convert(ptr, type, value->v.string)) {
 	    free(ptr);
-	    dict_list_destroy(&list, NULL, NULL);
+	    dico_list_destroy(&list, NULL, NULL);
 	    return;
 	}
-	dict_list_append(list, ptr);
-	*(dict_list_t*)target = list;
+	dico_list_append(list, ptr);
+	*(dico_list_t*)target = list;
     } else
 	string_convert(target, CFG_TYPE(kwp->type), value->v.string);
 }

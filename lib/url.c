@@ -1,23 +1,23 @@
 /* This file is part of Gjdcit
    Copyright (C) 2003,2004,2007,2008 Sergey Poznyakoff
   
-   This program is free software; you can redistribute it and/or modify
+   Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
-   This program is distributed in the hope that it will be useful,
+   Dico is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+   along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
-#include <gjdict.h>
+#include <dico.h>
 #include <string.h>
 
 /* proto://[user[:password]@][host/]path[;arg=str[;arg=str...] */
@@ -32,7 +32,7 @@ alloc_string(char **sptr, const char *start, const char *end)
 }
 
 static void
-url_parse_arg(dict_url_t url, char *p, char *q)
+url_parse_arg(dico_url_t url, char *p, char *q)
 {
     char *s;
     char *key, *value = NULL;
@@ -43,21 +43,21 @@ url_parse_arg(dict_url_t url, char *p, char *q)
     alloc_string(&key, p, s);
     if (s != q)
 	alloc_string(&value, s + 1, q);
-    dict_assoc_add(url->args, key, value);
+    dico_assoc_add(url->args, key, value);
     free(key);
     free(value);
     
 }
 
 static int
-url_get_args(dict_url_t url, char **str)
+url_get_args(dico_url_t url, char **str)
 {
     char *p;
 
     if (!**str)
 	return 0;
 
-    url->args = dict_assoc_create();
+    url->args = dico_assoc_create();
     for (p = *str;;) {
 	char *q = strchr (p, ';');
 	if (q) {
@@ -72,7 +72,7 @@ url_get_args(dict_url_t url, char **str)
 }
 
 static int
-url_get_path(dict_url_t url, char **str)
+url_get_path(dico_url_t url, char **str)
 {
     char *p;
     
@@ -89,7 +89,7 @@ url_get_path(dict_url_t url, char **str)
 
 /* On input str points at the beginning of host part */
 static int
-url_get_host(dict_url_t url, char **str)
+url_get_host(dico_url_t url, char **str)
 {
     char *p;
 
@@ -104,7 +104,7 @@ url_get_host(dict_url_t url, char **str)
 
 /* On input str points past the ':' */
 static int
-url_get_passwd(dict_url_t url, char **str)
+url_get_passwd(dico_url_t url, char **str)
 {
     char *p;
 
@@ -119,7 +119,7 @@ url_get_passwd(dict_url_t url, char **str)
 
 /* On input str points past the mech:// part */
 static int
-url_get_user (dict_url_t url, char **str)
+url_get_user (dico_url_t url, char **str)
 {
     char *p;
 
@@ -141,7 +141,7 @@ url_get_user (dict_url_t url, char **str)
 }
 
 static int
-url_get_proto(dict_url_t url, const char *str)
+url_get_proto(dico_url_t url, const char *str)
 {
     char *p;
     
@@ -160,9 +160,9 @@ url_get_proto(dict_url_t url, const char *str)
 }
 
 void
-dict_url_destroy(dict_url_t *purl)
+dico_url_destroy(dico_url_t *purl)
 {
-    dict_url_t url = *purl;
+    dico_url_t url = *purl;
 
     free(url->string);
     free(url->proto);
@@ -170,21 +170,21 @@ dict_url_destroy(dict_url_t *purl)
     free(url->path);
     free(url->user);
     free(url->passwd);
-    dict_assoc_destroy(&url->args);
+    dico_assoc_destroy(&url->args);
     free(url);
     *purl = NULL;
 }
 
 int
-dict_url_parse(dict_url_t *purl, const char *str)
+dico_url_parse(dico_url_t *purl, const char *str)
 {
     int rc;
-    dict_url_t url;
+    dico_url_t url;
     
     url = xzalloc(sizeof (*url));
     rc = url_get_proto(url, str);
     if (rc)
-	dict_url_destroy(&url);
+	dico_url_destroy(&url);
     else {
 	url->string = strdup(str);
 	*purl = url;
@@ -193,7 +193,7 @@ dict_url_parse(dict_url_t *purl, const char *str)
 }
 
 char *
-dict_url_full_path(dict_url_t url)
+dico_url_full_path(dico_url_t url)
 {
     char *path;
     size_t size = 1;
@@ -216,7 +216,7 @@ dict_url_full_path(dict_url_t url)
 }
 
 const char *
-dict_url_get_arg(dict_url_t url, const char *argname)
+dico_url_get_arg(dico_url_t url, const char *argname)
 {
-    return dict_assoc_find(url->args, argname);
+    return dico_assoc_find(url->args, argname);
 }

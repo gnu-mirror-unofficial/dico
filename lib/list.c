@@ -1,23 +1,23 @@
 /* This file is part of Gjdcit
    Copyright (C) 2003,2004,2007,2008 Sergey Poznyakoff
   
-   This program is free software; you can redistribute it and/or modify
+   Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
-   This program is distributed in the hope that it will be useful,
+   Dico is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+   along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
-#include <gjdict.h>
+#include <dico.h>
 #include <sys/types.h>
 #include <stdlib.h>
 
@@ -34,13 +34,13 @@ struct list {
 
 struct iterator {
     struct iterator *next;
-    dict_list_t list;
+    dico_list_t list;
     struct list_entry *cur;
     int advanced;
 };
 
 struct list *
-dict_list_create()
+dico_list_create()
 {
     struct list *p = xmalloc(sizeof(*p));
     p->head = p->tail = NULL;
@@ -49,7 +49,7 @@ dict_list_create()
 }
 
 void
-dict_list_destroy(struct list **plist, dict_list_iterator_t user_free,
+dico_list_destroy(struct list **plist, dico_list_iterator_t user_free,
 		  void *data)
 {
     struct list_entry *p;
@@ -70,7 +70,7 @@ dict_list_destroy(struct list **plist, dict_list_iterator_t user_free,
 }
 
 void *
-dict_iterator_current(dict_iterator_t ip)
+dico_iterator_current(dico_iterator_t ip)
 {
     if (!ip)
 	return NULL;
@@ -78,7 +78,7 @@ dict_iterator_current(dict_iterator_t ip)
 }
 
 static void
-dict_iterator_attach(dict_iterator_t itr, dict_list_t list)
+dico_iterator_attach(dico_iterator_t itr, dico_list_t list)
 {
     itr->list = list;
     itr->cur = NULL;
@@ -87,10 +87,10 @@ dict_iterator_attach(dict_iterator_t itr, dict_list_t list)
     list->itr = itr;	
 }
 
-static dict_iterator_t 
-dict_iterator_detach(dict_iterator_t iter)
+static dico_iterator_t 
+dico_iterator_detach(dico_iterator_t iter)
 {
-    dict_iterator_t cur, prev;
+    dico_iterator_t cur, prev;
     
     for (cur = iter->list->itr, prev = NULL;
 	 cur;
@@ -107,66 +107,66 @@ dict_iterator_detach(dict_iterator_t iter)
     return cur;
 }
 
-dict_iterator_t 
-dict_iterator_create(dict_list_t list)
+dico_iterator_t 
+dico_iterator_create(dico_list_t list)
 {
-    dict_iterator_t itr;
+    dico_iterator_t itr;
     
     if (!list)
 	return NULL;
     itr = xmalloc(sizeof(*itr));
-    dict_iterator_attach(itr, list);
+    dico_iterator_attach(itr, list);
     return itr;
 }
 
 void
-dict_iterator_destroy(dict_iterator_t *ip)
+dico_iterator_destroy(dico_iterator_t *ip)
 {
-    dict_iterator_t itr;
+    dico_iterator_t itr;
     
     if (!ip || !*ip)
 	return;
-    itr = dict_iterator_detach(*ip);
+    itr = dico_iterator_detach(*ip);
     if (itr)
 	free(itr);
     *ip = NULL;
 }
 		
 void *
-dict_iterator_first(dict_iterator_t ip)
+dico_iterator_first(dico_iterator_t ip)
 {
     if (!ip)
 	return NULL;
     ip->cur = ip->list->head;
     ip->advanced = 0;
-    return dict_iterator_current(ip);
+    return dico_iterator_current(ip);
 }
 
 void *
-dict_iterator_next(dict_iterator_t ip)
+dico_iterator_next(dico_iterator_t ip)
 {
     if (!ip || !ip->cur)
 	return NULL;
     if (!ip->advanced)
 	ip->cur = ip->cur->next;
     ip->advanced = 0;
-    return dict_iterator_current(ip);
+    return dico_iterator_current(ip);
 }	
 
 void
-dict_iterator_remove_current(dict_iterator_t ip)
+dico_iterator_remove_current(dico_iterator_t ip)
 {
-    dict_list_remove(ip->list, ip->cur->data, NULL);
+    dico_list_remove(ip->list, ip->cur->data, NULL);
 }
 
 void
-dict_iterator_set_data(dict_iterator_t ip, void *data)
+dico_iterator_set_data(dico_iterator_t ip, void *data)
 {
     ip->cur->data = data;
 }
 
 static void
-_iterator_advance(dict_iterator_t ip, struct list_entry *e)
+_iterator_advance(dico_iterator_t ip, struct list_entry *e)
 {
     for (; ip; ip = ip->next) {
 	if (ip->cur == e) {
@@ -177,7 +177,7 @@ _iterator_advance(dict_iterator_t ip, struct list_entry *e)
 }
 
 void *
-dict_list_item(struct list *list, size_t n)
+dico_list_item(struct list *list, size_t n)
 {
     struct list_entry *p;
     if (!list || n >= list->count)
@@ -188,7 +188,7 @@ dict_list_item(struct list *list, size_t n)
 }
 
 size_t
-dict_list_count(struct list *list)
+dico_list_count(struct list *list)
 {
     if (!list)
 	return 0;
@@ -196,7 +196,7 @@ dict_list_count(struct list *list)
 }
 
 void
-dict_list_append(struct list *list, void *data)
+dico_list_append(struct list *list, void *data)
 {
     struct list_entry *ep;
     
@@ -214,7 +214,7 @@ dict_list_append(struct list *list, void *data)
 }
 
 void
-dict_list_prepend(struct list *list, void *data)
+dico_list_prepend(struct list *list, void *data)
 {
     struct list_entry *ep;
     
@@ -236,7 +236,7 @@ cmp_ptr(const void *a, const void *b)
 }
 
 void *
-dict_list_remove(struct list *list, void *data, dict_list_comp_t cmp)
+dico_list_remove(struct list *list, void *data, dico_list_comp_t cmp)
 {
     struct list_entry *p, *prev;
 
@@ -270,31 +270,31 @@ dict_list_remove(struct list *list, void *data, dict_list_comp_t cmp)
 }
 
 void *
-dict_list_pop(struct list *list)
+dico_list_pop(struct list *list)
 {
-    return dict_list_remove(list, list->head->data, NULL);
+    return dico_list_remove(list, list->head->data, NULL);
 }
 
 /* Note: if modifying this function, make sure it does not allocate any
    memory! */
 void
-dict_list_iterate(struct list *list, dict_list_iterator_t func, void *data)
+dico_list_iterate(struct list *list, dico_list_iterator_t func, void *data)
 {
     struct iterator itr;
     void *p;
 	
     if (!list)
 	return;
-    dict_iterator_attach(&itr, list);
-    for (p = dict_iterator_first(&itr); p; p = dict_iterator_next(&itr)) {
+    dico_iterator_attach(&itr, list);
+    for (p = dico_iterator_first(&itr); p; p = dico_iterator_next(&itr)) {
 	if (func(p, data))
 	    break;
     }
-    dict_iterator_detach(&itr);
+    dico_iterator_detach(&itr);
 }
 
 void *
-dict_list_locate(struct list *list, void *data, dict_list_comp_t cmp)
+dico_list_locate(struct list *list, void *data, dico_list_comp_t cmp)
 {
     struct list_entry *cur;
     if (!list)
@@ -308,7 +308,7 @@ dict_list_locate(struct list *list, void *data, dict_list_comp_t cmp)
 }
 	
 int
-dict_list_insert_sorted(struct list *list, void *data, dict_list_comp_t cmp)
+dico_list_insert_sorted(struct list *list, void *data, dico_list_comp_t cmp)
 {
     struct list_entry *cur, *prev;
     
@@ -322,9 +322,9 @@ dict_list_insert_sorted(struct list *list, void *data, dict_list_comp_t cmp)
 	    break;
     
     if (!prev) {
-	dict_list_prepend(list, data);
+	dico_list_prepend(list, data);
     } else if (!cur) {
-	dict_list_append(list, data);
+	dico_list_append(list, data);
     } else {
 	struct list_entry *ep = xmalloc(sizeof(*ep));
 	ep->data = data;
@@ -338,21 +338,21 @@ dict_list_insert_sorted(struct list *list, void *data, dict_list_comp_t cmp)
    contains elements from the list A that are also encountered
    in the list B. Elements are compared using function CMP.
    The resulting list preserves the ordering of A. */
-dict_list_t 
-dict_list_intersect (dict_list_t a, dict_list_t b, dict_list_comp_t cmp)
+dico_list_t 
+dico_list_intersect (dico_list_t a, dico_list_t b, dico_list_comp_t cmp)
 {
-    dict_list_t res;
-    dict_iterator_t itr = dict_iterator_create(a);
+    dico_list_t res;
+    dico_iterator_t itr = dico_iterator_create(a);
     void *p;
     
     if (!itr)
 	return NULL;
-    res = dict_list_create();
-    for (p = dict_iterator_first(itr); p; p = dict_iterator_next(itr)) {
-	if (dict_list_locate(b, p, cmp))
-	    dict_list_append(res, p);
+    res = dico_list_create();
+    for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) {
+	if (dico_list_locate(b, p, cmp))
+	    dico_list_append(res, p);
     }
-    dict_iterator_destroy (&itr);
+    dico_iterator_destroy (&itr);
     return res;
 }
 

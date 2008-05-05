@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 #$Id$
-# This program converts character glyphs from the bdf font file into
+# Dico converts character glyphs from the bdf font file into
 # xbm files.
 # usage: bdfextract.pl [-v] [-x xlist] [-l list] [-o outdir] file.bdf
 #     -v          verbose mode

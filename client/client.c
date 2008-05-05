@@ -22,7 +22,7 @@
 #include <client.h>
 #include <options.h>
 #include <dict.h>
-#include <gjdict.h>
+#include <dico.h>
 
 static int sockfd = -1;
 static int data_socket;

@@ -18,8 +18,8 @@ config.log
 config.status
 configure
 core
-gnu
 gmon.out
+gnu
 libltdl
 libtool
 m4

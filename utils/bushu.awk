@@ -69,7 +69,7 @@ END {
     print "#include <stdlib.h>"
     print "#include <stdio.h>"
     print "#include <dict.h>"
-    print "#include <gjdict.h>"
+    print "#include <dico.h>"
     print "#include <bushu.h>"
     print
     printf "int bushu_last = %d;\n", last

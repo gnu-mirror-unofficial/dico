@@ -14,7 +14,7 @@
 #include <ctype.h>
 
 #include <dict.h>
-#include <gjdict.h>
+#include <dico.h>
 #include <client.h>
 #include <search.h>
 #include <help.h>

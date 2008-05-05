@@ -1,18 +1,18 @@
-/* This file is part of Gjdict.
+/* This file is part of Dico.
    Copyright (C) 1998-2000, 2008 Sergey Poznyakoff
 
-   This program is free software; you can redistribute it and/or modify
+   Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
-   This program is distributed in the hope that it will be useful,
+   Dico is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+   along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -38,7 +38,7 @@
 #include <netdb.h>
 #include <signal.h>
 
-#include <gjdict.h>
+#include <dico.h>
 #include <c-strcase.h>
 
 extern int mode;
@@ -47,10 +47,10 @@ extern int single_process; /* Single process mode */
 extern int log_to_stderr;  /* Log to stderr */
 extern char *config_file;
 extern char *pidfile_name;
-extern dict_list_t listen_addr;
+extern dico_list_t listen_addr;
 extern uid_t user_id;
 extern gid_t group_id;
-extern dict_list_t /* of gid_t */ group_list;
+extern dico_list_t /* of gid_t */ group_list;
 extern unsigned int max_children;
 extern unsigned int shutdown_timeout;
 extern unsigned int inactivity_timeout;
@@ -59,7 +59,7 @@ extern const char *program_version;
 extern char *initial_banner_text;
 extern int got_quit;
 extern char *help_text;
-extern dict_list_t dictionary_list;
+extern dico_list_t dictionary_list;
 extern const char *server_info;
 extern char *msg_id;
 
@@ -123,7 +123,7 @@ enum cfg_callback_command {
 typedef struct {
     int type;
     union {
-	dict_list_t list;
+	dico_list_t list;
 	const char *string;
     } v;
 } config_value_t;
@@ -160,7 +160,7 @@ int yylex(void);
 int yyerror(char *); 
 
 void config_error(gd_locus_t *locus, int errcode, const char *fmt, ...)
-    GD_PRINTFLIKE(3,4);
+    DICO_PRINTFLIKE(3,4);
 int config_lex_begin(const char *name);
 void config_lex_end(void);
 void config_set_keywords(struct config_keyword *kwd);
@@ -297,7 +297,7 @@ void dictd_capa_iterate(int (*fun)(const char*, int, void *), void *closure);
 /* user db */
 struct udb_def {
     const char *proto;
-    int (*_db_open) (void **, dict_url_t);
+    int (*_db_open) (void **, dico_url_t);
     int (*_db_close) (void *);
     int (*_db_get_password) (void *, const char *, const char *, char **);
     int (*_db_get_groups) (void *, const char *, const char *, char ***);

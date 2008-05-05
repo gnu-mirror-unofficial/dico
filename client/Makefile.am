@@ -50,10 +50,10 @@ fallback.h: $(srcdir)/Gjdict.ad $(srcdir)/resource.sed
 	fi; \
 	rm fallback-t.h
 
-gjdict.chl: gjdict.help tmac.gjdict
+gjdict.chl: dico.help tmac.gjdict
 	GROFF_TMAC_PATH=$(srcdir) \
 	$(top_srcdir)/utils/helpcmp.pl \
-               -v -mgjdict -ogjdict.chl -in0 -po2n -ll55n gjdict.help
+               -v -mgjdict -ogjdict.chl -in0 -po2n -ll55n dico.help
 
 
 SUFFIXES=.opt .c
@@ -66,7 +66,7 @@ EXTRA_DIST=\
  Gjdict.ad\
  bushu.code.c\
  cmdline.opt\
- gjdict.help\
+ dico.help\
  resource.sed\
  tmac.gjdict\
  $(pkgdata_DATA)

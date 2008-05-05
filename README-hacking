@@ -1,11 +1,11 @@
 These notes intend to help people working on the Git version of
-Gjdict.
+Dico.
 See end of file for copying conditions.
 
 * Requirements
 
 If you have taken the sources from Git you will need the following
-packages to build Gjdict.  I don't make any extra effort to accommodate
+packages to build Dico.  I don't make any extra effort to accommodate
 older versions of these packages, so please make sure that you have the
 latest stable version.
 
@@ -35,7 +35,7 @@ Once done, proceed as described in the file README (section
 INSTALLATION).
 
 Normally you will have to run bootstrap only once. However, if you
-intend to hack on Gjdict, you might need to run it again later. In
+intend to hack on Dico, you might need to run it again later. In
 this case, you will probably want to save some time and bandwidth by
 avoiding downloading the same files again. If so, create in the project's
 root directory a file named `.bootstrap' with the following

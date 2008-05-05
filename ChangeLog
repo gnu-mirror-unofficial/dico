@@ -1,3 +1,15 @@
+2008-05-06  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Add loader.c
+	
+	* README: Update
+	* configure.ac: Require libtool 2.2.5a
+	(DICO_MODDIR): Define
+	* dictd/loader.c: New file.
+	* dictd/Makefile.am: Add loader.c.
+	* dictd/dictd.h (dictd_loader_init): New proto.
+	* dictd/main.c (main): Call dictd_loader_init.
+
 2008-05-05  Sergey Poznyakoff  <gray@gnu.org.ua>
 
 	Change incorporation model of libltdl.

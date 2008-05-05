@@ -14,11 +14,16 @@ Dico is an implementation of DICT server (RFC 2229).  It is fully
 modular: the daemon itself (dictd) provides only the server
 functionality, but it knows nothing about database formats.  Actual
 searches are performed by functions supplied in loadable modules.  A
-single module can serve one or more databases.
+single module can serve one or more databases. 
 
 At least two modules will be added in the nearest future: a module for
 handling dict.org databases, and a module for lookups in Jim Breen's
 Kanjidic and Edict databases.
+
+* What's in a name?
+
+Dico is informal French for "Dictionary".  It is pronounced "Deekoh",
+with the stress on the last syllable.
 
 * Current state
 

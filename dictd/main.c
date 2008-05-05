@@ -66,6 +66,9 @@ gid_t group_id;
 /* Retain these supplementary groups when switching to the user privileges. */
 dico_list_t /* of gid_t */ group_list;
 
+/* List of directories to search for handler modules. */
+dico_list_t /* of char * */ module_load_path;
+
 /* List of configured dictionary handlers */
 dico_list_t /* of dictd_handler_t */ handler_list;
 
@@ -256,7 +259,7 @@ set_handler(enum cfg_callback_command cmd,
 	break;
 	
     case callback_set_value:
-	config_error(locus, 0, _("invalid use of a block statement"));
+	config_error(locus, 0, _("invalid use of block statement"));
     }
     return 0;
 }
@@ -290,7 +293,7 @@ set_dictionary(enum cfg_callback_command cmd,
 	break;
 	
     case callback_set_value:
-	config_error(locus, 0, _("invalid use of a block statement"));
+	config_error(locus, 0, _("invalid use of block statement"));
     }
     return 0;
 }
@@ -482,6 +485,9 @@ struct config_keyword keywords[] = {
       cfg_string, &hostname },
     { "capability", N_("arg"), N_("Request additional capabilities."),
       cfg_string|CFG_LIST, NULL, 0, enable_capability },
+    { "module-load-path", N_("path"),
+      N_("List of directories searched for handler modules."),
+      cfg_string|CFG_LIST, &module_load_path },
     { "dictionary", NULL, N_("Define a dictionary database."),
       cfg_section, NULL, 0, set_dictionary, NULL,
       kwd_dictionary },
@@ -596,6 +602,8 @@ main(int argc, char **argv)
 	set_log_printer(syslog_log_printer);
     }
 
+    dictd_loader_init();
+    
     switch (mode) {
     case MODE_DAEMON:
 	dictd_server(argc, argv);

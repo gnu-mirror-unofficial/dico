@@ -62,6 +62,7 @@ extern char *help_text;
 extern dico_list_t dictionary_list;
 extern const char *server_info;
 extern char *msg_id;
+extern dico_list_t module_load_path;
 
 #ifndef LOG_FACILITY
 # define LOG_FACILITY LOG_LOCAL1
@@ -323,3 +324,5 @@ void udp_define(struct udb_def *dptr);
 /* auth.c */
 void register_auth(void);
 
+/* loader.c */
+void dictd_loader_init(void);

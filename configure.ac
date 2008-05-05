@@ -22,6 +22,9 @@ AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR(m4)	
 AM_INIT_AUTOMAKE([1.9 gnits tar-ustar std-options])
 
+dnl Some variables
+AC_SUBST(DICO_MODDIR,'$(libdir)/$(PACKAGE)')
+
 dnl Checks for programs.
 AC_PROG_CC
 gl_EARLY	
@@ -30,9 +33,10 @@ AC_PROG_AWK
 AC_PROG_YACC
 AC_PROG_LEX
 
-LT_PREREQ(2.1a)
-LT_INIT	
-LT_CONFIG_LTDL_DIR([libltdl], [recursive])
+LT_PREREQ(2.2.5a)
+LT_CONFIG_LTDL_DIR([libltdl])
+LT_INIT([dlopen])
+LTDL_INIT([recursive])
 LT_WITH_LTDL
 AC_CONFIG_FILES([libltdl/Makefile])
 

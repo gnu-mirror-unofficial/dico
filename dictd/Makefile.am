@@ -27,6 +27,7 @@ dictd_SOURCES=\
  dictd.c\
  fdio.c\
  linebuf.c\
+ loader.c\
  main.c\
  server.c\
  stream.c\
@@ -34,12 +35,13 @@ dictd_SOURCES=\
 
 noinst_HEADERS=dictd.h config-gram.h
 
-AM_CFLAGS = -DSYSCONFIG=\"$(sysconfdir)\"
+AM_CFLAGS = -DSYSCONFIG=\"$(sysconfdir)\" -DDICO_MODDIR=\"$(DICO_MODDIR)\" 
 AM_YFLAGS = -dtv
 AM_LFLAGS = -dvp
 
-LDADD=../lib/libdico.a  ../gnu/libgnu.a ../lib/libextra.a @DB_LIBS@
-INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu @DB_INCLUDES@
+LDADD=../lib/libdico.a  ../gnu/libgnu.a ../lib/libextra.a @LIBLTDL@ @DB_LIBS@
+INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu @LTDLINCL@ @DB_INCLUDES@
+# dictd_DEPENDENCIES=@LTDLDEPS@
 
 config-lex.c: config-gram.h
 config-gram.h: config-gram.c

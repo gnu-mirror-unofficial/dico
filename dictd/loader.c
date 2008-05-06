@@ -80,3 +80,17 @@ dictd_load_module(dictd_handler_t *hptr)
     return rc;
 }
 
+int
+dictd_open_dictionary_handler(dictd_dictionary_t *dp)
+{
+    dictd_handler_t *hptr = dp->handler;
+
+    if (hptr->module->module_open) {
+	dp->mod = hptr->module->module_open(dp->name, dp->argc, dp->argv);
+	if (!dp->mod) {
+	    logmsg(L_ERR, 0, _("cannot open module `%s'"), dp->command);
+	    return 1;
+	}
+    }
+    return 0;
+}

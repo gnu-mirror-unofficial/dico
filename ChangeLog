@@ -1,5 +1,16 @@
 2008-05-06  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Initialize databases.
+	
+	* dictd/dictd.c (init_databases): New function.
+	(dictd_server_init): Call init_databases.
+	* dictd/dictd.h (struct dictd_dictionary): New fields: mod, argc,
+	argv.
+	(dictd_open_dictionary_handler): New proto.
+	* dictd/loader.c (dictd_open_dictionary_handler): New function.
+	* dictd/main.c (set_dico_handler): Rename to set_dict_handler (fix
+	a typo). Intialize command, argc and argv.
+
 	Load modules.
 	
 	* dictd/commands.c (dictd_show_databases): Return 554 response if

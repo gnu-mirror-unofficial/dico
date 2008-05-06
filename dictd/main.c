@@ -308,26 +308,38 @@ cmp_handler_ident(const void *item, const void *data)
 }
 
 int
-set_dico_handler(enum cfg_callback_command cmd,
+set_dict_handler(enum cfg_callback_command cmd,
 		 gd_locus_t *locus,
 		 void *varptr,
 		 config_value_t *value,
 		 void *cb_data)
 {
     dictd_handler_t *han;
+    dictd_dictionary_t *dict = varptr;
+    int rc;
     
     if (value->type != TYPE_STRING) {
 	config_error(locus, 0, _("expected scalar value buf found list"));
 	return 1;
     }
 
-    han = dico_list_locate(handler_list, (void*) value->v.string,
-			   cmp_handler_ident);
+    dict->command = value->v.string;
+    if (rc = dico_argcv_get(value->v.string, NULL, NULL,
+			    &dict->argc, &dict->argv)) {
+	config_error(locus, rc, _("cannot parse command line `%s'"),
+		     value->v.string);
+	free(dict); /* FIXME: Free members */
+	return 1;
+    } 
+
+    han = dico_list_locate(handler_list, dict->argv[0], cmp_handler_ident);
     if (!han) {
-	config_error(locus, 0, _("%s: handler not declared"), value->v.string);
+	config_error(locus, 0, _("%s: handler not declared"), dict->argv[0]);
+	/* FIXME: Free memory */
 	return 1;
     }
-    *(dictd_handler_t**)varptr = han;
+    dict->handler = han;
+    
     return 0;
 }
 
@@ -381,8 +393,7 @@ struct config_keyword kwd_dictionary[] = {
 	 "SHOW INFO command."),
       cfg_string, NULL, offsetof(dictd_dictionary_t, info) },
     { "handler", N_("name"), N_("Name of the handler for this dictionary."),
-      cfg_string, NULL, offsetof(dictd_dictionary_t, handler),
-      set_dico_handler },
+      cfg_string, NULL, 0, set_dict_handler },
     { NULL }
 };
 

@@ -214,15 +214,22 @@ typedef struct dictd_handler {
 } dictd_handler_t;
 
 typedef struct dictd_dictionary {
-    char *name;
-    char *descr;
-    char *info;
-    dictd_handler_t *handler;
+    char *name;   /* Dictionary name */
+    char *descr;  /* Description (SHOW DB) */
+    char *info;   /* Info (SHOW INFO) */
+
+    dico_handle_t *mod;       /* Dico module handler */
+    
+    dictd_handler_t *handler; /* Pointer to the handler structure */
+    int argc;                 /* Handler arguments: count */
+    char **argv;              /*  ... and pointers */
+    char *command;            /* Handler command line (for diagnostics) */
 } dictd_dictionary_t;
 
 void dictd_server(int argc, char **argv);
 int dictd_loop(dico_stream_t stream);
 int dictd_inetd(void);
+
 dictd_dictionary_t *find_dictionary(const char *name);
 void dictionary_remove_dependent(dictd_handler_t *handler);
 
@@ -279,3 +286,4 @@ void register_auth(void);
 /* loader.c */
 void dictd_loader_init(void);
 int dictd_load_module(dictd_handler_t *hptr);
+int dictd_open_dictionary_handler(dictd_dictionary_t *dp);

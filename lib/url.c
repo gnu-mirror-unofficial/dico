@@ -19,19 +19,23 @@
 #endif
 #include <dico.h>
 #include <string.h>
+#include <errno.h>
 
 /* proto://[user[:password]@][host/]path[;arg=str[;arg=str...] */
 
-static void
+static int
 alloc_string(char **sptr, const char *start, const char *end)
 {
     size_t len = end - start;
-    *sptr = xmalloc(len + 1);
+    *sptr = malloc(len + 1);
+    if (!*sptr)
+	return 1;
     memcpy(*sptr, start, len);
     (*sptr)[len] = 0;
+    return 0;
 }
 
-static void
+static int
 url_parse_arg(dico_url_t url, char *p, char *q)
 {
     char *s;
@@ -40,35 +44,41 @@ url_parse_arg(dico_url_t url, char *p, char *q)
     for (s = p; s < q && *s != '='; s++)
 	;
 
-    alloc_string(&key, p, s);
-    if (s != q)
-	alloc_string(&value, s + 1, q);
+    if (alloc_string(&key, p, s))
+	return 1;
+    if (s != q) {
+	if (alloc_string(&value, s + 1, q))
+	    return 1;
+    }
     dico_assoc_add(url->args, key, value);
     free(key);
     free(value);
-    
+    return 0;
 }
 
 static int
 url_get_args(dico_url_t url, char **str)
 {
+    int rc;
     char *p;
 
     if (!**str)
 	return 0;
 
     url->args = dico_assoc_create();
-    for (p = *str;;) {
+    if (!url->args)
+	return 1;
+    for (p = *str, rc = 0; !rc;) {
 	char *q = strchr (p, ';');
 	if (q) {
-	    url_parse_arg(url, p, q);
+	    rc = url_parse_arg(url, p, q);
 	    p = q + 1;
 	} else {
-	    url_parse_arg(url, p, p + strlen(p));
+	    rc = url_parse_arg(url, p, p + strlen(p));
 	    break;
 	}
     }
-    return 0;
+    return rc;
 }
 
 static int
@@ -79,7 +89,8 @@ url_get_path(dico_url_t url, char **str)
     p = strchr(*str, ';');
     if (!p)
 	p = *str + strlen(*str);
-    alloc_string(&url->path, *str, p);
+    if (alloc_string(&url->path, *str, p))
+	return 1;
     *str = p;
     if (*p)
 	++ * str;
@@ -96,7 +107,8 @@ url_get_host(dico_url_t url, char **str)
     p = strchr(*str, '/');
 
     if (p) {
-	alloc_string(&url->host, *str, p);
+	if (alloc_string(&url->host, *str, p))
+	    return 1;
 	*str = p + 1;
     }
     return url_get_path(url, str);
@@ -111,7 +123,8 @@ url_get_passwd(dico_url_t url, char **str)
     p = strchr(*str, '@');
 
     if (p) {
-	alloc_string(&url->passwd, *str, p);
+	if (alloc_string(&url->passwd, *str, p))
+	    return 1;
 	*str = p + 1;
     }
     return url_get_host(url, str);
@@ -129,11 +142,13 @@ url_get_user (dico_url_t url, char **str)
     switch (*p)
 	{
 	case ':':
-	    alloc_string (&url->user, *str, p);
+	    if (alloc_string (&url->user, *str, p))
+		return 1;
 	    *str = p + 1;
 	    return url_get_passwd(url, str);
 	case '@':
-	    alloc_string(&url->user, *str, p);
+	    if (alloc_string(&url->user, *str, p))
+		return 1;
 	    url->passwd = NULL;
 	    *str = p + 1;
 	}
@@ -145,12 +160,17 @@ url_get_proto(dico_url_t url, const char *str)
 {
     char *p;
     
-    if (!str)
+    if (!str) {
+	errno = EINVAL;
 	return 1;
-
+    }
+    
     p = strchr (str, ':');
-    if (!p)
+    if (!p) {
+	errno = EINVAL;
 	return 1;
+    }
+    
     alloc_string(&url->proto, str, p);
 
     /* Skip slashes */
@@ -181,7 +201,10 @@ dico_url_parse(dico_url_t *purl, const char *str)
     int rc;
     dico_url_t url;
     
-    url = xzalloc(sizeof (*url));
+    url = malloc(sizeof (*url));
+    if (url)
+	return 1;
+    memset(url, 0, sizeof(*url));
     rc = url_get_proto(url, str);
     if (rc)
 	dico_url_destroy(&url);
@@ -202,15 +225,17 @@ dico_url_full_path(dico_url_t url)
 	size += strlen(url->host);
     if (url->path)
 	size += strlen(url->path) + 1;
-    path = xmalloc(size + 1);
-    if (url->host) {
-	strcpy(path, "/");
-	strcat(path, url->host);
-    }
-    if (url->path) {
-	if (path[0])
-	    strcat(path, "/");
-	strcat(path, url->path);
+    path = malloc(size + 1);
+    if (path) {
+	if (url->host) {
+	    strcpy(path, "/");
+	    strcat(path, url->host);
+	}
+	if (url->path) {
+	    if (path[0])
+		strcat(path, "/");
+	    strcat(path, url->path);
+	}
     }
     return path;
 }

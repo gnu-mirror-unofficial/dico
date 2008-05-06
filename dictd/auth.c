@@ -67,7 +67,7 @@ auth(const char *username, const char *authstr)
 }
 
 void
-dictd_auth(stream_t str, int argc, char **argv)
+dictd_auth(dico_stream_t str, int argc, char **argv)
 {
     /* FIXME: Raise some global variable and obtain user's groups */
     if (auth(argv[1], argv[2]) == 0) 
@@ -76,7 +76,7 @@ dictd_auth(stream_t str, int argc, char **argv)
 	stream_writez(str,
 		      "531 Access denied, "
 		      "use \"SHOW INFO\" for server information");
-    stream_write(str, "\r\n", 2);
+    dico_stream_write(str, "\r\n", 2);
 }
 
 static int

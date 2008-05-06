@@ -32,7 +32,8 @@
 #include <intprops.h>
 #include <inttostr.h>
 
-#include <dico.h>
+#include <xdico.h>
+#include <xalloc.h>
 
 /*
  *	Return an IP address in host long notation from a host

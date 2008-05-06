@@ -27,7 +27,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <dict.h>
-#include <dico.h>
+#include <xdico.h>
 #include <db.h>
 #define obstack_chunk_alloc xmalloc
 #define obstack_chunk_free free

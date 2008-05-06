@@ -38,7 +38,7 @@
 #include <netdb.h>
 #include <signal.h>
 
-#include <dico.h>
+#include <xdico.h>
 #include <c-strcase.h>
 
 extern int mode;
@@ -181,67 +181,12 @@ void format_statement_array(FILE *stream, struct config_keyword *kwp,
 void config_help(void);
 
 
-/* Line buffer */
-typedef struct _line_buffer *linebuf_t;
-enum line_buffer_type { lb_in, lb_out };
-typedef struct stream *stream_t;
-
-int linebuf_create(linebuf_t *s, stream_t stream,
-		   enum line_buffer_type type, size_t size);
-void linebuf_destroy(linebuf_t *s);
-void linebuf_drop(linebuf_t s);
-
-int linebuf_grow(linebuf_t s, const char *ptr, size_t size);
-size_t linebuf_read(linebuf_t s, char *ptr, size_t size);
-int linebuf_readline(linebuf_t s, char *ptr, size_t size);
-int linebuf_write(linebuf_t s, char *ptr, size_t size);
-int linebuf_writelines(linebuf_t s);
-size_t linebuf_level(linebuf_t s);
-char *linebuf_data(linebuf_t s);
-int linebuf_flush(linebuf_t s);
-
-
-/* Streams */
-
-stream_t fd_stream_create(int ifd, int oufd);
-
-int stream_create(stream_t *pstream,
-		  void *data, 
-		  int (*readfn) (void *, char *, size_t, size_t *),
-		  int (*writefn) (void *, char *, size_t, size_t *),
-		  int (*closefn) (void *));
-
-void stream_set_error_string(stream_t stream,
-			     const char *(*error_string) (void *, int));
-
-int stream_set_buffer(stream_t stream, enum line_buffer_type type,
-		      size_t size);
-
-int stream_read_unbuffered(stream_t stream, char *buf, size_t size,
-			   size_t *pread);
-int stream_write_unbuffered(stream_t stream, char *buf, size_t size,
-			    size_t *pwrite);
-
-int stream_read(stream_t stream, char *buf, size_t size, size_t *pread);
-int stream_readln(stream_t stream, char *buf, size_t size, size_t *pread);
-int stream_getline(stream_t stream, char **pbuf, size_t *psize, size_t *pread);
-int stream_write(stream_t stream, char *buf, size_t size);
-int stream_writeln(stream_t stream, char *buf, size_t size);
-
-const char *stream_strerror(stream_t stream, int rc);
-int stream_last_error(stream_t stream);
-void stream_clearerr(stream_t stream);
-int stream_eof(stream_t stream);
-
-
-int stream_flush(stream_t stream);
-int stream_close(stream_t stream);
-void stream_destroy(stream_t *stream);
-
 /* Dictd-specific streams */
-int stream_writez(stream_t str, char *buf);
-int stream_printf(stream_t str, const char *fmt, ...);
-void stream_write_multiline(stream_t str, const char *text);
+dico_stream_t fd_stream_create(int ifd, int oufd);
+
+int stream_writez(dico_stream_t str, char *buf);
+int stream_printf(dico_stream_t str, const char *fmt, ...);
+void stream_write_multiline(dico_stream_t str, const char *text);
 
 
 /* */
@@ -270,12 +215,12 @@ typedef struct dictd_dictionary {
 } dictd_dictionary_t;
 
 void dictd_server(int argc, char **argv);
-int dictd_loop(stream_t stream);
+int dictd_loop(dico_stream_t stream);
 int dictd_inetd(void);
 dictd_dictionary_t *find_dictionary(const char *name);
 
 
-typedef void (*dictd_cmd_fn) (stream_t str, int argc, char **argv);
+typedef void (*dictd_cmd_fn) (dico_stream_t str, int argc, char **argv);
 
 struct dictd_command {
     char *keyword;
@@ -285,7 +230,7 @@ struct dictd_command {
     dictd_cmd_fn handler;
 };
 
-void dictd_handle_command(stream_t str, int argc, char **argv);
+void dictd_handle_command(dico_stream_t str, int argc, char **argv);
 void dictd_init_command_tab(void);
 void dictd_add_command(struct dictd_command *cmd);
 

@@ -66,8 +66,8 @@ void
 udp_define(struct udb_def *dptr)
 {
     if (!udb_def_list)
-	udb_def_list = dico_list_create();
-    dico_list_append(udb_def_list, dptr);
+	udb_def_list = xdico_list_create();
+    xdico_list_append(udb_def_list, dptr);
 }
 
 static int

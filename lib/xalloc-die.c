@@ -17,7 +17,7 @@
 # include <config.h>
 #endif
 
-#include <dico.h>
+#include <xdico.h>
 
 void
 xalloc_die()

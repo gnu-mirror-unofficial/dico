@@ -1,5 +1,5 @@
 /* This file is part of Dico.
-   Copyright (C) 1998-2000, 2008 Sergey Poznyakoff
+   Copyright (C) 2008 Sergey Poznyakoff
 
    Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,31 +14,20 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef __dico_h
-#define __dico_h
+#ifndef __dico_xlat_h
+#define __dico_xlat_h
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <stdarg.h>
+/* Simple translation tables */
+struct xlat_tab {
+    char *string;
+    int num;
+};
 
-#include <dico/list.h>
-#include <dico/assoc.h>
-#include <dico/stream.h>
-#include <dico/url.h>
-#include <dico/xlat.h>
+#define XLAT_ICASE 0x01
 
-#ifndef offsetof
-# define offsetof(s,f) ((size_t)&((s*)0)->f)
-#endif
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
-
-#ifndef DICO_ARG_UNUSED
-# define DICO_ARG_UNUSED __attribute__ ((__unused__))
-#endif
-
-#ifndef DICO_PRINTFLIKE
-# define DICO_PRINTFLIKE(fmt,narg) __attribute__ ((__format__ (__printf__, fmt, narg)))
-#endif
+int xlat_string(struct xlat_tab *tab, const char *string, size_t len,
+		int flags, int *result);
+int xlat_c_string(struct xlat_tab *tab, const char *string, int flags,
+		  int *result);
 
 #endif
-    

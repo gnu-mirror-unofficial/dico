@@ -19,16 +19,16 @@
 int got_quit;
 
 void
-dictd_quit(stream_t str, int argc, char **argv)
+dictd_quit(dico_stream_t str, int argc, char **argv)
 {
     got_quit = 1;
     stream_writez(str, "221 bye\r\n");
 }
 
-void dictd_show_std_help(stream_t str);
+void dictd_show_std_help(dico_stream_t str);
 
 void
-dictd_help(stream_t str, int argc, char **argv)
+dictd_help(dico_stream_t str, int argc, char **argv)
 {
     const char *text = help_text;
     stream_writez(str, "113 help text follows\r\n");
@@ -48,7 +48,7 @@ static int
 _show_database(void *item, void *data)
 {
     dictd_dictionary_t *dict = item;
-    stream_t str = data;
+    dico_stream_t str = data;
 
     stream_printf(str, "%s \"%s\"\r\n",
 		  dict->name, dict->descr); /* FIXME: Quote descr. */
@@ -56,7 +56,7 @@ _show_database(void *item, void *data)
 }
 
 void
-dictd_show_info(stream_t str, int argc, char **argv)
+dictd_show_info(dico_stream_t str, int argc, char **argv)
 {
     char *dbname = argv[2];
     dictd_dictionary_t *dict = find_dictionary(dbname);
@@ -75,7 +75,7 @@ dictd_show_info(stream_t str, int argc, char **argv)
 
 
 void
-dictd_show_databases(stream_t str, int argc, char **argv)
+dictd_show_databases(dico_stream_t str, int argc, char **argv)
 {
     size_t count = dico_list_count(dictionary_list);
     stream_printf(str, "110 %lu databases present\r\n",
@@ -86,7 +86,7 @@ dictd_show_databases(stream_t str, int argc, char **argv)
 }
 
 void
-dictd_show_server(stream_t str, int argc, char **argv)
+dictd_show_server(dico_stream_t str, int argc, char **argv)
 {
     stream_writez(str, "114 server information\r\n");
     /* FIXME: (For logged in users) show:
@@ -98,7 +98,7 @@ dictd_show_server(stream_t str, int argc, char **argv)
 }
 
 void
-dictd_client(stream_t str, int argc, char **argv)
+dictd_client(dico_stream_t str, int argc, char **argv)
 {
     logmsg(L_INFO, 0, "Client info: %s", argv[1]);
     stream_writez(str, "250 ok\r\n");
@@ -136,8 +136,8 @@ void
 dictd_add_command(struct dictd_command *cmd)
 {
     if (!command_list)
-	command_list = dico_list_create();
-    dico_list_append(command_list, cmd);
+	command_list = xdico_list_create();
+    xdico_list_append(command_list, cmd);
 }
 
 void
@@ -153,7 +153,7 @@ static int
 _print_help(void *item, void *data)
 {
     struct dictd_command *p = item;
-    stream_t str = data;
+    dico_stream_t str = data;
     int len = strlen(p->keyword);
 
     stream_writez(str, p->keyword);
@@ -171,7 +171,7 @@ _print_help(void *item, void *data)
 }
 
 void
-dictd_show_std_help(stream_t str)
+dictd_show_std_help(dico_stream_t str)
 {
     dico_list_iterate(command_list, _print_help, str);
 }
@@ -216,7 +216,7 @@ locate_command(int argc, char **argv)
 }
 
 void
-dictd_handle_command(stream_t str, int argc, char **argv)
+dictd_handle_command(dico_stream_t str, int argc, char **argv)
 {
     struct dictd_command *cmd = locate_command(argc, argv);
     if (!cmd) 

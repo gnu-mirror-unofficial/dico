@@ -17,8 +17,10 @@
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
-#include <dico.h>
+#include <xdico.h>
+#include <xalloc.h>
 #include <string.h>
+#include <errno.h>
 
 void
 trimnl(char *buf, size_t len)
@@ -51,3 +53,55 @@ make_full_file_name(const char *dir, const char *file)
     strcpy(buf + dirlen, file);
     return buf;
 }
+
+
+/* X-versions of dico library calls */
+
+dico_list_t
+xdico_list_create()
+{
+    dico_list_t p = dico_list_create();
+    if (!p)
+	xalloc_die();
+    return p;
+}
+
+dico_iterator_t
+xdico_iterator_create(dico_list_t list)
+{
+    dico_iterator_t p = dico_iterator_create(list); 
+    if (!p && errno == ENOMEM)
+	xalloc_die();
+    return p;
+}
+
+void
+xdico_list_append(struct list *list, void *data)
+{
+    if (dico_list_append(list, data) && errno == ENOMEM)
+	xalloc_die();
+}
+
+void
+xdico_list_prepend(struct list *list, void *data)
+{
+    if (dico_list_prepend(list, data) && errno == ENOMEM)
+	xalloc_die();
+}
+
+dico_assoc_list_t
+xdico_assoc_create()
+{
+    dico_assoc_list_t p = dico_assoc_create();
+    if (!p)
+	xalloc_die();
+    return p;
+}
+
+void
+xdico_assoc_add(dico_assoc_list_t assoc, const char *key, const char *value)
+{
+    if (dico_assoc_add(assoc, key, value) && errno == EINVAL)
+	xalloc_die();
+}
+

@@ -17,7 +17,8 @@
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
-#include <dico.h>
+#include <xdico.h>
+#include <xalloc.h>
 #include <limits.h>
 #include <errno.h>
 #include <string.h>

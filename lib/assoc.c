@@ -26,17 +26,19 @@ dico_assoc_create()
     return dico_list_create();
 }
 
-void
+int
 dico_assoc_add(dico_assoc_list_t assoc, const char *key, const char *value)
 {
     struct dico_assoc *a;
     size_t size = sizeof(*a) + strlen(key) + strlen(value) + 2;
-    a = xmalloc(size);
+    a = malloc(size);
+    if (!a)
+	    return 1;
     a->key = (char*)(a + 1);
     strcpy(a->key, key);
     a->value = a->key + strlen(a->key) + 1;
     strcpy(a->value, value);
-    dico_list_append(assoc, a);
+    return dico_list_append(assoc, a);
 }
 
 static int

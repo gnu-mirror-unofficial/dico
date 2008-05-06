@@ -20,6 +20,7 @@
 #include <dico.h>
 #include <sys/types.h>
 #include <stdlib.h>
+#include <errno.h>
 
 struct list_entry {
     struct list_entry *next;
@@ -42,9 +43,11 @@ struct iterator {
 struct list *
 dico_list_create()
 {
-    struct list *p = xmalloc(sizeof(*p));
-    p->head = p->tail = NULL;
-    p->itr = NULL;
+    struct list *p = malloc(sizeof(*p));
+    if (p) {
+	    p->head = p->tail = NULL;
+	    p->itr = NULL;
+    }
     return p;
 }
 
@@ -107,15 +110,18 @@ dico_iterator_detach(dico_iterator_t iter)
     return cur;
 }
 
-dico_iterator_t 
+dico_iterator_t
 dico_iterator_create(dico_list_t list)
 {
     dico_iterator_t itr;
     
-    if (!list)
+    if (!list) {
+        errno = EINVAL;    
 	return NULL;
-    itr = xmalloc(sizeof(*itr));
-    dico_iterator_attach(itr, list);
+    }
+    itr = malloc(sizeof(*itr));
+    if (itr)
+        dico_iterator_attach(itr, list);
     return itr;
 }
 
@@ -195,14 +201,18 @@ dico_list_count(struct list *list)
     return list->count;
 }
 
-void
+int
 dico_list_append(struct list *list, void *data)
 {
     struct list_entry *ep;
     
-    if (!list)
-	return;
-    ep = xmalloc(sizeof(*ep));
+    if (!list) {
+	errno = EINVAL;    
+	return 1;
+    }
+    ep = malloc(sizeof(*ep));
+    if (ep)
+	return 1;
     ep->next = NULL;
     ep->data = data;
     if (list->tail)
@@ -211,22 +221,28 @@ dico_list_append(struct list *list, void *data)
 	list->head = ep;
     list->tail = ep;
     list->count++;
+    return 0;
 }
 
-void
+int
 dico_list_prepend(struct list *list, void *data)
 {
     struct list_entry *ep;
     
-    if (!list)
-	return;
-    ep = xmalloc(sizeof(*ep));
+    if (!list) {
+	errno = EINVAL;
+	return 1;
+    }
+    ep = malloc(sizeof(*ep));
+    if (!ep)
+	return 1;
     ep->data = data;
     ep->next = list->head;
     list->head = ep;
     if (!list->tail)
 	list->tail = list->head;
     list->count++;
+    return 0;
 }
 
 static int
@@ -310,28 +326,33 @@ dico_list_locate(struct list *list, void *data, dico_list_comp_t cmp)
 int
 dico_list_insert_sorted(struct list *list, void *data, dico_list_comp_t cmp)
 {
+    int rc;
     struct list_entry *cur, *prev;
     
-    if (!list)
-	return -1;
-    if (!cmp)
-	return -1;
+    if (!list || !cmp) {
+	errno = EINVAL;
+	return 1;
+    }
     
     for (cur = list->head, prev = NULL; cur; prev = cur, cur = cur->next)
 	if (cmp(cur->data, data) > 0)
 	    break;
     
     if (!prev) {
-	dico_list_prepend(list, data);
+	rc = dico_list_prepend(list, data);
     } else if (!cur) {
-	dico_list_append(list, data);
+	rc = dico_list_append(list, data);
     } else {
-	struct list_entry *ep = xmalloc(sizeof(*ep));
-	ep->data = data;
-	ep->next = cur;
-	prev->next = ep;
+	struct list_entry *ep = malloc(sizeof(*ep));
+	if (ep) {
+	    rc = 0;
+	    ep->data = data;
+	    ep->next = cur;
+	    prev->next = ep;
+	} else
+	    rc = 1;
     }
-    return 0;
+    return rc;
 }
 
 /* Computes an intersection of the two lists. The resulting list
@@ -348,9 +369,11 @@ dico_list_intersect (dico_list_t a, dico_list_t b, dico_list_comp_t cmp)
     if (!itr)
 	return NULL;
     res = dico_list_create();
+    if (!res)
+	return NULL;
     for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) {
 	if (dico_list_locate(b, p, cmp))
-	    dico_list_append(res, p);
+	    dico_list_append(res, p); /* FIXME: check return, and? */
     }
     dico_iterator_destroy (&itr);
     return res;

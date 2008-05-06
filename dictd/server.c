@@ -57,16 +57,16 @@ open_sockets()
 	struct sockaddr_in *sp = xmalloc(sizeof(*sp));
 	
 	if (!listen_addr)
-	    listen_addr = dico_list_create();
+	    listen_addr = xdico_list_create();
 	sp->sin_family = AF_INET;
 	sp->sin_addr.s_addr = INADDR_ANY;
 	sp->sin_port = htons(DICT_PORT);
-	dico_list_append(listen_addr, sp);
+	xdico_list_append(listen_addr, sp);
 	fdcount = 1;
     }
     fdtab = xcalloc(fdcount, sizeof fdtab[0]);
     fdmax = 0;
-    itr = dico_iterator_create(listen_addr);
+    itr = xdico_iterator_create(listen_addr);
     for (i = 0, sp = dico_iterator_first(itr); sp;
 	 sp = dico_iterator_next(itr)) {
 	int fd = socket(address_family_to_domain(sp->s.sa_family),
@@ -343,20 +343,20 @@ handle_connection(int listenfd)
 
     if (single_process) {
 	int status;
-	stream_t str;
+	dico_stream_t str;
 
 	str = fd_stream_create(connfd, connfd);
-	stream_set_buffer(str, lb_in, 512);
-	stream_set_buffer(str, lb_out, 512);
+	dico_stream_set_buffer(str, lb_in, 512);
+	dico_stream_set_buffer(str, lb_out, 512);
 	status = dictd_loop(str);
-	stream_close(str);
+	dico_stream_close(str);
     } else {
 	pid_t pid = fork();
 	if (pid == -1)
 	    logmsg(LOG_ERR, errno, "fork");
 	else if (pid == 0) {
 	    /* Child.  */
-	    stream_t str;
+	    dico_stream_t str;
 	    
 	    close(listenfd);
 	    
@@ -367,10 +367,10 @@ handle_connection(int listenfd)
 	    signal(SIGHUP, SIG_DFL);
         
 	    str = fd_stream_create(connfd, connfd);
-	    stream_set_buffer(str, lb_in, 512);
-	    stream_set_buffer(str, lb_out, 512);
+	    dico_stream_set_buffer(str, lb_in, 512);
+	    dico_stream_set_buffer(str, lb_out, 512);
 	    status = dictd_loop(str);
-	    stream_close(str);
+	    dico_stream_close(str);
 	    exit(status);
 	} else {
 	    register_child(pid);

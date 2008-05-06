@@ -99,13 +99,13 @@ tokenize_input(struct input *in, char *str)
 }
 
 int
-stream_writez(stream_t str, char *buf)
+stream_writez(dico_stream_t str, char *buf)
 {
-    return stream_write(str, buf, utf8_strbytelen(buf));
+    return dico_stream_write(str, buf, utf8_strbytelen(buf));
 }
 
 int
-stream_printf(stream_t str, const char *fmt, ...)
+stream_printf(dico_stream_t str, const char *fmt, ...)
 {
     int len;
     char *buf;
@@ -119,13 +119,13 @@ stream_printf(stream_t str, const char *fmt, ...)
 	       _("not enough memory while formatting reply message"));
 	exit(1);
     }
-    len = stream_write(str, buf, len);
+    len = dico_stream_write(str, buf, len);
     free(buf);
     return len;
 }
 
 void
-stream_write_multiline(stream_t str, const char *text)
+stream_write_multiline(dico_stream_t str, const char *text)
 {
     struct utf8_iterator itr;
     size_t len = 0;
@@ -134,18 +134,18 @@ stream_write_multiline(stream_t str, const char *text)
 	 !utf8_iter_end_p(&itr);
 	 utf8_iter_next(&itr)) {
 	if (utf8_iter_isascii(itr) && *itr.curptr == '\n') {
-	    stream_writeln(str, itr.curptr - len, len);
+	    dico_stream_writeln(str, itr.curptr - len, len);
 	    len = 0;
 	} else
 	    len += itr.curwidth;
     }
     if (len)
-	stream_writeln(str, itr.curptr - len, len);
+	dico_stream_writeln(str, itr.curptr - len, len);
 }
 
 struct capa_print {
     size_t num;
-    stream_t stream;
+    dico_stream_t stream;
 };
 
 static int
@@ -154,21 +154,21 @@ print_capa(const char *name, int enabled, void *data)
     struct capa_print *cp = data;
     if (enabled) {
 	if (cp->num++)
-	    stream_write(cp->stream, ".", 1);
+	    dico_stream_write(cp->stream, ".", 1);
 	stream_writez(cp->stream, (char*)name);
     }
     return 0;
 }
 
 static void
-output_capabilities(stream_t str)
+output_capabilities(dico_stream_t str)
 {
     struct capa_print cp;
     cp.num = 0;
     cp.stream = str;
-    stream_write(str, "<", 1);
+    dico_stream_write(str, "<", 1);
     dictd_capa_iterate(print_capa, &cp);
-    stream_write(str, ">", 1);
+    dico_stream_write(str, ">", 1);
 }
 
 /*
@@ -180,32 +180,32 @@ output_capabilities(stream_t str)
              220 text capabilities msg-id
 */
 static void
-initial_banner(stream_t str)
+initial_banner(dico_stream_t str)
 {
-    stream_write(str, "220 ", 4);
+    dico_stream_write(str, "220 ", 4);
     stream_writez(str, hostname);
-    stream_write(str, " ", 1);
+    dico_stream_write(str, " ", 1);
     if (initial_banner_text)
 	stream_writez(str, initial_banner_text);
     else
 	stream_writez(str, (char*) program_version);
-    stream_write(str, " ", 1);
+    dico_stream_write(str, " ", 1);
     output_capabilities(str);
-    stream_write(str, " ", 1);
+    dico_stream_write(str, " ", 1);
     asprintf(&msg_id, "<%lu.%lu@%s>",
 	     (unsigned long) getpid(),
 	     (unsigned long) time(NULL),
 	     hostname);
     stream_writez(str, msg_id);
-    stream_write(str, "\r\n", 2);
+    dico_stream_write(str, "\r\n", 2);
 }
 
 int
-get_input_line(stream_t str, char **buf, size_t *size, size_t *rdbytes)
+get_input_line(dico_stream_t str, char **buf, size_t *size, size_t *rdbytes)
 {
     int rc;
     alarm(inactivity_timeout);
-    rc = stream_getline(str, buf, size, rdbytes);
+    rc = dico_stream_getline(str, buf, size, rdbytes);
     alarm(0);
     return rc;
 }
@@ -217,7 +217,7 @@ sig_alarm(int sig)
 }
 
 int
-dictd_loop(stream_t str)
+dictd_loop(dico_stream_t str)
 {
     char *buf = NULL;
     size_t size = 0;
@@ -236,16 +236,16 @@ dictd_loop(stream_t str)
 	dictd_handle_command(str, input.argc, input.argv);
     }
     
-    stream_close(str);
-    stream_destroy(&str);
+    dico_stream_close(str);
+    dico_stream_destroy(&str);
     return 0;
 }
 
 int
 dictd_inetd()
 {
-    stream_t str = fd_stream_create(0, 1);
-    stream_set_buffer(str, lb_in, 512);
-    stream_set_buffer(str, lb_out, 512);
+    dico_stream_t str = fd_stream_create(0, 1);
+    dico_stream_set_buffer(str, lb_in, 512);
+    dico_stream_set_buffer(str, lb_out, 512);
     return dictd_loop(str);
 }

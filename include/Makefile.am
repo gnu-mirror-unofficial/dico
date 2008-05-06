@@ -16,8 +16,12 @@
 
 noinst_HEADERS=\
  dict.h\
- dico.h\
+ xdico.h\
  Xaw.h
+
+pkginclude_HEADERS = dico.h
+
+SUBDIRS = dico
 
 pkgdata_DATA = gjdict.xbm
 EXTRA_DIST = gjdict.xbm

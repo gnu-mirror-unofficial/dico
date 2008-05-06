@@ -1,5 +1,5 @@
 /* This file is part of Dico.
-   Copyright (C) 1998-2000, 2008 Sergey Poznyakoff
+   Copyright (C) 2008 Sergey Poznyakoff
 
    Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,31 +14,24 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef __dico_h
-#define __dico_h
+#ifndef __dico_assoc_h
+#define __dico_assoc_h
 
 #include <sys/types.h>
 #include <stdlib.h>
-#include <stdarg.h>
 
-#include <dico/list.h>
-#include <dico/assoc.h>
-#include <dico/stream.h>
-#include <dico/url.h>
-#include <dico/xlat.h>
+/* Association lists */
+struct dico_assoc {
+    char *key;
+    char *value;
+};
 
-#ifndef offsetof
-# define offsetof(s,f) ((size_t)&((s*)0)->f)
-#endif
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
+typedef dico_list_t dico_assoc_list_t;
 
-#ifndef DICO_ARG_UNUSED
-# define DICO_ARG_UNUSED __attribute__ ((__unused__))
-#endif
-
-#ifndef DICO_PRINTFLIKE
-# define DICO_PRINTFLIKE(fmt,narg) __attribute__ ((__format__ (__printf__, fmt, narg)))
-#endif
+dico_assoc_list_t dico_assoc_create(void);
+void dico_assoc_destroy(dico_assoc_list_t *passoc);
+int dico_assoc_add(dico_assoc_list_t assoc, const char *key, const char *value);
+const char *dico_assoc_find(dico_assoc_list_t assoc, const char *key);
+void dico_assoc_remove(dico_assoc_list_t assoc, const char *key);
 
 #endif
-    

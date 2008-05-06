@@ -14,10 +14,17 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dictd.h>
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+#include <dico.h>
+#include <string.h>
+#include <errno.h>
+#include <limits.h>
+#include <size_max.h>
 
-struct stream {
-    linebuf_t inbuf, outbuf;
+struct dico_stream {
+    dico_linebuf_t inbuf, outbuf;
     int eof;
     int last_err;
     int (*read) (void *, char *, size_t, size_t *);
@@ -28,13 +35,13 @@ struct stream {
 };    
 
 int
-stream_create(stream_t *pstream,
-	      void *data, 
-	      int (*readfn) (void *, char *, size_t, size_t *),
-	      int (*writefn) (void *, char *, size_t, size_t *),
-	      int (*closefn) (void *))
+dico_stream_create(dico_stream_t *pstream,
+		   void *data, 
+		   int (*readfn) (void *, char *, size_t, size_t *),
+		   int (*writefn) (void *, char *, size_t, size_t *),
+		   int (*closefn) (void *))
 {
-    stream_t stream = malloc(sizeof(*stream));
+    dico_stream_t stream = malloc(sizeof(*stream));
     if (stream == NULL)
 	return ENOMEM;
     memset(stream, 0, sizeof(*stream));
@@ -47,14 +54,14 @@ stream_create(stream_t *pstream,
 }
 
 void
-stream_set_error_string(stream_t stream,
-			const char *(*error_string) (void *, int))
+dico_stream_set_error_string(dico_stream_t stream,
+			     const char *(*error_string) (void *, int))
 {
     stream->error_string = error_string;
 }
 
 const char *
-stream_strerror(stream_t stream, int rc)
+dico_stream_strerror(dico_stream_t stream, int rc)
 {
     if (stream->error_string)
 	stream->error_string(stream->data, rc);
@@ -63,27 +70,28 @@ stream_strerror(stream_t stream, int rc)
 }
 
 int
-stream_last_error(stream_t stream)
+dico_stream_last_error(dico_stream_t stream)
 {
     return stream->last_err;
 }
 
 void
-stream_clearerr(stream_t stream)
+dico_stream_clearerr(dico_stream_t stream)
 {
     stream->last_err = 0;
 }
 
 int
-stream_eof(stream_t stream)
+dico_stream_eof(dico_stream_t stream)
 {
     return stream->eof;
 }
 
 int
-stream_set_buffer(stream_t stream, enum line_buffer_type type, size_t size)
+dico_stream_set_buffer(dico_stream_t stream, enum dico_line_buffer_type type,
+		       size_t size)
 {
-    linebuf_t *pbuf;
+    dico_linebuf_t *pbuf;
 
     switch (type) {
     case lb_in:
@@ -95,11 +103,12 @@ stream_set_buffer(stream_t stream, enum line_buffer_type type, size_t size)
     default:
 	abort();
     }
-    return linebuf_create(pbuf, stream, type, size);
+    return dico_linebuf_create(pbuf, stream, type, size);
 }
 
 int
-stream_read_unbuffered(stream_t stream, char *buf, size_t size, size_t *pread)
+dico_stream_read_unbuffered(dico_stream_t stream, char *buf, size_t size,
+			    size_t *pread)
 {
     int rc;
 
@@ -133,8 +142,8 @@ stream_read_unbuffered(stream_t stream, char *buf, size_t size, size_t *pread)
 }
 
 int
-stream_write_unbuffered(stream_t stream, char *buf, size_t size,
-			size_t *pwrite)
+dico_stream_write_unbuffered(dico_stream_t stream, char *buf, size_t size,
+			     size_t *pwrite)
 {
     int rc;
     
@@ -158,7 +167,7 @@ stream_write_unbuffered(stream_t stream, char *buf, size_t size,
 
 
 int
-stream_read(stream_t stream, char *buf, size_t size, size_t *pread)
+dico_stream_read(dico_stream_t stream, char *buf, size_t size, size_t *pread)
 {
     if (stream->inbuf) {
 	int rc;
@@ -167,39 +176,39 @@ stream_read(stream_t stream, char *buf, size_t size, size_t *pread)
 	if (pread == NULL) {
 	    size_t n = 0;
 	    while (n < size) {
-		rc = stream_read_unbuffered(stream, buf, size, &rdbytes);
+		rc = dico_stream_read_unbuffered(stream, buf, size, &rdbytes);
 		if (rc)
 		    break;
 		if (rdbytes == 0)
 		    break;
-		linebuf_grow(stream->inbuf, buf, rdbytes);
+		dico_linebuf_grow(stream->inbuf, buf, rdbytes);
 		n += rdbytes;
 	    }
 	    if (rc && n == 0)
 		return rc;
 	    
-	    if (linebuf_read(stream->inbuf, buf, size) != size)
+	    if (dico_linebuf_read(stream->inbuf, buf, size) != size)
 		rc = EIO;
 	    else
 		rc = 0;
 	} else {
-	    if (linebuf_level(stream->inbuf) == 0) {
-		rc = stream_read_unbuffered(stream, buf, size, &rdbytes);
+	    if (dico_linebuf_level(stream->inbuf) == 0) {
+		rc = dico_stream_read_unbuffered(stream, buf, size, &rdbytes);
 		if (rc)
 		    return rc;
-		linebuf_grow(stream->inbuf, buf, rdbytes);
+		dico_linebuf_grow(stream->inbuf, buf, rdbytes);
 	    }
 	
-	    *pread = linebuf_read(stream->inbuf, buf, size);
+	    *pread = dico_linebuf_read(stream->inbuf, buf, size);
 	    rc = 0;
 	}
 	return rc;
     } else
-	return stream_read_unbuffered(stream, buf, size, pread);
+	return dico_stream_read_unbuffered(stream, buf, size, pread);
 }
 
 int
-stream_readln(stream_t stream, char *buf, size_t size, size_t *pread)
+dico_stream_readln(dico_stream_t stream, char *buf, size_t size, size_t *pread)
 {
     int rc;
     char c;
@@ -209,7 +218,7 @@ stream_readln(stream_t stream, char *buf, size_t size, size_t *pread)
 	return EIO;
     
     size--;
-    for (n = 0; n < size && (rc = stream_read(stream, &c, 1, NULL)) == 0;
+    for (n = 0; n < size && (rc = dico_stream_read(stream, &c, 1, NULL)) == 0;
 	 n++) {
 	*buf++ = c;
 	if (c == '\n')
@@ -222,7 +231,8 @@ stream_readln(stream_t stream, char *buf, size_t size, size_t *pread)
 }
 
 int
-stream_getline(stream_t stream, char **pbuf, size_t *psize, size_t *pread)
+dico_stream_getline(dico_stream_t stream, char **pbuf, size_t *psize,
+		    size_t *pread)
 {
     int rc;
     char *lineptr = *pbuf;
@@ -241,7 +251,7 @@ stream_getline(stream_t stream, char **pbuf, size_t *psize, size_t *pread)
     for (;;) {
 	char c;
 
-	rc = stream_read(stream, &c, 1, NULL);
+	rc = dico_stream_read(stream, &c, 1, NULL);
 	if (rc)
 	    break;
 	
@@ -286,43 +296,43 @@ stream_getline(stream_t stream, char **pbuf, size_t *psize, size_t *pread)
 }
 
 int
-stream_write(stream_t stream, char *buf, size_t size)
+dico_stream_write(dico_stream_t stream, char *buf, size_t size)
 {
     if (stream->outbuf)
-	return linebuf_write(stream->outbuf, buf, size);
-    return stream_write_unbuffered(stream, buf, size, NULL);
+	return dico_linebuf_write(stream->outbuf, buf, size);
+    return dico_stream_write_unbuffered(stream, buf, size, NULL);
 }
 
 int
-stream_writeln(stream_t stream, char *buf, size_t size)
+dico_stream_writeln(dico_stream_t stream, char *buf, size_t size)
 {
     int rc;
-    if ((rc = stream_write(stream, buf, size)) == 0)
-	rc = stream_write(stream, "\r\n", 2);
+    if ((rc = dico_stream_write(stream, buf, size)) == 0)
+	rc = dico_stream_write(stream, "\r\n", 2);
     return rc;
 }
 
 int
-stream_flush(stream_t stream)
+dico_stream_flush(dico_stream_t stream)
 {
     int rc = 0;
     if (stream->outbuf)
-	rc = linebuf_flush(stream->outbuf);
+	rc = dico_linebuf_flush(stream->outbuf);
     return rc;
 }
 
 int
-stream_close(stream_t stream)
+dico_stream_close(dico_stream_t stream)
 {
     int rc = 0;
-    stream_flush(stream);
+    dico_stream_flush(stream);
     if (stream->close)
 	rc = stream->close(stream->data);
     return rc;
 }
 
 void
-stream_destroy(stream_t *stream)
+dico_stream_destroy(dico_stream_t *stream)
 {
     free(*stream);
     *stream = NULL;

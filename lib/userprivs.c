@@ -23,7 +23,7 @@
 #include <grp.h>
 #include <errno.h>
 #include <xalloc.h>
-#include <dico.h>
+#include <xdico.h>
 
 /* Switch to the given UID/GID */
 int

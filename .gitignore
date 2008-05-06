@@ -1,10 +1,14 @@
 *.a
+*.la
+*.lo
 *.o
 *.tar.bz2
 *.tar.gz
 *~
 .deps
 .emacs.desktop
+.libs
+.libs/*
 INSTALL
 Makefile
 Makefile.in

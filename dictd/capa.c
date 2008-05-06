@@ -37,8 +37,8 @@ dictd_capa_register(const char *name, struct dictd_command *cmd,
     cp->closure = closure;
     cp->enabled = 0;
     if (!capa_list)
-	capa_list = dico_list_create();
-    dico_list_append(capa_list, cp);
+	capa_list = xdico_list_create();
+    xdico_list_append(capa_list, cp);
 }
 
 static int

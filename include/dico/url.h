@@ -1,5 +1,5 @@
 /* This file is part of Dico.
-   Copyright (C) 1998-2000, 2008 Sergey Poznyakoff
+   Copyright (C) 2008 Sergey Poznyakoff
 
    Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,31 +14,24 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef __dico_h
-#define __dico_h
+#ifndef __dico_url_h
+#define __dico_url_h
 
-#include <sys/types.h>
-#include <stdlib.h>
-#include <stdarg.h>
+/* URLs */
+struct dico_url {
+    char *string;
+    char *proto;
+    char *host;
+    char *path;
+    char *user;
+    char *passwd;
+    dico_assoc_list_t args;
+};
 
-#include <dico/list.h>
-#include <dico/assoc.h>
-#include <dico/stream.h>
-#include <dico/url.h>
-#include <dico/xlat.h>
-
-#ifndef offsetof
-# define offsetof(s,f) ((size_t)&((s*)0)->f)
-#endif
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
-
-#ifndef DICO_ARG_UNUSED
-# define DICO_ARG_UNUSED __attribute__ ((__unused__))
-#endif
-
-#ifndef DICO_PRINTFLIKE
-# define DICO_PRINTFLIKE(fmt,narg) __attribute__ ((__format__ (__printf__, fmt, narg)))
-#endif
+typedef struct dico_url *dico_url_t;
+int dico_url_parse(dico_url_t *purl, const char *str);
+void dico_url_destroy(dico_url_t *purl);
+const char *dico_url_get_arg(dico_url_t url, const char *argname);
+char *dico_url_full_path(dico_url_t url);
 
 #endif
-    

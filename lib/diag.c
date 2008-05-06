@@ -17,7 +17,7 @@
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
-#include <dico.h>
+#include <xdico.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>

@@ -26,11 +26,9 @@ dictd_SOURCES=\
  dbtext.c\
  dictd.c\
  fdio.c\
- linebuf.c\
  loader.c\
  main.c\
  server.c\
- stream.c\
  udb.c
 
 noinst_HEADERS=dictd.h config-gram.h
@@ -39,7 +37,13 @@ AM_CFLAGS = -DSYSCONFIG=\"$(sysconfdir)\" -DDICO_MODDIR=\"$(DICO_MODDIR)\"
 AM_YFLAGS = -dtv
 AM_LFLAGS = -dvp
 
-LDADD=../lib/libdico.a  ../gnu/libgnu.a ../lib/libextra.a @LIBLTDL@ @DB_LIBS@
+LDADD=\
+ ../lib/libxdico.a\
+ ../gnu/libgnu.a\
+ ../lib/libextra.a\
+ ../lib/libdico.la\
+ @LIBLTDL@  @DB_LIBS@
+
 INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu @LTDLINCL@ @DB_INCLUDES@
 # dictd_DEPENDENCIES=@LTDLDEPS@
 

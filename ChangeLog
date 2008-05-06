@@ -1,5 +1,48 @@
 2008-05-06  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Provide an installable library and header files for dico
+	database modules.
+	
+	* include/dico/Makefile.am: New file.
+	* include/dico/assoc.h: New file.
+	* include/dico/list.h: New file.
+	* include/dico/url.h: New file.
+	* include/dico/xlat.h: New file.
+	* include/xdico.h: New file.
+	* include/dico.h: Rewrite. Installable header.
+	* include/Makefile.am (pkginclude_HEADERS): New var.
+	Add SUBDIRS.
+	
+	* dictd/linebuf.c: Move to ...
+	* lib/linebuf.c: ... this (with mods).
+	* dictd/stream.c: Move to ...
+	* lib/stream.c: ... this (with mods).
+	* lib/Makefile.am (lib_LTLIBRARIES): New installable library
+	libdico.la.
+	(noinst_LIBRARIES): New library libxdico.
+	* lib/assoc.c, lib/list.c, lib/url.c: Avoid using xalloc calls,
+	instead return error status and set errno.
+	* lib/diag.c, lib/iputil.c, lib/userprivs.c, lib/utf8.c,
+	lib/xalloc-die.c: Include xdico.h
+	
+	* lib/util.c: Likewise.
+	(xdico_list_create, xdico_iterator_create, xdico_list_append)
+	(xdico_list_prepend, xdico_assoc_create, xdico_assoc_add): New
+	functions. 
+	
+	* .gitignore: Update.
+	* configure.ac (AC_CONFIG_FILES): Add include/dico/Makefile
+	* dictd/Makefile.am (dictd_SOURCES): Remove linebuf.c and
+	stream.c.
+	(LDADD): Add libxdico.a, libdico.la
+
+	* dictd/auth.c, dictd/capa.c, dictd/commands.c, dictd/config-gram.y,
+	dictd/dictd.c, dictd/dictd.h, dictd/fdio.c, dictd/main.c,
+	dictd/server.c, dictd/udb.c: Reflect changes to the namespace.
+	
+	* makedict/Makefile.am (LDADD): Add libxdico.a, libdico.la
+	* makedict/makedict.h: Include xdico.h
+
 	Add loader.c
 	
 	* README: Update

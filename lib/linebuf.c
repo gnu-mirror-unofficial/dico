@@ -14,11 +14,16 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dictd.h>
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+#include <dico.h>
+#include <string.h>
+#include <errno.h>
 
-struct _line_buffer {
-    enum line_buffer_type type;
-    stream_t stream;
+struct dico_line_buffer {
+    enum dico_line_buffer_type type;
+    dico_stream_t stream;
     char *buffer;        /* Line buffer */
     size_t size;         /* Allocated size */
     size_t level;        /* Current filling level */
@@ -26,11 +31,11 @@ struct _line_buffer {
 
 
 int
-linebuf_create(struct _line_buffer **pbuf,
-	       stream_t stream, enum line_buffer_type type,
-	       size_t size)
+dico_linebuf_create(struct dico_line_buffer **pbuf,
+		    dico_stream_t stream, enum dico_line_buffer_type type,
+		    size_t size)
 {
-    struct _line_buffer *buf;
+    struct dico_line_buffer *buf;
 
     buf = malloc(sizeof(*buf));
     if (!buf)
@@ -49,7 +54,7 @@ linebuf_create(struct _line_buffer **pbuf,
 }
 
 void
-linebuf_destroy(struct _line_buffer **s)
+dico_linebuf_destroy(struct dico_line_buffer **s)
 {
     if (s && *s) {
 	free((*s)->buffer);
@@ -59,13 +64,13 @@ linebuf_destroy(struct _line_buffer **s)
 }
 
 void
-linebuf_drop(struct _line_buffer *s)
+dico_linebuf_drop(struct dico_line_buffer *s)
 {
     s->level = 0;
 }
 
 int
-linebuf_grow(struct _line_buffer *s, const char *ptr, size_t size)
+dico_linebuf_grow(struct dico_line_buffer *s, const char *ptr, size_t size)
 {
     if (!s->buffer) {
 	s->buffer = malloc(size);
@@ -87,7 +92,7 @@ linebuf_grow(struct _line_buffer *s, const char *ptr, size_t size)
 }
 
 size_t
-linebuf_read(struct _line_buffer *s, char *optr, size_t osize)
+dico_linebuf_read(struct dico_line_buffer *s, char *optr, size_t osize)
 {
     int len;
     
@@ -103,17 +108,17 @@ linebuf_read(struct _line_buffer *s, char *optr, size_t osize)
 }
 
 int
-linebuf_readline(struct _line_buffer *s, char *ptr, size_t size)
+dico_linebuf_readline(struct dico_line_buffer *s, char *ptr, size_t size)
 {
     char *p = memchr(s->buffer, '\n', s->level);
 
     if (p)
 	size = p - s->buffer + 1;
-    return linebuf_read(s, ptr, size);
+    return dico_linebuf_read(s, ptr, size);
 }
 
 int
-linebuf_writelines(struct _line_buffer *s)
+dico_linebuf_writelines(struct dico_line_buffer *s)
 {
     if (s->level >= 2) {
 	char *start, *end;
@@ -123,8 +128,8 @@ linebuf_writelines(struct _line_buffer *s)
 	     end && end < s->buffer + s->level;
 	     start = end + 1,
 		 end = memchr(start, '\n', s->buffer + s->level - start)) {
-		int rc = stream_write_unbuffered(s->stream, start,
-						 end - start + 1, NULL);
+		int rc = dico_stream_write_unbuffered(s->stream, start,
+						      end - start + 1, NULL);
 		if (rc)
 		    return rc;
 	    }
@@ -142,39 +147,41 @@ linebuf_writelines(struct _line_buffer *s)
 }
 
 size_t
-linebuf_level(struct _line_buffer *s)
+dico_linebuf_level(struct dico_line_buffer *s)
 {
     return s->level;
 }
 
 char *
-linebuf_data(struct _line_buffer *s)
+dico_linebuf_data(struct dico_line_buffer *s)
 {
     return s->buffer;
 }
 
 int
-linebuf_write(struct _line_buffer *s, char *ptr, size_t size)
+dico_linebuf_write(struct dico_line_buffer *s, char *ptr, size_t size)
 {
-    int rc = linebuf_grow(s, ptr, size);
+    int rc = dico_linebuf_grow(s, ptr, size);
     if (rc == 0)
-	rc = linebuf_writelines(s);
+	rc = dico_linebuf_writelines(s);
     return rc;
 }
 
 int
-linebuf_flush(struct _line_buffer *s)
+dico_linebuf_flush(struct dico_line_buffer *s)
 {
     int rc;
     
     switch (s->type) {
     case lb_in:
-	rc = stream_read_unbuffered(s->stream, s->buffer, s->size, &s->level);
+	rc = dico_stream_read_unbuffered(s->stream, s->buffer, s->size,
+					 &s->level);
 	break;
 
     case lb_out:
 	if (s->level) {
-	    rc = stream_write_unbuffered(s->stream, s->buffer, s->level, NULL);
+	    rc = dico_stream_write_unbuffered(s->stream, s->buffer, s->level,
+					      NULL);
 	    s->level = 0;
 	}
 	break;

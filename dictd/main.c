@@ -125,14 +125,14 @@ set_supp_group(enum cfg_callback_command cmd,
 	       void *cb_data)
 {
     if (!group_list)
-	group_list = dico_list_create();
+	group_list = xdico_list_create();
     
     if (value->type == TYPE_LIST)
 	dico_list_iterate(value->v.list, set_supp_group_iter, locus);
     else {
 	struct group *group = getgrnam(value->v.string);
 	if (group)
-	    dico_list_append(group_list, (void*)group->gr_gid);
+	    xdico_list_append(group_list, (void*)group->gr_gid);
 	else {
 	    config_error(locus, 0, _("%s: unknown group"), value->v.string);
 	    return 1;
@@ -252,9 +252,9 @@ set_handler(enum cfg_callback_command cmd,
 	
     case callback_section_end:
 	if (!handler_list)
-	    handler_list = dico_list_create();
+	    handler_list = xdico_list_create();
 	han = *pdata;
-	dico_list_append(handler_list, han);
+	xdico_list_append(handler_list, han);
 	*pdata = NULL;
 	break;
 	
@@ -286,9 +286,9 @@ set_dictionary(enum cfg_callback_command cmd,
 	
     case callback_section_end:
 	if (!dictionary_list)
-	    dictionary_list = dico_list_create();
+	    dictionary_list = xdico_list_create();
 	dict = *pdata;
-	dico_list_append(dictionary_list, dict);
+	xdico_list_append(dictionary_list, dict);
 	*pdata = NULL;
 	break;
 	
@@ -564,11 +564,11 @@ syslog_log_printer(int lvl, int exitcode, int errcode,
 
 
 static void
-dictd_xversion(stream_t str, int argc, char **argv)
+dictd_xversion(dico_stream_t str, int argc, char **argv)
 {
     stream_writez(str, "110 ");
     stream_writez(str, (char*)program_version);
-    stream_write(str, "\r\n", 2);
+    dico_stream_write(str, "\r\n", 2);
 }
     
 static void

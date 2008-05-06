@@ -264,6 +264,7 @@ esac
   
 AC_CONFIG_FILES([Makefile
                  include/Makefile
+                 include/dico/Makefile
                  utils/Makefile
 		 gnu/Makefile
                  lib/Makefile

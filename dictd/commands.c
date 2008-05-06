@@ -47,7 +47,7 @@ dictd_help(dico_stream_t str, int argc, char **argv)
 static int
 _show_database(void *item, void *data)
 {
-    dictd_dictionary_t *dict = item;
+    dictd_database_t *dict = item;
     dico_stream_t str = data;
 
     stream_printf(str, "%s \"%s\"\r\n",
@@ -59,7 +59,7 @@ void
 dictd_show_info(dico_stream_t str, int argc, char **argv)
 {
     char *dbname = argv[2];
-    dictd_dictionary_t *dict = find_dictionary(dbname);
+    dictd_database_t *dict = find_database(dbname);
     if (!dict) 
 	stream_writez(str, "550 invalid database, use SHOW DB for list\r\n");
     else {
@@ -77,13 +77,13 @@ dictd_show_info(dico_stream_t str, int argc, char **argv)
 void
 dictd_show_databases(dico_stream_t str, int argc, char **argv)
 {
-    size_t count = dico_list_count(dictionary_list);
+    size_t count = dico_list_count(database_list);
     if (count == 0) 
 	stream_printf(str, "554 No databases present\r\n");
     else {
 	stream_printf(str, "110 %lu databases present\r\n",
 		      (unsigned long) count);
-	dico_list_iterate(dictionary_list, _show_database, str);
+	dico_list_iterate(database_list, _show_database, str);
 	stream_writez(str, ".\r\n");
 	stream_writez(str, "250 ok\r\n");
     }

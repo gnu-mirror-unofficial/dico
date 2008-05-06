@@ -1,3 +1,10 @@
+2008-05-07  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	* dictd/commands.c, dictd/dictd.c, dictd/dictd.h, dictd/loader.c,
+	dictd/main.c, include/dico.h: Rename `dictionary' to `database'
+	for consistency with RFC 2229.
+	Get list of supported strategies for each database.
+
 2008-05-06  Sergey Poznyakoff  <gray@gnu.org.ua>
 
 	Initialize databases.

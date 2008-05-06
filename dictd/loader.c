@@ -81,7 +81,7 @@ dictd_load_module(dictd_handler_t *hptr)
 }
 
 int
-dictd_open_dictionary_handler(dictd_dictionary_t *dp)
+dictd_open_database_handler(dictd_database_t *dp)
 {
     dictd_handler_t *hptr = dp->handler;
 
@@ -93,4 +93,37 @@ dictd_open_dictionary_handler(dictd_dictionary_t *dp)
 	}
     }
     return 0;
+}
+
+int
+dictd_database_get_strats(dictd_database_t *dp)
+{
+    dictd_handler_t *hptr = dp->handler;
+    int rc;
+    
+    if (hptr->module->module_strats) 
+	rc = hptr->module->module_strats(dp->mod, &dp->stratc, dp->stratv);
+    else {
+	dp->stratc = 1;
+	dp->stratv = xcalloc(2, sizeof(dp->stratv[0]));
+	dp->stratv[0] = xstrdup("exact");
+	dp->stratv[1] = NULL;
+	rc = 0;
+    }
+    return rc;
+}
+
+int
+dictd_close_database_handler(dictd_database_t *dp)
+{
+    int rc;
+    
+    if (dp->mod) {
+	dictd_handler_t *hptr = dp->handler;
+	if (hptr->module->module_close) 
+	    rc = hptr->module->module_close(dp->mod);
+	dp->mod = NULL;
+    } else
+	rc = 0;
+    return rc;
 }

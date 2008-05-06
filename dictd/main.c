@@ -69,11 +69,11 @@ dico_list_t /* of gid_t */ group_list;
 /* List of directories to search for handler modules. */
 dico_list_t /* of char * */ module_load_path;
 
-/* List of configured dictionary handlers */
+/* List of configured database handlers */
 dico_list_t /* of dictd_handler_t */ handler_list;
 
 /* List of configured dictionaries */
-dico_list_t /* of dictd_dictionary_t */ dictionary_list;
+dico_list_t /* of dictd_database_t */ database_list;
 
 
 /* Configuration */
@@ -265,13 +265,13 @@ set_handler(enum cfg_callback_command cmd,
 }
 
 int
-set_dictionary(enum cfg_callback_command cmd,
-	       gd_locus_t *locus,
-	       void *varptr,
-	       config_value_t *value,
-	       void *cb_data)
+set_database(enum cfg_callback_command cmd,
+	     gd_locus_t *locus,
+	     void *varptr,
+	     config_value_t *value,
+	     void *cb_data)
 {
-    dictd_dictionary_t *dict;
+    dictd_database_t *dict;
     void **pdata = cb_data;
     
     switch (cmd) {
@@ -285,10 +285,10 @@ set_dictionary(enum cfg_callback_command cmd,
 	break;
 	
     case callback_section_end:
-	if (!dictionary_list)
-	    dictionary_list = xdico_list_create();
+	if (!database_list)
+	    database_list = xdico_list_create();
 	dict = *pdata;
-	xdico_list_append(dictionary_list, dict);
+	xdico_list_append(database_list, dict);
 	*pdata = NULL;
 	break;
 	
@@ -315,7 +315,7 @@ set_dict_handler(enum cfg_callback_command cmd,
 		 void *cb_data)
 {
     dictd_handler_t *han;
-    dictd_dictionary_t *dict = varptr;
+    dictd_database_t *db = varptr;
     int rc;
     
     if (value->type != TYPE_STRING) {
@@ -323,22 +323,22 @@ set_dict_handler(enum cfg_callback_command cmd,
 	return 1;
     }
 
-    dict->command = value->v.string;
+    db->command = value->v.string;
     if (rc = dico_argcv_get(value->v.string, NULL, NULL,
-			    &dict->argc, &dict->argv)) {
+			    &db->argc, &db->argv)) {
 	config_error(locus, rc, _("cannot parse command line `%s'"),
 		     value->v.string);
-	free(dict); /* FIXME: Free members */
+	dictd_database_free(db); /* FIXME: Free members */
 	return 1;
     } 
 
-    han = dico_list_locate(handler_list, dict->argv[0], cmp_handler_ident);
+    han = dico_list_locate(handler_list, db->argv[0], cmp_handler_ident);
     if (!han) {
-	config_error(locus, 0, _("%s: handler not declared"), dict->argv[0]);
+	config_error(locus, 0, _("%s: handler not declared"), db->argv[0]);
 	/* FIXME: Free memory */
 	return 1;
     }
-    dict->handler = han;
+    db->handler = han;
     
     return 0;
 }
@@ -382,17 +382,17 @@ struct config_keyword kwd_handler[] = {
     { NULL }
 };
 
-struct config_keyword kwd_dictionary[] = {
+struct config_keyword kwd_database[] = {
     { "name", N_("word"), N_("Dictionary name (a single word)."),
-      cfg_string, NULL, offsetof(dictd_dictionary_t, name) },
+      cfg_string, NULL, offsetof(dictd_database_t, name) },
     { "description", N_("arg"),
       N_("Short description, to be shown in reply to SHOW DB command."),
-      cfg_string, NULL, offsetof(dictd_dictionary_t, descr) },
+      cfg_string, NULL, offsetof(dictd_database_t, descr) },
     { "info", N_("arg"),
-      N_("Full description of the dictionary, to be shown in reply to "
+      N_("Full description of the database, to be shown in reply to "
 	 "SHOW INFO command."),
-      cfg_string, NULL, offsetof(dictd_dictionary_t, info) },
-    { "handler", N_("name"), N_("Name of the handler for this dictionary."),
+      cfg_string, NULL, offsetof(dictd_database_t, info) },
+    { "handler", N_("name"), N_("Name of the handler for this database."),
       cfg_string, NULL, 0, set_dict_handler },
     { NULL }
 };
@@ -499,10 +499,10 @@ struct config_keyword keywords[] = {
     { "module-load-path", N_("path"),
       N_("List of directories searched for handler modules."),
       cfg_string|CFG_LIST, &module_load_path },
-    { "dictionary", NULL, N_("Define a dictionary database."),
-      cfg_section, NULL, 0, set_dictionary, NULL,
-      kwd_dictionary },
-    { "handler", N_("name: string"), N_("Define a dictionary handler."),
+    { "database", NULL, N_("Define a dictionary database."),
+      cfg_section, NULL, 0, set_database, NULL,
+      kwd_database },
+    { "handler", N_("name: string"), N_("Define a database handler."),
       cfg_section, NULL, 0, set_handler, NULL,
       kwd_handler },
     { "user-db", N_("url: string"),
@@ -520,36 +520,44 @@ config_help()
 
 
 static int
-cmp_dict_name(const void *item, const void *data)
+cmp_database_name(const void *item, const void *data)
 {
-    const dictd_dictionary_t *db = item;
+    const dictd_database_t *db = item;
     if (!db->name)
 	return 1;
     return strcmp(db->name, (const char*)data);
 }    
 
-dictd_dictionary_t *
-find_dictionary(const char *name)
+dictd_database_t *
+find_database(const char *name)
 {
-    return dico_list_locate(dictionary_list, (void*) name,
-			    cmp_dict_name);
+    return dico_list_locate(database_list, (void*) name,
+			    cmp_database_name);
 }
 
 /* Remove all dictionaries that depend on the given handler */
 void
-dictionary_remove_dependent(dictd_handler_t *handler)
+database_remove_dependent(dictd_handler_t *handler)
 {
-    dico_iterator_t itr = xdico_iterator_create(dictionary_list);
-    dictd_dictionary_t *dp;
+    dico_iterator_t itr = xdico_iterator_create(database_list);
+    dictd_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
 	if (dp->handler == handler) {
-	    logmsg(L_NOTICE, 0, _("removing dictionary %s"), dp->name);
+	    logmsg(L_NOTICE, 0, _("removing database %s"), dp->name);
 	    dico_iterator_remove_current(itr);
 	    free(dp); /* FIXME: Free dp fields */
 	}
     }
     dico_iterator_destroy(&itr);
+}
+
+void
+dictd_database_free(dictd_database_t *dp)
+{
+    dico_argcv_free(dp->argc, dp->argv);
+    dico_argcv_free(dp->stratc, dp->stratv);
+    free(dp);
 }
 
 

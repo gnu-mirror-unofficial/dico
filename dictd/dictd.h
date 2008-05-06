@@ -60,12 +60,11 @@ extern const char *program_version;
 extern char *initial_banner_text;
 extern int got_quit;
 extern char *help_text;
-extern dico_list_t dictionary_list;
 extern const char *server_info;
 extern char *msg_id;
 extern dico_list_t module_load_path;
 extern dico_list_t handler_list;
-extern dico_list_t dictionary_list;
+extern dico_list_t database_list;
 
 #ifndef LOG_FACILITY
 # define LOG_FACILITY LOG_LOCAL1
@@ -213,7 +212,7 @@ typedef struct dictd_handler {
     lt_dlhandle handle;
 } dictd_handler_t;
 
-typedef struct dictd_dictionary {
+typedef struct dictd_database {
     char *name;   /* Dictionary name */
     char *descr;  /* Description (SHOW DB) */
     char *info;   /* Info (SHOW INFO) */
@@ -224,14 +223,18 @@ typedef struct dictd_dictionary {
     int argc;                 /* Handler arguments: count */
     char **argv;              /*  ... and pointers */
     char *command;            /* Handler command line (for diagnostics) */
-} dictd_dictionary_t;
+
+    int stratc;               /* Number of supported strategies */
+    char **stratv;            /* Array of supported strategies */
+} dictd_database_t;
 
 void dictd_server(int argc, char **argv);
 int dictd_loop(dico_stream_t stream);
 int dictd_inetd(void);
 
-dictd_dictionary_t *find_dictionary(const char *name);
-void dictionary_remove_dependent(dictd_handler_t *handler);
+dictd_database_t *find_database(const char *name);
+void database_remove_dependent(dictd_handler_t *handler);
+void dictd_database_free(dictd_database_t *dp);
 
 
 typedef void (*dictd_cmd_fn) (dico_stream_t str, int argc, char **argv);
@@ -286,4 +289,6 @@ void register_auth(void);
 /* loader.c */
 void dictd_loader_init(void);
 int dictd_load_module(dictd_handler_t *hptr);
-int dictd_open_dictionary_handler(dictd_dictionary_t *dp);
+int dictd_open_database_handler(dictd_database_t *dp);
+int dictd_close_database_handler(dictd_database_t *dp);
+int dictd_database_get_strats(dictd_database_t *dp);

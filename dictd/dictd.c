@@ -224,24 +224,30 @@ load_handlers()
 
     for (hp = dico_iterator_first(itr); hp; hp = dico_iterator_next(itr)) {
 	if (dictd_load_module(hp)) {
-	    dictionary_remove_dependent(hp);
+	    database_remove_dependent(hp);
 	    dico_iterator_remove_current(itr);
 	}
     }
     dico_iterator_destroy(&itr);
 }
 
-int
+static void
 init_databases()
 {
-    dico_iterator_t itr = xdico_iterator_create(dictionary_list);
-    dictd_dictionary_t *dp;
+    dico_iterator_t itr = xdico_iterator_create(database_list);
+    dictd_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
-	if (dictd_open_dictionary_handler(dp)) {
-	    logmsg(L_NOTICE, 0, _("removing dictionary %s"), dp->name);
+	if (dictd_open_database_handler(dp)) {
+	    logmsg(L_NOTICE, 0, _("removing database %s"), dp->name);
 	    dico_iterator_remove_current(itr);
-	    free(dp); /* FIXME: Free dp fields */
+	    dictd_database_free(dp);
+	}
+	if (dictd_database_get_strats(dp)) {
+	    logmsg(L_NOTICE, 0, _("removing database %s"), dp->name);
+	    dico_iterator_remove_current(itr);
+	    dictd_close_database_handler(dp);
+	    dictd_database_free(dp);
 	}
     }
     dico_iterator_destroy(&itr);

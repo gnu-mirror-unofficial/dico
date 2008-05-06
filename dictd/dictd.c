@@ -216,6 +216,29 @@ sig_alarm(int sig)
     exit(1);
 }
 
+static int
+load_handlers()
+{
+    dico_iterator_t itr = xdico_iterator_create(handler_list);
+    dictd_handler_t *hp;
+
+    for (hp = dico_iterator_first(itr); hp; hp = dico_iterator_next(itr)) {
+	if (dictd_load_module(hp)) {
+	    dictionary_remove_dependent(hp);
+	    dico_iterator_remove_current(itr);
+	}
+    }
+    dico_iterator_destroy(&itr);
+}
+
+void
+dictd_server_init()
+{
+    load_handlers();
+    
+    //init_databases();
+}
+
 int
 dictd_loop(dico_stream_t str)
 {
@@ -224,6 +247,7 @@ dictd_loop(dico_stream_t str)
     size_t rdbytes;
     struct input input;
 
+    dictd_server_init();
     signal(SIGALRM, sig_alarm);
     memset(&input, 0, sizeof input);
     initial_banner(str);

@@ -21,6 +21,7 @@ lib_LTLIBRARIES = libdico.la
 noinst_LIBRARIES=libxdico.a libextra.a
 
 libdico_la_SOURCES=\
+ argcv.c\
  assoc.c\
  linebuf.c\
  list.c\

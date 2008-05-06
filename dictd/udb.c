@@ -90,13 +90,13 @@ udb_create(dictd_user_db_t *pdb,
     
     rc = dico_url_parse(&url, urlstr);
     if (rc) {
-	config_error(locus, 0, _("invalid URL"));
+	config_error(locus, 0, _("%s: invalid URL"), urlstr);
 	return 1;
     }
 
     def = dico_list_locate(udb_def_list, url->proto, udb_def_cmp);
     if (!def) {
-	config_error(locus, 0, _("invalid URL: unknown protocol"));
+	config_error(locus, 0, _("%s: invalid URL: unknown protocol"), urlstr);
 	dico_url_destroy(&url);
 	return 1;
     }

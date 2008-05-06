@@ -50,7 +50,7 @@ void dico_iterator_destroy(dico_iterator_t *ip);
 void *dico_iterator_first(dico_iterator_t ip);
 void *dico_iterator_next(dico_iterator_t ip);
 
-void dico_iterator_remove_current(dico_iterator_t ip);
+void *dico_iterator_remove_current(dico_iterator_t ip);
 void dico_iterator_set_data(dico_iterator_t ip, void *data);
 
 #endif

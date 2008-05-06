@@ -524,6 +524,23 @@ find_dictionary(const char *name)
 			    cmp_dict_name);
 }
 
+/* Remove all dictionaries that depend on the given handler */
+void
+dictionary_remove_dependent(dictd_handler_t *handler)
+{
+    dico_iterator_t itr = xdico_iterator_create(dictionary_list);
+    dictd_dictionary_t *dp;
+
+    for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
+	if (dp->handler == handler) {
+	    logmsg(L_NOTICE, 0, _("removing dictionary %s"), dp->name);
+	    dico_iterator_remove_current(itr);
+	    free(dp); /* FIXME: Free dp fields */
+	}
+    }
+    dico_iterator_destroy(&itr);
+}
+
 
 void
 syslog_log_printer(int lvl, int exitcode, int errcode,

@@ -37,6 +37,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <signal.h>
+#include <ltdl.h>
 
 #include <xdico.h>
 #include <c-strcase.h>
@@ -63,6 +64,8 @@ extern dico_list_t dictionary_list;
 extern const char *server_info;
 extern char *msg_id;
 extern dico_list_t module_load_path;
+extern dico_list_t handler_list;
+extern dico_list_t dictionary_list;
 
 #ifndef LOG_FACILITY
 # define LOG_FACILITY LOG_LOCAL1
@@ -205,6 +208,9 @@ typedef struct dictd_handler {
     char *ident;
     enum dictd_handler_type type;
     char *command;
+
+    struct dico_handler_module *module;
+    lt_dlhandle handle;
 } dictd_handler_t;
 
 typedef struct dictd_dictionary {
@@ -218,6 +224,7 @@ void dictd_server(int argc, char **argv);
 int dictd_loop(dico_stream_t stream);
 int dictd_inetd(void);
 dictd_dictionary_t *find_dictionary(const char *name);
+void dictionary_remove_dependent(dictd_handler_t *handler);
 
 
 typedef void (*dictd_cmd_fn) (dico_stream_t str, int argc, char **argv);
@@ -271,3 +278,4 @@ void register_auth(void);
 
 /* loader.c */
 void dictd_loader_init(void);
+int dictd_load_module(dictd_handler_t *hptr);

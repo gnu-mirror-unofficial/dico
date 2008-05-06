@@ -202,7 +202,7 @@ dico_url_parse(dico_url_t *purl, const char *str)
     dico_url_t url;
     
     url = malloc(sizeof (*url));
-    if (url)
+    if (!url)
 	return 1;
     memset(url, 0, sizeof(*url));
     rc = url_get_proto(url, str);

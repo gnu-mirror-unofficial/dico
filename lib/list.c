@@ -159,10 +159,10 @@ dico_iterator_next(dico_iterator_t ip)
     return dico_iterator_current(ip);
 }	
 
-void
+void *
 dico_iterator_remove_current(dico_iterator_t ip)
 {
-    dico_list_remove(ip->list, ip->cur->data, NULL);
+    return dico_list_remove(ip->list, ip->cur->data, NULL);
 }
 
 void
@@ -211,7 +211,7 @@ dico_list_append(struct list *list, void *data)
 	return 1;
     }
     ep = malloc(sizeof(*ep));
-    if (ep)
+    if (!ep)
 	return 1;
     ep->next = NULL;
     ep->data = data;

@@ -15,6 +15,7 @@
 # along with Dico.  If not, see <http://www.gnu.org/licenses/>.
 
 pkginclude_HEADERS = \
+ argcv.h\
  assoc.h\
  list.h\
  stream.h\

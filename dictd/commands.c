@@ -78,11 +78,15 @@ void
 dictd_show_databases(dico_stream_t str, int argc, char **argv)
 {
     size_t count = dico_list_count(dictionary_list);
-    stream_printf(str, "110 %lu databases present\r\n",
-		  (unsigned long) count);
-    dico_list_iterate(dictionary_list, _show_database, str);
-    stream_writez(str, ".\r\n");
-    stream_writez(str, "250 ok\r\n");    
+    if (count == 0) 
+	stream_printf(str, "554 No databases present\r\n");
+    else {
+	stream_printf(str, "110 %lu databases present\r\n",
+		      (unsigned long) count);
+	dico_list_iterate(dictionary_list, _show_database, str);
+	stream_writez(str, ".\r\n");
+	stream_writez(str, "250 ok\r\n");
+    }
 }
 
 void

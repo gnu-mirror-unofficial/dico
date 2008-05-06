@@ -1,5 +1,28 @@
 2008-05-06  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Load modules.
+	
+	* dictd/commands.c (dictd_show_databases): Return 554 response if
+	no databases are configured.
+	* dictd/dictd.c (dictd_loop): Load all configured handlers.
+	* dictd/dictd.h: Include ltdl.h
+	(handler_list, dictionary_list): Add declarations.
+	(dictd_handler_t): New fields: module and handle.
+	(dictionary_remove_dependent, dictd_load_module): New proto.
+	* dictd/loader.c (dictd_load_module): New function.
+	* dictd/main.c (dictionary_remove_dependent): New function.
+	* dictd/udb.c (udb_create): Improve error diagnostics.
+	* include/dico.h: Include dico/argcv.h
+	(DICO_EXPORT): New define.
+	(dico_handle_t, struct dico_handler_module): New declarations.
+	* include/dico/Makefile.am (pkginclude_HEADERS): Add argcv.h.
+	* include/dico/argcv.h: New file.
+	* include/dico/list.h (dico_iterator_remove_current): Change
+	return type.
+	* lib/Makefile.am (libdico_la_SOURCES): add argcv.c
+	* lib/argcv.c: New file.
+	* lib/list.c, lib/url.c: Fix dummy errors.
+
 	Provide an installable library and header files for dico
 	database modules.
 	

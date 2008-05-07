@@ -62,7 +62,7 @@ tokenize_input(struct input *in, char *str)
 	    quote = 0;
 
 	for (; !utf8_iter_end_p(&itr)
-		 && !(utf8_iter_isascii(itr) && ISWS(*itr.curptr));
+		 && !(utf8_iter_isascii(itr) && (quote ? 0 : ISWS(*itr.curptr)));
 	     utf8_iter_next(&itr)) {
 	    if (utf8_iter_isascii(itr)) {
 		if (*itr.curptr == quote) {

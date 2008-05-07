@@ -1,5 +1,10 @@
 2008-05-07  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Bugfix.
+	
+	* dictd/dictd.c (tokenize_input): Correctly handle quoted
+	arguments.
+
 	Rewrite interface to strategies.	
 	
 	* include/dico/strat.h: New file.

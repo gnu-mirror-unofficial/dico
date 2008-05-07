@@ -237,17 +237,10 @@ init_databases()
     dico_iterator_t itr = xdico_iterator_create(database_list);
     dictd_database_t *dp;
 
-    strategy_list = xdico_list_create();
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
 	if (dictd_open_database_handler(dp)) {
 	    logmsg(L_NOTICE, 0, _("removing database %s"), dp->name);
 	    dico_iterator_remove_current(itr);
-	    dictd_database_free(dp);
-	}
-	if (dictd_database_get_strats(dp)) {
-	    logmsg(L_NOTICE, 0, _("removing database %s"), dp->name);
-	    dico_iterator_remove_current(itr);
-	    dictd_close_database_handler(dp);
 	    dictd_database_free(dp);
 	}
     }
@@ -255,9 +248,19 @@ init_databases()
 }
 
 void
+init_strategies()
+{
+    static dico_strategy_t defstrat = {
+	"exact", "Match words exactly"
+    };
+    dico_strategy_add(&defstrat);
+}
+
+void
 dictd_server_init()
 {
     load_handlers();
+    init_strategies();
     init_databases();
 }
 

@@ -96,49 +96,6 @@ dictd_open_database_handler(dictd_database_t *dp)
     return 0;
 }
 
-static int
-strat_name_cmp(const void *item, const void *data)
-{
-    const dico_strategy_t *strat = item;
-    const char *name = data;
-    return strcmp(strat->name, name);
-}
-
-static void
-add_strategies(dictd_database_t *dp, int stratc, dico_strategy_t *strat)
-{
-    int i;
-    
-    dp->stratc = stratc;
-    dp->stratv = xcalloc(stratc + 1, sizeof(dp->stratv[0]));
-    for (i = 0; i < stratc; i++) {
-	if (!dico_list_locate(strategy_list, strat[i].name, strat_name_cmp))
-	    dico_list_append(strategy_list, strat + i);
-	dp->stratv[i] = strat[i].name;
-    }
-}
-
-int
-dictd_database_get_strats(dictd_database_t *dp)
-{
-    dictd_handler_t *hptr = dp->handler;
-    
-    if (hptr->module->module_strats) {
-	dico_strategy_t *strat;
-	int count;
-	count = hptr->module->module_strats(dp->mod, &strat);
-	if (count == 0)
-	    return 1;
-	add_strategies(dp, count, strat);
-    } else {
-	static dico_strategy_t exact_strat = {
-	    "exact", "Match words exactly"
-	};
-	add_strategies(dp, 1, &exact_strat);
-    }
-    return 0;
-}
-
 int
 dictd_close_database_handler(dictd_database_t *dp)
 {

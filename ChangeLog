@@ -1,5 +1,29 @@
 2008-05-07  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Rewrite interface to strategies.	
+	
+	* include/dico/strat.h: New file.
+	* include/dico/Makefile.am (pkginclude_HEADERS): Add strat.h
+	* lib/strat.c: New file.
+	* lib/Makefile.am (libdico_la_SOURCES): Add strat.c
+	
+	* dictd/dictd.c (init_databases): Remove querying for supported
+	strategies.
+	(init_strategies): New function.
+	(dictd_server_init): Call init_strategies.
+	* dictd/commands.c (dictd_show_strategies): Use new interface to
+	strategies.
+	* dictd/dictd.h (dictd_database_t): Remove stratc and stratv.
+	* dictd/loader.c (strat_name_cmp, add_strategies)
+	(dictd_database_get_strats): Remove.
+	* dictd/main.c (strategy_list): Remove.
+	(dictd_database_free): Remove references to stratc and stratv.
+	* include/dico.h: Include dico/strat.h
+	(dico_strategy_t): Move definition to dico/strat.h
+	(struct dico_handler_module): Remove module_strats.
+	* outline/outline.c (outline_strats): Remove. Register strategies
+	in outline_init.
+	
 	Implement SHOW STRAT. Begin writing `outline' handler module.
 	
 	* modules: New directory.

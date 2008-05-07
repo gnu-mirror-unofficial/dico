@@ -18,6 +18,7 @@ pkginclude_HEADERS = \
  argcv.h\
  assoc.h\
  list.h\
+ strat.h\
  stream.h\
  url.h\
  xlat.h

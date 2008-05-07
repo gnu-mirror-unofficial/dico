@@ -106,13 +106,13 @@ _show_strategy(void *item, void *data)
 void
 dictd_show_strategies(dico_stream_t str, int argc, char **argv)
 {
-    size_t count = dico_list_count(strategy_list);
+    size_t count = dico_strategy_count();
     if (count == 0)
 	stream_printf(str, "555 No strategies available\r\n");
     else {
 	stream_printf(str, "111 %lu strategies present: list follows\r\n",
 		      (unsigned long) count);
-	dico_list_iterate(strategy_list, _show_strategy, str);
+	dico_strategy_iterate(_show_strategy, str);
 	stream_writez(str, ".\r\n");
 	stream_writez(str, "250 ok\r\n");
     }

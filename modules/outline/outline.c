@@ -20,9 +20,17 @@
 #include <dico.h>
 #include <string.h>
 
+static dico_strategy_t defstrat[] = {
+    { "exact", "Match words exactly" },
+    { "prefix", "Match word prefixes" }
+};
+
 int
 outline_init(int argc, char **argv)
 {
+    int i;
+    for (i = 0; i < ARRAY_SIZE(defstrat); i++)
+	dico_strategy_add(defstrat + i);
     return 0;
 }
 
@@ -38,18 +46,6 @@ outline_close(dico_handle_t hp)
 {
     /* FIXME */
     return 0;
-}
-
-static dico_strategy_t defstrat[] = {
-    { "exact", "Match words exactly" },
-    { "prefix", "Match word prefixes" }
-};
-
-int
-outline_strats(dico_handle_t hp, dico_strategy_t **pstrat)
-{
-    *pstrat = defstrat;
-    return ARRAY_SIZE(defstrat);
 }
 
 int
@@ -77,7 +73,6 @@ struct dico_handler_module DICO_EXPORT(outline, module) = {
     outline_close,
     NULL,
     NULL,
-    outline_strats,
     outline_match,
     outline_define
 };

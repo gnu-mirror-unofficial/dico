@@ -25,6 +25,7 @@ libdico_la_SOURCES=\
  assoc.c\
  linebuf.c\
  list.c\
+ strat.c\
  stream.c\
  xlat.c\
  url.c

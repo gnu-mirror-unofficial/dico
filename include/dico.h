@@ -27,6 +27,7 @@
 #include <dico/stream.h>
 #include <dico/url.h>
 #include <dico/xlat.h>
+#include <dico/strat.h>
 
 #ifndef offsetof
 # define offsetof(s,f) ((size_t)&((s*)0)->f)
@@ -46,18 +47,12 @@
 
 typedef void *dico_handle_t;
 
-typedef struct dico_strategy {
-    char *name;
-    char *descr;
-} dico_strategy_t;
-
 struct dico_handler_module {
     int (*module_init) (int argc, char **argv);
     dico_handle_t (*module_open) (const char *db, int argc, char **argv);
     int (*module_close) (dico_handle_t hp);
     char *(*module_db_info) (dico_handle_t hp);
     char *(*module_db_descr) (dico_handle_t hp);
-    int (*module_strats) (dico_handle_t hp, dico_strategy_t **pstrat);
     int (*module_match) (dico_handle_t hp, dico_stream_t stream,
 			 const char *strat, const char *word);
     int (*module_define) (dico_handle_t hp, dico_stream_t stream,

@@ -75,9 +75,6 @@ dico_list_t /* of dictd_handler_t */ handler_list;
 /* List of configured dictionaries */
 dico_list_t /* of dictd_database_t */ database_list;
 
-/* List of configured matching strategies */
-dico_list_t /* of dico_strategy_t */ strategy_list;
-
 
 /* Configuration */
 int
@@ -327,8 +324,8 @@ set_dict_handler(enum cfg_callback_command cmd,
     }
 
     db->command = value->v.string;
-    if (rc = dico_argcv_get(value->v.string, NULL, NULL,
-			    &db->argc, &db->argv)) {
+    if ((rc = dico_argcv_get(value->v.string, NULL, NULL,
+			     &db->argc, &db->argv))) {
 	config_error(locus, rc, _("cannot parse command line `%s'"),
 		     value->v.string);
 	dictd_database_free(db); /* FIXME: Free members */
@@ -559,7 +556,6 @@ void
 dictd_database_free(dictd_database_t *dp)
 {
     dico_argcv_free(dp->argc, dp->argv);
-    dico_argcv_free(dp->stratc, dp->stratv);
     free(dp);
 }
 

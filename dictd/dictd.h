@@ -65,7 +65,6 @@ extern char *msg_id;
 extern dico_list_t module_load_path;
 extern dico_list_t handler_list;
 extern dico_list_t database_list;
-extern dico_list_t strategy_list;
 
 #ifndef LOG_FACILITY
 # define LOG_FACILITY LOG_LOCAL1
@@ -224,9 +223,6 @@ typedef struct dictd_database {
     int argc;                 /* Handler arguments: count */
     char **argv;              /*  ... and pointers */
     char *command;            /* Handler command line (for diagnostics) */
-
-    int stratc;               /* Number of supported strategies */
-    char **stratv;            /* Array of supported strategies */
 } dictd_database_t;
 
 void dictd_server(int argc, char **argv);

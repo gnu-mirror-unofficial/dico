@@ -75,6 +75,9 @@ dico_list_t /* of dictd_handler_t */ handler_list;
 /* List of configured dictionaries */
 dico_list_t /* of dictd_database_t */ database_list;
 
+/* List of configured matching strategies */
+dico_list_t /* of dico_strategy_t */ strategy_list;
+
 
 /* Configuration */
 int

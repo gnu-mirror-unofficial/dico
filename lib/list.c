@@ -45,8 +45,9 @@ dico_list_create()
 {
     struct list *p = malloc(sizeof(*p));
     if (p) {
-	    p->head = p->tail = NULL;
-	    p->itr = NULL;
+	p->count = 0;
+	p->head = p->tail = NULL;
+	p->itr = NULL;
     }
     return p;
 }
@@ -120,7 +121,7 @@ dico_iterator_create(dico_list_t list)
 	return NULL;
     }
     itr = malloc(sizeof(*itr));
-    if (itr)
+    if (itr) 
         dico_iterator_attach(itr, list);
     return itr;
 }

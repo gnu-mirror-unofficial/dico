@@ -269,6 +269,8 @@ AC_CONFIG_FILES([Makefile
 		 gnu/Makefile
                  lib/Makefile
                  dictd/Makefile
+		 modules/Makefile
+		 modules/outline/Makefile
                  makedict/Makefile])
 
 AC_OUTPUT

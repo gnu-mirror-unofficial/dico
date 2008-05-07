@@ -1,5 +1,40 @@
 2008-05-07  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Implement SHOW STRAT. Begin writing `outline' handler module.
+	
+	* modules: New directory.
+	* modules/Makefile.am: New file.
+	* modules/outline: New directory.
+	* modules/outline/Makefile.am: New file.
+	* modules/outline/outline.c: New file.
+	
+	* Makefile.am (SUBDIRS): Add modules.
+	* configure.ac (AC_CONFIG_FILES): Add modules, modules/outline
+	* dictd/commands.c (_show_database, dictd_show_info): Use data
+	returned by the backend module, if not configured in the database
+	structure.
+	(dictd_show_strategies): New function.
+	(command_tab): Implement show strat.
+	* dictd/dictd.c (init_databases): Initialize strategy list.
+	* dictd/dictd.h (strategy_list): New declaration.
+	(dictd_get_database_descr, dictd_free_database_descr)
+	(dictd_get_database_info, dictd_free_database_info): New
+	prototypes.
+	* dictd/loader.c (_add_load_dir): Bugfix.
+	(add_strategies, strat_name_cmp): New functions.
+	(dictd_database_get_strats): Rewrite using new version of
+	module_strats.
+	(dictd_get_database_descr, dictd_free_database_descr)
+	(dictd_get_database_info, dictd_free_database_info): New
+	functions.
+	(dictd_match_word): New placeholder.
+	* dictd/main.c (strategy_list): New variable.
+	* include/dico.h (dico_strategy_t): New data type.
+	(dico_handler_module): New members module_db_info and
+	module_db_descr.
+	(module_strats, module_define): Change signature.
+	* lib/list.c: Initialize p with zeroes.
+
 	* dictd/commands.c, dictd/dictd.c, dictd/dictd.h, dictd/loader.c,
 	dictd/main.c, include/dico.h: Rename `dictionary' to `database'
 	for consistency with RFC 2229.

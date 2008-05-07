@@ -49,9 +49,10 @@ _show_database(void *item, void *data)
 {
     dictd_database_t *dict = item;
     dico_stream_t str = data;
-
+    char *descr = dictd_get_database_descr(dict);
     stream_printf(str, "%s \"%s\"\r\n",
-		  dict->name, dict->descr); /* FIXME: Quote descr. */
+		  dict->name, descr); /* FIXME: Quote descr. */
+    dictd_free_database_descr(dict, descr);
     return 0;
 }
 
@@ -63,10 +64,12 @@ dictd_show_info(dico_stream_t str, int argc, char **argv)
     if (!dict) 
 	stream_writez(str, "550 invalid database, use SHOW DB for list\r\n");
     else {
+	char *info = dictd_get_database_info(dict);
 	stream_printf(str, "112 information for %s\r\n", dbname);
-	if (dict->info)
-	    stream_write_multiline(str, dict->info);
-	else
+	if (info) {
+	    stream_write_multiline(str, info);
+	    dictd_free_database_info(dict, info);
+	} else
 	    stream_writez(str, "No information available.\r\n");
 	stream_writez(str, "\r\n.\r\n");
 	stream_writez(str, "250 ok\r\n");    
@@ -88,6 +91,33 @@ dictd_show_databases(dico_stream_t str, int argc, char **argv)
 	stream_writez(str, "250 ok\r\n");
     }
 }
+
+static int
+_show_strategy(void *item, void *data)
+{
+    dico_strategy_t *sp = item;
+    dico_stream_t str = data;
+
+    stream_printf(str, "%s \"%s\"\r\n",
+		  sp->name, sp->descr); /* FIXME: Quote descr. */
+    return 0;
+}
+
+void
+dictd_show_strategies(dico_stream_t str, int argc, char **argv)
+{
+    size_t count = dico_list_count(strategy_list);
+    if (count == 0)
+	stream_printf(str, "555 No strategies available\r\n");
+    else {
+	stream_printf(str, "111 %lu strategies present: list follows\r\n",
+		      (unsigned long) count);
+	dico_list_iterate(strategy_list, _show_strategy, str);
+	stream_writez(str, ".\r\n");
+	stream_writez(str, "250 ok\r\n");
+    }
+}
+	
 
 void
 dictd_show_server(dico_stream_t str, int argc, char **argv)
@@ -118,9 +148,9 @@ struct dictd_command command_tab[] = {
     { "SHOW DATABASES", 2, NULL, "list all accessible databases",
       dictd_show_databases, },
     { "SHOW STRAT", 2, NULL, "list available matching strategies",
-      NULL },
+      dictd_show_strategies },
     { "SHOW STRATEGIES", 2, NULL, "list available matching strategies",
-      NULL },
+      dictd_show_strategies  },
     { "SHOW INFO", 3, "database", "provide information about the database",
       dictd_show_info },
     { "SHOW SERVER", 2, NULL, "provide site-specific information",

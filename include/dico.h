@@ -46,14 +46,22 @@
 
 typedef void *dico_handle_t;
 
+typedef struct dico_strategy {
+    char *name;
+    char *descr;
+} dico_strategy_t;
+
 struct dico_handler_module {
     int (*module_init) (int argc, char **argv);
     dico_handle_t (*module_open) (const char *db, int argc, char **argv);
     int (*module_close) (dico_handle_t hp);
-    int (*module_strats) (dico_handle_t hp, int *startc, char ***stratv);
+    char *(*module_db_info) (dico_handle_t hp);
+    char *(*module_db_descr) (dico_handle_t hp);
+    int (*module_strats) (dico_handle_t hp, dico_strategy_t **pstrat);
     int (*module_match) (dico_handle_t hp, dico_stream_t stream,
-			      const char *strat, const char *word);
-    int (*module_define) (dico_handle_t hp, const char *word);
+			 const char *strat, const char *word);
+    int (*module_define) (dico_handle_t hp, dico_stream_t stream,
+			  const char *word);
 };
 
 #endif

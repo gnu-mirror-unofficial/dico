@@ -237,6 +237,7 @@ init_databases()
     dico_iterator_t itr = xdico_iterator_create(database_list);
     dictd_database_t *dp;
 
+    strategy_list = xdico_list_create();
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
 	if (dictd_open_database_handler(dp)) {
 	    logmsg(L_NOTICE, 0, _("removing database %s"), dp->name);

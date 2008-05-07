@@ -65,6 +65,7 @@ extern char *msg_id;
 extern dico_list_t module_load_path;
 extern dico_list_t handler_list;
 extern dico_list_t database_list;
+extern dico_list_t strategy_list;
 
 #ifndef LOG_FACILITY
 # define LOG_FACILITY LOG_LOCAL1
@@ -292,3 +293,10 @@ int dictd_load_module(dictd_handler_t *hptr);
 int dictd_open_database_handler(dictd_database_t *dp);
 int dictd_close_database_handler(dictd_database_t *dp);
 int dictd_database_get_strats(dictd_database_t *dp);
+
+char *dictd_get_database_descr(dictd_database_t *db);
+void dictd_free_database_descr(dictd_database_t *db, char *descr);
+char *dictd_get_database_info(dictd_database_t *db);
+void dictd_free_database_info(dictd_database_t *db, char *info);
+
+

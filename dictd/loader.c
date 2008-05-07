@@ -19,7 +19,8 @@
 static int
 _add_load_dir (void *item, void *unused)
 {
-    return lt_dladdsearchdir(item);
+    char *str = *(char**)item;
+    return lt_dladdsearchdir(str);
 }
 
 void
@@ -68,7 +69,7 @@ dictd_load_module(dictd_handler_t *hptr)
     char **argv;
     int rc;
 	
-    if (rc = dico_argcv_get(hptr->command, NULL, NULL, &argc, &argv)) {
+    if ((rc = dico_argcv_get(hptr->command, NULL, NULL, &argc, &argv))) {
 	logmsg(L_ERR, rc, _("cannot parse command line `%s'"), hptr->command);
 	return 1;
     }
@@ -95,22 +96,47 @@ dictd_open_database_handler(dictd_database_t *dp)
     return 0;
 }
 
+static int
+strat_name_cmp(const void *item, const void *data)
+{
+    const dico_strategy_t *strat = item;
+    const char *name = data;
+    return strcmp(strat->name, name);
+}
+
+static void
+add_strategies(dictd_database_t *dp, int stratc, dico_strategy_t *strat)
+{
+    int i;
+    
+    dp->stratc = stratc;
+    dp->stratv = xcalloc(stratc + 1, sizeof(dp->stratv[0]));
+    for (i = 0; i < stratc; i++) {
+	if (!dico_list_locate(strategy_list, strat[i].name, strat_name_cmp))
+	    dico_list_append(strategy_list, strat + i);
+	dp->stratv[i] = strat[i].name;
+    }
+}
+
 int
 dictd_database_get_strats(dictd_database_t *dp)
 {
     dictd_handler_t *hptr = dp->handler;
-    int rc;
     
-    if (hptr->module->module_strats) 
-	rc = hptr->module->module_strats(dp->mod, &dp->stratc, dp->stratv);
-    else {
-	dp->stratc = 1;
-	dp->stratv = xcalloc(2, sizeof(dp->stratv[0]));
-	dp->stratv[0] = xstrdup("exact");
-	dp->stratv[1] = NULL;
-	rc = 0;
+    if (hptr->module->module_strats) {
+	dico_strategy_t *strat;
+	int count;
+	count = hptr->module->module_strats(dp->mod, &strat);
+	if (count == 0)
+	    return 1;
+	add_strategies(dp, count, strat);
+    } else {
+	static dico_strategy_t exact_strat = {
+	    "exact", "Match words exactly"
+	};
+	add_strategies(dp, 1, &exact_strat);
     }
-    return rc;
+    return 0;
 }
 
 int
@@ -127,3 +153,52 @@ dictd_close_database_handler(dictd_database_t *dp)
 	rc = 0;
     return rc;
 }
+
+char *
+dictd_get_database_descr(dictd_database_t *db)
+{
+    if (db->descr)
+	return db->descr;
+    else {
+	dictd_handler_t *hptr = db->handler;
+	if (hptr->module->module_db_descr)
+	    return hptr->module->module_db_descr(db);
+    }
+    return NULL;
+}
+
+void
+dictd_free_database_descr(dictd_database_t *db, char *descr)
+{
+    if (descr && descr != db->descr)
+	free(descr);
+}
+
+char *
+dictd_get_database_info(dictd_database_t *db)
+{
+    if (db->info)
+	return db->info;
+    else {
+	dictd_handler_t *hptr = db->handler;
+	if (hptr->module->module_db_info)
+	    return hptr->module->module_db_info(db);
+    }
+    return NULL;
+}
+
+void
+dictd_free_database_info(dictd_database_t *db, char *info)
+{
+    if (info && info != db->info)
+	free(info);
+}
+
+void
+dictd_match_word(dictd_database_t *db, dico_stream_t stream,
+		 const char *strat, const char *word)
+{
+    dictd_handler_t *hptr = db->handler;
+    
+}
+

@@ -294,5 +294,9 @@ char *dictd_get_database_descr(dictd_database_t *db);
 void dictd_free_database_descr(dictd_database_t *db, char *descr);
 char *dictd_get_database_info(dictd_database_t *db);
 void dictd_free_database_info(dictd_database_t *db, char *info);
+void dictd_match_word(dictd_database_t *db, dico_stream_t stream,
+		      const char *strat, const char *word);
+void dictd_define_word(dictd_database_t *db, dico_stream_t stream,
+		       const char *word);  
 
 

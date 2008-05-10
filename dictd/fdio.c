@@ -49,7 +49,8 @@ static int
 fd_close(void *data)
 {
     struct fds *p = data;
-    int rc1 = close(p->in), rc2 = close(p->out);
+    int rc1 = p->in >= 0 ? close(p->in) : 0,
+	rc2 = p->out >= 0 ? close(p->out) : 0;
 
     if (rc1 || rc2)
 	return errno;

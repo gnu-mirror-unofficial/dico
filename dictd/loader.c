@@ -119,7 +119,7 @@ dictd_get_database_descr(dictd_database_t *db)
     else {
 	dictd_handler_t *hptr = db->handler;
 	if (hptr->module->module_db_descr)
-	    return hptr->module->module_db_descr(db);
+	    return hptr->module->module_db_descr(db->mod);
     }
     return NULL;
 }
@@ -139,7 +139,7 @@ dictd_get_database_info(dictd_database_t *db)
     else {
 	dictd_handler_t *hptr = db->handler;
 	if (hptr->module->module_db_info)
-	    return hptr->module->module_db_info(db);
+	    return hptr->module->module_db_info(db->mod);
     }
     return NULL;
 }
@@ -151,11 +151,76 @@ dictd_free_database_info(dictd_database_t *db, char *info)
 	free(info);
 }
 
+static char nomatch[] = "552 No match";
+static size_t nomatch_len = (sizeof(nomatch)-1);
+
 void
 dictd_match_word(dictd_database_t *db, dico_stream_t stream,
 		 const char *strat, const char *word)
 {
-    dictd_handler_t *hptr = db->handler;
+    struct dico_handler_module *mp = db->handler->module;
+    dico_result_t res = mp->module_match(db->mod, strat, word);
+    size_t count;
     
+    if (!res) {
+	dico_stream_writeln(stream, nomatch, nomatch_len);
+	return;
+    }
+
+    count = mp->module_result_count(res);
+
+    if (count == 0) 
+	dico_stream_writeln(stream, nomatch, nomatch_len);
+    else {
+	size_t i;
+
+	stream_printf(stream, "152 %lu matches found: list follows\r\n",
+		      (unsigned long) count);
+	for (i = 0; i < count; i++) {
+	    mp->module_output_result(res, i, stream);
+	    dico_stream_write(stream, "\r\n", 2);
+	}
+	dico_stream_write(stream, ".\r\n", 3);
+	stream_writez(stream, "250 Command complete");
+	/* FIXME: Timing info */
+	dico_stream_write(stream, "\r\n", 2);
+    }
+    
+    mp->module_free_result(res);
 }
 
+void
+dictd_define_word(dictd_database_t *db, dico_stream_t stream, const char *word)
+{
+    struct dico_handler_module *mp = db->handler->module;
+    dico_result_t res = mp->module_define(db->mod, word);
+    size_t count;
+    
+    if (!res) {
+	dico_stream_writeln(stream, nomatch, nomatch_len);
+	return;
+    }
+
+    count = mp->module_result_count(res);
+
+    if (count == 0) 
+	dico_stream_writeln(stream, nomatch, nomatch_len);
+    else {
+	size_t i;
+	char *descr = dictd_get_database_descr(db);
+	
+	stream_printf(stream, "150 %lu definitions found: list follows\r\n",
+		      (unsigned long) count);
+	for (i = 0; i < count; i++) {
+	    
+	    stream_printf(stream, "151 \"%s\" %s \"%s\":text follows\r\n",
+			  word, db->name, descr);
+	    mp->module_output_result(res, i, stream);
+	    dico_stream_write(stream, "\r\n.\r\n", 5);
+	    stream_writez(stream, "250 Command complete\r\n");
+	}
+	dictd_free_database_descr(db, descr);
+    }
+    
+    mp->module_free_result(res);
+}

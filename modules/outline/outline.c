@@ -48,23 +48,37 @@ outline_close(dico_handle_t hp)
     return 0;
 }
 
-int
-outline_match(dico_handle_t hp, dico_stream_t stream,
-	      const char *strat, const char *word)
+dico_result_t
+outline_match(dico_handle_t hp, const char *strat, const char *word)
 {
     /* FIXME */
-    static char nomatch[] = "552 No match";
-    dico_stream_writeln(stream, nomatch, strlen(nomatch));
+    return NULL;
+}
+
+dico_result_t
+outline_define(dico_handle_t hp, dico_stream_t stream, const char *word)
+{
+    /* FIXME */
     return 0;
 }
 
 int
-outline_define(dico_handle_t hp, dico_stream_t stream, const char *word)
+outline_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 {
     /* FIXME */
-    static char nomatch[] = "552 No match";
-    dico_stream_writeln(stream, nomatch, strlen(nomatch));
+    return 1;
+}
+
+size_t
+outline_result_count (dico_result_t rp)
+{
     return 0;
+}
+
+void
+outline_free_result (dico_result_t rp)
+{
+    /* FIXME */
 }
 
 struct dico_handler_module DICO_EXPORT(outline, module) = {
@@ -74,6 +88,9 @@ struct dico_handler_module DICO_EXPORT(outline, module) = {
     NULL,
     NULL,
     outline_match,
-    outline_define
+    outline_define,
+    outline_output_result,
+    outline_result_count,
+    outline_free_result
 };
     

@@ -138,11 +138,44 @@ dictd_client(dico_stream_t str, int argc, char **argv)
     stream_writez(str, "250 ok\r\n");
 }
 
+void
+dictd_match(dico_stream_t str, int argc, char **argv)
+{
+    dictd_database_t *db = find_database(argv[1]);
+    
+    if (!db) 
+	stream_writez(str, "550 invalid database, use SHOW DB for list\r\n");
+    else {
+	const char *strat = argv[2];
+	const char *word = argv[3];
+
+	if (!dico_strategy_find(strat)) {
+	    stream_writez(str,
+			  "551 Invalid strategy, use \"SHOW STRAT\" "
+			  "for a list of strategies\r\n");
+	} else
+	    dictd_match_word(db, str, strat, word);
+    }
+}
+
+void
+dictd_define(dico_stream_t str, int argc, char **argv)
+{
+    dictd_database_t *db = find_database(argv[1]);
+    
+    if (!db) 
+	stream_writez(str, "550 invalid database, use SHOW DB for list\r\n");
+    else
+	dictd_define_word(db, str, argv[2]);
+}
+
 
 struct dictd_command command_tab[] = {
-    { "DEFINE", 3, "database word", "look up word in database" },
+    { "DEFINE", 3, "database word", "look up word in database",
+      dictd_define },
     { "MATCH", 4, "database strategy word",
-      "match word in database using strategy" },
+      "match word in database using strategy",
+      dictd_match },
     { "SHOW DB", 2, NULL, "list all accessible databases",
       dictd_show_databases, },
     { "SHOW DATABASES", 2, NULL, "list all accessible databases",

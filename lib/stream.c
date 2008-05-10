@@ -337,3 +337,4 @@ dico_stream_destroy(dico_stream_t *stream)
     free(*stream);
     *stream = NULL;
 }
+

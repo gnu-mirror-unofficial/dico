@@ -250,10 +250,13 @@ init_databases()
 void
 init_strategies()
 {
-    static dico_strategy_t defstrat = {
-	"exact", "Match words exactly"
+    static dico_strategy_t defstrat[] = {
+	{ "exact", "Match words exactly" },
+	{ "prefix", "Match word prefixes" }
     };
-    dico_strategy_add(&defstrat);
+    int i;
+    for (i = 0; i < ARRAY_SIZE(defstrat); i++)
+	dico_strategy_add(defstrat + i);
 }
 
 void

@@ -1,3 +1,25 @@
+2008-05-10  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Initial implementation of MATCH and DEFINE.
+	
+	* README: Update.
+	* dictd/commands.c: Initial implementation of MATCH and DEFINE
+	commands.
+	* dictd/dictd.c (init_strategies): Always define the "prefix"
+	strategy.
+	* dictd/dictd.h (dictd_match_word, dictd_define_word): New
+	functions.
+	* dictd/fdio.c (fd_close): Don't raise error on closing descr -1.
+	* dictd/loader.c (dictd_get_database_descr)
+	(dictd_get_database_info): Bugfix.
+	(dictd_match_word, dictd_define_word): New functions.
+	* include/dico.h  (dico_result_t): New data type.
+	(struct dico_handler_module): Change signatures of module_match
+	and module_define. Add new methods: module_output_result,
+	module_result_count, module_free_result.
+	* modules/outline/outline.c: Reflect changes to struct
+	dico_handler_module. 
+
 2008-05-07  Sergey Poznyakoff  <gray@gnu.org.ua>
 
 	Bugfix.

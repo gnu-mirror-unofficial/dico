@@ -141,20 +141,26 @@ dictd_client(dico_stream_t str, int argc, char **argv)
 void
 dictd_match(dico_stream_t str, int argc, char **argv)
 {
-    dictd_database_t *db = find_database(argv[1]);
+    const char *dbname = argv[1];
+    const char *strat = argv[2];
+    const char *word = argv[3];
     
-    if (!db) 
-	stream_writez(str, "550 invalid database, use SHOW DB for list\r\n");
+    if (!dico_strategy_find(strat)) 
+	stream_writez(str,
+		      "551 Invalid strategy, use \"SHOW STRAT\" "
+		      "for a list of strategies\r\n");
+    else if (strcmp(dbname, "!") == 0) 
+	dictd_match_word_first(str, strat, word);
+    else if (strcmp(dbname, "*") == 0) 
+	dictd_match_word_all(str, strat, word);
     else {
-	const char *strat = argv[2];
-	const char *word = argv[3];
-
-	if (!dico_strategy_find(strat)) {
+	dictd_database_t *db = find_database(dbname);
+    
+	if (!db) 
 	    stream_writez(str,
-			  "551 Invalid strategy, use \"SHOW STRAT\" "
-			  "for a list of strategies\r\n");
-	} else
-	    dictd_match_word(db, str, strat, word);
+			  "550 invalid database, use SHOW DB for list\r\n");
+	else
+	    dictd_match_word_db(db, str, strat, word);
     }
 }
 

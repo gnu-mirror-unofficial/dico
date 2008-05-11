@@ -161,12 +161,22 @@ dictd_match(dico_stream_t str, int argc, char **argv)
 void
 dictd_define(dico_stream_t str, int argc, char **argv)
 {
-    dictd_database_t *db = find_database(argv[1]);
+    char *dbname = argv[1];
+    char *word = argv[2];
     
-    if (!db) 
-	stream_writez(str, "550 invalid database, use SHOW DB for list\r\n");
-    else
-	dictd_define_word(db, str, argv[2]);
+    if (strcmp(dbname, "!") == 0) {
+	dictd_define_word_first(str, word);
+    } else if (strcmp(dbname, "*") == 0) {
+	dictd_define_word_all(str, word);
+    } else {   
+	dictd_database_t *db = find_database(dbname);
+    
+	if (!db) 
+	    stream_writez(str,
+			  "550 invalid database, use SHOW DB for list\r\n");
+	else
+	    dictd_define_word_db(db, str, word);
+    }
 }
 
 

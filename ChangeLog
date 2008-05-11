@@ -1,5 +1,16 @@
 2008-05-11  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Provide a framework for ! and * searches.
+	
+	* dictd/commands.c (dictd_define): Implement ! and * searches.
+	* dictd/dictd.h (dictd_define_word): Remove.
+	(dictd_define_word_db, dictd_define_word_first)
+	(dictd_define_word_all): New prototypes.
+	* dictd/loader.c (print_definitions): New function.
+	(dictd_define_word): Rename to dictd_define_word_db; use
+	print_definitions.
+	(dictd_define_word_first, dictd_define_word_all): New functions.
+
 	Provide a default strategy.
 	
 	* dictd/dictd.c (init_strategies): Rename to dictd_init_strategies.

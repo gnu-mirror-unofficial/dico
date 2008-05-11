@@ -189,8 +189,28 @@ dictd_match_word(dictd_database_t *db, dico_stream_t stream,
     mp->module_free_result(res);
 }
 
+
+static void
+print_definitions(dictd_database_t *db, dico_result_t res,
+		  const char *word,
+		  dico_stream_t stream, size_t count)
+{
+    size_t i;
+    char *descr = dictd_get_database_descr(db);
+    struct dico_handler_module *mp = db->handler->module;
+    
+    for (i = 0; i < count; i++) {
+	stream_printf(stream, "151 \"%s\" %s \"%s\":text follows\r\n",
+		      word, db->name, descr);
+	mp->module_output_result(res, i, stream);
+	dico_stream_write(stream, "\r\n.\r\n", 5);
+    }
+    dictd_free_database_descr(db, descr);
+}
+
 void
-dictd_define_word(dictd_database_t *db, dico_stream_t stream, const char *word)
+dictd_define_word_db(dictd_database_t *db, dico_stream_t stream,
+		     const char *word)
 {
     struct dico_handler_module *mp = db->handler->module;
     dico_result_t res = mp->module_define(db->mod, word);
@@ -206,21 +226,99 @@ dictd_define_word(dictd_database_t *db, dico_stream_t stream, const char *word)
     if (count == 0) 
 	dico_stream_writeln(stream, nomatch, nomatch_len);
     else {
-	size_t i;
-	char *descr = dictd_get_database_descr(db);
-	
 	stream_printf(stream, "150 %lu definitions found: list follows\r\n",
 		      (unsigned long) count);
-	for (i = 0; i < count; i++) {
-	    
-	    stream_printf(stream, "151 \"%s\" %s \"%s\":text follows\r\n",
-			  word, db->name, descr);
-	    mp->module_output_result(res, i, stream);
-	    dico_stream_write(stream, "\r\n.\r\n", 5);
-	    stream_writez(stream, "250 Command complete\r\n");
-	}
-	dictd_free_database_descr(db, descr);
+	print_definitions(db, res, word, stream, count);
+	stream_writez(stream, "250 Command complete\r\n");
     }
     
     mp->module_free_result(res);
 }
+
+void
+dictd_define_word_first(dico_stream_t stream, const char *word)
+{
+    dictd_database_t *db;
+    dico_iterator_t itr;
+
+    itr = xdico_iterator_create(database_list);
+    for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
+	struct dico_handler_module *mp = db->handler->module;
+	dico_result_t res = mp->module_define(db->mod, word);
+	size_t count;
+    
+	if (!res)
+	    continue;
+	count = mp->module_result_count(res);
+
+	if (count) {
+	    stream_printf(stream, "150 %lu definitions found: list follows\r\n",
+			  (unsigned long) count);
+	    print_definitions(db, res, word, stream, count);
+	    stream_writez(stream, "250 Command complete\r\n");
+	}
+    
+	mp->module_free_result(res);
+	break;
+    }
+    dico_iterator_destroy(&itr);
+    if (!db)
+	dico_stream_writeln(stream, nomatch, nomatch_len);
+}
+
+struct dbres {
+    dictd_database_t *db;
+    dico_result_t res;
+    size_t count;
+};
+
+void
+dictd_define_word_all(dico_stream_t stream, const char *word)
+{
+    dictd_database_t *db;
+    dico_iterator_t itr;
+    dico_list_t reslist = xdico_list_create();
+    size_t total = 0;
+    struct dbres *rp;
+
+    itr = xdico_iterator_create(database_list);
+    for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
+	struct dico_handler_module *mp = db->handler->module;
+	dico_result_t res = mp->module_define(db->mod, word);
+	size_t count;
+	
+	if (!res)
+	    continue;
+	count = mp->module_result_count(res);
+	if (!count) {
+	    mp->module_free_result(res);
+	    continue;
+	}
+
+	rp = xmalloc(sizeof(*rp));
+	total += count;
+	rp->db = db;
+	rp->res = res;
+	rp->count = count;
+	xdico_list_append(reslist, rp);
+    }
+
+    dico_iterator_destroy(&itr);
+
+    if (total == 0)
+	dico_stream_writeln(stream, nomatch, nomatch_len);
+    else {
+	itr = xdico_iterator_create(reslist);
+	
+	stream_printf(stream, "150 %lu definitions found: list follows\r\n",
+		      (unsigned long) total);
+	for (rp = dico_iterator_first(itr); rp; rp = dico_iterator_next(itr)) {
+	    print_definitions(rp->db, rp->res, word, stream, rp->count);
+	    free(rp);
+	}
+	stream_writez(stream, "250 Command complete\r\n");
+	dico_iterator_destroy(&itr);
+    }
+    dico_list_destroy(&reslist, NULL, NULL);
+}
+	    

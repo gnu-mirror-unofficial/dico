@@ -21,4 +21,5 @@ pkginclude_HEADERS = \
  strat.h\
  stream.h\
  url.h\
+ utf8.h\
  xlat.h

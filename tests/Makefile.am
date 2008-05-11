@@ -1,5 +1,5 @@
 # This file is part of Dico
-# Copyright (C) 1998-2000, 2008 Sergey Poznyakoff
+# Copyright (C) 2008 Sergey Poznyakoff
 #
 # Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,15 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-dictdir=@dictdir@
-inputdictpath=@inputdictpath@
+SUFFIXES = .cfin .conf
 
-ACLOCAL_AMFLAGS = -I m4
+noinst_DATA=dictd.conf
+CLEANFILES=dictd.conf
 
-SUBDIRS=include utils gnu lib libltdl dictd modules makedict tests
-#FIXME: add these when ready: client fonts
+.cfin.conf:
+	sed 's|<BUILDDIR>|'`cd $(top_builddir); pwd`'|g;s|<SRCDIR>|'`cd $(top_srcdir); pwd`'|g' \
+		$< > $@
 
-#dict:
-#	$(top_builddir)/makedict/makedict -cv -o$(dictdir) -d$(inputdictpath)
-
-#distcleancheck_listfiles = find . -type f -not -name 'bushu.pcf.gz' -print
+EXTRA_DIST=dictd.cfin devils.out

@@ -243,7 +243,7 @@ dictd_word_all(dico_stream_t stream, const char *word, const char *strat,
 	stream_printf(stream, begfmt, (unsigned long) total);
 	for (rp = dico_iterator_first(itr); rp; rp = dico_iterator_next(itr)) {
 	    proc(rp->db, rp->res, word, stream, rp->count);
-	    db->handler->module->module_free_result(rp->res);
+	    rp->db->handler->module->module_free_result(rp->res);
 	    free(rp);
 	}
 	stream_writez(stream, (char*) endmsg);
@@ -261,6 +261,8 @@ print_matches(dictd_database_t *db, dico_result_t res,
     struct dico_handler_module *mp = db->handler->module;
 
     for (i = 0; i < count; i++) {
+	stream_writez(stream, db->name);
+	dico_stream_write(stream, " ", 1);
 	mp->module_output_result(res, i, stream);
 	dico_stream_write(stream, "\r\n", 2);
     }
@@ -327,7 +329,7 @@ print_definitions(dictd_database_t *db, dico_result_t res,
     struct dico_handler_module *mp = db->handler->module;
     
     for (i = 0; i < count; i++) {
-	stream_printf(stream, "151 \"%s\" %s \"%s\":text follows\r\n",
+	stream_printf(stream, "151 \"%s\" %s \"%s\"\r\n",
 		      word, db->name, descr);
 	mp->module_output_result(res, i, stream);
 	dico_stream_write(stream, "\r\n.\r\n", 5);

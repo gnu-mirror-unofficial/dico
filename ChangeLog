@@ -1,3 +1,29 @@
+2008-05-12  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Implement working outline module. Add example data and
+	configuration, for testing. 
+	
+	* dictd/loader.c (dictd_word_all): Bugfix
+	(print_matches): Fix output.
+	(print_definitions): Remove optional ': text follows' part, as it
+	seems to confuse some clients (notably, kdict).
+	* include/dico.h: Include dico/utf8.h
+	* include/dico/utf8.h: New file.
+	* include/xdico.h (utf8_*): Move to dico/utf8.h
+	* lib/Makefile.am (libdico_la_SOURCES): Add utf8.c.
+	(libxdico_la_SOURCES): Remove utf8.c.
+	* lib/utf8.c: Do not include xalloc.h and xdico.h, include dico.h
+	instead.
+	(utf8_wc_strdup): Use calloc.
+	(utf8_wc_to_mbstr): Do not use logmsg.
+
+	* modules/outline/outline.c: Working implementation.
+
+	* tests/.gitignore, tests/Makefile.am, tests/devils.out,
+	tests/dictd.cfin
+	* Makefile.am (SUBDIRS): Add tests.
+	* configure.ac (AC_CONFIG_FILES): Add tests/Makefile.am
+
 2008-05-11  Sergey Poznyakoff  <gray@gnu.org.ua>
 
 	Provide a generalized framework for ! and * (matches and defines).

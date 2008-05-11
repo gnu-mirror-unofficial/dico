@@ -14,11 +14,47 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
+/* This module provides support for databases in Emacs outline format.
+   It is intended to work as a testbed for Dico's database module system.
+   Do not use it in production environment.
+
+   An outline database has the following structure:
+
+   * Description
+   <text>
+   
+   * Info
+   <text>
+
+   * Dictionary
+   ** <entry>
+   <text>
+   [any number of entries follows]
+
+   Any other text is ignored.
+
+   To use this module, add the following to your dictd.conf file:
+
+   handler outline {
+	type loadable;
+	command "outline";
+   }
+   database {
+        handler "outline <filename>";
+	...
+   }
+*/   
+
+
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
 #include <dico.h>
 #include <string.h>
+#include <syslog.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <ctype.h>
 
 static dico_strategy_t defstrat[] = {
     { "exact", "Match words exactly" },
@@ -34,37 +70,379 @@ outline_init(int argc, char **argv)
     return 0;
 }
 
-dico_handle_t
-outline_open(const char *db, int argc, char **argv)
+struct entry {
+    char *word;             /* Word */
+    size_t wordlen;         /* Its length in characters */
+    off_t offset;           /* Offset of the corresponding article in file */
+    size_t size;            /* Size of the article */
+};
+
+struct outline_file {
+    char *name;
+    FILE *fp;
+    size_t count;
+    struct entry *index;
+
+    struct entry *info_entry, *descr_entry;
+};
+
+#define STATE_INITIAL 0
+#define STATE_DICT    1
+
+static size_t
+trimnl(char *buf)
 {
-    /* FIXME: */
-    return db;
+    size_t len = strlen(buf);
+    if (len > 0 && buf[len - 1] == '\n')
+	buf[--len] = 0;
+    return len;
+}
+
+static size_t
+trimws(char *buf)
+{
+    size_t len = strlen(buf);
+    while (len > 0 && isspace(buf[len - 1]))
+	buf[--len] = 0;
+    return len;
+}
+    
+int
+find_header(struct outline_file *file, char *buf, size_t size, size_t *pread)
+{
+    while (fgets(buf, size, file->fp)) {
+	size_t rdbytes = strlen(buf);
+	size_t len = trimnl(buf);
+	
+	if (len > 0) {
+	    int level;
+
+	    for (level = 0; buf[level] == '*' && level < len; level++)
+		;
+	    if (level) {
+		*pread = rdbytes;
+		return level;
+	    }
+	}
+    }
+    return 0;
+}
+
+off_t
+skipws(struct outline_file *file, char *buf, size_t size)
+{
+    while (fgets(buf, size, file->fp)) {
+	size_t len = strlen(buf);
+	if (!(len == 1 && buf[0] == '\n')) {
+	    fseek(file->fp, -(off_t)len, SEEK_CUR);
+	    break;
+	}
+    }
+    return ftell(file->fp);
+}
+
+struct entry *
+alloc_entry(const char *text, size_t len)
+{
+    struct entry *ep = malloc(sizeof(*ep));
+    if (ep) {
+	memset(ep, 0, sizeof(*ep));
+	ep->word = malloc(len + 1);
+	if (!ep->word) {
+	    free(ep);
+	    return NULL;
+	}
+	memcpy(ep->word, text, len);
+	ep->word[len] = 0;
+	ep->wordlen = len; /* FIXME: multibyte!! */
+    }
+    return ep;
+}
+
+static struct entry *
+read_entry(struct outline_file *file, int *plevel)
+{
+    char buf[128], *p;
+    struct entry *ep;
+    int level;
+    size_t rdbytes, len;
+    
+    level = find_header(file, buf, sizeof(buf), &rdbytes);
+
+    if (level == 0)
+	return NULL;
+
+    *plevel = level;
+    for (p = buf + level; *p && isspace(*p); p++) 
+	;
+
+    len = trimws(p);
+
+    ep = alloc_entry(p, len);
+    if (!ep)
+	return NULL;
+
+    ep->offset = skipws(file, buf, sizeof(buf));
+
+    find_header(file, buf, sizeof(buf), &rdbytes);
+    fseek(file->fp, -(off_t)rdbytes, SEEK_CUR);
+    ep->size = ftell(file->fp) - ep->offset;
+    
+    return ep;
+}
+
+static int
+compare_entry(const void *a, const void *b)
+{
+    const struct entry *epa = a;
+    const struct entry *epb = b;
+    return strcasecmp(epa->word, epb->word);
 }
 
 int
 outline_close(dico_handle_t hp)
 {
-    /* FIXME */
+    size_t i;
+    struct outline_file *file = hp;
+    
+    fclose(file->fp);
+    free(file->name);
+    free(file->info_entry);
+    free(file->descr_entry);
+    for (i = 0; i < file->count; i++) 
+	free(file->index[i].word);
+    free(file->index);
+    free(file);
     return 0;
 }
+
+dico_handle_t
+outline_open(const char *dbname, int argc, char **argv)
+{
+    FILE *fp;
+    struct outline_file *file;
+    dico_list_t list;
+    struct entry *ep;
+    int level;
+    int state;
+    size_t i, count;
+    dico_iterator_t itr;
+
+    if (argc != 2) {
+	syslog(LOG_ERR, _("outline_open: wrong number of arguments"));
+	return NULL;
+    }
+    
+    fp = fopen(argv[1], "r");
+    if (!fp) {
+	syslog(LOG_ERR, _("cannot open file %s: %m"), argv[1]);
+	return NULL;
+    }
+    file = malloc(sizeof(*file));
+    if (!file) {
+	syslog(LOG_ERR, "not enough memory");
+	fclose(fp);
+	return NULL;
+    }
+
+    memset(file, 0, sizeof(*file));
+    file->name = strdup(argv[1]);
+    file->fp = fp;
+    
+    list = dico_list_create();
+    if (!list) {
+	syslog(LOG_ERR, "not enough memory");
+	fclose(fp);
+	free(file);
+	return NULL;
+    }
+
+    state = STATE_INITIAL;
+    while (ep = read_entry(file, &level)) {
+	switch (state) {
+	case STATE_DICT:
+	    if (level == 2) {
+		dico_list_append(list, ep);
+		break;
+	    } else if (level == 1) {
+		state = STATE_INITIAL;
+		/* FALL THROUGH */
+	    } else {
+		free(ep);
+		break;
+	    }
+	    
+	case STATE_INITIAL:
+	    if (level == 1) {
+		if (strcasecmp(ep->word, "info") == 0) {
+		    file->info_entry = ep;
+		    break;
+		} else if (strcasecmp(ep->word, "description") == 0) {
+		    file->descr_entry = ep;
+		    break;
+		} else if (strcasecmp(ep->word, "dictionary") == 0)
+		    state = STATE_DICT;
+	    }
+	    free(ep);
+	    break;
+	}
+    }
+
+    file->count = count = dico_list_count(list);
+    file->index = calloc(count, sizeof(file->index[0]));
+    if (!file->index) {
+	syslog(LOG_ERR, "not enough memory");
+	outline_close((dico_handle_t)file);
+	return NULL;
+    }
+
+    itr = dico_iterator_create(list);
+    for (i = 0, ep = dico_iterator_first(itr); ep;
+	 i++, ep = dico_iterator_next(itr)) {
+	file->index[i] = *ep;
+	free(ep);
+    }
+    dico_iterator_destroy(&itr);
+    dico_list_destroy(&list, NULL, NULL);
+    qsort(file->index, count, sizeof(file->index[0]), compare_entry);
+    
+    return file;
+}
+
+
+char *
+read_buf(struct outline_file *file, struct entry *ep)
+{
+    size_t size;
+    char *buf = malloc(ep->size + 1);
+    if (!buf)
+	return NULL;
+    fseek(file->fp, ep->offset, SEEK_SET);
+    size = fread(buf, 1, ep->size, file->fp);
+    buf[size] = 0;
+    return buf;
+}
+
+char *
+outline_info(dico_handle_t hp)
+{
+    struct outline_file *file = hp;
+    if (file->info_entry) 
+	return read_buf(file, file->info_entry);
+    return NULL;
+}
+
+char *
+outline_descr(dico_handle_t hp)
+{
+    struct outline_file *file = hp;
+    if (file->descr_entry) { 
+	char *buf = read_buf(file, file->descr_entry);
+	char *p = strchr(buf, '\n');
+	if (p)
+	    *p = 0;
+	return buf;
+    }
+    return NULL;
+}
+
+
+static const struct entry *
+exact_match(struct outline_file *file, const char *word)
+{
+    struct entry x;
+    x.word = (char*) word;
+    x.wordlen = strlen(word);
+    return bsearch(&x, file->index, file->count, sizeof(file->index[0]),
+		   compare_entry);
+}
+
+enum result_type {
+    result_match,
+    result_define
+};
+
+struct result {
+    struct outline_file *file;
+    enum result_type type;
+    const struct entry *ep;
+};
 
 dico_result_t
 outline_match(dico_handle_t hp, const char *strat, const char *word)
 {
-    /* FIXME */
-    return NULL;
+    struct outline_file *file = hp;
+    struct result *res;
+    const struct entry *ep;
+    
+    /* FIXME: */
+    ep = exact_match(file, word);
+    if (!ep)
+	return NULL;
+
+    res = malloc(sizeof(*res));
+    if (!res)
+	return NULL;
+    res->file = file;
+    res->type = result_match;
+    res->ep = ep;
+    return res;
 }
 
 dico_result_t
-outline_define(dico_handle_t hp, dico_stream_t stream, const char *word)
+outline_define(dico_handle_t hp, const char *word)
 {
-    /* FIXME */
-    return 0;
+    struct outline_file *file = hp;
+    struct result *res;
+    const struct entry *ep;
+    
+    ep = exact_match(file, word);
+    if (!ep)
+	return NULL;
+
+    res = malloc(sizeof(*res));
+    if (!res)
+	return NULL;
+    res->file = file;
+    res->type = result_define;
+    res->ep = ep;
+    return res;
+}
+
+static void
+printdef(dico_stream_t str, struct result *res)
+{
+    FILE *fp = res->file->fp;
+    const struct entry *ep = res->ep;
+    size_t size = ep->size;
+    char buf[128];
+    
+    fseek(fp, ep->offset, SEEK_SET);
+    while (size) {
+	size_t rdsize = size;
+	if (rdsize > sizeof(buf))
+	    rdsize = sizeof(buf);
+	rdsize = fread(buf, 1, rdsize, fp);
+	if (rdsize == 0)
+	    break;
+	dico_stream_write(str, buf, rdsize);
+	size -= rdsize;
+    }
 }
 
 int
 outline_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 {
+    struct result *res = rp;
+    
+    switch (res->type) {
+    case result_match:
+	dico_stream_write(str, res->ep->word, strlen(res->ep->word));
+	break;
+	
+    case result_define:
+	printdef(str, res);
+    }
     /* FIXME */
     return 1;
 }
@@ -72,21 +450,21 @@ outline_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 size_t
 outline_result_count (dico_result_t rp)
 {
-    return 0;
+    return 1; /* FIXME */
 }
 
 void
-outline_free_result (dico_result_t rp)
+outline_free_result(dico_result_t rp)
 {
-    /* FIXME */
+    free(rp);
 }
 
 struct dico_handler_module DICO_EXPORT(outline, module) = {
     outline_init,
     outline_open,
     outline_close,
-    NULL,
-    NULL,
+    outline_info,
+    outline_descr,
     outline_match,
     outline_define,
     outline_output_result,

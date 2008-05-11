@@ -17,8 +17,7 @@
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
-#include <xdico.h>
-#include <xalloc.h>
+#include <dico.h>
 #include <limits.h>
 #include <errno.h>
 #include <string.h>
@@ -1790,8 +1789,10 @@ unsigned *
 utf8_wc_strdup (const unsigned *s)
 {
   size_t len = utf8_wc_strlen (s) + 1;
-  unsigned *clone = xcalloc (len, sizeof s[0]);
-  return memcpy (clone, s, len);
+  unsigned *clone = calloc (len, sizeof s[0]);
+  if (clone)
+      memcpy (clone, s, len);
+  return clone;
 }
 
 size_t
@@ -1839,7 +1840,7 @@ utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char *s, size_t size)
       char r[4];
       int rc = utf8_wctomb (r, wordbuf[i]);
       if (rc <= 0)
-	logmsg(L_ERR, errno, _("unexpected error converting UTF-8 string"));
+	  return rc;
       if (s)
 	{
 	  if (wbc + rc < size)

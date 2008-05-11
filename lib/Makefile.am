@@ -28,14 +28,14 @@ libdico_la_SOURCES=\
  strat.c\
  stream.c\
  xlat.c\
- url.c
+ url.c\
+ utf8.c
 
 libxdico_a_SOURCES=\
  diag.c\
  iputil.c\
  jiscvt.c\
  userprivs.c\
- utf8.c\
  util.c
 
 libextra_a_SOURCES=xalloc-die.c

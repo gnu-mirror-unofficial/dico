@@ -271,7 +271,8 @@ AC_CONFIG_FILES([Makefile
                  dictd/Makefile
 		 modules/Makefile
 		 modules/outline/Makefile
-                 makedict/Makefile])
+                 makedict/Makefile
+		 tests/Makefile])
 
 AC_OUTPUT
 

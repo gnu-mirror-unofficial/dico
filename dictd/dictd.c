@@ -248,7 +248,7 @@ init_databases()
 }
 
 void
-init_strategies()
+dictd_init_strategies()
 {
     static dico_strategy_t defstrat[] = {
 	{ "exact", "Match words exactly" },
@@ -263,8 +263,9 @@ void
 dictd_server_init()
 {
     load_handlers();
-    init_strategies();
     init_databases();
+    if (!dico_get_default_strategy()) 
+	dico_set_default_strategy(DICTD_DEFAULT_STRATEGY);
 }
 
 int

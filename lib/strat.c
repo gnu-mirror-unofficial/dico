@@ -20,9 +20,13 @@
 #include <dico.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 
 /* List of configured matching strategies */
 static dico_list_t /* of dico_strategy_t */ strategy_list;
+static const dico_strategy_t *default_strategy;
+
+#define DEFSTRATNAME(s) ((s)[0] == '.' && (s)[1] == 0)
 
 static int
 strat_name_cmp(const void *item, const void *data)
@@ -50,6 +54,8 @@ dico_strategy_dup(const dico_strategy_t *strat)
 const dico_strategy_t *
 dico_strategy_find(const char *name)
 {
+    if (DEFSTRATNAME(name)) 
+	return default_strategy;
     return dico_list_locate(strategy_list, (void*)name, strat_name_cmp);
 }
 
@@ -87,3 +93,25 @@ dico_strategy_iterate(dico_list_iterator_t itr, void *data)
 {
     return dico_list_iterate(strategy_list, itr, data);
 }
+
+int
+dico_set_default_strategy(const char *name)
+{
+    const dico_strategy_t *sp;
+
+    if (DEFSTRATNAME(name) || (sp = dico_strategy_find(name)) == NULL) {
+	errno = EINVAL;
+	return 1;
+    }
+
+    default_strategy = sp;
+    return 0;
+}
+
+const dico_strategy_t *
+dico_get_default_strategy()
+{
+    return default_strategy;
+}
+
+    

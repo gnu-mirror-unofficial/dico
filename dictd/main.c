@@ -87,7 +87,7 @@ set_user(enum cfg_callback_command cmd,
     struct passwd *pw;
     
     if (value->type != TYPE_STRING) {
-	config_error(locus, 0, _("expected scalar value buf found list"));
+	config_error(locus, 0, _("expected scalar value but found list"));
 	return 1;
     }
     
@@ -155,7 +155,7 @@ set_mode(enum cfg_callback_command cmd,
     };
 	
     if (value->type != TYPE_STRING) {
-	config_error(locus, 0, _("expected scalar value buf found list"));
+	config_error(locus, 0, _("expected scalar value but found list"));
 	return 1;
     }
     if (xlat_c_string(tab, value->v.string, 0, &mode)) {
@@ -192,7 +192,7 @@ set_log_facility(enum cfg_callback_command cmd,
 {
     const char *str;
     if (value->type != TYPE_STRING) {
-	config_error(locus, 0, _("expected scalar value buf found list"));
+	config_error(locus, 0, _("expected scalar value but found list"));
 	return 1;
     }
     str = value->v.string;
@@ -217,7 +217,7 @@ set_handler_type(enum cfg_callback_command cmd,
 	{ NULL }
     };
     if (value->type != TYPE_STRING) {
-	config_error(locus, 0, _("expected scalar value buf found list"));
+	config_error(locus, 0, _("expected scalar value but found list"));
 	return 1;
     }
     if (xlat_c_string(tab, value->v.string, XLAT_ICASE, varptr)) {
@@ -319,7 +319,7 @@ set_dict_handler(enum cfg_callback_command cmd,
     int rc;
     
     if (value->type != TYPE_STRING) {
-	config_error(locus, 0, _("expected scalar value buf found list"));
+	config_error(locus, 0, _("expected scalar value but found list"));
 	return 1;
     }
 
@@ -372,7 +372,25 @@ enable_capability(enum cfg_callback_command cmd,
 	config_error(locus, 0, _("unknown capability: %s"), value->v.string);
     return 0;
 }
-		 
+
+int
+set_defstrat(enum cfg_callback_command cmd,
+	     gd_locus_t *locus,
+	     void *varptr,
+	     config_value_t *value,
+	     void *cb_data)
+{
+    if (value->type != TYPE_STRING) {
+	config_error(locus, 0, _("expected scalar value but found list"));
+	return 1;
+    }
+    if (dico_set_default_strategy(value->v.string)) {
+	config_error(locus, 0, _("unknown strategy"));
+	return 1;
+    }
+    return 0;
+}
+
 struct config_keyword kwd_handler[] = {
     { "type", N_("type"), N_("Type of this handler"),
       cfg_string, NULL, offsetof(dictd_handler_t, type),
@@ -499,6 +517,9 @@ struct config_keyword keywords[] = {
     { "module-load-path", N_("path"),
       N_("List of directories searched for handler modules."),
       cfg_string|CFG_LIST, &module_load_path },
+    { "default-strategy", N_("name"),
+      N_("Set the name of the default matching strategy."),
+      cfg_string, NULL, 0, set_defstrat },
     { "database", NULL, N_("Define a dictionary database."),
       cfg_section, NULL, 0, set_database, NULL,
       kwd_database },
@@ -623,6 +644,7 @@ main(int argc, char **argv)
     log_tag = program_name;
     hostname = xgethostname();
     dictd_init_command_tab();
+    dictd_init_strategies();
     udb_init();
     register_auth();
     register_xversion();

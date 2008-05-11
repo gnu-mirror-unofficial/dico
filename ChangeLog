@@ -1,3 +1,20 @@
+2008-05-11  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Provide a default strategy.
+	
+	* dictd/dictd.c (init_strategies): Rename to dictd_init_strategies.
+	(dictd_server_init): Remove call to init_strategies, it is done in
+	main. Ensure that a default strategy is set.
+	* dictd/dictd.h (DICTD_DEFAULT_STRATEGY): New define.
+	(dictd_init_strategies): New prototype.
+	* dictd/main.c: Fix typos in diagnostics messages.
+	(keywords): New statement `default-strategy'.
+	(main): Call dictd_init_strategies.
+	* include/dico/strat.h (dico_set_default_strategy)
+	(dico_get_default_strategy): New prototypes.
+	* lib/strat.c (dico_set_default_strategy)
+	(dico_get_default_strategy): New functions.
+
 2008-05-10  Sergey Poznyakoff  <gray@gnu.org.ua>
 
 	Initial implementation of MATCH and DEFINE.

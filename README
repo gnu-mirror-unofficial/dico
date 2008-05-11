@@ -30,7 +30,8 @@ with stress on the last syllable.
 Dictd provides all the functionality required by RFC 2229, except for
 SASL commands and OPTION MIME.
 
-Database module interface is being worked upon.
+For test purposes a database module "outline" is available.  This
+module handles databases in Emacs outline format.
 
 * Building
 

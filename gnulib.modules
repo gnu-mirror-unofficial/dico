@@ -8,6 +8,7 @@ inttypes
 getline
 getopt
 gettext-h
+gettimeofday
 hash
 malloc
 obstack

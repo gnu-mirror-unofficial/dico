@@ -75,6 +75,9 @@ dico_list_t /* of dictd_handler_t */ handler_list;
 /* List of configured dictionaries */
 dico_list_t /* of dictd_database_t */ database_list;
 
+/* Provide timing information */
+int timing_option;
+
 
 /* Configuration */
 int
@@ -520,6 +523,10 @@ struct config_keyword keywords[] = {
     { "default-strategy", N_("name"),
       N_("Set the name of the default matching strategy."),
       cfg_string, NULL, 0, set_defstrat },
+    { "timing", N_("arg"),
+      N_("Provide timing information after successful completion of an "
+	 "operation."),
+      cfg_bool, &timing_option },
     { "database", NULL, N_("Define a dictionary database."),
       cfg_section, NULL, 0, set_database, NULL,
       kwd_database },

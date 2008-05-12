@@ -1,5 +1,25 @@
 2008-05-12  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Optionally print timing information for match and define commands.
+	
+	* dictd/commands.c (dictd_match): Resolve strategy before passing
+	it to the handler module.
+	* dictd/dictd.h (timing_option): New global.
+	* dictd/loader.c (print_timing): New function.
+	(dictd_word_first, dictd_word_all, dictd_match_word_db)
+	(dictd_match_word_first, dictd_match_word_all)
+	(dictd_define_word_db, dictd_define_word_first)
+	(dictd_define_word_all): Optionally print timing information.
+	* dictd/main.c (timing_option): New global.
+	(keywords): New statement `timing'.
+	* gnulib.modules: Add gettimeofday.
+	* include/xdico.h (xdico_timer_t): New data type.
+	(timer_get, timer_start, timer_stop, timer_reset)
+	(timer_get_real, timer_get_user, timer_get_system)
+	(timer_format_time): New functions.
+	* lib/Makefile.am (libxdico_a_SOURCES): Add timer.c
+	* lib/timer.c: New file.
+
 	* modules/outline/outline.c: Implement prefix matches.
 
 	Implement working outline module. Add example data and

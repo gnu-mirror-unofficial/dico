@@ -35,6 +35,7 @@ libxdico_a_SOURCES=\
  diag.c\
  iputil.c\
  jiscvt.c\
+ timer.c\
  userprivs.c\
  util.c
 

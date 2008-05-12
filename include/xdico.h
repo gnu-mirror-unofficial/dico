@@ -81,5 +81,19 @@ dico_assoc_list_t xdico_assoc_create(void);
 void xdico_assoc_add(dico_assoc_list_t assoc, const char *key,
 		     const char *value);
 
+
+/* Timer */
+typedef struct timer_slot *xdico_timer_t;
+
+xdico_timer_t timer_get(const char *name);
+xdico_timer_t timer_start(const char *name);
+xdico_timer_t timer_stop(const char *name);
+xdico_timer_t timer_reset(const char *name);
+double timer_get_real(xdico_timer_t t);
+double timer_get_user(xdico_timer_t t);
+double timer_get_system(xdico_timer_t t);
+void timer_format_time(dico_stream_t stream, double t);
+
+
 #endif
     

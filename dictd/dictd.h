@@ -65,6 +65,7 @@ extern char *msg_id;
 extern dico_list_t module_load_path;
 extern dico_list_t handler_list;
 extern dico_list_t database_list;
+extern int timing_option;
 
 #ifndef LOG_FACILITY
 # define LOG_FACILITY LOG_LOCAL1
@@ -308,6 +309,7 @@ void dictd_define_word_db(dictd_database_t *db, dico_stream_t stream,
 			  const char *word);
 void dictd_define_word_first(dico_stream_t stream, const char *word);
 void dictd_define_word_all(dico_stream_t stream, const char *word);
+
 
 
 

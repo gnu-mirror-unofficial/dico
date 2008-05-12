@@ -56,20 +56,6 @@
 #include <stdio.h>
 #include <ctype.h>
 
-static dico_strategy_t defstrat[] = {
-    { "exact", "Match words exactly" },
-    { "prefix", "Match word prefixes" }
-};
-
-int
-outline_init(int argc, char **argv)
-{
-    int i;
-    for (i = 0; i < ARRAY_SIZE(defstrat); i++)
-	dico_strategy_add(defstrat + i);
-    return 0;
-}
-
 struct entry {
     char *word;             /* Word */
     size_t wordlen;         /* Its length in characters */
@@ -191,6 +177,56 @@ read_entry(struct outline_file *file, int *plevel)
     return ep;
 }
 
+
+enum result_type {
+    result_match,
+    result_define
+};
+
+struct result {
+    struct outline_file *file;
+    enum result_type type;
+    const struct entry *ep;
+    size_t count;
+};
+
+typedef int (*entry_match_t) (struct outline_file *file,
+			      const char *word,
+			      struct result *res);
+
+struct strategy_def {
+    dico_strategy_t strat;
+    entry_match_t match;
+};
+
+static int exact_match(struct outline_file *, const char *, struct result *);
+static int prefix_match(struct outline_file *, const char *, struct result *);
+
+static struct strategy_def strat_tab[] = {
+    { { "exact", "Match words exactly" }, exact_match },
+    { { "prefix", "Match word prefixes" }, prefix_match },
+};
+
+static entry_match_t
+find_matcher(const char *strat)
+{
+    int i;
+    for (i = 0; i < ARRAY_SIZE(strat_tab); i++) 
+	if (strcmp(strat, strat_tab[i].strat.name) == 0)
+	    return strat_tab[i].match;
+    return NULL;
+}
+
+int
+outline_init(int argc, char **argv)
+{
+    int i;
+    for (i = 0; i < ARRAY_SIZE(strat_tab); i++) 
+	dico_strategy_add(&strat_tab[i].strat);
+    return 0;
+}
+
+
 static int
 compare_entry(const void *a, const void *b)
 {
@@ -199,6 +235,57 @@ compare_entry(const void *a, const void *b)
     return strcasecmp(epa->word, epb->word);
 }
 
+static int
+exact_match(struct outline_file *file, const char *word, struct result *res)
+{
+    struct entry x, *ep;
+    x.word = (char*) word;
+    x.wordlen = strlen(word);
+    ep = bsearch(&x, file->index, file->count, sizeof(file->index[0]),
+		 compare_entry);
+    if (ep) {
+	res->ep = ep;
+	res->count = 1;
+	return 0;
+    }
+    return 1;
+}
+
+
+static int
+compare_prefix(const void *a, const void *b)
+{
+    const struct entry *pkey = a;
+    const struct entry *pelt = b;
+    if (pelt->wordlen < pkey->wordlen)
+	return 1;
+    return strncasecmp(pkey->word, pelt->word, pkey->wordlen);
+}
+
+static int
+prefix_match(struct outline_file *file, const char *word, struct result *res)
+{
+    struct entry x, *ep;
+    x.word = (char*) word;
+    x.wordlen = strlen(word);
+    ep = bsearch(&x, file->index, file->count, sizeof(file->index[0]),
+		 compare_prefix);
+    if (ep) {
+	size_t count = 1;
+	struct entry *p;
+	for (p = ep - 1; p > file->index && compare_prefix(&x, p) == 0; p--)
+	    count++;
+	for (ep++; ep < file->index + file->count
+		 && compare_prefix(&x, ep) == 0; ep++)
+	    count++;
+	res->ep = p + 1;
+	res->count = count;
+	return 0;
+    }
+    return 1;
+}
+
+
 int
 outline_close(dico_handle_t hp)
 {
@@ -347,45 +434,26 @@ outline_descr(dico_handle_t hp)
 }
 
 
-static const struct entry *
-exact_match(struct outline_file *file, const char *word)
-{
-    struct entry x;
-    x.word = (char*) word;
-    x.wordlen = strlen(word);
-    return bsearch(&x, file->index, file->count, sizeof(file->index[0]),
-		   compare_entry);
-}
-
-enum result_type {
-    result_match,
-    result_define
-};
-
-struct result {
-    struct outline_file *file;
-    enum result_type type;
-    const struct entry *ep;
-};
 
 dico_result_t
 outline_match(dico_handle_t hp, const char *strat, const char *word)
 {
     struct outline_file *file = hp;
     struct result *res;
-    const struct entry *ep;
-    
-    /* FIXME: */
-    ep = exact_match(file, word);
-    if (!ep)
-	return NULL;
+    entry_match_t match = find_matcher(strat);
 
+    if (!match)
+	return NULL;
+    
     res = malloc(sizeof(*res));
     if (!res)
 	return NULL;
     res->file = file;
     res->type = result_match;
-    res->ep = ep;
+    if (match(file, word, res)) {
+	free(res);
+	res = NULL;
+    }
     return res;
 }
 
@@ -394,26 +462,23 @@ outline_define(dico_handle_t hp, const char *word)
 {
     struct outline_file *file = hp;
     struct result *res;
-    const struct entry *ep;
     
-    ep = exact_match(file, word);
-    if (!ep)
-	return NULL;
-
     res = malloc(sizeof(*res));
     if (!res)
 	return NULL;
     res->file = file;
     res->type = result_define;
-    res->ep = ep;
+    if (exact_match(file, word, res)) {
+	free(res);
+	res = NULL;
+    }
     return res;
 }
 
 static void
-printdef(dico_stream_t str, struct result *res)
+printdef(dico_stream_t str, struct outline_file *file, const struct entry *ep)
 {
-    FILE *fp = res->file->fp;
-    const struct entry *ep = res->ep;
+    FILE *fp = file->fp;
     size_t size = ep->size;
     char buf[128];
     
@@ -434,14 +499,15 @@ int
 outline_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 {
     struct result *res = rp;
+    const struct entry *ep = res->ep + n;
     
     switch (res->type) {
     case result_match:
-	dico_stream_write(str, res->ep->word, strlen(res->ep->word));
+	dico_stream_write(str, ep->word, strlen(ep->word));
 	break;
 	
     case result_define:
-	printdef(str, res);
+	printdef(str, res->file, ep);
     }
     /* FIXME */
     return 1;
@@ -450,7 +516,8 @@ outline_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 size_t
 outline_result_count (dico_result_t rp)
 {
-    return 1; /* FIXME */
+    struct result *res = rp;
+    return res->count;
 }
 
 void

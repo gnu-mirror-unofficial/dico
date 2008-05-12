@@ -1,5 +1,7 @@
 2008-05-12  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	* modules/outline/outline.c: Implement prefix matches.
+
 	Implement working outline module. Add example data and
 	configuration, for testing. 
 	

@@ -291,6 +291,8 @@ dictd_loop(dico_stream_t str)
     
     dico_stream_close(str);
     dico_stream_destroy(&str);
+    
+    init_auth_data();
     return 0;
 }
 

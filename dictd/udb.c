@@ -24,7 +24,7 @@ struct dictd_user_db {
     int (*_db_open) (void **, dico_url_t url);
     int (*_db_close) (void *);
     int (*_db_get_password) (void *, const char *, const char *, char **);
-    int (*_db_get_groups) (void *, const char *, const char *, char ***);
+    int (*_db_get_groups) (void *, const char *, const char *, dico_list_t *);
 };
 
 int
@@ -55,7 +55,7 @@ udb_get_password(dictd_user_db_t db, const char *key, char **pass)
 }
 
 int
-udb_get_groups(dictd_user_db_t db, const char *key, char ***groups)
+udb_get_groups(dictd_user_db_t db, const char *key, dico_list_t *groups)
 {
     return db->_db_get_groups(db->handle, db->qgrp, key, groups);
 }

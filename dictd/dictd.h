@@ -66,6 +66,8 @@ extern dico_list_t module_load_path;
 extern dico_list_t handler_list;
 extern dico_list_t database_list;
 extern int timing_option;
+extern char *user_name;
+extern dico_list_t user_groups; 
 
 #ifndef LOG_FACILITY
 # define LOG_FACILITY LOG_LOCAL1
@@ -220,6 +222,9 @@ typedef struct dictd_database {
     char *descr;  /* Description (SHOW DB) */
     char *info;   /* Info (SHOW INFO) */
 
+    int require_auth;         /* Visible only for authenticated users */
+    dico_list_t groups;       /* Visible only for users from these groups */
+    
     dico_handle_t *mod;       /* Dico module handler */
     
     dictd_handler_t *handler; /* Pointer to the handler structure */
@@ -236,6 +241,10 @@ void dictd_init_strategies(void);
 dictd_database_t *find_database(const char *name);
 void database_remove_dependent(dictd_handler_t *handler);
 void dictd_database_free(dictd_database_t *dp);
+size_t database_count(void);
+int database_iterate(dico_list_iterator_t fun, void *data);
+int database_visible_p(const dictd_database_t *db);
+
 
 
 typedef void (*dictd_cmd_fn) (dico_stream_t str, int argc, char **argv);
@@ -264,7 +273,7 @@ struct udb_def {
     int (*_db_open) (void **, dico_url_t);
     int (*_db_close) (void *);
     int (*_db_get_password) (void *, const char *, const char *, char **);
-    int (*_db_get_groups) (void *, const char *, const char *, char ***);
+    int (*_db_get_groups) (void *, const char *, const char *, dico_list_t *);
 };
 
 struct udb_def text_udb_def;
@@ -281,11 +290,12 @@ int udb_create(dictd_user_db_t *pdb,
 int udb_open(dictd_user_db_t db);
 int udb_close(dictd_user_db_t db);
 int udb_get_password(dictd_user_db_t db, const char *key, char **pass);
-int udb_get_groups(dictd_user_db_t db, const char *key, char ***groups);
+int udb_get_groups(dictd_user_db_t db, const char *key, dico_list_t *groups);
 void udp_define(struct udb_def *dptr);
 
 /* auth.c */
 void register_auth(void);
+void init_auth_data(void);
 
 /* loader.c */
 void dictd_loader_init(void);

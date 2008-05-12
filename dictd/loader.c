@@ -189,25 +189,27 @@ dictd_word_first(dico_stream_t stream, const char *word, const char *strat,
 	timer_start(tid);
     itr = xdico_iterator_create(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
-	struct dico_handler_module *mp = db->handler->module;
-	dico_result_t res = strat ? mp->module_match(db->mod, strat, word) :
- 	                            mp->module_define(db->mod, word);
-	size_t count;
-    
-	if (!res)
-	    continue;
-	count = mp->module_result_count(res);
-
-	if (count) {
-	    stream_printf(stream, begfmt, (unsigned long) count);
-	    proc(db, res, word, stream, count);
-	    stream_writez(stream, (char*) endmsg);
-	    print_timing(stream, tid);
-	    dico_stream_write(stream, "\r\n", 2);
+	if (database_visible_p(db)) {
+	    struct dico_handler_module *mp = db->handler->module;
+	    dico_result_t res = strat ? mp->module_match(db->mod, strat, word) :
+ 	 	                        mp->module_define(db->mod, word);
+	    size_t count;
+	    
+	    if (!res)
+		continue;
+	    count = mp->module_result_count(res);
+	    
+	    if (count) {
+		stream_printf(stream, begfmt, (unsigned long) count);
+		proc(db, res, word, stream, count);
+		stream_writez(stream, (char*) endmsg);
+		print_timing(stream, tid);
+		dico_stream_write(stream, "\r\n", 2);
+	    }
+	    
+	    mp->module_free_result(res);
+	    break;
 	}
-    
-	mp->module_free_result(res);
-	break;
     }
     dico_iterator_destroy(&itr);
     if (!db)
@@ -236,25 +238,27 @@ dictd_word_all(dico_stream_t stream, const char *word, const char *strat,
 
     itr = xdico_iterator_create(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
-	struct dico_handler_module *mp = db->handler->module;
-	dico_result_t res = strat ? mp->module_match(db->mod, strat, word) :
- 	                            mp->module_define(db->mod, word);
-	size_t count;
+	if (database_visible_p(db)) {
+	    struct dico_handler_module *mp = db->handler->module;
+	    dico_result_t res = strat ? mp->module_match(db->mod, strat, word) :
+		                        mp->module_define(db->mod, word);
+	    size_t count;
 	
-	if (!res)
-	    continue;
-	count = mp->module_result_count(res);
-	if (!count) {
-	    mp->module_free_result(res);
-	    continue;
-	}
+	    if (!res)
+		continue;
+	    count = mp->module_result_count(res);
+	    if (!count) {
+		mp->module_free_result(res);
+		continue;
+	    }
 
-	rp = xmalloc(sizeof(*rp));
-	total += count;
-	rp->db = db;
-	rp->res = res;
-	rp->count = count;
-	xdico_list_append(reslist, rp);
+	    rp = xmalloc(sizeof(*rp));
+	    total += count;
+	    rp->db = db;
+	    rp->res = res;
+	    rp->count = count;
+	    xdico_list_append(reslist, rp);
+	}
     }
 
     dico_iterator_destroy(&itr);
@@ -377,7 +381,8 @@ dictd_define_word_db(dictd_database_t *db, dico_stream_t stream,
     
     if (timing_option)
 	timer_start("define");
-    
+
+    res = mp->module_define(db->mod, word);
     if (!res) {
 	dico_stream_writeln(stream, nomatch, nomatch_len);
 	return;

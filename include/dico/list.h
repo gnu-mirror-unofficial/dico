@@ -37,6 +37,7 @@ int dico_list_prepend(dico_list_t list, void *data);
 int dico_list_insert_sorted(dico_list_t list, void *data, dico_list_comp_t cmp);
 dico_list_t  dico_list_intersect(dico_list_t a, dico_list_t b,
 				 dico_list_comp_t cmp);
+int dico_list_intersect_p(dico_list_t a, dico_list_t b, dico_list_comp_t cmp);
 
 #define dico_list_push dico_list_prepend
 void *dico_list_pop(dico_list_t list);

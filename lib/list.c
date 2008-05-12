@@ -361,7 +361,7 @@ dico_list_insert_sorted(struct list *list, void *data, dico_list_comp_t cmp)
    in the list B. Elements are compared using function CMP.
    The resulting list preserves the ordering of A. */
 dico_list_t 
-dico_list_intersect (dico_list_t a, dico_list_t b, dico_list_comp_t cmp)
+dico_list_intersect(dico_list_t a, dico_list_t b, dico_list_comp_t cmp)
 {
     dico_list_t res;
     dico_iterator_t itr = dico_iterator_create(a);
@@ -380,3 +380,20 @@ dico_list_intersect (dico_list_t a, dico_list_t b, dico_list_comp_t cmp)
     return res;
 }
 
+/* Return true if there exists a non-empty intersection of lists A and B. */
+int
+dico_list_intersect_p(dico_list_t a, dico_list_t b, dico_list_comp_t cmp)
+{
+    dico_iterator_t itr = dico_iterator_create(a);
+    void *p;
+    int rc = 0;
+    
+    for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) {
+	if (dico_list_locate(b, p, cmp)) {
+	    rc = 1;
+	    break;
+	}
+    }
+    dico_iterator_destroy (&itr);
+    return rc;
+}

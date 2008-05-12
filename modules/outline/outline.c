@@ -257,9 +257,10 @@ compare_prefix(const void *a, const void *b)
 {
     const struct entry *pkey = a;
     const struct entry *pelt = b;
-    if (pelt->wordlen < pkey->wordlen)
-	return 1;
-    return strncasecmp(pkey->word, pelt->word, pkey->wordlen);
+    size_t wordlen = pkey->wordlen;
+    if (pelt->wordlen < wordlen)
+	wordlen = pelt->wordlen;
+    return strncasecmp(pkey->word, pelt->word, wordlen);
 }
 
 static int

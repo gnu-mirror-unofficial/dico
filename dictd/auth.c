@@ -59,6 +59,10 @@ auth(const char *username, const char *authstr)
 	    if (rc) 
 		logmsg(L_ERR, 0,
 		       _("authentication failed for `%s'"), username);
+	    else {
+		user_name = xstrdup(username);
+		udb_get_groups(user_db, username, &user_groups);
+	    }
 	    free(password);
 	}
     }
@@ -69,10 +73,9 @@ auth(const char *username, const char *authstr)
 void
 dictd_auth(dico_stream_t str, int argc, char **argv)
 {
-    /* FIXME: Raise some global variable and obtain user's groups */
-    if (auth(argv[1], argv[2]) == 0) 
+    if (auth(argv[1], argv[2]) == 0) {
 	stream_writez(str, "230 Authentication successful");
-    else
+    } else
 	stream_writez(str,
 		      "531 Access denied, "
 		      "use \"SHOW INFO\" for server information");
@@ -98,3 +101,20 @@ register_auth()
 	  dictd_auth };
     dictd_capa_register("auth", &cmd, auth_init, NULL);
 }
+
+
+static int
+_free_group(void *item, void *data)
+{
+    free(item);
+    return 0;
+}
+
+void
+init_auth_data()
+{
+    free(user_name);
+    user_name = NULL;
+    dico_list_destroy(&user_groups, _free_group, NULL);
+}
+

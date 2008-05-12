@@ -75,6 +75,12 @@ dico_list_t /* of dictd_handler_t */ handler_list;
 /* List of configured dictionaries */
 dico_list_t /* of dictd_database_t */ database_list;
 
+int require_auth; /* Require authentication */
+
+/* In authenticated state: */
+char *user_name;  /* User name */
+dico_list_t /* of char * */ user_groups; /* List of groups he is member of */
+
 /* Provide timing information */
 int timing_option;
 
@@ -415,6 +421,12 @@ struct config_keyword kwd_database[] = {
       cfg_string, NULL, offsetof(dictd_database_t, info) },
     { "handler", N_("name"), N_("Name of the handler for this database."),
       cfg_string, NULL, 0, set_dict_handler },
+    { "require-auth", N_("arg"),
+      N_("Require authentication for access to this database."),
+      cfg_bool, NULL, offsetof(dictd_database_t, require_auth) },
+    { "groups", N_("arg"),
+      N_("The database is visible only for users from these groups"),
+      cfg_string|CFG_LIST, NULL, offsetof(dictd_database_t, groups) },
     { NULL }
 };
 
@@ -527,6 +539,9 @@ struct config_keyword keywords[] = {
       N_("Provide timing information after successful completion of an "
 	 "operation."),
       cfg_bool, &timing_option },
+    { "require-auth", N_("arg"),
+      N_("Require authentication for access to databases."),
+      cfg_bool, &require_auth },
     { "database", NULL, N_("Define a dictionary database."),
       cfg_section, NULL, 0, set_database, NULL,
       kwd_database },
@@ -548,12 +563,31 @@ config_help()
 
 
 static int
+cmp_group_name(const void *item, const void *data)
+{
+    return strcmp((char*)item, (char*)data);
+}
+
+int
+database_visible_p(const dictd_database_t *db)
+{
+    return ((!db->groups || dico_list_intersect_p(db->groups, user_groups,
+						  cmp_group_name))
+	    && (user_name || !(db->require_auth || require_auth)));
+}
+
+static int
 cmp_database_name(const void *item, const void *data)
 {
     const dictd_database_t *db = item;
+    int rc;
+    
     if (!db->name)
 	return 1;
-    return strcmp(db->name, (const char*)data);
+    rc = strcmp(db->name, (const char*)data);
+    if (rc == 0 && !database_visible_p(db))
+	rc = 1;
+    return rc;
 }    
 
 dictd_database_t *
@@ -561,6 +595,40 @@ find_database(const char *name)
 {
     return dico_list_locate(database_list, (void*) name,
 			    cmp_database_name);
+}
+
+static int
+_count_databases(void *item, void *data)
+{
+    const dictd_database_t *db = item;
+    size_t *pcount = data;
+    if (database_visible_p(db))
+	++*pcount;
+    return 0;
+}
+
+size_t
+database_count()
+{
+    size_t count = 0;
+    dico_list_iterate(database_list, _count_databases, &count);
+    return count;
+}
+
+int
+database_iterate(dico_list_iterator_t fun, void *data)
+{
+    dico_iterator_t itr = xdico_iterator_create(database_list);
+    dictd_database_t *db;
+    int rc = 0;
+    
+    for (db = dico_iterator_first(itr); rc == 0 && db;
+	 db = dico_iterator_next(itr)) {
+	if (database_visible_p(db)) 
+	    rc = fun(db, data);
+    }
+    dico_iterator_destroy(&itr);
+    return rc;
 }
 
 /* Remove all dictionaries that depend on the given handler */

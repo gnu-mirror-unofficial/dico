@@ -1,5 +1,39 @@
 2008-05-12  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Implement authentication and database authorization.
+	
+	* dictd/auth.c (auth): Set user_name and user_groups.
+	(init_auth_data): New function.
+	* dictd/commands.c (dictd_show_info): Use database_count and
+	database_iterate instead of dico_list_ functions.
+	* dictd/dbtext.c (dbtext_get_groups): Store groups in a list.
+	* dictd/dictd.c (dictd_loop): Call init_auth_data before
+	returning.
+	* dictd/dictd.h (user_name, user_groups): New globals.
+	(struct dictd_database): New fields: require_auth and groups.
+	(database_count, database_iterate, database_visible_p): New
+	prototypes.
+	(struct udb_def._db_get_groups): Change signature.
+	(udb_get_groups): Change signature.
+	(init_auth_data): New function.
+	* dictd/loader.c (dictd_word_first, dictd_word_all): Ignore
+	databases that are not visible.
+	(dictd_define_word_db): Restore accidentally deleted call to
+	mp->module_define.
+	* dictd/main.c (require_auth, user_name, user_groups): New
+	variables.
+	(kwd_database): New keywords: `require-auth' and `groups'.
+	(keywords): New keyword `require-auth'.
+	(database_visible_p, database_count, database_iterate): New
+	functions. 
+	(cmp_database_name): Ignore invisible databases.
+	(struct dictd_user_db._db_get_groups): Change signature.
+	(udb_get_groups): Change signature.
+	* include/dico/list.h (dico_list_intersect_p): New function.
+	* lib/list.c (dico_list_intersect_p): New function.
+	* modules/outline/outline.c (compare_prefix): Bugfix.
+	* tests/devils.out (PRECIPITATE): Remove duplicate entry.
+
 	Optionally print timing information for match and define commands.
 	
 	* dictd/commands.c (dictd_match): Resolve strategy before passing

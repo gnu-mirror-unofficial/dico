@@ -116,34 +116,27 @@ dbtext_get_password(void *handle, const char *qpw, const char *key,
 
 static int
 dbtext_get_groups(void *handle, const char *qgr, const char *key,
-		  char ***pgroups)
+		  dico_list_t *pgroups)
 {
     dico_url_t url = handle;
     char *dir = dico_url_full_path(url);
     char *full_name;
     FILE *fp = open_file(dir, qgr, &full_name);
     int rc;
-	
+    dico_list_t groups = NULL;
+    
     if (fp) {
 	char *buf = NULL;
 	size_t size = 0;
-	int count = 0, i = 0;
-	char **groups = NULL;
 	char *val;
 
 	while ((val = find_key(fp, key, &buf, &size))) {
-	    if (i == count) {
-		if (count == 0)
-		    count = 10; /* Initial allocation */
-		groups = x2nrealloc(groups, &count, sizeof(groups[0]));
-		groups[i++] = xstrdup(val);
-	    }
-	}
-	if (groups && i == count) {
-	    groups = xnrealloc(groups, count+1, sizeof(groups[0]));
-	    groups[i++] = NULL;
+	    if (!groups)
+		groups = xdico_list_create();
+	    xdico_list_append(groups, xstrdup(val));
 	}
 
+	*pgroups = groups;
 	fclose(fp);
 	free(full_name);
 	free(buf);

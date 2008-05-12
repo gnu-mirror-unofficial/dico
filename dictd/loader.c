@@ -289,7 +289,8 @@ print_matches(dictd_database_t *db, dico_result_t res,
 {
     size_t i;
     struct dico_handler_module *mp = db->handler->module;
-    dico_stream_t ostr = dictd_ostream_create(stream);
+    dico_stream_t ostr = dictd_ostream_create(stream, db->content_type,
+	                                      db->content_transfer_encoding);
 
     for (i = 0; i < count; i++) {
 	stream_writez(ostr, db->name);
@@ -364,17 +365,18 @@ print_definitions(dictd_database_t *db, dico_result_t res,
     size_t i;
     char *descr = dictd_get_database_descr(db);
     struct dico_handler_module *mp = db->handler->module;
-    dico_stream_t ostr = dictd_ostream_create(stream);
-
     for (i = 0; i < count; i++) {
+	dico_stream_t ostr;
 	stream_printf(stream, "151 \"%s\" %s \"%s\"\r\n",
 		      word, db->name, descr);
+	ostr = dictd_ostream_create(stream, db->content_type,
+				    db->content_transfer_encoding);
 	mp->module_output_result(res, i, ostr);
+	dico_stream_close(ostr);
+	dico_stream_destroy(&ostr);
 	dico_stream_write(stream, "\r\n.\r\n", 5);
     }
     dictd_free_database_descr(db, descr);
-    dico_stream_close(ostr);
-    dico_stream_destroy(&ostr);
 }
 
 void

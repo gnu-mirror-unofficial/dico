@@ -17,6 +17,7 @@
 pkginclude_HEADERS = \
  argcv.h\
  assoc.h\
+ filter.h\
  list.h\
  strat.h\
  stream.h\

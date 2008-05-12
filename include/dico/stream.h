@@ -43,7 +43,9 @@ int dico_stream_create(dico_stream_t *pstream,
 		       void *data, 
 		       int (*readfn) (void *, char *, size_t, size_t *),
 		       int (*writefn) (void *, char *, size_t, size_t *),
-		       int (*closefn) (void *));
+		       int (*flushfn) (void *),
+		       int (*closefn) (void *),
+		       int (*destroyfn) (void *));
 
 void dico_stream_set_error_string(dico_stream_t stream,
 				  const char *(*error_string) (void *, int));

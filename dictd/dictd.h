@@ -226,6 +226,9 @@ typedef struct dictd_database {
     dico_list_t groups;       /* Visible only for users from these groups */
     
     dico_handle_t *mod;       /* Dico module handler */
+
+    char *content_type;
+    char *content_transfer_encoding;
     
     dictd_handler_t *handler; /* Pointer to the handler structure */
     int argc;                 /* Handler arguments: count */
@@ -324,7 +327,8 @@ void dictd_define_word_first(dico_stream_t stream, const char *word);
 void dictd_define_word_all(dico_stream_t stream, const char *word);
 
 /* ostream.c */
-dico_stream_t dictd_ostream_create(dico_stream_t str);
+dico_stream_t dictd_ostream_create(dico_stream_t str, const char *type,
+                                   const char *enc);
 
 
 

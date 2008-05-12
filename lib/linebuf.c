@@ -170,7 +170,7 @@ dico_linebuf_write(struct dico_line_buffer *s, char *ptr, size_t size)
 int
 dico_linebuf_flush(struct dico_line_buffer *s)
 {
-    int rc;
+    int rc = 0;
     
     switch (s->type) {
     case lb_in:

@@ -1,3 +1,40 @@
+2008-05-13  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Implement a framework for various encodings in mime mode.
+	Implement base64 encoding.
+	
+	* include/dico/filter.h: New file.
+	* lib/base64.c: New file.
+	* lib/fltstream.c: New file.
+
+	* dictd/commands.c: Update calls to dictd_ostream_create.
+	* dictd/loader.c: Update calls to dictd_ostream_create.
+	* dictd/dictd.h (struct dictd_database): New members: content_type
+	and content_transfer_encoding.
+	(dictd_ostream_create): Take two additional arguments.
+	* dictd/fdio.c: Update calls to dico_stream_create.
+	* dictd/main.c (keywords): New keywords `content-type',
+	`content-transfer-encoding'.
+	* dictd/ostream.c (struct ostream): New members: flags, type, and
+	encoding.
+	(print_headers): New function.
+	(ostream_write): Call print_headers.
+	(ostream_flush, ostream_destroy): New functions.
+	(dictd_ostream_create): Take two more arguments, specifying the
+	content type and encoding to be used.
+	* include/dico.h: Include dico/filter.h
+	* include/dico/Makefile.am (pkginclude_HEADERS): Add filter.h
+	* include/dico/stream.h (dico_stream_create): Change signature.
+	* lib/Makefile.am (libdico_la_SOURCES): Add base64.c and
+	fltstream.c.
+	* lib/linebuf.c (dico_linebuf_flush): Initialize rc.
+	* lib/list.c: Fix copyright header.
+	* lib/stream.c (dico_stream_create): Take one more argument.
+	(dico_stream_flush): Call stream->flush, if not NULL.
+	(dico_stream_destroy): Call stream->destroy, if not NULL.
+	* modules/outline/outline.c (outline_output_result): Fix return
+	value.
+
 2008-05-12  Sergey Poznyakoff  <gray@gnu.org.ua>
 
 	Implement OPTION MIME.

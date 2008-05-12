@@ -63,7 +63,7 @@ fd_stream_create(int ifd, int ofd)
     struct fds *p = xmalloc(sizeof(*p));
     dico_stream_t stream;
     int rc = dico_stream_create(&stream, p, 
-			        fd_read, fd_write, fd_close);
+			        fd_read, fd_write, NULL, fd_close, NULL);
     if (rc)
 	xalloc_die();
     p->in = ifd;

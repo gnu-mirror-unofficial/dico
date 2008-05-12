@@ -29,7 +29,9 @@ struct dico_stream {
     int last_err;
     int (*read) (void *, char *, size_t, size_t *);
     int (*write) (void *, char *, size_t, size_t *);
+    int (*flush) (void *);
     int (*close) (void *);
+    int (*destroy) (void *);
     const char *(*error_string) (void *, int);
     void *data;
 };    
@@ -39,7 +41,9 @@ dico_stream_create(dico_stream_t *pstream,
 		   void *data, 
 		   int (*readfn) (void *, char *, size_t, size_t *),
 		   int (*writefn) (void *, char *, size_t, size_t *),
-		   int (*closefn) (void *))
+		   int (*flushfn) (void *),
+		   int (*closefn) (void *),
+		   int (*destroyfn) (void *))
 {
     dico_stream_t stream = malloc(sizeof(*stream));
     if (stream == NULL)
@@ -47,7 +51,9 @@ dico_stream_create(dico_stream_t *pstream,
     memset(stream, 0, sizeof(*stream));
     stream->read = readfn;
     stream->write = writefn;
+    stream->flush = flushfn;
     stream->close = closefn;
+    stream->destroy = destroyfn;
     stream->data = data;
     *pstream = stream;
     return 0;
@@ -326,7 +332,9 @@ int
 dico_stream_flush(dico_stream_t stream)
 {
     int rc = 0;
-    if (stream->outbuf)
+    if (stream->flush)
+	rc = stream->flush(stream->data);
+    if (rc == 0 && stream->outbuf)
 	rc = dico_linebuf_flush(stream->outbuf);
     return rc;
 }
@@ -344,6 +352,8 @@ dico_stream_close(dico_stream_t stream)
 void
 dico_stream_destroy(dico_stream_t *stream)
 {
+    if ((*stream)->destroy)
+	(*stream)->destroy((*stream)->data);
     free(*stream);
     *stream = NULL;
 }

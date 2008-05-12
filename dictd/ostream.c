@@ -18,19 +18,63 @@
 
 extern int option_mime;
 
+#define OSTREAM_INITIALIZED       0x01
+#define OSTREAM_DESTROY_TRANSPORT 0x02
+
 struct ostream {
     dico_stream_t transport;
-    int inited;
+    int flags;
+    const char *type;
+    const char *encoding;
 };
+
+#define CONTENT_TYPE_HEADER "Content-type: "
+#define CONTENT_TRANSFER_ENCODING_HEADER "Content-transfer-encoding: "
+
+static int
+print_headers(struct ostream *ostr)
+{
+    int rc;
+
+    if (ostr->type) {
+	dico_stream_write(ostr->transport, CONTENT_TYPE_HEADER,
+			  sizeof(CONTENT_TYPE_HEADER) - 1);
+	dico_stream_write(ostr->transport, (char *) ostr->type,
+			  strlen(ostr->type));
+	dico_stream_write(ostr->transport, "\r\n", 2);
+    }
+
+    if (ostr->encoding) {
+	dico_stream_write(ostr->transport, CONTENT_TRANSFER_ENCODING_HEADER,
+			  sizeof(CONTENT_TRANSFER_ENCODING_HEADER) - 1);
+	dico_stream_write(ostr->transport, (char*) ostr->encoding,
+			  strlen(ostr->encoding));
+	dico_stream_write(ostr->transport, "\r\n", 2);
+    }
+
+    rc = dico_stream_write(ostr->transport, "\r\n", 2);
+    if (rc == 0 && ostr->encoding) {
+	if (strcmp(ostr->encoding, "base64") == 0) {
+	    ostr->transport = dico_base64_stream_create(ostr->transport,
+							FILTER_ENCODE);
+	    if (!ostr->transport)
+		return 1;
+	    ostr->flags |= OSTREAM_DESTROY_TRANSPORT;
+	}
+	/* FIXME: Quoted-printable */
+    }
+    return rc;
+}
+
 
 static int
 ostream_write(void *data, char *buf, size_t size, size_t *pret)
 {
     struct ostream *ostr = data;
-    if (!ostr->inited) {
-	if (option_mime && dico_stream_write(ostr->transport, "\r\n", 2))
+    if (!(ostr->flags & OSTREAM_INITIALIZED)) {
+	if (option_mime && print_headers(ostr))
 	    return 1;
-	ostr->inited = 1;
+	ostr->flags |= OSTREAM_INITIALIZED;
     }
     if (buf[0] == '.' && dico_stream_write(ostr->transport, ".", 1))
 	return 1;
@@ -38,17 +82,38 @@ ostream_write(void *data, char *buf, size_t size, size_t *pret)
     return dico_stream_write(ostr->transport, buf, size);
 }
 
+static int
+ostream_flush(void *data)
+{
+    struct ostream *ostr = data;
+    return dico_stream_flush(ostr->transport);
+}
+
+static int
+ostream_destroy(void *data)
+{
+    struct ostream *ostr = data;
+    if (ostr->flags & OSTREAM_DESTROY_TRANSPORT)
+	dico_stream_destroy(&ostr->transport);
+    return 0;
+}
+
 dico_stream_t
-dictd_ostream_create(dico_stream_t str)
+dictd_ostream_create(dico_stream_t str, const char *type, const char *enc)
 {
     struct ostream *ostr = xmalloc(sizeof(*ostr));
     dico_stream_t stream;
 
-    int rc = dico_stream_create(&stream, ostr, NULL, ostream_write, NULL);
+    int rc = dico_stream_create(&stream, ostr, NULL, ostream_write,
+				ostream_flush, NULL, ostream_destroy);
     if (rc)
 	xalloc_die();
     ostr->transport = str;
-    ostr->inited = 0;
+    ostr->flags = 0;
+    ostr->type = type;
+    ostr->encoding = enc;
     dico_stream_set_buffer(stream, lb_out, 1024);
     return stream;
 }
+
+    

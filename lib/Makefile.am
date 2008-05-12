@@ -23,6 +23,8 @@ noinst_LIBRARIES=libxdico.a libextra.a
 libdico_la_SOURCES=\
  argcv.c\
  assoc.c\
+ base64.c\
+ fltstream.c\
  linebuf.c\
  list.c\
  strat.c\

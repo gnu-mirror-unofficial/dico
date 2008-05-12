@@ -510,8 +510,7 @@ outline_output_result (dico_result_t rp, size_t n, dico_stream_t str)
     case result_define:
 	printdef(str, res->file, ep);
     }
-    /* FIXME */
-    return 1;
+    return 0;
 }
 
 size_t

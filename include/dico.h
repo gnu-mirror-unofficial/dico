@@ -29,6 +29,7 @@
 #include <dico/xlat.h>
 #include <dico/strat.h>
 #include <dico/utf8.h>
+#include <dico/filter.h>
 
 #ifndef offsetof
 # define offsetof(s,f) ((size_t)&((s*)0)->f)

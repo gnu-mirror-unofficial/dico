@@ -427,6 +427,12 @@ struct config_keyword kwd_database[] = {
     { "groups", N_("arg"),
       N_("The database is visible only for users from these groups"),
       cfg_string|CFG_LIST, NULL, offsetof(dictd_database_t, groups) },
+    { "content-type", N_("arg"), N_("Content type for MIME replies."),
+      cfg_string, NULL, offsetof(dictd_database_t, content_type) },
+    /* FIXME: Install a callback to verify if arg is acceptable. */
+    { "content-transfer-encoding", N_("arg"),
+      N_("Content transfer encoding for MIME replies."),
+      cfg_string, NULL, offsetof(dictd_database_t, content_transfer_encoding) },
     { NULL }
 };
 

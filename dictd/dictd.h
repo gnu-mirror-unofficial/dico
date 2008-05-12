@@ -267,6 +267,9 @@ void dictd_capa_register(const char *name, struct dictd_command *cmd,
 int dictd_capa_add(const char *name);
 void dictd_capa_iterate(int (*fun)(const char*, int, void *), void *closure);
 
+/* mime.c */
+void register_mime(void);
+
 /* user db */
 struct udb_def {
     const char *proto;
@@ -320,6 +323,8 @@ void dictd_define_word_db(dictd_database_t *db, dico_stream_t stream,
 void dictd_define_word_first(dico_stream_t stream, const char *word);
 void dictd_define_word_all(dico_stream_t stream, const char *word);
 
+/* ostream.c */
+dico_stream_t dictd_ostream_create(dico_stream_t str);
 
 
 

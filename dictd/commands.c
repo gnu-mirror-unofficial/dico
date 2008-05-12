@@ -31,17 +31,52 @@ void
 dictd_help(dico_stream_t str, int argc, char **argv)
 {
     const char *text = help_text;
+    dico_stream_t ostr;
+	
     stream_writez(str, "113 help text follows\r\n");
+    ostr = dictd_ostream_create(str);
+    
     if (text) {
 	if (text[0] == '+') {
-	    dictd_show_std_help(str);
+	    dictd_show_std_help(ostr);
 	    text++;
 	}
-	stream_write_multiline(str, text);
+	stream_write_multiline(ostr, text);
     } else
-	dictd_show_std_help(str);
-    stream_writez(str, "\r\n.\r\n");
+	dictd_show_std_help(ostr);
+
+    stream_writez(ostr, "\r\n");
+    dico_stream_close(ostr);
+    dico_stream_destroy(&ostr);
+
+    stream_writez(str, ".\r\n");
     stream_writez(str, "250 ok\r\n");    
+}
+
+void
+dictd_show_info(dico_stream_t str, int argc, char **argv)
+{
+    char *dbname = argv[2];
+    dictd_database_t *dict = find_database(dbname);
+    if (!dict) 
+	stream_writez(str, "550 invalid database, use SHOW DB for list\r\n");
+    else {
+	dico_stream_t ostr;
+	char *info = dictd_get_database_info(dict);
+	stream_printf(str, "112 information for %s\r\n", dbname);
+	ostr = dictd_ostream_create(str);
+	if (info) {
+	    stream_write_multiline(ostr, info);
+	    dictd_free_database_info(dict, info);
+	} else
+	    stream_writez(ostr, "No information available.\r\n");
+	stream_writez(ostr, "\r\n");
+	dico_stream_close(ostr);
+	dico_stream_destroy(&ostr);
+	
+	stream_writez(str, ".\r\n");
+	stream_writez(str, "250 ok\r\n");    
+    }
 }
 
 static int
@@ -57,36 +92,20 @@ _show_database(void *item, void *data)
 }
 
 void
-dictd_show_info(dico_stream_t str, int argc, char **argv)
-{
-    char *dbname = argv[2];
-    dictd_database_t *dict = find_database(dbname);
-    if (!dict) 
-	stream_writez(str, "550 invalid database, use SHOW DB for list\r\n");
-    else {
-	char *info = dictd_get_database_info(dict);
-	stream_printf(str, "112 information for %s\r\n", dbname);
-	if (info) {
-	    stream_write_multiline(str, info);
-	    dictd_free_database_info(dict, info);
-	} else
-	    stream_writez(str, "No information available.\r\n");
-	stream_writez(str, "\r\n.\r\n");
-	stream_writez(str, "250 ok\r\n");    
-    }
-}
-
-
-void
 dictd_show_databases(dico_stream_t str, int argc, char **argv)
 {
     size_t count = database_count();
     if (count == 0) 
 	stream_printf(str, "554 No databases present\r\n");
     else {
+	dico_stream_t ostr;
+	
 	stream_printf(str, "110 %lu databases present\r\n",
 		      (unsigned long) count);
-	database_iterate(_show_database, str);
+	ostr = dictd_ostream_create(str);
+	database_iterate(_show_database, ostr);
+	dico_stream_close(ostr);
+	dico_stream_destroy(&ostr);
 	stream_writez(str, ".\r\n");
 	stream_writez(str, "250 ok\r\n");
     }
@@ -110,9 +129,14 @@ dictd_show_strategies(dico_stream_t str, int argc, char **argv)
     if (count == 0)
 	stream_printf(str, "555 No strategies available\r\n");
     else {
+	dico_stream_t ostr;
+	
 	stream_printf(str, "111 %lu strategies present: list follows\r\n",
 		      (unsigned long) count);
-	dico_strategy_iterate(_show_strategy, str);
+	ostr = dictd_ostream_create(str);
+	dico_strategy_iterate(_show_strategy, ostr);
+	dico_stream_close(ostr);
+	dico_stream_destroy(&ostr);
 	stream_writez(str, ".\r\n");
 	stream_writez(str, "250 ok\r\n");
     }
@@ -122,12 +146,18 @@ dictd_show_strategies(dico_stream_t str, int argc, char **argv)
 void
 dictd_show_server(dico_stream_t str, int argc, char **argv)
 {
+    dico_stream_t ostr;
+    
     stream_writez(str, "114 server information\r\n");
+    ostr = dictd_ostream_create(str);
     /* FIXME: (For logged in users) show:
        dictd (gjdict 1.0.90) on Linux 2.6.18, Trurl.gnu.org.ua up 81+01:33:49, 12752570 forks (6554.7/hour)
     */
-    stream_write_multiline(str, server_info);
-    stream_writez(str, "\r\n.\r\n");
+    stream_write_multiline(ostr, server_info);
+    stream_writez(ostr, "\r\n");
+    dico_stream_close(ostr);
+    dico_stream_destroy(&ostr);
+    stream_writez(str, ".\r\n");
     stream_writez(str, "250 ok\r\n");    
 }
 

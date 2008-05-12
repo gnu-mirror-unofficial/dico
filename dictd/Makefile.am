@@ -28,6 +28,8 @@ dictd_SOURCES=\
  fdio.c\
  loader.c\
  main.c\
+ mime.c\
+ ostream.c\
  server.c\
  udb.c
 

@@ -722,6 +722,7 @@ main(int argc, char **argv)
     dictd_init_strategies();
     udb_init();
     register_auth();
+    register_mime();
     register_xversion();
     config_lex_trace(0);
     get_options(argc, argv);

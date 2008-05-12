@@ -1,5 +1,23 @@
 2008-05-12  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Implement OPTION MIME.
+	
+	* README: Update.
+	* dictd/Makefile.am (dictd_SOURCES): Add mime.c, ostream.c.
+	* dictd/dictd.h (register_mime, dictd_ostream_create): New
+	prototypes. 
+	* dictd/loader.c (print_matches, print_definitions): Use ostream
+	for output.
+	* dictd/commands.c (dictd_help, dictd_show_info)
+	(dictd_show_databases, dictd_show_strategies)
+	(dictd_show_strategies): Use ostream for output.
+	
+	* dictd/main.c (main): Call register_mime.
+	* tests/dictd.cfin: Request mime capability.
+	* lib/stream.c (dico_stream_read_unbuffered)
+	(dico_stream_write_unbuffered): Return 1 and set errno to ENOSYS
+	if the underlying method is NULL.
+
 	Implement authentication and database authorization.
 	
 	* dictd/auth.c (auth): Set user_name and user_groups.

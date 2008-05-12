@@ -30,5 +30,5 @@ server-info <<EOT
 This is a test Dico server.
 EOT
 
-capability xversion;
+capability (mime,xversion);
 

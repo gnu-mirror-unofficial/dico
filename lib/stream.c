@@ -112,6 +112,11 @@ dico_stream_read_unbuffered(dico_stream_t stream, char *buf, size_t size,
 {
     int rc;
 
+    if (!stream->read) {
+	errno = ENOSYS;
+	return 1;
+    }
+    
     if (stream->eof) {
 	if (pread)
 	    *pread = 0;
@@ -146,6 +151,11 @@ dico_stream_write_unbuffered(dico_stream_t stream, char *buf, size_t size,
 			     size_t *pwrite)
 {
     int rc;
+    
+    if (!stream->write) {
+	errno = ENOSYS;
+	return 1;
+    }
     
     if (pwrite == NULL) {
 	size_t wrbytes;

@@ -27,8 +27,8 @@ with stress on the last syllable.
 
 * Current state
 
-Dictd provides all the functionality required by RFC 2229, except for
-SASL commands and OPTION MIME.
+The dictd daemon is completely implemented. It provides all the
+functionality required by RFC 2229, except for SASL commands.
 
 For test purposes a database module "outline" is available.  This
 module handles databases in Emacs outline format.

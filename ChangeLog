@@ -1,5 +1,15 @@
 2008-05-13  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Introduce a documentation framework:
+	
+	* doc/.gitignore, doc/Makefile.am, doc/check-docs.sh,
+	doc/dico.texi, doc/fdl.texi, doc/gendocs_template,
+	doc/macros.texi, doc/mastermenu.el, doc/rendition.texi,
+	doc/untabify.el: New files.
+	* Makefile.am (SUBDIRS): Add doc.
+	* configure.ac (RENDITION): New subst variable.
+	(AC_CONFIG_FILES): Add doc/Makefile.
+
 	Implement quoted-printable encoding.
 	
 	* lib/Makefile.am (libdico_la_SOURCES): Add qp.c

@@ -1,0 +1,475 @@
+@node Bushu search shell
+@chapter Bushu search shell
+
+The Bushu search shell is designed to find a kanji by it's radical and
+stroke count.
+
+The shell has the following layout:
+
+ ╭────────────╮  ╭─────────╮  ╭────────────╮  ╭──╮ ╭──╮ 
+ │ RAD_STROKES │   │ RADICAL │   │ NUM_STROKES │  │次│ │前│
+ ╰────────────╯  ╰─────────╯  ╰────────────╯  ╰──╯ ╰──╯
+
+To search for a kanji:
+
+@enumerate 1
+@item 1
+Enter the number of strokes in the radical in the field
+RAD_STROKES. Then the `Radical selection' widgets will
+show all radicals that have that number of strokes. 
+
+@item 2
+Select your radical from the set of `Radical selection'
+widgets. The selected radical will be displayed in the
+RADICAL widget.
+
+@item 3
+In the NUM_STROKES field enter the number of additional
+strokes the kanji has, i.e. total number of 
+strokes minus number of strokes in the radical.
+
+@item 4
+Use the 次 widget to display next matching kanji and the 前
+widget to display previously found one.
+@end enumerate
+
+@node Four-corner search shell
+@chapter Four-corner search shell
+
+This shell allows you to look up a kanji using @dfn{4-corner method}:
+@cindex Four corner method
+
+Each widget in the upper line represents one of the 10 stroke shapes.
+The eleventh (blank) widget means the repetition of the first shape.
+
+The four widgets in the center stand for four parts of a kanji. The active
+part (i.e. the one which gets the input) is shaded.
+
+@FIXME{To construct a 4-corner code of a kanji, ...}
+
+Use the 次  widget to display the next matching kanji and 前
+widget to display previously found one.
+
+@node SKIP search shell
+@chapter SKIP search shell
+%cindex @acronym{SKIP} codes
+
+This search shell allows you to find a kanji using @acronym{SKIP} coding.
+
+To find a kanji:
+
+Select the kanji form description from the upper row of command widgets.
+This supplies the first digit of @acronym{SKIP} code.
+
+If the character in question can be divided into two distinct parts, then
+select one of the following and enter in the 2nd and 3rd input widgets
+the number of strokes each part has:
+
+@multitable @columnfractions 0.2 0.5
+@headitem Command @tab	the character consists of
+@item 八 @tab left and right parts
+@item 二 @tab upper and lower parts
+@item 回 @tab enclosing and internal parts
+@end multitable
+
+then keep pressing either 次 or 前 untill you have found the
+character.
+
+If your character matches none of the above descriptions then select the
+？ command widget. This enables the commands in the right column.
+Now select the command that matches best your kanji:
+
+@multitable @columnfractions 0.2 0.5
+@item 下 @tab the kanji has a horizontal line at the top
+@item 上 @tab the kanji has a horizontal line at the bottom
+@item 中 @tab the kanji has a vertical line through
+@item ？ @tab none of the above matches my kanji
+@end multitable
+
+and enter @emph{total} number of strokes the character has in the 2nd input
+widget.
+
+Keep pressing either 次 or 前 untill you have found the
+character.
+
+@node Bushu search method
+@chapter Bushu search method
+
+The radical (bushu) search method is a widely used method for searching
+characters.
+
+Each character is deemed to consist of a radical (key) and
+additional strokes. There exist 214 radicals which are grouped by the number
+of strokes. Each radical is given its number. Now, the code of a character
+consists of two numbers usually separated with a dot. First number is the
+radical number, second one represents the number of additional strokes.
+
+For example: 今 consists of 人 (rad.9) plus 2 additional strokes:
+its code is therefore 9.2; 語 is 言 (rad.149) plus 7 strokes:
+the code is 149.7.
+
+To find a character:
+
+@enumerate 1
+@item 1
+Determine which of its parts is the radical (It is not a trivial task, there
+are pitfalls there: see below).
+
+@item 2
+Count the number of strokes in the radical, look it up in the radical table
+and write down its number.
+
+@item 3
+Count the number of strokes in the non-radical part of the character and
+write it down.
+@end enumerate
+
+
+The radical itself can occupy various parts of the character.
+
+It can:
+
+@enumerate 1
+@item be placed to the left as in:
+汁, 汀 (radical 85), or 阪, 限 (radical 170);
+@item be placed to the right as in 邸, 郡 (radical 163);
+@item be above as in 芋, 荻 (radical 140);
+@item be placed below. 
+Examples: 煮, 然.;
+@item enclose the rest of the caracter. 
+Examples: 囲, 圈 or 閘, 閻 (radical 169).
+@end enumerate
+
+To find the radical the following method could be used:
+
+@enumerate 1
+@item
+Check whether the whole kanji in question can be used as a radical.
+For example, 金 has 8 strokes and is itself  radical #167. So, the
+code of this kanji is 167.0.
+
+@item
+Decide whether the character consists of an enclosing structure and an
+internal structure. For example, 国 contains 囗 as the enclosing
+structure. The character 囗 is the radical #31. Thus, the code for  
+国 is 31.5.
+
+@item
+If the character contains two radicals arranged horizontally, the leftmost
+one should be taken as its radical. For example, 明 contains two elements
+each of which can be used as a radical. The leftmost one is 日 (rad.72),
+so the code is 72.4.
+
+@item
+If the leftmost element is not the radical or the character could not be found
+using leftmost element as a radical, then try the rightmost one.
+Example: 顛 - radical 頁 (#181), the code is 181.10.
+
+@item
+If the character can be split into upper and lower parts, the upper one
+is the radical. For example: 登 - radical is 癶 (#105),
+code is 105.7.
+
+@item
+If the character could not be found using its upper element as its radical,
+then try to use the lower one.
+Example: 忠 - radical is 心 (#61), not 中.
+@end enumerate
+
+@node Four corner method
+@chapter Four corner method
+
+The Four Corner System has been used for many years in China  and  Japan  for 
+classifying  kanji.  In  China  it  is  losing popularity in favour of PinYin 
+ordering.  Some Japanese dictionaries,  such as the  Morohashi  Daikanwajiten 
+have a Four Corner Index. 
+
+The following overview of the system has been condensed from the article @cite{The 
+Four Corner System:  an introduction with exercises} by  Dr  Urs  App,  which 
+appeared in the @cite{Electronic Bodhidharma No 2},  February 1992, published by the 
+International Research Institute for Zen Buddhism,  Hanazono  College. 
+
+@enumerate 1
+@item 
+Stroke shapes are divided into ten classes:
+
+@multitable @columnfractions 0.2 0.6 0.3
+@item 0	@tab LID             @tab 亠 
+@item 1	@tab HORIZONTAL LINE @tab 一 
+@item 2	@tab VERTICAL LINE   @tab ｜ 
+@item 3	@tab DOT	     @tab 丶 
+@item 4	@tab CROSS	     @tab 十
+@item 5	@tab SKEWER	     @tab キ
+@item 6	@tab BOX	     @tab 口 
+@item 7	@tab ANGLE	     @tab 厂 
+@item 8	@tab HACHI	     @tab 八 
+@item 9	@tab CHIISAI	     @tab 小 
+@end multitable
+
+@item 
+The Four Digits are derived from the Four Corners in a Z-shaped order. 
+
+@example
+@group
+	A    B  
+        
+	C    D
+@end group
+@end example
+
+For example:
+
+@example
+@group
+                 7  1     7  7             
+                  原       月   
+                 2  9     2  2
+@end group
+@end example
+
+Some examples: 仕 2421  行 2122  歴 7121  魚 2733  詞 0762  同 7722  橋 4292
+
+@item 
+A shape is only used once.  If it fills several corners, it is counted 
+as zero in subsequent corners. 
+
+Some examples:
+
+@example
+@group
+口 6000
+首 8060
+分 8022
+大 2003
+和 2690
+品 6066
+京 0096
+@end group
+@end example
+
+@item 
+When the upper or lower half of a character consists of only one  (single 
+or composite) shape,  it is,  rergardless of its position,  counted as a left 
+corner. The right corner is counted as zero. 
+
+Some examples: 立 0010  由 5060  雪 1017  方 0022  庭 0024  糸 2090  手 2050
+
+@item
+When there is no additional element to the four sides of  the  characters 
+口,  門,  鬥 (and sometimes 行), whatever is inside these characters is 
+taken for the lower two corners. 
+
+Some examples: 問 7760  囚 6080  國 6015  目 6010  開 7744  面 1060  銜 2110
+
+@item
+The analysis is based on the block-style handwritten kaisho (楷書)  
+shape of characters. 
+
+(This needs attention, as 戸 is 3027, not 1027.  The top stroke is treated as 
+a 丶.) 
+
+@item
+Some points to note when analysing shapes: 
+
+@table @asis
+@item Shape 0
+
+When the horizontal line below a DOT shape (number 3) is connected to another 
+stroke at its right-hand end (as in 宀 戸,  etc.) it is not counted as a  LID
+(number 0) but as a DOT. 
+
+Examples: 安 3040  神 3520  祈 3222
+
+@item Shape 6
+Characters  such  as 皿 and 尸 where one of the strokes of the square extends 
+beyond it,  are not considered to be square (number 6)  shapes,  but  corners 
+(number 7). 
+
+Examples: 且 7710  所 3222  皿 7710  館 8377 宜 3010
+
+@item Shape 7
+
+Only the cornered end of corner shapes (number 7) is counted as 7. 
+
+Examples: 区 7171  斤 7222 句 2762　反 7124
+
+@item Shape 8
+
+Strokes that cross other strokes are not counted as shape number 8 (八). 
+
+Examples: 美 8043  関 7743  大 4003  失 8043  衡 2143  尖 9043
+
+@item Shape 9
+
+Shapes resembling shape 9, but featuring two strokes in the middle (as in the 
+top part of 業 or 叢) or two strokes on one side
+(as in 水 or the bottom part  of 慕) are not considered as
+9 shapes. 
+
+Examples: 慕 4433  業 3290  叢 3214
+@end table
+
+@item
+Some points to note when choosing corners. 
+
+@enumerate a
+@item 
+When a corner is occupied by more than one independant or parallel strokes, 
+the one that extend furthest to the left or right is  taken  as  the  corner, 
+regardless of how high or low it is. 
+
+examples: 非 1111  倬 2124  疾 0013  帝 0022  社 3421  猛 4721
+
+@item
+If there is another shape above (or, at the bottom of the character, below) 
+the  leftmost  or  rightmost  stroke  of  a  character,  that  shape is given 
+preference and is taken as the corner. 
+
+examples: 察 3090  幸 4040  甼 6020  女 4040  禮 3521  其 4480
+
+@item
+When two composite stroke shapes are interwoven and each could be  regarded 
+as a corner,  the shape that is higher is taken as the upper corner,  and the 
+lower stroke as lower corner. 
+
+@item
+When a stroke that slopes downwards to the left or right  is  supported  by 
+another stroke, the latter is taken as the corner. 
+
+examples: 碓 2740  裏 0073  硝 1962  薜 4464  茎 4410  被 3424
+
+@item
+A left slanting stroke on the upper left is taken for the left corner only; 
+for the right corner one takes a stroke more to the right. 
+
+examples: 身 2740  牟 2350  鴨 6752  的 2762  旬 2762  島 2772
+@end enumerate
+
+@item 
+Shape variations: (Dr App includes several pages of examples) 
+
+@item The fifth corner:
+In  order to differentiate between the several characters with the same code, 
+an optional @dfn{ifth corner} is sometimes used. This is, loosely, a shape above 
+the fourth corner which has not been used in any other shape. 
+@end enumerate
+
+@node SKIP codes
+@chapter SKIP codes
+
+Jeffrey Friedl provided the following summary of the @acronym{SKIP} codes. 
+See Halpern for a full description. 
+
+Look at the character in question and decide if it can visually be divided 
+
+@enumerate 1
+@item into  left  and  right  sides  
+@item into upper and lower halves 
+@item into an enclosing structure and an internal structure 
+@item none of the above. 
+@end enumerate
+
+For 1,2,  and 3,  count the strokes in the left/upper/enclosing part, and the 
+number left in the right/lower/internal part.  Write the three  numbers  (the 
+#1-#3  from  above plus the two stroke counts) seperated by dashes and that's 
+the code. 
+
+examples:
+
+@example
+ 回  3-3-3
+ 岡  3-2-6
+ 止  3-2-2 (strange - the last two strokes are the ``enclosure'').
+ 三  2-1-2
+ 響  2-11-9
+ 八  1-1-1
+ 街  1-3-9
+@end example
+
+For #4 above, choose the first true from:
+
+@enumerate
+@item has a horizontal line at the top (as in 下)
+@item has a horizontal line at the bottom (as in 亡)
+@item has a vertical line through (as in 中)
+@item 	none (for example 火, 成, 人, 女)
+@end enumerate
+
+Write  the  total  stroke  count between the #4 (from the first list) and the 
+number from the second (with intervening dashes). That's the code. 
+
+example codes:
+
+@example
+ 火  4-4-4
+ 成  4-6-4
+ 人  4-2-4
+ 女  4-3-4
+ 中  4-4-3
+ 亡  4-3-2
+ 下  4-3-1
+@end example
+
+Some codes aren't  as  concise  as  would  be  nice...  some  have  over  100 
+characters  with  the  same code.  However,  it is generally a rather concise 
+method. 
+
+@node Help shell
+@chapter Help shell
+The help shell provides on-line help for @command{Gjdict}.
+
+The left part of the shell is occupied by the list of help topics to select
+from. The selected topic is displayed in the text widget to the right of the
+list. Below this widget there is a list of cross-references for this topic.
+
+The shell has following command widgets:
+
+@multitable @columnfractions 0.3 0.5
+@item Close   @tab Close the shell
+@item Back    @tab Move to the previously visited topic
+@item Forward @tab Return to the next visited topic when you have used ``Back''.
+@item History @tab Display history list.
+@end multitable
+
+@node Help history shell
+@chapter Help history shell
+
+The help shell displays a list of the help topics visited so far. You can pick
+any one of them and press `Select' command to re-visit it.
+
+@node Kana input shell
+@chapter Kana input shell
+
+The shell makes it possible for you to enter the kana word just picking up
+the kana characters from the gojuon table. The additional commands are:
+
+@multitable @columnfractions 0.3 0.5
+@item ← @tab backspace
+@item ⇔ @tab hiragana/katakana toggle
+@item ゛@tab nigori. Also small あ、え、う、え、お、つ chars.
+@item ゜@tab han-daku-on
+@end multitable
+
+@node Inputting kana words
+@chapter Inputting kana words
+
+To input kana word in the kana input widget simply enter the word in Hepburn
+romanization. It will be converted to kana on the fly.
+
+The following points should be observed:
+
+Use `-' (dash) to enter -- (long vowel) mark in katakana.
+
+To enter ん char input "n " (`n' followed by space).
+
+@kbd{C-K} switches to katakana input, @kbd{C-H} switches to hiragana input
+
+@kbd{C-T} toggles input mode between hiragana and katakana
+
+@chapter  Cross-reference shell
+
+The cross-reference shell displays the list of dictionary entries that use
+the kanji found. To go to an entry select it with your mouse and press
+``Select'' button.
+
+@bye

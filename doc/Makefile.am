@@ -36,13 +36,13 @@ check-format:
 		false; \
 	fi
 
-#check-options:
-#	@check-docs.sh options \
-#	   '/argp_option options\[\] = /,/^}/s/[ \t]*{ *"\([^,"]*\)".*/\1/pg' \
-#	   's/@opindex *\([^@,]*\).*/\1/p' \
-#	   $(top_srcdir)/mfd/main.c -- \
-#	   $(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I $(srcdir) -E - \
-#		$(info_TEXINFOS) 
+check-options:
+	@check-docs.sh options \
+	   '/OPTIONS_BEGIN/,/OPTIONS_END/s/OPTION( *\([^,]*\),.*/\1/pg' \
+	   's/@opindex *\([^@,]*\).*/\1/p' \
+	   $(top_srcdir)/dictd/cmdline.opt -- \
+	   $(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I $(srcdir) -E - \
+		$(info_TEXINFOS) 
 
 check-refs:
 	@for file in $(info_TEXINFOS) $(dico_TEXINFOS); \
@@ -84,7 +84,7 @@ check-unrevised:
           rm $@-t; \
 	fi
 
-all-check-docs: check-format check-refs check-fixmes check-unrevised
+all-check-docs: check-format check-options check-refs check-fixmes check-unrevised
 
 check-docs: 
 	$(MAKE) -k all-check-docs

@@ -1,5 +1,12 @@
 2008-05-13  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Minor changes.
+	
+	* doc/Makefile.am: Add check-options rule
+	* doc/gjdict.texi: New file.
+	* utils/Makefile.am: Remove helpcmp.pl 
+	* utils/helpcmp.pl: Remove.
+
 	Introduce a documentation framework:
 	
 	* doc/.gitignore, doc/Makefile.am, doc/check-docs.sh,

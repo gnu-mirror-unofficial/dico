@@ -30,15 +30,26 @@ dico_stream_t filter_stream_create(dico_stream_t str,
 				   size_t max_line_length,
 				   filter_xcode_t xcode,
 				   int mode);
+dico_stream_t dico_codec_stream_create(const char *encoding, int mode,
+				       dico_stream_t transport);
+
 dico_stream_t dico_base64_stream_create(dico_stream_t str, int mode);
+dico_stream_t dico_qp_stream_create(dico_stream_t str, int mode);
 
 int dico_base64_decode(const char *iptr, size_t isize,
 		       char *optr, size_t osize,
 		       size_t *pnbytes,
 		       size_t line_max, size_t *pline_len);
-int dico_base64_encode (const char *iptr, size_t isize,
-			char *optr, size_t osize,
-			size_t *pnbytes, size_t line_max, size_t *pline_len);
+int dico_base64_encode(const char *iptr, size_t isize,
+		       char *optr, size_t osize,
+		       size_t *pnbytes, size_t line_max, size_t *pline_len);
+int dico_qp_decode(const char *iptr, size_t isize,
+		   char *optr, size_t osize,
+		   size_t *pnbytes,
+		   size_t line_max, size_t *pline_len);
+int dico_qp_encode(const char *iptr, size_t isize,
+		   char *optr, size_t osize,
+		   size_t *pnbytes, size_t line_max, size_t *pline_len);
 
 
 #endif

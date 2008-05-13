@@ -134,4 +134,15 @@ filter_stream_create(dico_stream_t str,
     fs->xcode = xcode;
     return stream;
 }
-		     
+
+dico_stream_t
+dico_codec_stream_create(const char *encoding, int mode,
+			 dico_stream_t transport)
+{
+    dico_stream_t str = NULL;
+    if (strcmp(encoding, "base64") == 0) 
+	str = dico_base64_stream_create(transport, mode);
+    else if (strcmp(encoding, "quoted-printable") == 0) 
+	str = dico_qp_stream_create(transport, mode);
+    return str;
+}

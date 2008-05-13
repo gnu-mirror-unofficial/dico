@@ -1,5 +1,21 @@
 2008-05-13  Sergey Poznyakoff  <gray@gnu.org.ua>
 
+	Implement quoted-printable encoding.
+	
+	* lib/Makefile.am (libdico_la_SOURCES): Add qp.c
+	* lib/qp.c: New file. Implementation of quoted-printable
+	encoding/decoding.
+	* lib/fltstream.c (dico_codec_stream_create): New function.
+	* dictd/ostream.c (print_headers): Use dico_codec_stream_create to
+	create encoder stream.
+	* include/dico/filter.h (dico_codec_stream_create)
+	(dico_qp_stream_create,dico_qp_decode<dico_qp_encode): New
+	functions.
+	
+	* dictd/main.c (database_remove_dependent): Use
+	dictd_database_free.
+
+	
 	Implement a framework for various encodings in mime mode.
 	Implement base64 encoding.
 	

@@ -27,6 +27,7 @@ libdico_la_SOURCES=\
  fltstream.c\
  linebuf.c\
  list.c\
+ qp.c\
  strat.c\
  stream.c\
  xlat.c\

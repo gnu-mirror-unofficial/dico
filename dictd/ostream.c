@@ -54,14 +54,13 @@ print_headers(struct ostream *ostr)
 
     rc = dico_stream_write(ostr->transport, "\r\n", 2);
     if (rc == 0 && ostr->encoding) {
-	if (strcmp(ostr->encoding, "base64") == 0) {
-	    ostr->transport = dico_base64_stream_create(ostr->transport,
-							FILTER_ENCODE);
-	    if (!ostr->transport)
-		return 1;
+	dico_stream_t str = dico_codec_stream_create(ostr->encoding,
+						     FILTER_ENCODE,
+						     ostr->transport);
+	if (str) {
+	    ostr->transport = str;
 	    ostr->flags |= OSTREAM_DESTROY_TRANSPORT;
-	}
-	/* FIXME: Quoted-printable */
+	}    
     }
     return rc;
 }

@@ -337,7 +337,7 @@ set_dict_handler(enum cfg_callback_command cmd,
 			     &db->argc, &db->argv))) {
 	config_error(locus, rc, _("cannot parse command line `%s'"),
 		     value->v.string);
-	dictd_database_free(db); /* FIXME: Free members */
+	dictd_database_free(db); 
 	return 1;
     } 
 
@@ -648,7 +648,7 @@ database_remove_dependent(dictd_handler_t *handler)
 	if (dp->handler == handler) {
 	    logmsg(L_NOTICE, 0, _("removing database %s"), dp->name);
 	    dico_iterator_remove_current(itr);
-	    free(dp); /* FIXME: Free dp fields */
+	    dictd_database_free(dp); 
 	}
     }
     dico_iterator_destroy(&itr);

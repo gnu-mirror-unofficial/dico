@@ -22,6 +22,26 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS=include utils gnu lib libltdl dictd modules makedict tests doc
 #FIXME: add these when ready: client fonts
 
+EXTRA_DIST = ChangeLog.2008
+
+gen_start_date = 2008-05-05
+.PHONY: make-ChangeLog
+make-ChangeLog: 
+	if test -d .git; then                                           \
+	  $(top_srcdir)/build-aux/gitlog-to-changelog                   \
+	    --since=$(gen_start_date) > $(distdir)/cl-t;                \
+	  echo "" >> $(distdir)/cl-t;                                 \
+	  echo "Local Variables:" >> $(distdir)/cl-t;                   \
+	  echo "mode: change-log" >> $(distdir)/cl-t;                   \
+	  echo "version-control: never"  >> $(distdir)/cl-t;            \
+	  echo "buffer-read-only: t" >> $(distdir)/cl-t;                \
+	  echo "End:" >> $(distdir)/cl-t;                               \
+	  rm -f $(distdir)/ChangeLog;                                   \
+	  mv $(distdir)/cl-t $(distdir)/ChangeLog;                      \
+	fi
+
+dist-hook: make-ChangeLog
+
 #dict:
 #	$(top_builddir)/makedict/makedict -cv -o$(dictdir) -d$(inputdictpath)
 

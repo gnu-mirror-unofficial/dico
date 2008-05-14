@@ -9,6 +9,7 @@
 .emacs.desktop
 .libs
 .libs/*
+ChangeLog
 INSTALL
 Makefile
 Makefile.in

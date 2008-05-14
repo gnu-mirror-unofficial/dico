@@ -9,6 +9,7 @@ getline
 getopt
 gettext-h
 gettimeofday
+gitlog-to-changelog
 hash
 malloc
 obstack

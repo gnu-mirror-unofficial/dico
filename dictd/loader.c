@@ -312,9 +312,9 @@ print_matches(dictd_database_t *db, dico_result_t res,
 
     for (i = 0; i < count; i++) {
 	stream_writez(ostr, db->name);
-	dico_stream_write(ostr, " ", 1);
+	dico_stream_write(ostr, " \"", 2);
 	mp->module_output_result(res, i, ostr);
-	dico_stream_write(ostr, "\r\n", 2);
+	dico_stream_write(ostr, "\"\r\n", 3);
     }
     dico_stream_close(ostr);
     dico_stream_destroy(&ostr);

@@ -451,7 +451,7 @@ dictd_server(int argc, char **argv)
     signal(SIGINT, sig_stop);
     signal(SIGCHLD, sig_child);
     if (argv[0][0] != '/') {
-	dico_log(L_WARN, 0, _("gjdict started without full file name"));
+	dico_log(L_WARN, 0, _("dictd started without full file name"));
 	dico_log(L_WARN, 0, _("restart (SIGHUP) will not work"));
 	signal(SIGHUP, sig_stop);
     } else if (config_file[0] != '/') {
@@ -485,14 +485,14 @@ dictd_server(int argc, char **argv)
     if (restart) {
 	int i;
 		
-	dico_log(L_INFO, 0, _("gjdict restarting"));
+	dico_log(L_INFO, 0, _("%s restarting"), program_version);
 	remove_pidfile(pidfile_name);
 	for (i = getmaxfd(); i > 2; i--)
 	    close(i);
 	execv(argv[0], argv);
 	dico_die(127, L_ERR|L_CONS, errno, _("Cannot restart"));
     } else 
-	dico_log(L_INFO, 0, _("gjdict terminating"));
+	dico_log(L_INFO, 0, _("%s terminating"), program_version);
     exit(rc);
 }
     

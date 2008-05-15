@@ -247,12 +247,36 @@ init_databases()
     dico_iterator_destroy(&itr);
 }
 
+int
+soundex_sel(int cmd, const char *word, const char *dict_word, void *closure)
+{
+    char *code = closure;
+    char dcode[5];
+    
+    switch (cmd) {
+    case DICO_SELECT_BEGIN:
+	dico_soundex(word, code);
+	break;
+
+    case DICO_SELECT_RUN:
+	dico_soundex(dict_word, dcode);
+	return strcmp(dcode, code) == 0;
+
+    case DICO_SELECT_END:
+	break;
+    }
+    return 0;
+}
+	    
+
 void
 dictd_init_strategies()
 {
+    static char code[5];
     static struct dico_strategy defstrat[] = {
 	{ "exact", "Match words exactly" },
 	{ "prefix", "Match word prefixes" },
+	{ "soundex", "Match using SOUNDEX algorithm", soundex_sel, code },
     };
     int i;
     for (i = 0; i < ARRAY_SIZE(defstrat); i++)

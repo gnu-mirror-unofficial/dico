@@ -30,6 +30,7 @@ libdico_la_SOURCES=\
  linebuf.c\
  list.c\
  qp.c\
+ soundex.c\
  strat.c\
  stream.c\
  xlat.c\

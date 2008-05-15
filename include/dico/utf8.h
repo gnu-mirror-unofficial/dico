@@ -37,6 +37,11 @@ int utf8_iter_next(struct utf8_iterator *itr);
 int utf8_mbtowc_internal (void *data, int (*read) (void*), unsigned int *pwc);
 int utf8_wctomb (unsigned char *r, unsigned int wc);
 
+int utf8_symcmp(unsigned char *a, unsigned char *b);
+int urf8_symcasecmp(unsigned char *a, unsigned char *b);
+int utf8_strcasecmp(unsigned char *a, unsigned char *b);
+int utf8_strncasecmp(unsigned char *a, unsigned char *b, size_t maxlen);
+
 unsigned utf8_wc_toupper (unsigned wc);
 int utf8_toupper (char *s, size_t len);
 unsigned utf8_wc_tolower (unsigned wc);
@@ -47,6 +52,9 @@ size_t utf8_wc_hash_string (const unsigned *ws, size_t n_buckets);
 int utf8_wc_strcmp (const unsigned *a, const unsigned *b);
 int utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char *s,
 		     size_t size);
-    
+int utf8_mbstr_to_wc(const char *str, unsigned **wptr);
+
+int dico_levenshtein_distance(char *a, char *b, int damerau);
+
 #endif
 

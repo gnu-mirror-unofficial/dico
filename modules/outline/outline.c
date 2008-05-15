@@ -232,7 +232,7 @@ compare_entry(const void *a, const void *b)
 {
     const struct entry *epa = a;
     const struct entry *epb = b;
-    return strcasecmp(epa->word, epb->word);
+    return utf8_strcasecmp(epa->word, epb->word);
 }
 
 static int
@@ -260,7 +260,7 @@ compare_prefix(const void *a, const void *b)
     size_t wordlen = pkey->wordlen;
     if (pelt->wordlen < wordlen)
 	wordlen = pelt->wordlen;
-    return strncasecmp(pkey->word, pelt->word, wordlen);
+    return utf8_strncasecmp(pkey->word, pelt->word, wordlen);
 }
 
 static int

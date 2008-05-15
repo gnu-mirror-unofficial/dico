@@ -1726,6 +1726,97 @@ utf8_mbtowc (unsigned int *pwc, unsigned char *r, size_t len)
 }
 
 
+int
+urf8_symcmp(unsigned char *a, unsigned char *b)
+{
+  unsigned int wa, wb;
+
+  utf8_mbtowc(&wa, a, utf8_char_width(a));
+  utf8_mbtowc(&wb, b, utf8_char_width(b));
+  if (wa < wb)
+    return -1;
+  if (wa > wb)
+    return 1;
+  return 0;
+}
+
+int
+urf8_symcasecmp(unsigned char *a, unsigned char *b)
+{
+  unsigned int wa, wb;
+
+  utf8_mbtowc(&wa, a, utf8_char_width(a));
+  utf8_mbtowc(&wb, b, utf8_char_width(b));
+  wa = utf8_wc_toupper(wa);
+  wb = utf8_wc_toupper(wb);
+  if (wa < wb)
+    return -1;
+  if (wa > wb)
+    return 1;
+  return 0;
+}
+
+int
+utf8_strcasecmp(unsigned char *a, unsigned char *b)
+{
+  int alen, blen;
+  
+  for (;*a; a += alen, b += blen)
+    {
+      unsigned wa, wb;
+      
+      if (*b == 0)
+	return 1;
+
+      alen = utf8_char_width(a);
+      utf8_mbtowc(&wa, a, alen);
+      blen = utf8_char_width(b);
+      utf8_mbtowc(&wb, b, blen);
+      wa = utf8_wc_toupper(wa);
+      wb = utf8_wc_toupper(wb);
+      if (wa < wb)
+	return -1;
+      if (wa > wb)
+	return 1;
+      
+    }
+  if (*b)
+    return -1;
+  return 0;
+}
+
+int
+utf8_strncasecmp(unsigned char *a, unsigned char *b, size_t maxlen)
+{
+  int alen, blen;
+  unsigned char *aend = a + maxlen, *bend = b + maxlen;
+  
+  for ( ; a < aend; a += alen, b += blen)
+    {
+      unsigned wa, wb;
+      
+      if (*a == 0) 
+	return (*b == 0) ? 0 : -1;
+
+      if (*b == 0 || b >= bend)
+	return 1;
+
+      alen = utf8_char_width(a);
+      utf8_mbtowc(&wa, a, alen);
+      blen = utf8_char_width(b);
+      utf8_mbtowc(&wb, b, blen);
+      wa = utf8_wc_toupper(wa);
+      wb = utf8_wc_toupper(wb);
+      if (wa < wb)
+	return -1;
+      if (wa > wb)
+	return 1;
+      
+    }
+  return 0;
+}
+
+
 
 unsigned
 utf8_wc_toupper (unsigned wc)
@@ -1827,6 +1918,28 @@ utf8_wc_strcmp (const unsigned *a, const unsigned *b)
   return 0;
 }
 
+int
+utf8_wc_strcasecmp (const unsigned *a, const unsigned *b)
+{
+  unsigned wa, wb;
+    
+  while (*a == *b)
+    {
+      if (*a == 0)
+	return 0;
+      a++;
+      b++;
+    }
+  wa = utf8_wc_toupper(*a);
+  wb = utf8_wc_toupper(*b);
+  
+  if (wa < wb)
+    return -1;
+  if (wa > wb)
+    return 1;
+  return 0;
+}
+
 
 int
 utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char *s, size_t size)
@@ -1854,3 +1967,25 @@ utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char *s, size_t size)
   return wbc;
 }
 
+int
+utf8_mbstr_to_wc(const char *str, unsigned **wptr)
+{
+  size_t sc = utf8_strbytelen(str);
+  size_t len, i;
+  unsigned *w = calloc(sizeof(w[0]), sc+1);
+
+  if (!w)
+    return -1;
+  for (i = 0, len = strlen(str); len; i++)
+    {
+      int rc = utf8_mbtowc (w + i, (unsigned char *)str, len);
+      if (rc <= 0) {
+	free(w);
+	return -1;
+      }
+      str += rc;
+      len -= rc;
+    }
+  *wptr = w;
+  return sc;
+}

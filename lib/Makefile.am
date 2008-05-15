@@ -26,6 +26,7 @@ libdico_la_SOURCES=\
  base64.c\
  diag.c\
  fltstream.c\
+ levenshtein.c\
  linebuf.c\
  list.c\
  qp.c\

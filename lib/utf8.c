@@ -1727,7 +1727,7 @@ utf8_mbtowc (unsigned int *pwc, unsigned char *r, size_t len)
 
 
 int
-urf8_symcmp(unsigned char *a, unsigned char *b)
+utf8_symcmp(unsigned char *a, unsigned char *b)
 {
   unsigned int wa, wb;
 

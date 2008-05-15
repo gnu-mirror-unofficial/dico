@@ -38,7 +38,7 @@ int utf8_mbtowc_internal (void *data, int (*read) (void*), unsigned int *pwc);
 int utf8_wctomb (unsigned char *r, unsigned int wc);
 
 int utf8_symcmp(unsigned char *a, unsigned char *b);
-int urf8_symcasecmp(unsigned char *a, unsigned char *b);
+int utf8_symcasecmp(unsigned char *a, unsigned char *b);
 int utf8_strcasecmp(unsigned char *a, unsigned char *b);
 int utf8_strncasecmp(unsigned char *a, unsigned char *b, size_t maxlen);
 

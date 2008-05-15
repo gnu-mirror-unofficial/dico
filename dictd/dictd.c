@@ -250,7 +250,7 @@ init_databases()
 void
 dictd_init_strategies()
 {
-    static dico_strategy_t defstrat[] = {
+    static struct dico_strategy defstrat[] = {
 	{ "exact", "Match words exactly" },
 	{ "prefix", "Match word prefixes" },
     };

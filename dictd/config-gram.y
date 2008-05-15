@@ -180,9 +180,13 @@ config_error(gd_locus_t *locus, int errcode, const char *fmt, ...)
     va_list ap;
 
     va_start(ap, fmt);
-    fprintf(stderr, "%s:%d: ", locus->file, locus->line);
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "\n");
+    if (!locus || !locus->file)
+	dico_vlog(L_ERR, errcode, fmt, ap);
+    else {
+	fprintf(stderr, "%s:%d: ", locus->file, locus->line);
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
+    }
     va_end(ap);
     config_error_count++;
 }

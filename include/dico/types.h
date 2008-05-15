@@ -40,7 +40,12 @@ typedef struct dico_stream *dico_stream_t;
 
 typedef struct dico_handle_struct *dico_handle_t;
 typedef struct dico_result_struct *dico_result_t;
-typedef int (*dico_select_t) (const char *, const char *, void *);
+#define DICO_SELECT_BEGIN 0
+#define DICO_SELECT_RUN   1
+#define DICO_SELECT_END   2
+typedef int (*dico_select_t) (int, const char *, const char *, void *);
+struct dico_strategy;
+#define dico_strategy_t struct dico_strategy *
 
 struct dico_handler_module {
     int (*module_init) (int argc, char **argv);
@@ -48,10 +53,9 @@ struct dico_handler_module {
     int (*module_close) (dico_handle_t hp);
     char *(*module_db_info) (dico_handle_t hp);
     char *(*module_db_descr) (dico_handle_t hp);
-    dico_result_t (*module_match) (dico_handle_t hp, const char *strat,
+    dico_result_t (*module_match) (dico_handle_t hp,
+				   const dico_strategy_t strat,
 				   const char *word);
-    dico_result_t (*module_match_all) (dico_handle_t hp, const char *word,
-				       dico_select_t sel, void *closure);
     dico_result_t (*module_define) (dico_handle_t hp, const char *word);
     int (*module_output_result) (dico_result_t rp, size_t n, dico_stream_t str);
     size_t (*module_result_count) (dico_result_t rp);

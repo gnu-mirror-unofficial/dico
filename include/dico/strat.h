@@ -20,21 +20,21 @@
 #include <dico/types.h>
 #include <dico/list.h>
 
-typedef struct dico_strategy {
+struct dico_strategy {
     char *name;
     char *descr;
     dico_select_t sel;
     void *closure;
-} dico_strategy_t;
+};
 
-dico_strategy_t *dico_strategy_dup(const dico_strategy_t *strat);
-const dico_strategy_t *dico_strategy_find(const char *name);
-int dico_strategy_add(const dico_strategy_t *strat);
+dico_strategy_t dico_strategy_dup(const dico_strategy_t strat);
+const dico_strategy_t dico_strategy_find(const char *name);
+int dico_strategy_add(const dico_strategy_t strat);
 dico_iterator_t  dico_strategy_iterator(void);
 void dico_strategy_iterate(dico_list_iterator_t itr, void *data);
 size_t dico_strategy_count(void);
 
 int dico_set_default_strategy(const char *name);
-const dico_strategy_t *dico_get_default_strategy(void);
+const dico_strategy_t dico_get_default_strategy(void);
 
 #endif

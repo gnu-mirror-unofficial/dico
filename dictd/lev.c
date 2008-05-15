@@ -19,22 +19,25 @@
 static int levenshtein_distance = 1;
 
 static int
-lev_sel(const char *word, const char *dict_word, void *closure)
+lev_sel(int cmd, const char *word, const char *dict_word, void *closure)
 {
-    int dist = dico_levenshtein_distance(word, dict_word, closure != NULL);
-    if (dist < 0)
-	return 0;
-    return dist <= levenshtein_distance; 
+    if (cmd == DICO_SELECT_RUN) {
+	int dist = dico_levenshtein_distance(word, dict_word, closure != NULL);
+	if (dist < 0)
+	    return 0;
+	return dist <= levenshtein_distance;
+    }
+    return 0;
 }
 
-static dico_strategy_t levstrat = {
+static struct dico_strategy levstrat = {
     "lev",
     "Match headwords within given Levenshtein distance",
     lev_sel,
     NULL
 };
 
-static dico_strategy_t dlevstrat = {
+static struct dico_strategy dlevstrat = {
     "dlev",
     "Match headwords within given Damerau-Levenshtein distance",
     lev_sel,

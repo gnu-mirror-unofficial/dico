@@ -114,7 +114,7 @@ dictd_show_databases(dico_stream_t str, int argc, char **argv)
 static int
 _show_strategy(void *item, void *data)
 {
-    dico_strategy_t *sp = item;
+    dico_strategy_t sp = item;
     dico_stream_t str = data;
 
     stream_printf(str, "%s \"%s\"\r\n",
@@ -173,7 +173,7 @@ dictd_match(dico_stream_t str, int argc, char **argv)
 {
     const char *dbname = argv[1];
     const char *word = argv[3];
-    const dico_strategy_t *strat = dico_strategy_find(argv[2]);
+    const dico_strategy_t strat = dico_strategy_find(argv[2]);
     
     if (!strat) 
 	stream_writez(str,

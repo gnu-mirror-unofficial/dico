@@ -31,6 +31,7 @@ dictd_SOURCES=\
  main.c\
  mime.c\
  ostream.c\
+ regex.c\
  server.c\
  udb.c
 

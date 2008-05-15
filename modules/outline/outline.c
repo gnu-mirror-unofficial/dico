@@ -199,7 +199,7 @@ typedef int (*entry_match_t) (struct outline_file *file,
 			      struct result *res);
 
 struct strategy_def {
-    dico_strategy_t strat;
+    struct dico_strategy strat;
     entry_match_t match;
 };
 
@@ -441,7 +441,8 @@ outline_descr(dico_handle_t hp)
 
 
 dico_result_t
-outline_match(dico_handle_t hp, const char *strat, const char *word)
+outline_match0(dico_handle_t hp, const char *strat,
+	       const char *word)
 {
     struct outline_file *file = (struct outline_file *) hp;
     struct result *res;
@@ -478,12 +479,18 @@ outline_match_all(dico_handle_t hp, const char *word,
 	return NULL;
     }
 
+    if (sel(DICO_SELECT_BEGIN, word, NULL, closure)) {
+	dico_log(L_ERR, 0, _("outline_match_all: initial select failed"));
+	return NULL;
+    }
+    
     for (i = 0; i < file->count; i++) {
-	if (sel(word, file->index[i].word, closure)) {
+	if (sel(DICO_SELECT_RUN, word, file->index[i].word, closure)) {
 	    dico_list_append(list, &file->index[i]);
 	}
     }
-
+    sel(DICO_SELECT_END, word, NULL, closure);
+	
     count = dico_list_count(list);
     if (count == 0) {
 	dico_list_destroy(&list, NULL, NULL);
@@ -498,6 +505,15 @@ outline_match_all(dico_handle_t hp, const char *word,
     res->count = count;
     res->v.list = list;
     return (dico_result_t) res;
+}
+
+dico_result_t
+outline_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
+{
+    if (strat->sel) 
+	return outline_match_all(hp, word, strat->sel, strat->closure);
+    else
+	return outline_match0(hp, strat->name, word);
 }
 
 dico_result_t
@@ -585,7 +601,6 @@ struct dico_handler_module DICO_EXPORT(outline, module) = {
     outline_info,
     outline_descr,
     outline_match,
-    outline_match_all,
     outline_define,
     outline_output_result,
     outline_result_count,

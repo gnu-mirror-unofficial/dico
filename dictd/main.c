@@ -731,6 +731,7 @@ main(int argc, char **argv)
     register_mime();
     register_xversion();
     register_lev();
+    register_regex();
     config_lex_trace(0);
     get_options(argc, argv);
     config_set_keywords(keywords);

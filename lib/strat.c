@@ -23,23 +23,23 @@
 #include <errno.h>
 
 /* List of configured matching strategies */
-static dico_list_t /* of dico_strategy_t */ strategy_list;
-static const dico_strategy_t *default_strategy;
+static dico_list_t /* of struct dico_strategy */ strategy_list;
+static const dico_strategy_t default_strategy;
 
 #define DEFSTRATNAME(s) ((s)[0] == '.' && (s)[1] == 0)
 
 static int
 strat_name_cmp(const void *item, const void *data)
 {
-    const dico_strategy_t *strat = item;
+    dico_strategy_t const strat = item;
     const char *name = data;
     return strcmp(strat->name, name);
 }
 
-dico_strategy_t *
-dico_strategy_dup(const dico_strategy_t *strat)
+dico_strategy_t
+dico_strategy_dup(const dico_strategy_t strat)
 {
-    dico_strategy_t *np;
+    dico_strategy_t np;
     size_t size = sizeof(*np) + strlen(strat->name) + strlen(strat->descr) + 2;
     np = malloc(size);
     if (np) {
@@ -53,7 +53,7 @@ dico_strategy_dup(const dico_strategy_t *strat)
     return np;
 }
 
-const dico_strategy_t *
+const dico_strategy_t
 dico_strategy_find(const char *name)
 {
     if (DEFSTRATNAME(name)) 
@@ -62,7 +62,7 @@ dico_strategy_find(const char *name)
 }
 
 int
-dico_strategy_add(const dico_strategy_t *strat)
+dico_strategy_add(const dico_strategy_t strat)
 {
     if (!strategy_list) {
 	strategy_list = dico_list_create();
@@ -70,7 +70,7 @@ dico_strategy_add(const dico_strategy_t *strat)
 	    return 1;
     }
     if (!dico_strategy_find(strat->name)) {
-	dico_strategy_t *new_strat = dico_strategy_dup(strat);
+	dico_strategy_t new_strat = dico_strategy_dup(strat);
 	if (!new_strat)
 	    return 1;
 	dico_list_append(strategy_list, new_strat);
@@ -99,7 +99,7 @@ dico_strategy_iterate(dico_list_iterator_t itr, void *data)
 int
 dico_set_default_strategy(const char *name)
 {
-    const dico_strategy_t *sp;
+    const dico_strategy_t sp;
 
     if (DEFSTRATNAME(name) || (sp = dico_strategy_find(name)) == NULL) {
 	errno = EINVAL;
@@ -110,7 +110,7 @@ dico_set_default_strategy(const char *name)
     return 0;
 }
 
-const dico_strategy_t *
+const dico_strategy_t
 dico_get_default_strategy()
 {
     return default_strategy;

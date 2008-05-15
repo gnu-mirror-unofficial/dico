@@ -25,18 +25,18 @@ dbtext_open(void **handle, dico_url_t url)
     char *dirname = dico_url_full_path(url);
     struct stat st;
     if (!dirname) {
-	logmsg(L_ERR, 0, _("cannot get path from URL `%s'"), url->string);
+	dico_log(L_ERR, 0, _("cannot get path from URL `%s'"), url->string);
 	return 1;
     }
 
     if (stat(dirname, &st)) {
-	logmsg(L_ERR, errno, _("cannot stat directory `%s'"), dirname);
+	dico_log(L_ERR, errno, _("cannot stat directory `%s'"), dirname);
 	free(dirname);
 	return 1;
     }
 
     if (!S_ISDIR(st.st_mode)) {
-	logmsg(L_ERR, 0, _("%s: not a directory"), dirname);
+	dico_log(L_ERR, 0, _("%s: not a directory"), dirname);
 	free(dirname);
 	return 1;
     }
@@ -52,7 +52,7 @@ open_file(const char *dir, const char *file, char **pfname)
     char *full_name = make_full_file_name(dir, file);
     FILE *fp = fopen(full_name, "r");
     if (!fp) {
-	logmsg(L_ERR, errno, _("cannot open file `%s'"), full_name);
+	dico_log(L_ERR, errno, _("cannot open file `%s'"), full_name);
 	free(full_name);
     } else
 	*pfname = full_name;

@@ -17,17 +17,17 @@
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
-#include <xdico.h>
+#include <dico.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
 
-const char *program_name;
+const char *dico_program_name;
 
 void
-set_program_name(char *name)
+dico_set_program_name(char *name)
 {
     const char *progname;
 
@@ -44,7 +44,7 @@ set_program_name(char *name)
 	    progname += 3;
     }
 
-    program_name = progname;
+    dico_program_name = progname;
 }
 
 static char *prefix[] = {
@@ -59,7 +59,7 @@ static char *prefix[] = {
 };
 
 int
-str_to_diag_level(const char *str)
+dico_str_to_diag_level(const char *str)
 {
     int i;
     if (str[1] == 0 && isdigit(*str))
@@ -71,32 +71,32 @@ str_to_diag_level(const char *str)
 }
 
 void
-_stderr_log_printer(int lvl, int exitcode, int errcode,
-		    const char *fmt, va_list ap)
+_dico_stderr_log_printer(int lvl, int exitcode, int errcode,
+			 const char *fmt, va_list ap)
 {
-    fprintf(stderr, "%s: %s: ", program_name, prefix[lvl & L_MASK]);
+    fprintf(stderr, "%s: %s: ", dico_program_name, prefix[lvl & L_MASK]);
     vfprintf(stderr, fmt, ap);
     if (errcode)
 	fprintf(stderr, ": %s", strerror(errcode));
     fprintf(stderr, "\n");
 }
 
-static dico_log_printer_t _log_printer = _stderr_log_printer;
+static dico_log_printer_t _log_printer = _dico_stderr_log_printer;
 
 void
-set_log_printer(dico_log_printer_t prt)
+dico_set_log_printer(dico_log_printer_t prt)
 {
     _log_printer = prt;
 }
 
 void
-vlogmsg(int lvl, int errcode, const char *fmt, va_list ap)
+dico_vlog(int lvl, int errcode, const char *fmt, va_list ap)
 {
     _log_printer(lvl, 0, errcode, fmt, ap);
 }
 
 void
-logmsg(int lvl, int errcode, const char *fmt, ...)
+dico_log(int lvl, int errcode, const char *fmt, ...)
 {
     va_list ap;
     
@@ -106,7 +106,7 @@ logmsg(int lvl, int errcode, const char *fmt, ...)
 }
 
 void
-die(int exitcode, int lvl, int errcode, char *fmt, ...)
+dico_die(int exitcode, int lvl, int errcode, char *fmt, ...)
 {
     va_list ap;
     

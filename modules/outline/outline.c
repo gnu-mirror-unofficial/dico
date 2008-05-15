@@ -51,10 +51,10 @@
 #endif
 #include <dico.h>
 #include <string.h>
-#include <syslog.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
 
 struct entry {
     char *word;             /* Word */
@@ -317,18 +317,18 @@ outline_open(const char *dbname, int argc, char **argv)
     dico_iterator_t itr;
 
     if (argc != 2) {
-	syslog(LOG_ERR, _("outline_open: wrong number of arguments"));
+	dico_log(L_ERR, 0, _("outline_open: wrong number of arguments"));
 	return NULL;
     }
     
     fp = fopen(argv[1], "r");
     if (!fp) {
-	syslog(LOG_ERR, _("cannot open file %s: %m"), argv[1]);
+	dico_log(L_ERR, errno, _("cannot open file %s"), argv[1]);
 	return NULL;
     }
     file = malloc(sizeof(*file));
     if (!file) {
-	syslog(LOG_ERR, "not enough memory");
+	dico_log(L_ERR, 0, "not enough memory");
 	fclose(fp);
 	return NULL;
     }
@@ -339,7 +339,7 @@ outline_open(const char *dbname, int argc, char **argv)
     
     list = dico_list_create();
     if (!list) {
-	syslog(LOG_ERR, "not enough memory");
+	dico_log(L_ERR, 0, "not enough memory");
 	fclose(fp);
 	free(file);
 	return NULL;
@@ -379,7 +379,7 @@ outline_open(const char *dbname, int argc, char **argv)
     file->count = count = dico_list_count(list);
     file->index = calloc(count, sizeof(file->index[0]));
     if (!file->index) {
-	syslog(LOG_ERR, "not enough memory");
+	dico_log(L_ERR, 0, "not enough memory");
 	outline_close((dico_handle_t)file);
 	return NULL;
     }

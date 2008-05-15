@@ -43,21 +43,21 @@ auth(const char *username, const char *authstr)
     char *password;
     
     if (udb_open(user_db)) {
-	logmsg(L_ERR, 0, _("failed to open user database"));
+	dico_log(L_ERR, 0, _("failed to open user database"));
 	return 1;
     }
     if (udb_get_password(user_db, username, &password)) {
-	logmsg(L_ERR, 0,
+	dico_log(L_ERR, 0,
 	       _("failed to get password for `%s' from the database"),
 	       username);
     } else {
 	if (!password) {
-	    logmsg(L_ERR, 0, _("no such user `%s'"), username);
+	    dico_log(L_ERR, 0, _("no such user `%s'"), username);
 	    rc = 1;
 	} else {
 	    rc = verify_apop(password, authstr);
 	    if (rc) 
-		logmsg(L_ERR, 0,
+		dico_log(L_ERR, 0,
 		       _("authentication failed for `%s'"), username);
 	    else {
 		user_name = xstrdup(username);
@@ -86,7 +86,7 @@ static int
 auth_init(void *ptr)
 {
     if (user_db == NULL) {
-	logmsg(L_ERR, 0, "auth capability required but user database is "
+	dico_log(L_ERR, 0, "auth capability required but user database is "
 	       "not configured");
 	return 1;
     }

@@ -115,7 +115,7 @@ stream_printf(dico_stream_t str, const char *fmt, ...)
     len = vasprintf(&buf, fmt, ap);
     va_end(ap);
     if (len < 0) {
-	logmsg(L_CRIT, 0,
+	dico_log(L_CRIT, 0,
 	       _("not enough memory while formatting reply message"));
 	exit(1);
     }
@@ -239,7 +239,7 @@ init_databases()
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
 	if (dictd_open_database_handler(dp)) {
-	    logmsg(L_NOTICE, 0, _("removing database %s"), dp->name);
+	    dico_log(L_NOTICE, 0, _("removing database %s"), dp->name);
 	    dico_iterator_remove_current(itr);
 	    dictd_database_free(dp);
 	}

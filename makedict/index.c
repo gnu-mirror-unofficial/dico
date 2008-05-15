@@ -169,8 +169,8 @@ simple_list_iter(struct dbidx *idx, unsigned num, char *p)
 	/*printf("%s/%u\n", key.data,num);*/
 	rc = idx->dbp->put(idx->dbp, NULL, &key, &content, 0);
 	if (rc && rc != DB_KEYEXIST) {
-	    logmsg(L_ERR, 0, "%s: failed to insert entry %s/%u: %s",
-		   idx->name, (char*)key.data, num, db_strerror(rc));
+	    dico_log(L_ERR, 0, "%s: failed to insert entry %s/%u: %s",
+		     idx->name, (char*)key.data, num, db_strerror(rc));
 	}
     }
     return 0;
@@ -331,8 +331,8 @@ words_iter(struct dbidx *idx, unsigned num, DictEntry *ep)
 	/*printf("%s/%u\n", key.data,num);*/
 	rc = idx->dbp->put(idx->dbp, NULL, &key, &content, 0);
 	if (rc && rc != DB_KEYEXIST) {
-	    logmsg(L_ERR, 0, "%s: failed to insert entry %s/%u: %s",
-		   idx->name, (char*)key.data, num, db_strerror(rc));
+	    dico_log(L_ERR, 0, "%s: failed to insert entry %s/%u: %s",
+		     idx->name, (char*)key.data, num, db_strerror(rc));
 	}
     }
     free(buf);
@@ -374,8 +374,8 @@ xref_iter(struct dbidx *idx, unsigned num, DictEntry *ep)
 	/*printf("%s/%u\n", key.data,num);*/
 	rc = idx->dbp->put(idx->dbp, NULL, &key, &content, 0);
 	if (rc) {
-	    logmsg(L_ERR, 0, "%s: failed to insert entry %x-%u/%u: %s",
-		   idx->name, xref.kanji, xref.pos, num, db_strerror(rc));
+	    dico_log(L_ERR, 0, "%s: failed to insert entry %x-%u/%u: %s",
+		     idx->name, xref.kanji, xref.pos, num, db_strerror(rc));
 	}
 	xref.pos++;
 	text++;
@@ -451,8 +451,8 @@ yomi_generic_iter(struct dbidx *idx, unsigned num, DictEntry *ep,
 	    dfree(&key);
 	
 	if (rc && rc != DB_KEYEXIST) {
-	    logmsg(L_ERR, 0, "%s: failed to insert entry `%s': %s",
-		   idx->name, (char*)key.data, db_strerror(rc));
+	    dico_log(L_ERR, 0, "%s: failed to insert entry `%s': %s",
+		     idx->name, (char*)key.data, db_strerror(rc));
 	}
 
 	if (end) {
@@ -480,8 +480,8 @@ yomi_generic_iter(struct dbidx *idx, unsigned num, DictEntry *ep,
 		    dfree(&key);
 		free(buf);
 		if (rc && rc != DB_KEYEXIST) {
-		    logmsg(L_ERR, 0, "%s: failed to insert entry `%s': %s",
-			   idx->name, (char*)key.data, db_strerror(rc));
+		    dico_log(L_ERR, 0, "%s: failed to insert entry `%s': %s",
+			     idx->name, (char*)key.data, db_strerror(rc));
 		}
 	    } 
 	    text = end;
@@ -587,26 +587,27 @@ open_secondary(DB *master, struct dbidx *idx)
     int ret;
     
     if ((ret = db_create(&sdbp, NULL, 0)) != 0)
-	die(1, L_CRIT, 0, "cannot create secondary index DB: %s",
-	    db_strerror(ret));
+	dico_die(1, L_CRIT, 0, "cannot create secondary index DB: %s",
+		 db_strerror(ret));
     if ((ret = sdbp->set_flags(sdbp, DB_DUP|DB_DUPSORT)) != 0)
-	die(1, L_CRIT, 0, "cannot set flags on secondary index DB %s: %s",
-	    idx->name, db_strerror(ret));
+	dico_die(1, L_CRIT, 0, "cannot set flags on secondary index DB %s: %s",
+		 idx->name, db_strerror(ret));
 
     if (idx->cmp_key && (ret = sdbp->set_bt_compare(sdbp, idx->cmp_key)))
-	die(1, L_CRIT, 0, "cannot set comparator on secondary index DB %s: %s",
+	dico_die(1, L_CRIT, 0,
+		 "cannot set comparator on secondary index DB %s: %s",
 	    idx->name, db_strerror(ret));
     
     if ((ret = sdbp->open(sdbp, NULL, idx->name, NULL, 
 			  DB_BTREE, DB_CREATE|DB_TRUNCATE, dbmode)) != 0)
-	die(1, L_CRIT, 0, "cannot open secondary index DB %s: %s",
-	    idx->name, db_strerror(ret));
+	dico_die(1, L_CRIT, 0, "cannot open secondary index DB %s: %s",
+		 idx->name, db_strerror(ret));
     
     /* Associate the secondary with the primary. */
     if (!idx->iter &&
 	(ret = master->associate(master, NULL, sdbp, idx->get_key, 0)) != 0)
-	die(1, L_CRIT, 0, "cannot associate secondary index DB %s: %s",
-	    idx->name, db_strerror(ret));
+	dico_die(1, L_CRIT, 0, "cannot associate secondary index DB %s: %s",
+		 idx->name, db_strerror(ret));
 
     idx->dbp = sdbp;
 }
@@ -620,11 +621,12 @@ open_db()
     
     /* Open/create primary */
     if ((ret = db_create(&dbp, NULL, 0)) != 0)
-	die(1, L_CRIT, 0, "cannot create DB: %s", db_strerror(ret));
+	dico_die(1, L_CRIT, 0, "cannot create DB: %s", db_strerror(ret));
     if ((ret = dbp->open(dbp, NULL,
 			 dictname, NULL, DB_BTREE, DB_CREATE|DB_TRUNCATE,
 			 dbmode)) != 0)
-	die(1, L_CRIT, 0, "cannot open DB %s: %s", dictname, db_strerror(ret));
+	dico_die(1, L_CRIT, 0, "cannot open DB %s: %s",
+		 dictname, db_strerror(ret));
 
     /* Open/create secondaries */
     for (i = 0; dbidx[i].name; i++) 
@@ -671,7 +673,7 @@ iterate_db(DB *dbp)
     if (verbose)
 	printf("creating additional indexes\n");
     if (rc = dbp->cursor(dbp, NULL, &cursor, 0))
-	die(1, L_CRIT, 0, "cannot create cursor: %s", db_strerror(rc));
+	dico_die(1, L_CRIT, 0, "cannot create cursor: %s", db_strerror(rc));
 
     memset(&key, 0, sizeof key);
     memset(&content, 0, sizeof content);
@@ -689,8 +691,8 @@ iterate_db(DB *dbp)
 /*	printf("%s\n", DICT_ENGLISH_PTR(ep)); */
     }
     if (rc != DB_NOTFOUND)
-	die(1, L_CRIT, 0, "cannot iterate over the database: %s",
-	    db_strerror(rc));
+	dico_die(1, L_CRIT, 0, "cannot iterate over the database: %s",
+		 db_strerror(rc));
     cursor->c_close(cursor);
 }
 
@@ -711,7 +713,7 @@ update_kanji_ref_count(DB *dbp, Ushort kanji, unsigned count)
 
     rc = jisdb->pget(jisdb, NULL, &key, &pkey, &content, 0);
     if (rc) {
-	die(1, L_CRIT, 0, "cannot get dictionary entry for %x: %s",
+	dico_die(1, L_CRIT, 0, "cannot get dictionary entry for %x: %s",
 	    kanji, db_strerror(rc));
     }
 		
@@ -719,7 +721,7 @@ update_kanji_ref_count(DB *dbp, Ushort kanji, unsigned count)
     ep->refcnt = count;
     rc = dbp->put(dbp, NULL, &pkey, &content, 0);
     if (rc)
-	die(1, L_CRIT, 0, "cannot update item: %s", db_strerror(rc));
+	dico_die(1, L_CRIT, 0, "cannot update item: %s", db_strerror(rc));
 }
 
 void
@@ -736,7 +738,7 @@ count_xref(DB *dbp)
 	printf("Counting cross-references\n");
 
     if (rc = idbp->cursor(idbp, NULL, &cursor, 0))
-	die(1, L_CRIT, 0, "cannot create cursor: %s", db_strerror(rc));
+	dico_die(1, L_CRIT, 0, "cannot create cursor: %s", db_strerror(rc));
 
     memset(&key, 0, sizeof key);
     memset(&pkey, 0, sizeof pkey);
@@ -761,7 +763,7 @@ count_xref(DB *dbp)
 	update_kanji_ref_count(dbp, last, count);
     }
     if (rc != DB_NOTFOUND)
-	die(1, L_CRIT, 0, "cannot iterate over the database: %s",
-	    db_strerror(rc));
+	dico_die(1, L_CRIT, 0, "cannot iterate over the database: %s",
+		 db_strerror(rc));
     cursor->c_close(cursor);
 }

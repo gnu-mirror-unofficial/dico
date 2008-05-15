@@ -55,7 +55,7 @@ make_names()
 int
 main(int argc, char **argv)
 {
-    set_program_name(argv[0]);
+    dico_set_program_name(argv[0]);
 
     if (argc == 1) {
 	print_help();

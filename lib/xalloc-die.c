@@ -22,5 +22,5 @@
 void
 xalloc_die()
 {
-    die(1, L_CRIT, 0, "Not enough memory");
+    dico_die(1, L_CRIT, 0, "Not enough memory");
 }

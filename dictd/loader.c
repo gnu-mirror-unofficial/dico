@@ -39,7 +39,7 @@ dictd_load_module0(dictd_handler_t *hptr, int argc, char **argv)
 	
     handle = lt_dlopenext(argv[0]);
     if (!handle) {
-	logmsg(L_ERR, 0, _("cannot load module %s: %s"), argv[0],
+	dico_log(L_ERR, 0, _("cannot load module %s: %s"), argv[0],
 	       lt_dlerror());
 	return 1;
     }
@@ -47,13 +47,13 @@ dictd_load_module0(dictd_handler_t *hptr, int argc, char **argv)
     pmod = (struct dico_handler_module *) lt_dlsym(handle, "module");
     if (!pmod) {
 	lt_dlclose(handle);
-	logmsg(L_ERR, 0, _("%s: faulty module"), argv[0]);
+	dico_log(L_ERR, 0, _("%s: faulty module"), argv[0]);
 	return 1;
     }
 
     if (pmod->module_init && pmod->module_init(argc, argv)) {
 	lt_dlclose(handle);
-	logmsg(L_ERR, 0, _("%s: initialization failed"), argv[0]);
+	dico_log(L_ERR, 0, _("%s: initialization failed"), argv[0]);
 	return 1;
     }
 
@@ -70,7 +70,7 @@ dictd_load_module(dictd_handler_t *hptr)
     int rc;
 	
     if ((rc = dico_argcv_get(hptr->command, NULL, NULL, &argc, &argv))) {
-	logmsg(L_ERR, rc, _("cannot parse command line `%s'"), hptr->command);
+	dico_log(L_ERR, rc, _("cannot parse command line `%s'"), hptr->command);
 	return 1;
     }
 
@@ -89,7 +89,7 @@ dictd_open_database_handler(dictd_database_t *dp)
     if (hptr->module->module_open) {
 	dp->mod = hptr->module->module_open(dp->name, dp->argc, dp->argv);
 	if (!dp->mod) {
-	    logmsg(L_ERR, 0, _("cannot open module `%s'"), dp->command);
+	    dico_log(L_ERR, 0, _("cannot open module `%s'"), dp->command);
 	    return 1;
 	}
     }

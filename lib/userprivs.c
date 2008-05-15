@@ -36,7 +36,7 @@ switch_to_privs (uid_t uid, gid_t gid, dico_list_t retain_groups)
     void *gp;
     
     if (uid == 0) {
-	logmsg(L_ERR, 0, _("Refusing to run as root"));
+	dico_log(L_ERR, 0, _("Refusing to run as root"));
 	return 1;
     }
 
@@ -54,7 +54,7 @@ switch_to_privs (uid_t uid, gid_t gid, dico_list_t retain_groups)
     
     /* Reset group permissions */
     if (geteuid() == 0 && setgroups(j, emptygidset)) {
-	logmsg(L_ERR, errno, _("setgroups(1, %lu) failed"),
+	dico_log(L_ERR, errno, _("setgroups(1, %lu) failed"),
 		 (unsigned long) emptygidset[0]);
 	rc = 1;
     }
@@ -65,27 +65,27 @@ switch_to_privs (uid_t uid, gid_t gid, dico_list_t retain_groups)
 
 #if defined(HAVE_SETEGID)
     if ((rc = setegid(gid)) < 0)
-	logmsg(L_ERR, errno, _("setegid(%lu) failed"),
-	       (unsigned long) gid);
+	dico_log(L_ERR, errno, _("setegid(%lu) failed"),
+		 (unsigned long) gid);
 #elif defined(HAVE_SETREGID)
     if ((rc = setregid(gid, gid)) < 0)
-	logmsg(L_ERR, errno, _("setregid(%lu,%lu) failed"),
-	       (unsigned long) gid, (unsigned long) gid);
+	dico_log(L_ERR, errno, _("setregid(%lu,%lu) failed"),
+		 (unsigned long) gid, (unsigned long) gid);
 #elif defined(HAVE_SETRESGID)
     if ((rc = setresgid(gid, gid, gid)) < 0)
-	logmsg(L_ERR, errno, _("setresgid(%lu,%lu,%lu) failed"),
-	       (unsigned long) gid,
-	       (unsigned long) gid,
-	       (unsigned long) gid);
+	dico_log(L_ERR, errno, _("setresgid(%lu,%lu,%lu) failed"),
+		 (unsigned long) gid,
+		 (unsigned long) gid,
+		 (unsigned long) gid);
 #endif
 
     if (rc == 0 && gid != 0) {
 	if ((rc = setgid(gid)) < 0 && getegid() != gid) 
-	    logmsg(L_ERR, errno, _("setgid(%lu) failed"),
-		   (unsigned long) gid);
+	    dico_log(L_ERR, errno, _("setgid(%lu) failed"),
+		     (unsigned long) gid);
 	if (rc == 0 && getegid() != gid) {
-	    logmsg(L_ERR, errno, _("Cannot set effective gid to %lu"),
-		   (unsigned long) gid);
+	    dico_log(L_ERR, errno, _("Cannot set effective gid to %lu"),
+		     (unsigned long) gid);
 	    rc = 1;
 	}
     }
@@ -102,30 +102,30 @@ switch_to_privs (uid_t uid, gid_t gid, dico_list_t retain_groups)
 #if defined(HAVE_SETREUID)
 	    if (geteuid() != uid) {
 		if (setreuid(uid, -1) < 0) { 
-		    logmsg(L_ERR, errno, _("setreuid(%lu,-1) failed"),
-			   (unsigned long) uid);
+		    dico_log(L_ERR, errno, _("setreuid(%lu,-1) failed"),
+			     (unsigned long) uid);
 		    rc = 1;
 		}
 		if (setuid(uid) < 0) {
-		    logmsg(L_ERR, errno, _("second setuid(%lu) failed"),
-			   (unsigned long) uid);
+		    dico_log(L_ERR, errno, _("second setuid(%lu) failed"),
+			     (unsigned long) uid);
 		    rc = 1;
 		}
 	    } else
 #endif
 		{
-		    logmsg(L_ERR, errno, _("setuid(%lu) failed"),
-			   (unsigned long) uid);
+		    dico_log(L_ERR, errno, _("setuid(%lu) failed"),
+			     (unsigned long) uid);
 		    rc = 1;
 		}
 	}
 	
 	euid = geteuid();
 	if (uid != 0 && setuid(0) == 0) {
-	    logmsg(L_ERR, 0, _("seteuid(0) succeeded when it should not"));
+	    dico_log(L_ERR, 0, _("seteuid(0) succeeded when it should not"));
 	    rc = 1;
 	} else if (uid != euid && setuid(euid) == 0) {
-	    logmsg(L_ERR, 0, _("Cannot drop non-root setuid privileges"));
+	    dico_log(L_ERR, 0, _("Cannot drop non-root setuid privileges"));
 	    rc = 1;
 	}
 	

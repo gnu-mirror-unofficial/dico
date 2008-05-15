@@ -646,7 +646,7 @@ database_remove_dependent(dictd_handler_t *handler)
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
 	if (dp->handler == handler) {
-	    logmsg(L_NOTICE, 0, _("removing database %s"), dp->name);
+	    dico_log(L_NOTICE, 0, _("removing database %s"), dp->name);
 	    dico_iterator_remove_current(itr);
 	    dictd_database_free(dp); 
 	}
@@ -685,7 +685,7 @@ syslog_log_printer(int lvl, int exitcode, int errcode,
     int level = 0;
 
     if (lvl & L_CONS)
-        _stderr_log_printer(lvl, exitcode, errcode, fmt, ap);
+        _dico_stderr_log_printer(lvl, exitcode, errcode, fmt, ap);
 
     s    = loglevels[lvl & L_MASK].prefix;
     prio = loglevels[lvl & L_MASK].priority;
@@ -721,8 +721,8 @@ register_xversion()
 int
 main(int argc, char **argv)
 {
-    set_program_name(argv[0]);
-    log_tag = program_name;
+    dico_set_program_name(argv[0]);
+    log_tag = dico_program_name;
     hostname = xgethostname();
     dictd_init_command_tab();
     dictd_init_strategies();
@@ -738,7 +738,7 @@ main(int argc, char **argv)
     
     if (!log_to_stderr) {
 	openlog(log_tag, LOG_PID, LOG_FACILITY);
-	set_log_printer(syslog_log_printer);
+	dico_set_log_printer(syslog_log_printer);
     }
 
     dictd_loader_init();

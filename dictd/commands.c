@@ -164,7 +164,7 @@ dictd_show_server(dico_stream_t str, int argc, char **argv)
 void
 dictd_client(dico_stream_t str, int argc, char **argv)
 {
-    logmsg(L_INFO, 0, "Client info: %s", argv[1]);
+    dico_log(L_INFO, 0, "Client info: %s", argv[1]);
     stream_writez(str, "250 ok\r\n");
 }
 

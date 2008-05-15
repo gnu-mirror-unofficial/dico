@@ -24,6 +24,7 @@ libdico_la_SOURCES=\
  argcv.c\
  assoc.c\
  base64.c\
+ diag.c\
  fltstream.c\
  linebuf.c\
  list.c\
@@ -35,7 +36,6 @@ libdico_la_SOURCES=\
  utf8.c
 
 libxdico_a_SOURCES=\
- diag.c\
  iputil.c\
  jiscvt.c\
  timer.c\

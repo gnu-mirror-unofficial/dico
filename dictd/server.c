@@ -72,7 +72,7 @@ open_sockets()
 	int fd = socket(address_family_to_domain(sp->s.sa_family),
 			SOCK_STREAM, 0);
 	if (fd == -1) {
-	    logmsg(L_ERR, errno, "socket");
+	    dico_log(L_ERR, errno, "socket");
 	    continue;
 	}
 
@@ -80,20 +80,20 @@ open_sockets()
 	case AF_UNIX:
 	    if (stat(sp->s_un.sun_path, &st)) {
 		if (errno != ENOENT) {
-		    logmsg(L_ERR, errno,
+		    dico_log(L_ERR, errno,
 			   _("file %s exists but cannot be stat'd"),
 			   sp->s_un.sun_path);
 		    close(fd);
 		    continue;
 		}
 	    } else if (!S_ISSOCK(st.st_mode)) {
-		logmsg(L_ERR, 0,
+		dico_log(L_ERR, 0,
 		       _("file %s is not a socket"),
 		       sp->s_un.sun_path);
 		close(fd);
 		continue;
 	    } else if (unlink(sp->s_un.sun_path)) {
-		logmsg(L_ERR, errno,
+		dico_log(L_ERR, errno,
 		       _("cannot unlink file %s"),
 		       sp->s_un.sun_path);
 		close(fd);
@@ -111,7 +111,7 @@ open_sockets()
 
 	if (bind(fd, &sp->s, socklen) == -1) {
 	    p = sockaddr_to_astr(&sp->s, socklen);
-	    logmsg(L_ERR, errno, ("cannot bind to %s"), p);
+	    dico_log(L_ERR, errno, ("cannot bind to %s"), p);
 	    free(p);
 	    close(fd);
 	    continue;
@@ -119,7 +119,7 @@ open_sockets()
 
 	if (listen(fd, 8) == -1) {
 	    p = sockaddr_to_astr(&sp->s, socklen);
-	    logmsg(L_ERR, errno, "cannot listen on %s", p);
+	    dico_log(L_ERR, errno, "cannot listen on %s", p);
 	    free(p);
 	    close(fd);
 	    continue;
@@ -133,7 +133,7 @@ open_sockets()
     fdcount = i;
 
     if (fdcount == 0)
-	die(1, L_ERR, 0, _("No sockets opened"));
+	dico_die(1, L_ERR, 0, _("No sockets opened"));
 }
 
 void
@@ -174,11 +174,11 @@ print_status (pid_t pid, int status, int expect_term)
 {
     if (WIFEXITED(status)) {
 	if (WEXITSTATUS(status) == 0)
-	    logmsg(L_DEBUG, 0,
+	    dico_log(L_DEBUG, 0,
 		   _("%lu exited successfully"),
 		   (unsigned long) pid);
 	else
-	    logmsg(L_ERR, 0,
+	    dico_log(L_ERR, 0,
 		   _("%lu failed with status %d"),
 		   (unsigned long) pid,
 		   WEXITSTATUS(status));
@@ -189,19 +189,19 @@ print_status (pid_t pid, int status, int expect_term)
 	    prio = L_DEBUG;
 	else
 	    prio = L_ERR;
-	logmsg(prio, 0,
+	dico_log(prio, 0,
 	       _("%lu terminated on signal %d"),
 	       (unsigned long) pid, WTERMSIG(status));
     } else if (WIFSTOPPED(status))
-	logmsg(L_ERR, 0,
+	dico_log(L_ERR, 0,
 	       _("%lu stopped on signal %d"),
 	       (unsigned long) pid, WSTOPSIG(status));
 #ifdef WCOREDUMP
     else if (WCOREDUMP(status))
-	logmsg(L_ERR, 0, _("%lu dumped core"), (unsigned long) pid);
+	dico_log(L_ERR, 0, _("%lu dumped core"), (unsigned long) pid);
 #endif
     else
-	logmsg(L_ERR, 0, _("%lu terminated with unrecognized status"),
+	dico_log(L_ERR, 0, _("%lu terminated with unrecognized status"),
 	       (unsigned long) pid);
 }
 
@@ -215,7 +215,7 @@ cleanup_children(int term)
     while ((pid = waitpid ((pid_t)-1, &status, WNOHANG)) > 0) {
 	unsigned long i = find_pid(pid);
 	if (i == (unsigned long)-1) {
-	    logmsg(L_INFO, 0, "subprocess %lu finished",
+	    dico_log(L_INFO, 0, "subprocess %lu finished",
 		   (unsigned long) pid);
 	} else {
 	    print_status(pid, status, term);
@@ -263,23 +263,23 @@ check_pidfile(char *name)
     if (!fp) {
 	if (errno == ENOENT)
 	    return;
-	die(1, L_ERR, errno, _("Cannot open pidfile `%s'"), name);
+	dico_die(1, L_ERR, errno, _("Cannot open pidfile `%s'"), name);
     }
     if (fscanf(fp, "%lu", &pid) != 1) {
-	logmsg(L_ERR, 0, _("Cannot get pid from pidfile `%s'"), name);
+	dico_log(L_ERR, 0, _("Cannot get pid from pidfile `%s'"), name);
     } else {
 	if (kill(pid, 0) == 0) {
-	    die(1, L_ERR, 0,
+	    dico_die(1, L_ERR, 0,
 		_("%s appears to run with pid %lu. "
 		  "If it does not, remove `%s' and retry."),
-		program_name,
+		dico_program_name,
 		pid,
 		name);
 	}
     }
     fclose(fp);
     if (unlink(name)) 
-	die(1, L_ERR, errno, _("Cannot unlink pidfile `%s'"), name);
+	dico_die(1, L_ERR, errno, _("Cannot unlink pidfile `%s'"), name);
 }
 
 void
@@ -288,7 +288,7 @@ create_pidfile(char *name)
     FILE *fp = fopen(name, "w");
 
     if (!fp) 
-	die(1, L_ERR, errno, _("Cannot create pidfile `%s'"), name);
+	dico_die(1, L_ERR, errno, _("Cannot create pidfile `%s'"), name);
     fprintf(fp, "%lu", (unsigned long)getpid());
     fclose(fp);
 }
@@ -297,7 +297,7 @@ void
 remove_pidfile(char *name)
 {
     if (unlink(name)) 
-	logmsg(L_ERR, errno, _("Cannot unlink pidfile `%s'"), name);
+	dico_log(L_ERR, errno, _("Cannot unlink pidfile `%s'"), name);
 }
 
 
@@ -334,7 +334,7 @@ handle_connection(int listenfd)
     if (connfd == -1) {
 	if (errno == EINTR)
 	    return -1;
-	logmsg(L_ERR, errno, "accept");
+	dico_log(L_ERR, errno, "accept");
 	return -1;
 	/*exit (EXIT_FAILURE);*/
     }
@@ -353,7 +353,7 @@ handle_connection(int listenfd)
     } else {
 	pid_t pid = fork();
 	if (pid == -1)
-	    logmsg(LOG_ERR, errno, "fork");
+	    dico_log(LOG_ERR, errno, "fork");
 	else if (pid == 0) {
 	    /* Child.  */
 	    dico_stream_t str;
@@ -400,7 +400,7 @@ server_loop()
 	}
 
 	if (num_children > max_children) {
-	    logmsg(L_ERR, 0, _("too many children (%lu)"), num_children);
+	    dico_log(L_ERR, 0, _("too many children (%lu)"), num_children);
 	    pause();
 	    continue;
 	}
@@ -412,7 +412,7 @@ server_loop()
 		break;
 	    continue;
 	} else if (rc < 0) {
-	    logmsg(L_CRIT, errno, _("select error"));
+	    dico_log(L_CRIT, errno, _("select error"));
 	    return 1;
 	}
 
@@ -438,10 +438,10 @@ dictd_server(int argc, char **argv)
 {
     int rc;
     
-    logmsg(L_INFO, 0, _("%s started"), program_version);
+    dico_log(L_INFO, 0, _("%s started"), program_version);
 
     if (user_id && switch_to_privs(user_id, group_id, group_list))
-	die(1, L_CRIT, 0, "exiting");
+	dico_die(1, L_CRIT, 0, "exiting");
 
     if (!foreground)
 	check_pidfile(pidfile_name);
@@ -451,19 +451,19 @@ dictd_server(int argc, char **argv)
     signal(SIGINT, sig_stop);
     signal(SIGCHLD, sig_child);
     if (argv[0][0] != '/') {
-	logmsg(L_WARN, 0, _("gjdict started without full file name"));
-	logmsg(L_WARN, 0, _("restart (SIGHUP) will not work"));
+	dico_log(L_WARN, 0, _("gjdict started without full file name"));
+	dico_log(L_WARN, 0, _("restart (SIGHUP) will not work"));
 	signal(SIGHUP, sig_stop);
     } else if (config_file[0] != '/') {
-	logmsg(L_WARN, 0, _("configuration file is not given with a full file name"));
-	logmsg(L_WARN, 0, _("restart (SIGHUP) will not work"));
+	dico_log(L_WARN, 0, _("configuration file is not given with a full file name"));
+	dico_log(L_WARN, 0, _("restart (SIGHUP) will not work"));
 	signal(SIGHUP, sig_stop);
     } else	
 	signal(SIGHUP, sig_restart);
 
     if (!foreground) {
 	if (daemon(0, 0) == -1) 
-	    die(1, L_CRIT, errno, _("Cannot become a daemon"));
+	    dico_die(1, L_CRIT, errno, _("Cannot become a daemon"));
 
 	create_pidfile(pidfile_name);
     }
@@ -480,19 +480,19 @@ dictd_server(int argc, char **argv)
     close_sockets();
 
     if (rc) 
-	logmsg(L_NOTICE, errno, _("Exit code = %d, last error status"), rc);
+	dico_log(L_NOTICE, errno, _("Exit code = %d, last error status"), rc);
 
     if (restart) {
 	int i;
 		
-	logmsg(L_INFO, 0, _("gjdict restarting"));
+	dico_log(L_INFO, 0, _("gjdict restarting"));
 	remove_pidfile(pidfile_name);
 	for (i = getmaxfd(); i > 2; i--)
 	    close(i);
 	execv(argv[0], argv);
-	die(127, L_ERR|L_CONS, errno, _("Cannot restart"));
+	dico_die(127, L_ERR|L_CONS, errno, _("Cannot restart"));
     } else 
-	logmsg(L_INFO, 0, _("gjdict terminating"));
+	dico_log(L_INFO, 0, _("gjdict terminating"));
     exit(rc);
 }
     

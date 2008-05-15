@@ -253,13 +253,13 @@ get_number(const char *str, int base, unsigned long maxval, char *delim)
 
     val = strtoul(str, &p, base);
     if (*p && !(delim && strchr(delim, *p))) {
-	logmsg(L_ERR, 0, "%s:%d: not a valid number (%s)",
-	       filename, line_num, str);
+	dico_log(L_ERR, 0, "%s:%d: not a valid number (%s)",
+		 filename, line_num, str);
 	return 0;
     }
     if (val > maxval) {
-	logmsg(L_ERR, 0, "%s:%d: %s: value out of allowed range (0..%lu)",
-	       filename, line_num, str, maxval);
+	dico_log(L_ERR, 0, "%s:%d: %s: value out of allowed range (0..%lu)",
+		 filename, line_num, str, maxval);
 	return 0;
     }
     return val;
@@ -293,7 +293,7 @@ compile_kanjidic(DB *dbp)
 
     infile = open_compressed(kanjidict, &pflag);
     if (infile == NULL) {
-	die(1, L_ERR, errno, "cannot open kanjidic file `%s'", kanjidict);
+	dico_die(1, L_ERR, errno, "cannot open kanjidic file `%s'", kanjidict);
 	return;
     }
     if (verbose)
@@ -313,23 +313,23 @@ compile_kanjidic(DB *dbp)
 	    continue;
 	
 	if (token.type != TOK_KANA || token.length != 2) {
-	    logmsg(L_ERR, 0, "%s:%d: unrecognized line",
-		   filename, line_num);
+	    dico_log(L_ERR, 0, "%s:%d: unrecognized line",
+		     filename, line_num);
 	    skip_to_eol();
 	    continue;
 	}
 	
 	if (nextkn() != TOK_NUMBER) {
-	    logmsg(L_ERR, 0, "%s:%d: expected JIS code but found `%s'",
-		   filename, line_num, token.string);
+	    dico_log(L_ERR, 0, "%s:%d: expected JIS code but found `%s'",
+		     filename, line_num, token.string);
 	    skip_to_eol();
 	    continue;
 	}
 		
 	kanji = strtol(token.string, &p, 16);
 	if (!isws(*p) && *p != 0) {
-	    logmsg(L_ERR, 0, "%s:%d: unrecognized line\n",
-		   filename, line_num);
+	    dico_log(L_ERR, 0, "%s:%d: unrecognized line\n",
+		     filename, line_num);
 	    skip_to_eol();
 	    continue;
 	}    
@@ -458,8 +458,8 @@ compile_kanjidic(DB *dbp)
 	
 	rc = insert_dict_entry(dbp, numberofkanji, ep, sizeof(entry) + offset);
 	if (rc)
-	    logmsg(L_ERR, 0, "%s:%d: failed to insert entry: %s",
-		   filename, line_num, db_strerror(rc));
+	    dico_log(L_ERR, 0, "%s:%d: failed to insert entry: %s",
+		     filename, line_num, db_strerror(rc));
 
 	numberofkanji++;
 	if (verbose > 1 && numberofkanji % 1000 == 0) {
@@ -497,7 +497,7 @@ compile_edict(DB *dbp)
     
     infile = open_compressed(edict, &pflag);
     if (infile == NULL) {
-	die(1, L_ERR, errno, "cannot open edict file `%s'", edict);
+	dico_die(1, L_ERR, errno, "cannot open edict file `%s'", edict);
 	return;
     }
     if (verbose)
@@ -518,8 +518,8 @@ compile_edict(DB *dbp)
 	    continue;
 
 	if (token.type != TOK_KANJI) {
-	    logmsg(L_ERR, 0, "%s:%d: unrecognized line",
-		   filename, line_num);
+	    dico_log(L_ERR, 0, "%s:%d: unrecognized line",
+		     filename, line_num);
 	    skip_to_eol();
 	    continue;
 	}
@@ -551,8 +551,8 @@ compile_edict(DB *dbp)
 	    if (token.type == TOK_ENGLISH) {
 		ADD_TEXT(TEXT_ENGLISH, token.string, token.length);
 	    } else {
-		logmsg(L_ERR, 0, "%s:%d: unrecognized string",
-		       filename, line_num);
+		dico_log(L_ERR, 0, "%s:%d: unrecognized string",
+			 filename, line_num);
 	    }
 	}
  	
@@ -561,8 +561,8 @@ compile_edict(DB *dbp)
 	}
 
 	if (token.type != TOK_EOL && token.type != 0) {
-	    logmsg(L_ERR, 0, "%s:%d: junk after end of line",
-		   filename, line_num);
+	    dico_log(L_ERR, 0, "%s:%d: junk after end of line",
+		     filename, line_num);
 	    skip_to_eol();
 	}
 
@@ -594,8 +594,8 @@ compile_edict(DB *dbp)
 			       ep, sizeof(entry) + offset);
 	nedict++;
 	if (rc)
-	    logmsg(L_ERR, 0, "%s:%d: failed to insert entry: %s",
-		   filename, line_num, db_strerror(rc));
+	    dico_log(L_ERR, 0, "%s:%d: failed to insert entry: %s",
+		     filename, line_num, db_strerror(rc));
 	
 	obstack_free(&stk, stkroot);
 	obstack_1grow(&stk, 0); 

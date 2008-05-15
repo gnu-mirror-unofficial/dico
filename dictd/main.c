@@ -730,6 +730,7 @@ main(int argc, char **argv)
     register_auth();
     register_mime();
     register_xversion();
+    register_lev();
     config_lex_trace(0);
     get_options(argc, argv);
     config_set_keywords(keywords);

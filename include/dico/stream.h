@@ -18,9 +18,7 @@
 #define __dico_stream_h
 
 /* Line buffer */
-typedef struct dico_line_buffer *dico_linebuf_t;
 enum dico_line_buffer_type { lb_in, lb_out };
-typedef struct dico_stream *dico_stream_t;
 
 int dico_linebuf_create(dico_linebuf_t *s, dico_stream_t stream,
 			enum dico_line_buffer_type type, size_t size);

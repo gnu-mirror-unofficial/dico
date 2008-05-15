@@ -17,7 +17,7 @@
 #ifndef __dico_diag_h
 #define __dico_diag_h
 
-#include <sys/types.h>
+#include <dico/types.h>
 
 #define L_DEBUG     0
 #define L_INFO      1
@@ -31,10 +31,6 @@
 #define L_MASK      0xff
 
 #define L_CONS      0x8000
-
-#ifndef DICO_PRINTFLIKE
-# define DICO_PRINTFLIKE(fmt,narg) __attribute__ ((__format__ (__printf__, fmt, narg)))
-#endif
 
 extern const char *dico_program_name;
 void dico_set_program_name(char *name);

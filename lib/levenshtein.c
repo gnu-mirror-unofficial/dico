@@ -33,12 +33,11 @@
 #endif
 
 int
-dico_levenshtein_distance(char *astr, char *bstr, int damerau)
+dico_levenshtein_distance(const char *astr, const char *bstr, int damerau)
 {
     unsigned *a, *b;
     int alen;
     int blen;
-    int tlen = 0;
     unsigned *rowptr;
     unsigned *row[3];
     int i, j, idx, nrows;
@@ -75,14 +74,14 @@ dico_levenshtein_distance(char *astr, char *bstr, int damerau)
 	for (j = 0; j < blen; j++) { 
 	    unsigned n, cost;
 	    
-	    cost = !(a[i] == b[j]);
+	    cost = !(utf8_wc_toupper(a[i]) == utf8_wc_toupper(b[j]));
 	    n = MIN(row[!idx][j+1] + 1,   /* Deletion */
 		    row[idx][j] + 1);     /* Insertion */
 	    n = MIN(n, row[!idx][j] + cost); /* Substitution */
 	    if (damerau) {
 		if (i > 1 && j > 1
-		    && a[i-1] == b[j-2]
-		    && a[i-2] == b[j-1])
+		    && utf8_wc_toupper(a[i-1]) == utf8_wc_toupper(b[j-2])
+		    && utf8_wc_toupper(a[i-2]) == utf8_wc_toupper(b[j-1]))
 		    /* Transposition */
 		    n = MIN(n, row[(idx + 1) % nrows][j - 2] + cost);
 	    }

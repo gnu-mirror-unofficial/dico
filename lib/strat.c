@@ -47,6 +47,8 @@ dico_strategy_dup(const dico_strategy_t *strat)
 	strcpy(np->name, strat->name);
 	np->descr = np->name + strlen(np->name) + 1;
 	strcpy(np->descr, strat->descr);
+	np->sel = strat->sel;
+	np->closure = strat->closure;
     }
     return np;
 }

@@ -180,9 +180,9 @@ dictd_match(dico_stream_t str, int argc, char **argv)
 		      "551 Invalid strategy, use \"SHOW STRAT\" "
 		      "for a list of strategies\r\n");
     else if (strcmp(dbname, "!") == 0) 
-	dictd_match_word_first(str, strat->name, word);
+	dictd_match_word_first(str, strat, word);
     else if (strcmp(dbname, "*") == 0) 
-	dictd_match_word_all(str, strat->name, word);
+	dictd_match_word_all(str, strat, word);
     else {
 	dictd_database_t *db = find_database(dbname);
     
@@ -190,7 +190,7 @@ dictd_match(dico_stream_t str, int argc, char **argv)
 	    stream_writez(str,
 			  "550 invalid database, use SHOW DB for list\r\n");
 	else
-	    dictd_match_word_db(db, str, strat->name, word);
+	    dictd_match_word_db(db, str, strat, word);
     }
 }
 

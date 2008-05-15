@@ -51,6 +51,17 @@ dictd_load_module0(dictd_handler_t *hptr, int argc, char **argv)
 	return 1;
     }
 
+    if (!pmod->module_match
+	|| !pmod->module_match_all
+	|| !pmod->module_define
+	|| !pmod->module_output_result
+	|| !pmod->module_result_count
+	|| !pmod->module_free_result) {
+	lt_dlclose(handle);
+	dico_log(L_ERR, 0, _("%s: faulty module"), argv[0]);
+	return 1;
+    }
+    
     if (pmod->module_init && pmod->module_init(argc, argv)) {
 	lt_dlclose(handle);
 	dico_log(L_ERR, 0, _("%s: initialization failed"), argv[0]);
@@ -177,8 +188,14 @@ typedef void (*outproc_t)(dictd_database_t *db, dico_result_t res,
 			  const char *word, dico_stream_t stream,
 			  size_t count);
 
+#define MATCH(db, strat, word)                                               \
+    (strat->sel ?                                                            \
+         mp->module_match_all(db->mod, word, strat->sel, strat->closure) :   \
+         mp->module_match(db->mod, strat->name, word)) 
+
 void
-dictd_word_first(dico_stream_t stream, const char *word, const char *strat,
+dictd_word_first(dico_stream_t stream, const char *word,
+		 const dico_strategy_t *strat,
 		 const char *begfmt, const char *endmsg,
 		 outproc_t proc, const char *tid)
 {
@@ -191,7 +208,7 @@ dictd_word_first(dico_stream_t stream, const char *word, const char *strat,
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
 	if (database_visible_p(db)) {
 	    struct dico_handler_module *mp = db->handler->module;
-	    dico_result_t res = strat ? mp->module_match(db->mod, strat, word) :
+	    dico_result_t res = strat ? MATCH(db, strat, word) :
  	 	                        mp->module_define(db->mod, word);
 	    size_t count;
 	    
@@ -223,7 +240,8 @@ struct dbres {
 };
 
 void
-dictd_word_all(dico_stream_t stream, const char *word, const char *strat,
+dictd_word_all(dico_stream_t stream, const char *word,
+	       const dico_strategy_t *strat,
 	       const char *begfmt, const char *endmsg,
 	       outproc_t proc, const char *tid)
 {
@@ -240,7 +258,7 @@ dictd_word_all(dico_stream_t stream, const char *word, const char *strat,
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
 	if (database_visible_p(db)) {
 	    struct dico_handler_module *mp = db->handler->module;
-	    dico_result_t res = strat ? mp->module_match(db->mod, strat, word) :
+	    dico_result_t res = strat ? MATCH(db, strat, word) :
 		                        mp->module_define(db->mod, word);
 	    size_t count;
 	
@@ -304,7 +322,7 @@ print_matches(dictd_database_t *db, dico_result_t res,
 
 void
 dictd_match_word_db(dictd_database_t *db, dico_stream_t stream,
-		    const char *strat, const char *word)
+		    const dico_strategy_t *strat, const char *word)
 {
     struct dico_handler_module *mp = db->handler->module;
     dico_result_t res;
@@ -312,7 +330,8 @@ dictd_match_word_db(dictd_database_t *db, dico_stream_t stream,
     
     if (timing_option)
 	timer_start("match");
-    res = mp->module_match(db->mod, strat, word);
+    res = MATCH(db, strat, word);
+    
     if (!res) {
 	dico_stream_writeln(stream, nomatch, nomatch_len);
 	return;
@@ -337,7 +356,7 @@ dictd_match_word_db(dictd_database_t *db, dico_stream_t stream,
 
 void
 dictd_match_word_first(dico_stream_t stream,
-		       const char *strat, const char *word)
+		       const dico_strategy_t *strat, const char *word)
 {
     dictd_word_first(stream, word, strat,
 		     "152 %lu matches found: list follows\r\n",
@@ -347,7 +366,7 @@ dictd_match_word_first(dico_stream_t stream,
 
 void
 dictd_match_word_all(dico_stream_t stream,
-		     const char *strat, const char *word)
+		     const dico_strategy_t *strat, const char *word)
 {
     dictd_word_all(stream, word, strat,
 		   "152 %lu matches found: list follows\r\n",

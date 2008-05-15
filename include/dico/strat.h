@@ -17,12 +17,14 @@
 #ifndef __dico_strat_h
 #define __dico_strat_h
 
-#include <sys/types.h>
+#include <dico/types.h>
 #include <dico/list.h>
 
 typedef struct dico_strategy {
     char *name;
     char *descr;
+    dico_select_t sel;
+    void *closure;
 } dico_strategy_t;
 
 dico_strategy_t *dico_strategy_dup(const dico_strategy_t *strat);

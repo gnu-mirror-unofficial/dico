@@ -73,7 +73,7 @@ extern dico_list_t user_groups;
 # define LOG_FACILITY LOG_LOCAL1
 #endif
 
-#define DICTD_DEFAULT_STRATEGY "exact"
+#define DICTD_DEFAULT_STRATEGY "lev"
 
 #define DICT_PORT 2628
 
@@ -225,7 +225,7 @@ typedef struct dictd_database {
     int require_auth;         /* Visible only for authenticated users */
     dico_list_t groups;       /* Visible only for users from these groups */
     
-    dico_handle_t *mod;       /* Dico module handler */
+    dico_handle_t mod;        /* Dico module handler */
 
     char *content_type;
     char *content_transfer_encoding;
@@ -316,11 +316,11 @@ char *dictd_get_database_info(dictd_database_t *db);
 void dictd_free_database_info(dictd_database_t *db, char *info);
 
 void dictd_match_word_db(dictd_database_t *db, dico_stream_t stream,
-			 const char *strat, const char *word);
+			 const dico_strategy_t *strat, const char *word);
 void dictd_match_word_first(dico_stream_t stream,
-			    const char *strat, const char *word);
+			    const dico_strategy_t *strat, const char *word);
 void dictd_match_word_all(dico_stream_t stream,
-			  const char *strat, const char *word);
+			  const dico_strategy_t *strat, const char *word);
 void dictd_define_word_db(dictd_database_t *db, dico_stream_t stream,
 			  const char *word);
 void dictd_define_word_first(dico_stream_t stream, const char *word);

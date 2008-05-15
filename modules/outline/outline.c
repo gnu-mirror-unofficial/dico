@@ -180,14 +180,18 @@ read_entry(struct outline_file *file, int *plevel)
 
 enum result_type {
     result_match,
+    result_match_list,
     result_define
 };
 
 struct result {
     struct outline_file *file;
     enum result_type type;
-    const struct entry *ep;
     size_t count;
+    union {
+	const struct entry *ep;
+	dico_list_t list;
+    } v;
 };
 
 typedef int (*entry_match_t) (struct outline_file *file,
@@ -244,7 +248,7 @@ exact_match(struct outline_file *file, const char *word, struct result *res)
     ep = bsearch(&x, file->index, file->count, sizeof(file->index[0]),
 		 compare_entry);
     if (ep) {
-	res->ep = ep;
+	res->v.ep = ep;
 	res->count = 1;
 	return 0;
     }
@@ -279,7 +283,7 @@ prefix_match(struct outline_file *file, const char *word, struct result *res)
 	for (ep++; ep < file->index + file->count
 		 && compare_prefix(&x, ep) == 0; ep++)
 	    count++;
-	res->ep = p + 1;
+	res->v.ep = p + 1;
 	res->count = count;
 	return 0;
     }
@@ -291,7 +295,7 @@ int
 outline_close(dico_handle_t hp)
 {
     size_t i;
-    struct outline_file *file = hp;
+    struct outline_file *file = (struct outline_file *) hp;
     
     fclose(file->fp);
     free(file->name);
@@ -394,7 +398,7 @@ outline_open(const char *dbname, int argc, char **argv)
     dico_list_destroy(&list, NULL, NULL);
     qsort(file->index, count, sizeof(file->index[0]), compare_entry);
     
-    return file;
+    return (dico_handle_t) file;
 }
 
 
@@ -414,7 +418,7 @@ read_buf(struct outline_file *file, struct entry *ep)
 char *
 outline_info(dico_handle_t hp)
 {
-    struct outline_file *file = hp;
+    struct outline_file *file = (struct outline_file *) hp;
     if (file->info_entry) 
 	return read_buf(file, file->info_entry);
     return NULL;
@@ -423,7 +427,7 @@ outline_info(dico_handle_t hp)
 char *
 outline_descr(dico_handle_t hp)
 {
-    struct outline_file *file = hp;
+    struct outline_file *file = (struct outline_file *) hp;
     if (file->descr_entry) { 
 	char *buf = read_buf(file, file->descr_entry);
 	char *p = strchr(buf, '\n');
@@ -439,7 +443,7 @@ outline_descr(dico_handle_t hp)
 dico_result_t
 outline_match(dico_handle_t hp, const char *strat, const char *word)
 {
-    struct outline_file *file = hp;
+    struct outline_file *file = (struct outline_file *) hp;
     struct result *res;
     entry_match_t match = find_matcher(strat);
 
@@ -455,13 +459,51 @@ outline_match(dico_handle_t hp, const char *strat, const char *word)
 	free(res);
 	res = NULL;
     }
-    return res;
+    return (dico_result_t) res;
+}
+
+dico_result_t
+outline_match_all(dico_handle_t hp, const char *word,
+		  dico_select_t sel, void *closure)
+{
+    struct outline_file *file = (struct outline_file *) hp;
+    dico_list_t list;
+    size_t count, i;
+    struct result *res;
+    
+    list = dico_list_create();
+
+    if (!list) {
+	dico_log(L_ERR, 0, _("outline_match_all: not enough memory"));
+	return NULL;
+    }
+
+    for (i = 0; i < file->count; i++) {
+	if (sel(word, file->index[i].word, closure)) {
+	    dico_list_append(list, &file->index[i]);
+	}
+    }
+
+    count = dico_list_count(list);
+    if (count == 0) {
+	dico_list_destroy(&list, NULL, NULL);
+	return NULL;
+    }
+
+    res = malloc(sizeof(*res));
+    if (!res)
+	return NULL;
+    res->file = file;
+    res->type = result_match_list;
+    res->count = count;
+    res->v.list = list;
+    return (dico_result_t) res;
 }
 
 dico_result_t
 outline_define(dico_handle_t hp, const char *word)
 {
-    struct outline_file *file = hp;
+    struct outline_file *file = (struct outline_file *) hp;
     struct result *res;
     
     res = malloc(sizeof(*res));
@@ -473,7 +515,7 @@ outline_define(dico_handle_t hp, const char *word)
 	free(res);
 	res = NULL;
     }
-    return res;
+    return (dico_result_t) res;
 }
 
 static void
@@ -499,15 +541,22 @@ printdef(dico_stream_t str, struct outline_file *file, const struct entry *ep)
 int
 outline_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 {
-    struct result *res = rp;
-    const struct entry *ep = res->ep + n;
+    struct result *res = (struct result *) rp;
+    const struct entry *ep;
     
     switch (res->type) {
     case result_match:
+	ep = res->v.ep + n;
+	dico_stream_write(str, ep->word, strlen(ep->word));
+	break;
+
+    case result_match_list:
+	ep = dico_list_item(res->v.list, n);
 	dico_stream_write(str, ep->word, strlen(ep->word));
 	break;
 	
     case result_define:
+	ep = res->v.ep + n;
 	printdef(str, res->file, ep);
     }
     return 0;
@@ -516,13 +565,16 @@ outline_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 size_t
 outline_result_count (dico_result_t rp)
 {
-    struct result *res = rp;
+    struct result *res = (struct result *) rp;
     return res->count;
 }
 
 void
 outline_free_result(dico_result_t rp)
 {
+    struct result *res = (struct result *) rp;
+    if (res->type == result_match_list)
+	dico_list_destroy(&res->v.list, NULL, NULL);
     free(rp);
 }
 
@@ -533,6 +585,7 @@ struct dico_handler_module DICO_EXPORT(outline, module) = {
     outline_info,
     outline_descr,
     outline_match,
+    outline_match_all,
     outline_define,
     outline_output_result,
     outline_result_count,

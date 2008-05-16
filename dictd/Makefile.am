@@ -33,6 +33,7 @@ dictd_SOURCES=\
  ostream.c\
  regex.c\
  server.c\
+ stat.c\
  udb.c
 
 noinst_HEADERS=dictd.h config-gram.h

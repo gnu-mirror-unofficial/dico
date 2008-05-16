@@ -59,6 +59,7 @@ struct dico_handler_module {
     dico_result_t (*module_define) (dico_handle_t hp, const char *word);
     int (*module_output_result) (dico_result_t rp, size_t n, dico_stream_t str);
     size_t (*module_result_count) (dico_result_t rp);
+    size_t (*module_compare_count) (dico_result_t rp);
     void (*module_free_result) (dico_result_t rp);
 };
 

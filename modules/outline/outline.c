@@ -56,6 +56,8 @@
 #include <ctype.h>
 #include <errno.h>
 
+static size_t compare_count;
+
 struct entry {
     char *word;             /* Word */
     size_t wordlen;         /* Its length in characters */
@@ -188,6 +190,7 @@ struct result {
     struct outline_file *file;
     enum result_type type;
     size_t count;
+    size_t compare_count;
     union {
 	const struct entry *ep;
 	dico_list_t list;
@@ -236,6 +239,7 @@ compare_entry(const void *a, const void *b)
 {
     const struct entry *epa = a;
     const struct entry *epb = b;
+    compare_count++;
     return utf8_strcasecmp(epa->word, epb->word);
 }
 
@@ -264,6 +268,7 @@ compare_prefix(const void *a, const void *b)
     size_t wordlen = pkey->wordlen;
     if (pelt->wordlen < wordlen)
 	wordlen = pelt->wordlen;
+    compare_count++;
     return utf8_strncasecmp(pkey->word, pelt->word, wordlen);
 }
 
@@ -451,6 +456,7 @@ outline_match0(dico_handle_t hp, const char *strat,
     if (!match)
 	return NULL;
     
+    compare_count = 0;
     res = malloc(sizeof(*res));
     if (!res)
 	return NULL;
@@ -460,6 +466,7 @@ outline_match0(dico_handle_t hp, const char *strat,
 	free(res);
 	res = NULL;
     }
+    res->compare_count = compare_count;
     return (dico_result_t) res;
 }
 
@@ -489,6 +496,7 @@ outline_match_all(dico_handle_t hp, const char *word,
 	    dico_list_append(list, &file->index[i]);
 	}
     }
+    compare_count = file->count;
     sel(DICO_SELECT_END, word, NULL, closure);
 	
     count = dico_list_count(list);
@@ -504,6 +512,7 @@ outline_match_all(dico_handle_t hp, const char *word,
     res->type = result_match_list;
     res->count = count;
     res->v.list = list;
+    res->compare_count = compare_count;
     return (dico_result_t) res;
 }
 
@@ -521,7 +530,8 @@ outline_define(dico_handle_t hp, const char *word)
 {
     struct outline_file *file = (struct outline_file *) hp;
     struct result *res;
-    
+
+    compare_count = 0;
     res = malloc(sizeof(*res));
     if (!res)
 	return NULL;
@@ -531,6 +541,7 @@ outline_define(dico_handle_t hp, const char *word)
 	free(res);
 	res = NULL;
     }
+    res->compare_count = compare_count;
     return (dico_result_t) res;
 }
 
@@ -585,6 +596,13 @@ outline_result_count (dico_result_t rp)
     return res->count;
 }
 
+size_t
+outline_compare_count (dico_result_t rp)
+{
+    struct result *res = (struct result *) rp;
+    return res->compare_count;
+}
+
 void
 outline_free_result(dico_result_t rp)
 {
@@ -604,6 +622,7 @@ struct dico_handler_module DICO_EXPORT(outline, module) = {
     outline_define,
     outline_output_result,
     outline_result_count,
+    outline_compare_count,
     outline_free_result
 };
     

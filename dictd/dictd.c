@@ -300,8 +300,7 @@ dictd_loop(dico_stream_t str)
     size_t rdbytes;
     struct input input;
 
-    if (timing_option)
-	timer_start("dictd");
+    begin_timing("dictd");
     dictd_server_init();
     signal(SIGALRM, sig_alarm);
     memset(&input, 0, sizeof input);

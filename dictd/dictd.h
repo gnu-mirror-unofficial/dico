@@ -69,6 +69,10 @@ extern int timing_option;
 extern char *user_name;
 extern dico_list_t user_groups; 
 
+extern unsigned num_defines;
+extern unsigned num_matches;
+extern unsigned num_compares;
+
 #ifndef LOG_FACILITY
 # define LOG_FACILITY LOG_LOCAL1
 #endif
@@ -335,6 +339,10 @@ void dictd_define_word_all(dico_stream_t stream, const char *word);
 /* ostream.c */
 dico_stream_t dictd_ostream_create(dico_stream_t str, const char *type,
                                    const char *enc);
+
+/* stat.c */
+void begin_timing(const char *name);
+void report_timing(dico_stream_t stream, const char *name);
 
 
 

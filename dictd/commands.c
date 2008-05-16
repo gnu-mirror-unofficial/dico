@@ -23,7 +23,7 @@ dictd_quit(dico_stream_t str, int argc, char **argv)
 {
     got_quit = 1;
     stream_writez(str, "221 bye");
-    print_timing(str, "dictd");
+    report_timing(str, "dictd");
     stream_writez(str, "\r\n");
 }
 

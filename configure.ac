@@ -289,6 +289,7 @@ AC_CONFIG_FILES([Makefile
                  dictd/Makefile
 		 modules/Makefile
 		 modules/outline/Makefile
+		 modules/dict.org/Makefile
                  makedict/Makefile
 		 tests/Makefile
 		 doc/Makefile])

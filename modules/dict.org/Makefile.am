@@ -14,5 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-SUBDIRS = outline dict.org
-EXTRA_DIST = sample.c
+moddir=@DICO_MODDIR@
+
+mod_LTLIBRARIES=dictorg.la
+
+dictorg_la_SOURCES = dictorg.c
+dictorg_la_LIBADD = ../../lib/libdico.la -lz
+AM_LDFLAGS = -module -avoid-version -no-undefined
+INCLUDES = -I$(top_srcdir)/include

@@ -47,6 +47,12 @@ ChangeLog:
 	if test -d .git; then                                           \
 	  $(top_srcdir)/build-aux/gitlog-to-changelog                   \
 	    --since=$(gen_start_date) | fmt -s > ChangeLog;             \
+	  echo "" >> ChangeLog;                                       \
+	  echo "Local Variables:" >> ChangeLog;                         \
+	  echo "mode: change-log" >> ChangeLog;                         \
+	  echo "version-control: never"  >> ChangeLog;                  \
+	  echo "buffer-read-only: t" >> ChangeLog;                      \
+	  echo "End:" >> ChangeLog;                                     \
         fi
 
 #dict:

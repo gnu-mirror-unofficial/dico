@@ -55,7 +55,8 @@ int utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char *s,
 int utf8_mbstr_to_wc(const char *str, unsigned **wptr);
 
 int dico_levenshtein_distance(const char *a, const char *b, int damerau);
-int dico_soundex(const char *s, char codestr[5]);
+#define DICO_SOUNDEX_SIZE 5
+int dico_soundex(const char *s, char codestr[DICO_SOUNDEX_SIZE]);
 
 #endif
 

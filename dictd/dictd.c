@@ -251,7 +251,7 @@ int
 soundex_sel(int cmd, const char *word, const char *dict_word, void *closure)
 {
     char *code = closure;
-    char dcode[5];
+    char dcode[DICO_SOUNDEX_SIZE];
     
     switch (cmd) {
     case DICO_SELECT_BEGIN:

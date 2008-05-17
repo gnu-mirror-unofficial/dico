@@ -52,12 +52,12 @@ static unsigned char soundextbl[] = {
 #define soundex_code(c) soundextbl[toupper(c)-'A']
 
 int
-dico_soundex(const char *s, char codestr[5])
+dico_soundex(const char *s, char codestr[DICO_SOUNDEX_SIZE])
 {
     int i, prev = 0;
     
     codestr[0] = toupper(*s);
-    for (i = 1, s++; i < 4 && *s; s++) {
+    for (i = 1, s++; i < DICO_SOUNDEX_SIZE-1 && *s; s++) {
 	int n =  soundex_code(*s);
 	if (n) {
 	    if (n == prev)
@@ -66,7 +66,7 @@ dico_soundex(const char *s, char codestr[5])
 	    prev = n;
 	}
     }
-    for (; i < 4; i++)
+    for (; i < DICO_SOUNDEX_SIZE-1; i++)
 	codestr[i] = '0';
     codestr[i] = 0;
     return 0;

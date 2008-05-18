@@ -60,9 +60,11 @@ static size_t compare_count;
 
 struct entry {
     char *word;             /* Word */
+    size_t length;          /* Its length in bytes */
     size_t wordlen;         /* Its length in characters */
     off_t offset;           /* Offset of the corresponding article in file */
     size_t size;            /* Size of the article */
+    struct entry *peer;
 };
 
 struct outline_file {
@@ -70,7 +72,8 @@ struct outline_file {
     FILE *fp;
     size_t count;
     struct entry *index;
-
+    struct entry *suf_index;
+    
     struct entry *info_entry, *descr_entry;
 };
 
@@ -142,7 +145,8 @@ alloc_entry(const char *text, size_t len)
 	}
 	memcpy(ep->word, text, len);
 	ep->word[len] = 0;
-	ep->wordlen = len; /* FIXME: multibyte!! */
+	ep->length = len; 
+	ep->wordlen = utf8_strlen(ep->word);
     }
     return ep;
 }
@@ -208,10 +212,13 @@ struct strategy_def {
 
 static int exact_match(struct outline_file *, const char *, struct result *);
 static int prefix_match(struct outline_file *, const char *, struct result *);
+static int suffix_match(struct outline_file *file, const char *word,
+			struct result *res);
 
 static struct strategy_def strat_tab[] = {
     { { "exact", "Match words exactly" }, exact_match },
     { { "prefix", "Match word prefixes" }, prefix_match },
+    { { "suffix", "Match word suffixes" }, suffix_match }
 };
 
 static entry_match_t
@@ -243,15 +250,66 @@ compare_entry(const void *a, const void *b)
     return utf8_strcasecmp(epa->word, epb->word);
 }
 
+
+static void
+revert_word(char *dst, const char *src, size_t len)
+{
+    struct utf8_iterator itr;
+    char *p = dst + len;
+
+    *p = 0;
+    for (utf8_iter_first(&itr, (unsigned char *)src);
+	 !utf8_iter_end_p(&itr);
+	 utf8_iter_next(&itr)) {
+	p -= itr.curwidth;
+	if (p < dst)
+	    break;
+	memcpy(p, itr.curptr, itr.curwidth);
+    }
+}
+
+static int
+init_suffix_index(struct outline_file *file)
+{
+    if (!file->suf_index) {
+	size_t i;
+	
+	file->suf_index = calloc(file->count, sizeof(file->suf_index[0]));
+	if (!file->suf_index) 
+	    return 1;
+	for (i = 0; i < file->count; i++) {
+	    char *p = malloc(file->index[i].length + 1);
+	    if (!p) {
+		while (i-- >= 0)
+		    free(file->suf_index[i].word);
+		free(file->suf_index);
+		return 1;
+	    }
+	    revert_word(p, file->index[i].word, file->index[i].length);
+	    file->suf_index[i] = file->index[i];
+	    file->suf_index[i].word = p;
+	    file->suf_index[i].peer = &file->index[i];
+	}
+    }
+    qsort(file->suf_index, file->count, sizeof(file->suf_index[0]),
+	  compare_entry);
+    compare_count = 0;
+    return 0;
+}
+
+
+
 static int
 exact_match(struct outline_file *file, const char *word, struct result *res)
 {
     struct entry x, *ep;
     x.word = (char*) word;
-    x.wordlen = strlen(word);
+    x.length = strlen(word);
+    x.wordlen = utf8_strlen(word);
     ep = bsearch(&x, file->index, file->count, sizeof(file->index[0]),
 		 compare_entry);
     if (ep) {
+	res->type = result_match;
 	res->v.ep = ep;
 	res->count = 1;
 	return 0;
@@ -277,7 +335,8 @@ prefix_match(struct outline_file *file, const char *word, struct result *res)
 {
     struct entry x, *ep;
     x.word = (char*) word;
-    x.wordlen = strlen(word);
+    x.length = strlen(word);
+    x.wordlen = utf8_strlen(word);
     ep = bsearch(&x, file->index, file->count, sizeof(file->index[0]),
 		 compare_prefix);
     if (ep) {
@@ -288,11 +347,86 @@ prefix_match(struct outline_file *file, const char *word, struct result *res)
 	for (ep++; ep < file->index + file->count
 		 && compare_prefix(&x, ep) == 0; ep++)
 	    count++;
+	res->type = result_match;
 	res->v.ep = p + 1;
 	res->count = count;
 	return 0;
     }
     return 1;
+}
+
+static int
+compare_entry_ptr(const void *a, const void *b)
+{
+    struct entry *const *epa = a;
+    struct entry *const *epb = b;
+    compare_count++;
+    return utf8_strcasecmp((*epa)->word, (*epb)->word);
+}
+
+static int
+suffix_match(struct outline_file *file, const char *word, struct result *res)
+{
+    struct entry x, *ep;
+    int rc;
+    
+    if (init_suffix_index(file)) {
+	dico_log(L_ERR, 0, "not enough memory");
+	return 1;
+    }
+    
+    x.length = strlen(word);
+    x.word = malloc(x.length + 1);
+    if (!x.word) {
+	dico_log(L_ERR, 0, "not enough memory");
+	return 1;
+    }
+    x.wordlen = utf8_strlen(word);
+
+    revert_word(x.word, word, x.length);
+    
+    ep = bsearch(&x, file->suf_index, file->count, sizeof(file->suf_index[0]),
+		 compare_prefix);
+    if (ep) {
+	struct entry *p, **epp;
+	size_t count = 1;
+
+	for (p = ep - 1; p > file->suf_index && compare_prefix(&x, p) == 0;
+	     p--)
+	    count++;
+	for (ep++; ep < file->suf_index + file->count
+		 && compare_prefix(&x, ep) == 0; ep++)
+	    count++;
+	p++;
+	
+	epp = calloc(count, sizeof(*epp));
+	if (!epp) {
+	    dico_log(L_ERR, 0, "not enough memory");
+	    rc = 1;
+	} else {
+	    res->type = result_match_list;
+	    res->v.list = dico_list_create();
+	    if (!res->v.list) {
+		dico_log(L_ERR, 0, "not enough memory");
+		rc = 1;
+	    } else {
+		size_t i;
+		
+		for (i = 0; i < count; i++)
+		    epp[i] = p[i].peer;
+		qsort(epp, count, sizeof(epp[0]), compare_entry_ptr);
+	    
+		for (i = 0; i < count; i++)
+		    dico_list_append(res->v.list, epp[i]);
+		res->count = dico_list_count(res->v.list);
+		rc = 0;
+	    }
+	    free(epp);
+	}
+    } else
+	rc = 1;
+    free(x.word);
+    return rc;
 }
 
 
@@ -306,9 +440,13 @@ outline_close(dico_handle_t hp)
     free(file->name);
     free(file->info_entry);
     free(file->descr_entry);
-    for (i = 0; i < file->count; i++) 
+    for (i = 0; i < file->count; i++) {
 	free(file->index[i].word);
+	if (file->suf_index)
+	    free(file->suf_index[i].word);
+    }
     free(file->index);
+    free(file->suf_index);
     free(file);
     return 0;
 }
@@ -461,7 +599,6 @@ outline_match0(dico_handle_t hp, const char *strat,
     if (!res)
 	return NULL;
     res->file = file;
-    res->type = result_match;
     if (match(file, word, res)) {
 	free(res);
 	res = NULL;
@@ -536,11 +673,11 @@ outline_define(dico_handle_t hp, const char *word)
     if (!res)
 	return NULL;
     res->file = file;
-    res->type = result_define;
     if (exact_match(file, word, res)) {
 	free(res);
 	res = NULL;
     }
+    res->type = result_define;
     res->compare_count = compare_count;
     return (dico_result_t) res;
 }

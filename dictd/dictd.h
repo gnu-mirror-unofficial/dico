@@ -68,6 +68,7 @@ extern dico_list_t database_list;
 extern int timing_option;
 extern char *user_name;
 extern dico_list_t user_groups; 
+extern int transcript;
 
 extern unsigned num_defines;
 extern unsigned num_matches;
@@ -343,6 +344,14 @@ dico_stream_t dictd_ostream_create(dico_stream_t str, const char *type,
 /* stat.c */
 void begin_timing(const char *name);
 void report_timing(dico_stream_t stream, const char *name);
+
+/* xscript.c */
+dico_stream_t transcript_stream_create(dico_stream_t transport,
+				       dico_stream_t logstr,
+				       const char *prefix[]);
+
+/* logstr.c */
+dico_stream_t log_stream_create(int level);
 
 
 

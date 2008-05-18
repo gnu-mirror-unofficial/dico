@@ -304,8 +304,14 @@ dictd_loop(dico_stream_t str)
     dictd_server_init();
     signal(SIGALRM, sig_alarm);
     memset(&input, 0, sizeof input);
-    initial_banner(str);
     got_quit = 0;
+    if (transcript) {
+	str = transcript_stream_create(str,
+				       log_stream_create(L_DEBUG),
+				       NULL);
+    }
+    initial_banner(str);
+
     while (!got_quit && get_input_line(str, &buf, &size, &rdbytes) == 0) {
 	trimnl(buf, rdbytes);
 	tokenize_input(&input, buf);

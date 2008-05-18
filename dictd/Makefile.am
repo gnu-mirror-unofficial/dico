@@ -27,6 +27,7 @@ dictd_SOURCES=\
  dictd.c\
  fdio.c\
  lev.c\
+ logstr.c\
  loader.c\
  main.c\
  mime.c\
@@ -34,7 +35,8 @@ dictd_SOURCES=\
  regex.c\
  server.c\
  stat.c\
- udb.c
+ udb.c\
+ xscript.c
 
 noinst_HEADERS=dictd.h config-gram.h
 

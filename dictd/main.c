@@ -21,7 +21,6 @@
 
 int foreground;     /* Run in foreground mode */
 int single_process; /* Single process mode */
-int log_to_stderr;  /* Log to stderr */
 /* Location of the default configuration file */
 char *config_file = SYSCONFIG "/dictd.conf" ; 
 /* Location of the pidfile */
@@ -38,9 +37,11 @@ unsigned int shutdown_timeout = 5;
 unsigned int inactivity_timeout = 0;
 
 /* Syslog parameters: */ 
+int log_to_stderr;  /* Log to stderr */
 const char *log_tag; 
 int log_facility = LOG_FACILITY;
 int log_print_severity;
+int transcript;
 
 /* Server information (for SHOW INFO command) */
 const char *server_info;
@@ -513,6 +514,8 @@ struct config_keyword keywords[] = {
     { "log-print-severity", N_("arg"),
       N_("Prefix diagnostics messages with their severity."),
       cfg_bool, &log_print_severity, 0 },
+    { "transcript", N_("arg"), N_("Log session transcript."),
+      cfg_bool, &transcript },
     { "pidfile", N_("name"),
       N_("Store PID of the master process in this file."),
       cfg_string, &pidfile_name, },

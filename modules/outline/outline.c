@@ -676,9 +676,10 @@ outline_define(dico_handle_t hp, const char *word)
     if (exact_match(file, word, res)) {
 	free(res);
 	res = NULL;
+    } else {
+	res->type = result_define;
+	res->compare_count = compare_count;
     }
-    res->type = result_define;
-    res->compare_count = compare_count;
     return (dico_result_t) res;
 }
 

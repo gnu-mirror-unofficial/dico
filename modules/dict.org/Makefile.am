@@ -18,7 +18,14 @@ moddir=@DICO_MODDIR@
 
 mod_LTLIBRARIES=dictorg.la
 
-dictorg_la_SOURCES = dictorg.c
+dictorg_la_SOURCES = \
+ crc.c\
+ data.c\
+ dictorg.c
+
+noinst_HEADERS = \
+ crc.h\
+ dictorg.h
 dictorg_la_LIBADD = ../../lib/libdico.la -lz
 AM_LDFLAGS = -module -avoid-version -no-undefined
 INCLUDES = -I$(top_srcdir)/include

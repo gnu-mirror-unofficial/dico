@@ -14,32 +14,7 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
-#include <dico.h>
-#include <ctype.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <unistd.h>
-#include <string.h>
-
-struct index_entry {
-    char *word;             /* Word */
-    size_t length;          /* Its length in bytes */
-    size_t wordlen;         /* Its length in characters */
-    off_t offset;           /* Offset of the corresponding article in file */
-    size_t size;            /* Size of the article */
-};
-
-struct dictdb {
-    const char *dbname;
-    char *basename;
-    size_t numwords;
-    struct index_entry *index;
-};
+#include "dictorg.h"
 
 static char *dbdir;
 

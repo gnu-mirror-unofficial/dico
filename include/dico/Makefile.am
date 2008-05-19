@@ -25,4 +25,5 @@ pkginclude_HEADERS = \
  types.h\
  url.h\
  utf8.h\
+ util.h\
  xlat.h

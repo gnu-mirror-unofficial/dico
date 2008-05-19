@@ -23,8 +23,8 @@
 const char b64_table[64] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-static int
-b64_input(char c)
+int
+dico_base64_input(char c)
 {
     int i;
 
@@ -48,7 +48,7 @@ dico_base64_decode(const char *iptr, size_t isize, char *optr, size_t osize,
     
     while (consumed < isize && nbytes + 3 < osize) {
 	while (i < 4 && consumed < isize) {
-	    tmp = b64_input(*iptr++);
+	    tmp = dico_base64_input(*iptr++);
 	    consumed++;
 	    if (tmp != -1)
 		data[i++] = tmp;

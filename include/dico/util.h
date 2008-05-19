@@ -1,5 +1,5 @@
 /* This file is part of Dico.
-   Copyright (C) 1998-2000, 2008 Sergey Poznyakoff
+   Copyright (C) 2008 Sergey Poznyakoff
 
    Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,24 +14,12 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef __dico_h
-#define __dico_h
+#ifndef __dico_util_h
+#define __dico_util_h
 
-#include <stdlib.h>
-#include <stdarg.h>
+char *dico_full_file_name(const char *dir, const char *file);
+size_t dico_trim_nl(char *buf);
+size_t dico_trim_ws(char *buf);
 
-#include <dico/types.h>
-#include <dico/argcv.h>
-#include <dico/list.h>
-#include <dico/assoc.h>
-#include <dico/stream.h>
-#include <dico/url.h>
-#include <dico/xlat.h>
-#include <dico/strat.h>
-#include <dico/utf8.h>
-#include <dico/filter.h>
-#include <dico/diag.h>
-#include <dico/util.h>
 
 #endif
-    

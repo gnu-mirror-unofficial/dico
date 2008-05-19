@@ -17,29 +17,55 @@
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
-#include <xdico.h>
+#include <dico.h>
 #include <xalloc.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 
-void
-trimnl(char *buf, size_t len)
+size_t
+dico_string_trim(char *buf, size_t len, int (*pred)(int c))
 {
-    if (len > 1 && buf[--len] == '\n') {
-	buf[len] = 0;
-	if (len > 1 && buf[--len] == '\r')
-	    buf[len] = 0;
-    }
+    while (len > 0 && pred(buf[len - 1]))
+	buf[--len] = 0;
+    return len;
+}
+
+static int
+_is_nl(int c)
+{
+    return c == '\r' || c == '\n';
+}
+
+size_t
+dico_trim_nl(char *buf)
+{
+    return dico_string_trim(buf, strlen(buf), _is_nl);
+}
+
+static int
+_is_ws(int c)
+{
+    return isspace(c);
+}
+
+size_t
+dico_trim_ws(char *buf)
+{
+    return dico_string_trim(buf, strlen(buf), _is_ws);
 }
 
 char *
-make_full_file_name(const char *dir, const char *file)
+dico_full_file_name(const char *dir, const char *file)
 {
     size_t dirlen = strlen(dir);
     int need_slash = !(dirlen && dir[dirlen - 1] == '/');
     size_t size = dirlen + need_slash + 1 + strlen(file) + 1;
-    char *buf = xmalloc(size);
+    char *buf = malloc(size);
 
+    if (!buf)
+	return NULL;
+    
     strcpy(buf, dir);
     if (need_slash)
 	strcpy(buf + dirlen++, "/");
@@ -52,56 +78,5 @@ make_full_file_name(const char *dir, const char *file)
 	file++;
     strcpy(buf + dirlen, file);
     return buf;
-}
-
-
-/* X-versions of dico library calls */
-
-dico_list_t
-xdico_list_create()
-{
-    dico_list_t p = dico_list_create();
-    if (!p)
-	xalloc_die();
-    return p;
-}
-
-dico_iterator_t
-xdico_iterator_create(dico_list_t list)
-{
-    dico_iterator_t p = dico_iterator_create(list); 
-    if (!p && errno == ENOMEM)
-	xalloc_die();
-    return p;
-}
-
-void
-xdico_list_append(struct list *list, void *data)
-{
-    if (dico_list_append(list, data) && errno == ENOMEM)
-	xalloc_die();
-}
-
-void
-xdico_list_prepend(struct list *list, void *data)
-{
-    if (dico_list_prepend(list, data) && errno == ENOMEM)
-	xalloc_die();
-}
-
-dico_assoc_list_t
-xdico_assoc_create()
-{
-    dico_assoc_list_t p = dico_assoc_create();
-    if (!p)
-	xalloc_die();
-    return p;
-}
-
-void
-xdico_assoc_add(dico_assoc_list_t assoc, const char *key, const char *value)
-{
-    if (dico_assoc_add(assoc, key, value) && errno == EINVAL)
-	xalloc_die();
 }
 

@@ -33,6 +33,8 @@ functionality required by RFC 2229, except for SASL commands.
 For test purposes a database module "outline" is available.  This
 module handles databases in Emacs outline format.
 
+The dict.org module is being developed.
+
 * Building
 
 As usual:

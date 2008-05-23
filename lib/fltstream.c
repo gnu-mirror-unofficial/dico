@@ -94,8 +94,13 @@ filter_wr_flush(void *data)
     struct filter_stream *fs = data;
     int rc = 0;
     
-    if (fs->level)
+    if (fs->level) {
 	rc = dico_stream_write(fs->transport, fs->buf, fs->level);
+	if (rc == 0) {
+	    if (fs->buf[fs->level-1] != '\n')
+		rc = dico_stream_write(fs->transport, "\r\n", 2);
+	}
+    }
     return rc;
 }
 

@@ -15,6 +15,7 @@ latest stable version.
 - Gnulib <http://www.gnu.org/software/gnulib/>
 - M4 <http://www.gnu.org/software/m4/>
 - libtool <http://www.gnu.org/software/libtool/>
+- Texinfo <http://www.gnu.org/software/texinfo/>
 
 * Bootstrapping
 

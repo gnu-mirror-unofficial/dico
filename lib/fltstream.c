@@ -109,29 +109,33 @@ filter_stream_create(dico_stream_t str,
     struct filter_stream *fs = malloc(sizeof(*fs));
     dico_stream_t stream;
     int rc;
-
+    
     if (!fs)
 	return NULL;
-    if (mode == FILTER_ENCODE)
-	rc = dico_stream_create(&stream, fs, 
-			        NULL, filter_write, filter_wr_flush,
-				NULL, NULL);
-    else
-	rc = dico_stream_create(&stream, fs, 
-			        filter_read, NULL, NULL,
-				NULL, NULL);
+
+    rc = dico_stream_create(&stream,
+			    mode == FILTER_ENCODE ?
+			        DICO_STREAM_WRITE : DICO_STREAM_READ,
+			    fs);
     if (rc) {
 	free(fs);
 	return NULL;
     }
-
-
+    
+    if (mode == FILTER_ENCODE) {
+	dico_stream_set_write(stream, filter_write);
+	dico_stream_set_flush(stream, filter_wr_flush);
+    } else {
+	dico_stream_set_read(stream, filter_read);
+    }
+    
     fs->transport = str;
     fs->level = 0;
     fs->min_level = min_level;
     fs->line_length = 0;
     fs->max_line_length = max_line_length;
     fs->xcode = xcode;
+
     return stream;
 }
 

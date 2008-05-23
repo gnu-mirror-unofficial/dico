@@ -36,16 +36,24 @@ log_write(void *data, char *buf, size_t size, size_t *pret)
     return 0;
 }
 
+static int
+log_destroy(void *data)
+{
+    free(data);
+    return 0;
+}
+
 dico_stream_t
 log_stream_create(int level)
 {
     struct log_stream *p = xmalloc(sizeof(*p));
     dico_stream_t stream;
-    int rc = dico_stream_create(&stream, p, 
-			        NULL, log_write, NULL, NULL, NULL);
+    int rc = dico_stream_create(&stream, DICO_STREAM_WRITE, p);
     if (rc)
 	xalloc_die();
-    dico_stream_set_buffer(stream, lb_out, 1024);
+    dico_stream_set_write(stream, log_write);
+    dico_stream_set_destroy(stream, log_destroy);
+    dico_stream_set_buffer(stream, dico_buffer_line, 1024);
     p->level = level;
     return stream;
 }

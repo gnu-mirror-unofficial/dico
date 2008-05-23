@@ -17,56 +17,25 @@
 #include <dictd.h>
 #include <unistd.h>
 
-struct fds {
-    int in;
-    int out;
-};
-    
-
-static int
-fd_read(void *data, char *buf, size_t size, size_t *pret)
-{
-    struct fds *p = data;
-    int n = read(p->in, buf, size);
-    if (n == -1)
-	return errno;
-    *pret = n;
-    return 0;
-}
-
-static int
-fd_write(void *data, char *buf, size_t size, size_t *pret)
-{
-    struct fds *p = data;
-    int n = write(p->out, buf, size);
-    if (n == -1)
-	return errno;
-    *pret = n;
-    return 0;
-}
-
-static int
-fd_close(void *data)
-{
-    struct fds *p = data;
-    int rc1 = p->in >= 0 ? close(p->in) : 0,
-	rc2 = p->out >= 0 ? close(p->out) : 0;
-
-    if (rc1 || rc2)
-	return errno;
-    return 0;
-}
-
 dico_stream_t
 fd_stream_create(int ifd, int ofd)
 {
-    struct fds *p = xmalloc(sizeof(*p));
-    dico_stream_t stream;
-    int rc = dico_stream_create(&stream, p, 
-			        fd_read, fd_write, NULL, fd_close, NULL);
-    if (rc)
-	xalloc_die();
-    p->in = ifd;
-    p->out = ofd;
-    return stream;
+    dico_stream_t in, out;
+    dico_stream_t str;
+
+    in = dico_fd_stream_create(ifd, DICO_STREAM_READ);
+    if (!in)
+	return 0;
+    out = dico_fd_stream_create(ofd, DICO_STREAM_WRITE);
+    if (!out) {
+	dico_stream_destroy(&in);
+	return NULL;
+    }
+
+    str = dico_io_stream(in, out);
+    if (!str) {
+	dico_stream_destroy(&in);
+	dico_stream_destroy(&out);
+    }
+    return str;
 }

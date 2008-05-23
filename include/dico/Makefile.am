@@ -19,6 +19,7 @@ pkginclude_HEADERS = \
  assoc.h\
  diag.h\
  filter.h\
+ lbuf.h\
  list.h\
  strat.h\
  stream.h\

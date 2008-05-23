@@ -94,6 +94,7 @@ ostream_destroy(void *data)
     struct ostream *ostr = data;
     if (ostr->flags & OSTREAM_DESTROY_TRANSPORT)
 	dico_stream_destroy(&ostr->transport);
+    free(data);
     return 0;
 }
 
@@ -103,15 +104,17 @@ dictd_ostream_create(dico_stream_t str, const char *type, const char *enc)
     struct ostream *ostr = xmalloc(sizeof(*ostr));
     dico_stream_t stream;
 
-    int rc = dico_stream_create(&stream, ostr, NULL, ostream_write,
-				ostream_flush, NULL, ostream_destroy);
+    int rc = dico_stream_create(&stream, DICO_STREAM_WRITE, ostr);
     if (rc)
 	xalloc_die();
     ostr->transport = str;
     ostr->flags = 0;
     ostr->type = type;
     ostr->encoding = enc;
-    dico_stream_set_buffer(stream, lb_out, 1024);
+    dico_stream_set_write(stream, ostream_write);
+    dico_stream_set_flush(stream, ostream_flush);
+    dico_stream_set_destroy(stream, ostream_destroy);
+    dico_stream_set_buffer(stream, dico_buffer_line, 1024);
     return stream;
 }
 

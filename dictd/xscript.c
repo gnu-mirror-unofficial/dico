@@ -72,34 +72,44 @@ transcript_read(void *data, char *buf, size_t size, size_t *pret)
 {
     struct transcript_stream *p = data;
     size_t nbytes;
-    int rc = dico_stream_read(p->transport, buf, size, &nbytes);
-    if (rc == 0) {
+
+    if (dico_stream_read(p->transport, buf, size, &nbytes) == 0) {
 	print_transcript(p, TRANS_READ, buf, nbytes);
 	if (pret)
 	    *pret = nbytes;
-    }
-    return rc;
+    } else
+	return dico_stream_last_error(p->transport);
+    return 0;
 }
 
 static int
 transcript_write(void *data, char *buf, size_t size, size_t *pret)
 {
     struct transcript_stream *p = data;
-    int rc = dico_stream_write(p->transport, buf, size);
-    if (rc == 0) {
+    if (dico_stream_write(p->transport, buf, size) == 0) {
 	print_transcript(p, TRANS_WRITE, buf, size);
 	if (pret)
 	    *pret = size;
-    }
-    return rc;
+    } else
+	return dico_stream_last_error(p->transport);
+    return 0;
 }
 
-static void
+static int
 transcript_destroy(void *data)
 {
     struct transcript_stream *p = data;
     free(p->prefix[0]);
     free(p->prefix[1]);
+    free(p);
+    return 0;
+}
+
+static const char *
+transcript_strerror(void *data, int rc)
+{
+    struct transcript_stream *p = data;
+    return dico_stream_strerror(p->transport, rc);
 }
 
 const char *default_prefix[2] = {
@@ -112,10 +122,7 @@ transcript_stream_create(dico_stream_t transport, dico_stream_t logstr,
 {
     struct transcript_stream *p = xmalloc(sizeof(*p));
     dico_stream_t stream;
-    int rc = dico_stream_create(&stream, p, 
-			        transcript_read, transcript_write,
-				NULL, NULL,
-				transcript_destroy);
+    int rc = dico_stream_create(&stream, DICO_STREAM_READ|DICO_STREAM_WRITE, p);
     if (rc)
 	xalloc_die();
     p->flags = TRANS_READ | TRANS_WRITE;
@@ -128,6 +135,12 @@ transcript_stream_create(dico_stream_t transport, dico_stream_t logstr,
     }
     p->transport = transport;
     p->logstr = logstr;
+    
+    dico_stream_set_read(stream, transcript_read);
+    dico_stream_set_write(stream, transcript_write);
+    dico_stream_set_destroy(stream, transcript_destroy);
+    dico_stream_set_error_string(stream, transcript_strerror);
+    dico_stream_set_buffer(stream, dico_buffer_line, 1024);
     return stream;
 }
 

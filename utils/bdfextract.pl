@@ -1,6 +1,5 @@
 #! /usr/bin/perl
-#$Id$
-# Dico converts character glyphs from the bdf font file into
+# This program converts character glyphs from the bdf font file into
 # xbm files.
 # usage: bdfextract.pl [-v] [-x xlist] [-l list] [-o outdir] file.bdf
 #     -v          verbose mode
@@ -14,13 +13,14 @@
 #     -o outdir   output directory name. Default is ./
 #
 
+no integer;
 while ($_ = $ARGV[0], /^-/) {
     shift;
     last if /^--$/;
     /^-d(.*)/ && ($debug = $1);
     /^-v/ && $verbose++;
     /^-x(.*)/ && do {
-	@array=split(/[ \t\n]+/, substr($_,2));
+	@array=split(' ', $1);
 	if (scalar(@array) % 2 == 0) {
 	    for ($i=0; $i<scalar(@array); $i+=2) {
 		$xlist{$array[$i]} = $array[$i+1];
@@ -30,7 +30,7 @@ while ($_ = $ARGV[0], /^-/) {
 	}
     };
     /^-l(.*)/ && do {
-	@array=split(/[ \t\n]+/, substr($_,2));
+	@array=split(' ', $1);
 	for ($i=0; $i<scalar(@array); $i++) {
 	    $xlist{$array[$i]} = $array[$i];
 	}
@@ -88,10 +88,21 @@ while (<>) {
 	    select STDOUT;
 	    $in_char=0;
 	    $in_bitmap=0;
-	} elsif (/[0-9a-fA-F]+/) {
-	    ($num)=/([0-9a-fA-F]+)/;
-	    $s=`echo $num|utils/revbits`;
-	    print "0x".substr($s, 2, 2).", 0x".substr($s, 0, 2).",\n" ;
+	} elsif (/([0-9a-fA-F]+)/) {
+	    $num=hex($1);
+	    $a = $num >>  1;
+	    $b = $num <<  1;
+	    $num = ("$a" & 0x55555555) | ("$b" & 0xaaaaaaaa);
+	    $a = $num >>  2;
+	    $b = $num <<  2;
+	    $num = ("$a" & 0x33333333) | ("$b" & 0xcccccccc);
+	    $a = $num >>  4;
+	    $b = $num <<  4;
+	    $num = ("$a" & 0x0f0f0f0f) | ("$b" & 0xf0f0f0f0);
+	    $a = $num >>  8;
+	    $b = $num <<  8;
+	    $num = ("$a" & 0x00ff00ff) | ("$b" & 0xff00ff00);
+            printf("0x%02x, 0x%02x,\n", $num & 0xff, ($num >> 8) & 0xff);
 	}
     } else {
 	if (/STARTCHAR[ \t]*[0-9a-fA-F]+/) {

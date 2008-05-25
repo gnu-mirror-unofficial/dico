@@ -45,9 +45,14 @@ function endchar() {
 /0x[0-9a-fA-F][0-9a-fA-F],/ {
     for (i=1; i <= NF; i++) 
        bits[i] = substr($i, 3, 2)
-    for (i = 1; i <= NF; i += 2) 
-       print bits[i+1] bits[i] | "revbits" # LSB first
-    close("revbits")	   
+    for (i = 1; i <= NF; i += 2) {
+	n = strtonum("0x" bits[i+1] bits[i]);
+	n = or(and(rshift(n, 1), 0x5555), and(lshift(n, 1), 0xaaaa));
+	n = or(and(rshift(n, 2), 0x3333), and(lshift(n, 2), 0xcccc));
+        n = or(and(rshift(n, 4), 0x0f0f), and(lshift(n, 4), 0xf0f0));
+        n = or(and(rshift(n, 8), 0x00ff), and(lshift(n, 8), 0xff00));
+        printf("%04x\n", n);
+     }
 }
 
 END {

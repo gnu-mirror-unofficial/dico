@@ -16,9 +16,12 @@ functionality, but it knows nothing about database formats.  Actual
 searches are performed by functions supplied in loadable modules.  A
 single module can serve one or more databases. 
 
-At least two modules will be added in the nearest future: a module for
-handling dict.org databases, and a module for lookups in Jim Breen's
-Kanjidic and Edict databases.
+The package includes several modules for searching in different
+dictionary databases, among them a module for dict.org databases and a
+module for databases in Emacs "outline" format.
+
+A module for lookups in Jim Breen's Kanjidic and Edict databases will
+be added in future.
 
 * What's in a name?
 
@@ -33,7 +36,8 @@ functionality required by RFC 2229, except for SASL commands.
 For test purposes a database module "outline" is available.  This
 module handles databases in Emacs outline format.
 
-The dict.org module is being developed.
+The dict.org module currently supports plain-text dictionaries. 
+Support for gzipped (dz) dictionaries is in development.
 
 * Building
 

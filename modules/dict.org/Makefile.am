@@ -21,7 +21,8 @@ mod_LTLIBRARIES=dictorg.la
 dictorg_la_SOURCES = \
  crc.c\
  data.c\
- dictorg.c
+ dictorg.c\
+ dictstr.c
 
 noinst_HEADERS = \
  crc.h\

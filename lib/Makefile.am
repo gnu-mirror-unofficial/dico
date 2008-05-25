@@ -31,6 +31,7 @@ libdico_la_SOURCES=\
  levenshtein.c\
  linebuf.c\
  list.c\
+ mapstream.c\
  qp.c\
  soundex.c\
  strat.c\

@@ -54,6 +54,9 @@ int dico_stream_set_buffer(dico_stream_t stream,
 			   enum dico_buffer_type type,
 			   size_t size);
 
+off_t dico_stream_seek(dico_stream_t stream, off_t offset, int whence);
+
+
 int dico_stream_read_unbuffered(dico_stream_t stream, char *buf, size_t size,
 				size_t *pread);
 int dico_stream_write_unbuffered(dico_stream_t stream, char *buf, size_t size,
@@ -82,5 +85,6 @@ void dico_stream_destroy(dico_stream_t *stream);
 dico_stream_t dico_fd_stream_create(int fd, int flags);
 
 dico_stream_t dico_io_stream(dico_stream_t in, dico_stream_t out);
+dico_stream_t dico_mapfile_stream_create(const char *filename, int flags);
 
 #endif

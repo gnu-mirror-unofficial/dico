@@ -350,6 +350,7 @@ dico_list_insert_sorted(struct list *list, void *data, dico_list_comp_t cmp)
 	    ep->data = data;
 	    ep->next = cur;
 	    prev->next = ep;
+	    list->count++;
 	} else
 	    rc = 1;
     }

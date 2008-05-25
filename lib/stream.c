@@ -49,12 +49,13 @@ struct dico_stream {
     void *data;
 };    
 
-static void
+static int
 _stream_seterror(dico_stream_t stream, int code, int perm)
 {
     stream->last_err = code;
     if (perm)
 	stream->flags |= _STR_ERR;
+    return code;
 }
 
 int
@@ -73,8 +74,9 @@ dico_stream_create(dico_stream_t *pstream, int flags, void *data)
 int
 dico_stream_open(dico_stream_t stream)
 {
-    if (stream->open && stream->open(stream->data, stream->flags))
-	return 1;
+    int rc;
+    if (stream->open && (rc = stream->open(stream->data, stream->flags))) 
+	return _stream_seterror(stream, rc, 1);
     stream->offset = 0;
     return 0;
 }
@@ -135,9 +137,12 @@ dico_stream_set_destroy(dico_stream_t stream, int (*destroyfn) (void *))
 const char *
 dico_stream_strerror(dico_stream_t stream, int rc)
 {
+    const char *str;
     if (stream->error_string)
-	stream->error_string(stream->data, rc);
-    return strerror(rc);
+	str = stream->error_string(stream->data, rc);
+    else
+	str =  strerror(rc);
+    return str;
 }
 
 int
@@ -165,7 +170,9 @@ dico_stream_eof(dico_stream_t stream)
 off_t
 dico_stream_seek(dico_stream_t stream, off_t offset, int whence)
 {
+    int rc;
     off_t res;
+    size_t bpos;
     
     if (!stream->seek) {
 	_stream_seterror(stream, ENOSYS, 0);
@@ -176,20 +183,38 @@ dico_stream_seek(dico_stream_t stream, off_t offset, int whence)
 	return -1;
     }
 
-    if (whence == DICO_SEEK_CUR) {
-	size_t bpos = _stream_buffer_offset(stream);
+    switch (whence) {
+    case DICO_SEEK_SET:
+	break;
+
+    case DICO_SEEK_CUR:
+	break;
+
+    case DICO_SEEK_END: 
+	bpos = _stream_buffer_offset(stream);
 	if (bpos + offset >= 0 && bpos + offset < _stream_orig_level(stream)) {
-	    if (stream->seek(stream->data, offset, whence, &res))
+	    if (rc = stream->seek(stream->data, offset, whence, &res)) {
+		_stream_seterror(stream, rc, 1);
 		return -1;
+	    }
 	    offset -= bpos;
 	    _stream_advance_buffer(stream, offset);
 	    return res - stream->level;
 	}
-    }
-    
-    if (dico_stream_flush(stream)
-	|| stream->seek(stream->data, offset, whence, &res))
+	break;
+
+    default:
+	_stream_seterror(stream, EINVAL, 1);
 	return -1;
+    }
+
+    if (dico_stream_flush(stream))
+	return -1;
+    rc = stream->seek(stream->data, offset, whence, &res);
+    if (rc) {
+	_stream_seterror(stream, rc, 1);
+	return -1;
+    }
     return res;
 }
 
@@ -213,9 +238,8 @@ dico_stream_set_buffer(dico_stream_t stream, enum dico_buffer_type type,
 
     stream->buffer = malloc(size);
     if (stream->buffer == NULL) {
-	_stream_seterror(stream, ENOMEM, 1);
 	stream->buftype = dico_buffer_none;
-	return 1;
+	return _stream_seterror(stream, ENOMEM, 1);
     }
     stream->bufsize = size;
     stream->cur = stream->buffer;
@@ -230,18 +254,14 @@ dico_stream_read_unbuffered(dico_stream_t stream, char *buf, size_t size,
 {
     int rc;
 
-    if (!stream->read) {
-	_stream_seterror(stream, ENOSYS, 0);
-	return 1;
-    }
+    if (!stream->read) 
+	return _stream_seterror(stream, ENOSYS, 0);
 
-    if (!(stream->flags & DICO_STREAM_READ)) {
-	_stream_seterror(stream, EACCES, 1);
-	return 1;
-    }
+    if (!(stream->flags & DICO_STREAM_READ)) 
+	return _stream_seterror(stream, EACCES, 1);
     
     if (stream->flags & _STR_ERR)
-	return 1;
+	return stream->last_err;
     
     if ((stream->flags & _STR_EOF) || size == 0) {
 	if (pread)
@@ -280,18 +300,14 @@ dico_stream_write_unbuffered(dico_stream_t stream, char *buf, size_t size,
 {
     int rc;
     
-    if (!stream->write) {
-	_stream_seterror(stream, ENOSYS, 0);
-	return 1;
-    }
+    if (!stream->write) 
+	return _stream_seterror(stream, ENOSYS, 0);
 
-    if (!(stream->flags & DICO_STREAM_WRITE)) {
-	_stream_seterror(stream, EACCES, 1);
-	return 1;
-    }
+    if (!(stream->flags & DICO_STREAM_WRITE)) 
+	return _stream_seterror(stream, EACCES, 1);
 
     if (stream->flags & _STR_ERR)
-	return 1;
+	return stream->last_err;
 
     if (size == 0) {
 	if (pwrite)
@@ -447,10 +463,8 @@ dico_stream_read(dico_stream_t stream, char *buf, size_t size, size_t *pread)
 
 	if (pread)
 	    *pread = nbytes;
-	else if (size) {
-	    _stream_seterror(stream, EIO, 1);
-	    return 1;
-	}
+	else if (size) 
+	    return _stream_seterror(stream, EIO, 1);
     }
     return 0;
 }

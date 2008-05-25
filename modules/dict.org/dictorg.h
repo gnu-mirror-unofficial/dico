@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <zlib.h>
 
 #define DICTORG_ENTRY_PREFIX        "00-database"
 #define DICTORG_ENTRY_PREFIX_LEN    sizeof(DICTORG_ENTRY_PREFIX)-1
@@ -48,6 +49,43 @@
 #define DICTORG_GZIP       2
 #define DICTORG_DZIP       3
 
+/* Header field definitions from dict.org project */
+
+/* For gzip-compatible header, as defined in RFC 1952 */
+
+				/* Magic for GZIP (rfc1952)                */
+#define GZ_MAGIC1     0x1f	/* First magic byte                        */
+#define GZ_MAGIC2     0x8b	/* Second magic byte                       */
+
+				/* FLaGs (bitmapped), from rfc1952         */
+#define GZ_FTEXT      0x01	/* Set for ASCII text                      */
+#define GZ_FHCRC      0x02	/* Header CRC16                            */
+#define GZ_FEXTRA     0x04	/* Optional field (random access index)    */
+#define GZ_FNAME      0x08	/* Original name                           */
+#define GZ_COMMENT    0x10	/* Zero-terminated, human-readable comment */
+#define GZ_MAX           2	/* Maximum compression                     */
+#define GZ_FAST          4	/* Fasted compression                      */
+
+#define GZ_RND_S1       'R'	/* First magic for random access format    */
+#define GZ_RND_S2       'A'	/* Second magic for random access format   */
+
+#define GZ_ID1           0	/* GZ_MAGIC1                               */
+#define GZ_ID2           1	/* GZ_MAGIC2                               */
+#define GZ_CM            2	/* Compression Method (Z_DEFALTED)         */
+#define GZ_FLG	         3	/* FLaGs (see above)                       */
+#define GZ_MTIME         4	/* Modification TIME                       */
+#define GZ_XFL           8	/* eXtra FLags (GZ_MAX or GZ_FAST)         */
+#define GZ_OS            9	/* Operating System                        */
+#define GZ_XLEN         10	/* eXtra LENgth (16bit)                    */
+#define GZ_FEXTRA_START 12	/* Start of extra fields                   */
+#define GZ_SI1          12	/* Subfield ID1                            */
+#define GZ_SI2          13      /* Subfield ID2                            */
+#define GZ_SUBLEN       14	/* Subfield length (16bit)                 */
+#define GZ_VERSION      16      /* Version for subfield format             */
+#define GZ_CHUNKLEN     18	/* Chunk length (16bit)                    */
+#define GZ_CHUNKCNT     20	/* Number of chunks (16bit)                */
+#define GZ_RNDDATA      22	/* Random access data (16bit)              */
+
 struct index_entry {
     char *word;             /* Word */
     size_t length;          /* Its length in bytes */
@@ -56,11 +94,39 @@ struct index_entry {
     size_t size;            /* Size of the article */
 };
 
+struct rev_entry {
+    char *word;       
+    struct index_entry *ptr;
+};
+    
 struct dictdb {
     const char *dbname;
     char *basename;
     size_t numwords;
     struct index_entry *index;
+    struct rev_entry *suf_index;
+    dico_stream_t stream;
 };
 
-typedef struct dictorg_data *dictorg_data_t;
+enum result_type {
+    result_match,
+    result_define
+};
+
+struct result {
+    struct dictdb *db;
+    enum result_type type;
+    size_t compare_count;
+    dico_list_t list;
+};
+
+typedef int (*entry_match_t) (struct dictdb *,
+			      const char *word,
+			      struct result *res);
+
+struct strategy_def {
+    struct dico_strategy strat;
+    entry_match_t match;
+};
+
+dico_stream_t dict_stream_create(const char *filename);

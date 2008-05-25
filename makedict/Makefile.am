@@ -16,7 +16,12 @@
 
 dictdir=@dictdir@
 inputdictpath=@inputdictpath@
-bin_PROGRAMS=makedict
+
+JDICT_PROGS=makedict
+
+bin_PROGRAMS=@BUILD_JDICT_PROGS@
+EXTRA_PROGRAMS=makedict
+
 makedict_SOURCES=\
  compile.c\
  index.c\

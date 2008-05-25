@@ -67,7 +67,44 @@ AC_CHECK_FUNCS(gethostname select socket strdup strerror strtol \
 	       sysconf getdtablesize)
 
 gl_INIT
-				   
+
+# Check for zlib
+AC_CHECK_HEADER(zlib.h,
+                AC_CHECK_LIB(z, inflate,
+                             [AC_DEFINE_UNQUOTED([USE_LIBZ],
+	                         [Define this if you have libz library], 1)
+	                      AC_SUBST(LIBZ, -lz)]))
+
+LOG_FACILITY="LOG_LOCAL1"
+
+AC_ARG_VAR([LOG_FACILITY],
+	   [Default syslog facility])
+if test -n "$LOG_FACILITY"; then
+   case $LOG_FACILITY in
+   USER|DAEMON|AUTH|AUTHPRIV|MAIL|CRON|LOCAL[[0-7]])
+      LOG_FACILITY=LOG_$LOG_FACILITY;;
+   LOG_USER|LOG_DAEMON|LOG_AUTH|LOG_AUTHPRIV|LOG_MAIL|LOG_CRON|LOG_LOCAL[[0-7]])
+      ;;
+   *) AC_MSG_ERROR([Invalid value of LOG_FACILITY]);;
+   esac
+fi		      
+AC_DEFINE_UNQUOTED([LOG_FACILITY],$LOG_FACILITY,
+                   [Default syslog facility.])
+	
+# FIXME: This is not a right place for this
+AH_BOTTOM([
+/* Provide placeholders for future i18n framework */
+#define N_(s) s
+#define _(s) s
+
+#if defined (SETVBUF_REVERSED)
+# define SETVBUF(str,buf,mode,size) setvbuf(str,mode,buf,size)
+#else
+# define SETVBUF(str,buf,mode,size) setvbuf(str,buf,mode,size)
+#endif
+])
+
+
 # Check for Berkeley DB
 db_path=
 db_version=4
@@ -120,9 +157,9 @@ check_bdb() {
                        && v_patch == DB_VERSION_PATCH);
             ])],
            [DB_LIBS="-l$2"],
-           [LIBS=$save_LIBS
-	    unset ac_cv_header_db_h
+           [unset ac_cv_header_db_h
 	    status_dbm=no])
+	   LIBS=$save_LIBS
 	fi
 }
 
@@ -158,11 +195,12 @@ check_slackware_bdb() {
 check_bdb $db_version db db_create
 if test $status_dbm = no; then
    check_slackware_bdb $db_version
-   if test $status_dbm = no; then
-     AC_MSG_ERROR([No suitable Berkeley DB library found.])
-   fi
 fi   	  
-		  			   
+
+if test $status_dbm != no; then
+  AC_SUBST(BUILD_JDICT_PROGS,'$(JDICT_PROGS)')
+fi
+
 # Check X configuration
 AC_PATH_XTRA
 
@@ -189,17 +227,6 @@ BDFTOPCF=bdftopcf
 AC_SUBST(GZIP)
 GZIP=gzip
 
-log_facility="LOG_LOCAL1"
-AC_MSG_CHECKING(for syslog facility to use)
-AC_ARG_WITH(log-facility,
- [AC_HELP_STRING([--with-log-facility=facility],
-                 [enable logging to the given facility])],
- AC_TRY_COMPILE([#include <syslog.h>], int lf = $withval,
-	log_facility=$withval))
-AC_DEFINE_UNQUOTED(LOGFACILITY, $log_facility, [Syslog facility to use])
-AC_MSG_RESULT($log_facility)
-
-
 AC_SUBST(inputdictpath)
 inputdictpath=/usr/local/lib
 AC_ARG_WITH(input-dict-path,
@@ -214,33 +241,6 @@ AC_ARG_WITH(dict-path,
                  [Specify alternate path for dictionaries])],
  [dictdir=$withval])
 
-# FIXME: This is not a right place for this
-AH_BOTTOM([
-/* Provide placeholders for future i18n framework */
-#define N_(s) s
-#define _(s) s
-
-#if defined (SETVBUF_REVERSED)
-# define SETVBUF(str,buf,mode,size) setvbuf(str,mode,buf,size)
-#else
-# define SETVBUF(str,buf,mode,size) setvbuf(str,buf,mode,size)
-#endif
-])
-
-AC_ARG_VAR([LOG_FACILITY],
-	   [Default syslog facility])
-if test -n "$LOG_FACILITY"; then
-   case $LOG_FACILITY in
-   USER|DAEMON|AUTH|AUTHPRIV|MAIL|CRON|LOCAL[[0-7]])
-      LOG_FACILITY=LOG_$LOG_FACILITY;;
-   LOG_USER|LOG_DAEMON|LOG_AUTH|LOG_AUTHPRIV|LOG_MAIL|LOG_CRON|LOG_LOCAL[[0-7]])
-      ;;
-   *) AC_MSG_ERROR([Invalid value of LOG_FACILITY]);;
-   esac
-   AC_DEFINE_UNQUOTED([LOG_FACILITY],$LOG_FACILITY,
-                      [Default syslog facility.])
-fi		      
-	
 AC_ARG_VAR([SCROLL_WHEN_NEEDED],
            [Override the value of XawtextScrollWhenNeeded constant. In libXaw
             version 1.0.3, scrollVertical is boolean and the value whenNeeded

@@ -377,7 +377,7 @@ print_definitions(dictd_database_t *db, dico_result_t res,
     for (i = 0; i < count; i++) {
 	dico_stream_t ostr;
 	stream_printf(stream, "151 \"%s\" %s \"%s\"\r\n",
-		      word, db->name, descr);
+		      word, db->name, descr ? descr : "");
 	ostr = dictd_ostream_create(stream, db->content_type,
 				    db->content_transfer_encoding);
 	mp->module_output_result(res, i, ostr);

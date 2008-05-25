@@ -139,7 +139,7 @@ parse_index_entry(const char *filename, size_t line,
 
 	start = itr.curptr;
 	for (; !utf8_iter_end_p(&itr)
-		 && !(utf8_iter_isascii(itr) && ISWS(*itr.curptr));
+		 && !(utf8_iter_isascii(itr) && *itr.curptr == '\t');
 	     utf8_iter_next(&itr))
 	    ;
 	end = itr.curptr;
@@ -151,6 +151,7 @@ parse_index_entry(const char *filename, size_t line,
 		memerr("parse_index_entry");
 		return 1;
 	    }
+	    /* FIXME: strip trailing whitespace */
 	    memcpy(idx.word, start, len);
 	    idx.word[len] = 0;
 	    idx.length = len;
@@ -682,8 +683,8 @@ _match_simple(struct dictdb *db, const char *strat, const char *word)
     if (match(db, word, res)) {
 	free(res);
 	res = NULL;
-    }
-    res->compare_count = compare_count;
+    } else
+	res->compare_count = compare_count;
     return (dico_result_t) res;
 }
 

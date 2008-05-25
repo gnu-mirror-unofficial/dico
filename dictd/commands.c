@@ -88,7 +88,7 @@ _show_database(void *item, void *data)
     dico_stream_t str = data;
     char *descr = dictd_get_database_descr(dict);
     stream_printf(str, "%s \"%s\"\r\n",
-		  dict->name, descr); /* FIXME: Quote descr. */
+		  dict->name, descr ? descr : ""); /* FIXME: Quote descr. */
     dictd_free_database_descr(dict, descr);
     return 0;
 }

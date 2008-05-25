@@ -333,14 +333,17 @@ open_stream(struct dictdb *db)
 	     db->basename);
     return 1;
 }
-	    
+
+static int compare_entry(const void *a, const void *b);
+
 dico_handle_t
 mod_open(const char *dbname, int argc, char **argv)
 {
     struct dictdb *db;
     char *filename;
+    int sort_index = 0;
     
-    if (argc != 2) {
+    if (argc < 2 || argc > 3) {
 	dico_log(L_ERR, 0, _("mod_open: wrong number of arguments"));
 	return NULL;
     }
@@ -357,6 +360,16 @@ mod_open(const char *dbname, int argc, char **argv)
     } else
 	filename = strdup(argv[1]);
 
+    if (argc == 3) {
+	if (strcmp(argv[2], "sort") == 0)
+	    sort_index = 1;
+	else if (strcmp(argv[2], "nosort") == 0)
+	    sort_index = 0;
+	else
+	    dico_log(L_ERR, 0, _("mod_open: ignoring unknown option `%s'"),
+		     argv[2]);
+    }
+    
     if (!filename) {
 	memerr("mod_open");
 	return NULL;
@@ -378,6 +391,9 @@ mod_open(const char *dbname, int argc, char **argv)
 	return NULL;
     }
 
+    if (sort_index)
+	qsort(db->index, db->numwords, sizeof(db->index[0]), compare_entry);
+    
     if (open_stream(db)) {
 	free_db(db);
 	return NULL;

@@ -304,7 +304,7 @@ open_stream(struct dictdb *db)
     int rc;
     dico_stream_t str;
     
-    for (i = 0; i < ARRAY_SIZE(suff); i++) {
+    for (i = 0; i < DICO_ARRAY_SIZE(suff); i++) {
 	name = mkname(db->basename, suff[i]);
 	if (access(name, R_OK) == 0) {
 	    str = dict_stream_create(name);
@@ -453,7 +453,7 @@ static entry_match_t
 find_matcher(const char *strat)
 {
     int i;
-    for (i = 0; i < ARRAY_SIZE(strat_tab); i++) 
+    for (i = 0; i < DICO_ARRAY_SIZE(strat_tab); i++) 
 	if (strcmp(strat, strat_tab[i].strat.name) == 0)
 	    return strat_tab[i].match;
     return NULL;
@@ -463,7 +463,7 @@ static int
 register_strategies(void)
 {
     int i;
-    for (i = 0; i < ARRAY_SIZE(strat_tab); i++) 
+    for (i = 0; i < DICO_ARRAY_SIZE(strat_tab); i++) 
 	dico_strategy_add(&strat_tab[i].strat);
     return 0;
 }

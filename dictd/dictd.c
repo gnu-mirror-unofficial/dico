@@ -279,7 +279,7 @@ dictd_init_strategies()
 	{ "soundex", "Match using SOUNDEX algorithm", soundex_sel, code },
     };
     int i;
-    for (i = 0; i < ARRAY_SIZE(defstrat); i++)
+    for (i = 0; i < DICO_ARRAY_SIZE(defstrat); i++)
 	dico_strategy_add(defstrat + i);
 }
 

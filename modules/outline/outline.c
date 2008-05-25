@@ -225,7 +225,7 @@ static entry_match_t
 find_matcher(const char *strat)
 {
     int i;
-    for (i = 0; i < ARRAY_SIZE(strat_tab); i++) 
+    for (i = 0; i < DICO_ARRAY_SIZE(strat_tab); i++) 
 	if (strcmp(strat, strat_tab[i].strat.name) == 0)
 	    return strat_tab[i].match;
     return NULL;
@@ -235,7 +235,7 @@ int
 outline_init(int argc, char **argv)
 {
     int i;
-    for (i = 0; i < ARRAY_SIZE(strat_tab); i++) 
+    for (i = 0; i < DICO_ARRAY_SIZE(strat_tab); i++) 
 	dico_strategy_add(&strat_tab[i].strat);
     return 0;
 }

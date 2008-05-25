@@ -607,7 +607,7 @@ process_ident(struct config_keyword *kwp, config_value_t *value)
 		config_value_t *vp = p;
 		size_t size;
 
-		if (type >= ARRAY_SIZE(config_type_size)
+		if (type >= DICO_ARRAY_SIZE(config_type_size)
 		    || (size = config_type_size[type]) == 0) {
 		    config_error(&locus, 0,
 				 _("INTERNAL ERROR at %s:%d: "
@@ -641,7 +641,7 @@ process_ident(struct config_keyword *kwp, config_value_t *value)
 	size_t size;
 	void *ptr;
 	
-	if (type >= ARRAY_SIZE(config_type_size)
+	if (type >= DICO_ARRAY_SIZE(config_type_size)
 	    || (size = config_type_size[type]) == 0) {
 	    config_error(&locus, 0,
 			 _("INTERNAL ERROR at %s:%d: unhandled data type %d"),

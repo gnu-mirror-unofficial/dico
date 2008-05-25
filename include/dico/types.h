@@ -22,7 +22,7 @@
 #ifndef offsetof
 # define offsetof(s,f) ((size_t)&((s*)0)->f)
 #endif
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
+#define DICO_ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
 #ifndef DICO_ARG_UNUSED
 # define DICO_ARG_UNUSED __attribute__ ((__unused__))

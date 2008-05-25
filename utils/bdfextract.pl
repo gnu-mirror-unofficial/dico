@@ -92,16 +92,16 @@ while (<>) {
 	    $num=hex($1);
 	    $a = $num >>  1;
 	    $b = $num <<  1;
-	    $num = ("$a" & 0x55555555) | ("$b" & 0xaaaaaaaa);
+	    $num = ("$a" & 0x5555) | ("$b" & 0xaaaa);
 	    $a = $num >>  2;
 	    $b = $num <<  2;
-	    $num = ("$a" & 0x33333333) | ("$b" & 0xcccccccc);
+	    $num = ("$a" & 0x3333) | ("$b" & 0xcccc);
 	    $a = $num >>  4;
 	    $b = $num <<  4;
-	    $num = ("$a" & 0x0f0f0f0f) | ("$b" & 0xf0f0f0f0);
+	    $num = ("$a" & 0x0f0f) | ("$b" & 0xf0f0);
 	    $a = $num >>  8;
 	    $b = $num <<  8;
-	    $num = ("$a" & 0x00ff00ff) | ("$b" & 0xff00ff00);
+	    $num = ("$a" & 0x00ff) | ("$b" & 0xff00);
             printf("0x%02x, 0x%02x,\n", $num & 0xff, ($num >> 8) & 0xff);
 	}
     } else {

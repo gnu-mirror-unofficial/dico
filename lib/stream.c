@@ -45,6 +45,7 @@ struct dico_stream {
     int (*close) (void *);
     int (*destroy) (void *);
     int (*seek) (void *, off_t, int, off_t *);
+    int (*size) (void *, off_t *);
     const char *(*error_string) (void *, int);
     void *data;
 };    
@@ -131,6 +132,12 @@ void
 dico_stream_set_destroy(dico_stream_t stream, int (*destroyfn) (void *))
 {
     stream->destroy = destroyfn;
+}
+
+void
+dico_stream_set_size(dico_stream_t stream, int (*sizefn) (void *, off_t *))
+{
+    stream->size = sizefn;
 }
 
 
@@ -615,6 +622,16 @@ dico_stream_close(dico_stream_t stream)
     if (stream->close)
 	rc = stream->close(stream->data);
     return rc;
+}
+
+int
+dico_stream_size(dico_stream_t stream, off_t *psize)
+{
+    int rc;
+    if (!stream->size)
+	return _stream_seterror(stream, ENOSYS, 0);
+    rc = stream->size(stream->data, psize);
+    return _stream_seterror(stream, rc, rc != 0);
 }
 
 void

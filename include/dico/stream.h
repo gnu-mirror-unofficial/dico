@@ -39,6 +39,8 @@ int dico_stream_open(dico_stream_t stream);
 void dico_stream_set_open(dico_stream_t stream, int (*openfn) (void *, int));
 void dico_stream_set_seek(dico_stream_t stream,
 			  int (*fun_seek) (void *, off_t, int, off_t *));
+void dico_stream_set_size(dico_stream_t stream,
+			  int (*sizefn) (void *, off_t *));
 void dico_stream_set_read(dico_stream_t stream,
 			  int (*readfn) (void *, char *, size_t, size_t *));
 void dico_stream_set_write(dico_stream_t stream,    
@@ -55,6 +57,7 @@ int dico_stream_set_buffer(dico_stream_t stream,
 			   size_t size);
 
 off_t dico_stream_seek(dico_stream_t stream, off_t offset, int whence);
+int dico_stream_size(dico_stream_t stream, off_t *psize);
 
 
 int dico_stream_read_unbuffered(dico_stream_t stream, char *buf, size_t size,

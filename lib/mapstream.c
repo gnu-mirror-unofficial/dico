@@ -112,7 +112,7 @@ _mapfile_open(void *data, int flags)
     return 0;
 }
 
-int
+static int
 _mapfile_seek(void *data, off_t needle, int whence, off_t *presult)
 {
     struct _mapfile_stream *str = data;
@@ -141,7 +141,18 @@ _mapfile_seek(void *data, off_t needle, int whence, off_t *presult)
     *presult = offset;
     return 0;
 }
+
+static int
+_mapfile_size(void *data, off_t *presult)
+{
+    struct _mapfile_stream *mfs = data;
     
+    if (mfs->start == NULL)
+	return EINVAL;
+    *presult = mfs->size;
+    return 0;
+}
+
 static int
 _mapfile_read(void *data, char *buf, size_t size, size_t *pret)
 {
@@ -190,6 +201,7 @@ dico_mapfile_stream_create(const char *filename, int flags)
     }
     dico_stream_set_open(str, _mapfile_open);
     dico_stream_set_seek(str, _mapfile_seek);
+    dico_stream_set_size(str, _mapfile_size);
     dico_stream_set_read(str, _mapfile_read);
     dico_stream_set_close(str, _mapfile_close);
     dico_stream_set_destroy(str, _mapfile_destroy);

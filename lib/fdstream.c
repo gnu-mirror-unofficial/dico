@@ -70,6 +70,17 @@ fd_seek (void *data, off_t off, int whence, off_t *presult)
 }
 
 int
+fd_size (void *data, off_t *psize)
+{
+    struct _stream *p = data;
+    off_t size = lseek(p->fd, 0, SEEK_END);
+    if (size < 0)
+	return errno;
+    *psize = size;
+    return 0;
+}
+    
+int
 fd_destroy(void *data)
 {
     free(data);
@@ -91,6 +102,8 @@ dico_fd_stream_create(int fd, int flags)
 	return NULL;
     }
     s->fd = fd;
+    dico_stream_set_seek(str, fd_seek);
+    dico_stream_set_size(str, fd_size);
     dico_stream_set_write(str, fd_write);
     dico_stream_set_read(str, fd_read);
     dico_stream_set_close(str, fd_close);

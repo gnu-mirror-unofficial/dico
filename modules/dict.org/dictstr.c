@@ -424,7 +424,7 @@ _dict_read(void *data, char *buf, size_t size, size_t *pret)
     return DE_UNSUPPORTED_FORMAT;
 }
 
-static off_t
+static int
 _dict_seek_text(struct _dict_stream *str, off_t needle, int whence,
 		off_t *presult)
 {
@@ -435,7 +435,7 @@ _dict_seek_text(struct _dict_stream *str, off_t needle, int whence,
     return 0;
 }
 
-static off_t
+static int
 _dict_seek_dzip(struct _dict_stream *str, off_t needle, int whence,
 		off_t *presult)
 {

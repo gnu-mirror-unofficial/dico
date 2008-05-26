@@ -15,6 +15,7 @@
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <dictd.h>
+#include <sys/utsname.h>
 
 int got_quit;
 
@@ -144,7 +145,6 @@ dictd_show_strategies(dico_stream_t str, int argc, char **argv)
     }
 }
 	
-
 void
 dictd_show_server(dico_stream_t str, int argc, char **argv)
 {
@@ -152,9 +152,34 @@ dictd_show_server(dico_stream_t str, int argc, char **argv)
     
     stream_writez(str, "114 server information\r\n");
     ostr = dictd_ostream_create(str, NULL, NULL);
-    /* FIXME: (For logged in users) show:
-       dictd (gjdict 1.0.90) on Linux 2.6.18, Trurl.gnu.org.ua up 81+01:33:49, 12752570 forks (6554.7/hour)
-    */
+    stream_writez(str, "dictd ");
+    if (show_sys_info_p()) {
+	struct utsname uts;
+	uname(&uts);
+	stream_printf(str, "(%s) on %s %s, ", PACKAGE_STRING,
+		      uts.sysname, uts.release);
+    } else
+	stream_writez(str, "server on ");
+    stream_writez(str, hostname);
+    if (show_sys_info_p()) {
+	xdico_timer_t t;
+	double x, fph;
+	
+	stream_writez(str, " up ");
+	t = timer_get_temp("server");
+	x = timer_get_real(t);
+	free(t);
+	timer_format_time(str, x);
+	if (mode == MODE_DAEMON && !single_process) {
+	    x /= 3600;
+	    if (x < 0.0001)
+		fph = 0;
+	    else
+		fph = (total_forks + 1) / x;
+	    stream_printf(str, ", %lu forks (%.1f/hour)", total_forks, fph);
+	}
+    }
+    stream_writez(str, "\r\n");
     stream_write_multiline(ostr, server_info);
     stream_writez(ostr, "\r\n");
     dico_stream_close(ostr);

@@ -71,6 +71,7 @@ extern char *user_name;
 extern dico_list_t user_groups; 
 extern int transcript;
 
+extern unsigned long total_forks;
 extern unsigned num_defines;
 extern unsigned num_matches;
 extern unsigned num_compares;
@@ -242,6 +243,15 @@ typedef struct dictd_database {
     char *command;            /* Handler command line (for diagnostics) */
 } dictd_database_t;
 
+enum ssi_mode {
+    ssi_never,
+    ssi_always,
+    ssi_auth
+};
+
+extern enum ssi_mode show_sys_info;
+extern dico_list_t ssi_group_list;
+
 void dictd_server(int argc, char **argv);
 int dictd_loop(dico_stream_t stream);
 int dictd_inetd(void);
@@ -253,7 +263,7 @@ void dictd_database_free(dictd_database_t *dp);
 size_t database_count(void);
 int database_iterate(dico_list_iterator_t fun, void *data);
 int database_visible_p(const dictd_database_t *db);
-
+int show_sys_info_p(void);
 
 
 typedef void (*dictd_cmd_fn) (dico_stream_t str, int argc, char **argv);

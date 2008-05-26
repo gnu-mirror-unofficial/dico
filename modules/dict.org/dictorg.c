@@ -826,14 +826,23 @@ printdef(dico_stream_t str, struct dictdb *db, const struct index_entry *ep)
 {
     size_t size = ep->size;
     char buf[128];
-
-    dico_stream_seek(db->stream, ep->offset, SEEK_SET);
+    int rc;
+    
+    if (dico_stream_seek(db->stream, ep->offset, SEEK_SET) < 0) {
+	dico_log(L_ERR, 0, _("%s: seak error: %s"), db->basename,
+		 dico_stream_strerror(db->stream,
+				      dico_stream_last_error(db->stream)));
+	return;
+    }
     while (size) {
 	size_t rdsize = size;
 	if (rdsize > sizeof(buf))
 	    rdsize = sizeof(buf);
-	if (dico_stream_read(db->stream, buf, rdsize, NULL))
+	if ((rc = dico_stream_read(db->stream, buf, rdsize, NULL))) {
+	    dico_log(L_ERR, 0, _("%s: read error: %s"), db->basename,
+		     dico_stream_strerror(db->stream, rc));
 	    break;
+	}
 	dico_stream_write(str, buf, rdsize);
 	size -= rdsize;
     }

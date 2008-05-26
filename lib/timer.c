@@ -103,10 +103,9 @@ timer_start(const char *name)
    (((now).tv_sec - (then).tv_sec) \
     + ((now).tv_usec - (then).tv_usec)/1000000)
 
-xdico_timer_t
-timer_stop(const char *name)
+static void
+_timer_stop(xdico_timer_t t)
 {
-    xdico_timer_t t = timer_get(name);
     struct timeval  real;
     struct rusage   rusage;
 
@@ -119,9 +118,26 @@ timer_stop(const char *name)
     getrusage(RUSAGE_CHILDREN, &rusage);
     t->children_user = DIFFTIME(rusage.ru_utime, t->children_mark.ru_utime);
     t->children_system = DIFFTIME(rusage.ru_stime, t->children_mark.ru_stime);
+}
+
+xdico_timer_t
+timer_stop(const char *name)
+{
+    xdico_timer_t t = timer_get(name);
+    _timer_stop(t);
     return t;
 }
-    
+
+xdico_timer_t
+timer_get_temp(const char *name)
+{
+    xdico_timer_t t = timer_get(name);
+    xdico_timer_t ret = xmalloc(sizeof(*ret));
+    *ret = *t;
+    _timer_stop(ret);
+    return ret;
+}
+
 xdico_timer_t
 timer_reset(const char *name)
 {

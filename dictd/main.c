@@ -18,6 +18,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <xgethostname.h>
+#include <xgetdomainname.h>
 
 int foreground;     /* Run in foreground mode */
 int single_process; /* Single process mode */
@@ -46,6 +47,9 @@ int transcript;
 
 /* Server information (for SHOW INFO command) */
 const char *server_info;
+
+enum ssi_mode show_sys_info = ssi_never;
+dico_list_t /* of char * */ ssi_group_list;
 
 /* This host name */
 char *hostname;
@@ -491,6 +495,31 @@ user_db_config(enum cfg_callback_command cmd,
     return 0;
 }
 
+int
+set_show_sys_info(enum cfg_callback_command cmd,
+		  gd_locus_t *locus,
+		  void *varptr,
+		  config_value_t *value,
+		  void *cb_data)
+{
+    static struct xlat_tab tab[] = {
+	{ "never", ssi_never },
+	{ "always", ssi_always },
+	{ "auth", ssi_auth },
+	{ NULL }
+    };
+    
+    if (value->type != TYPE_STRING) {
+	config_error(locus, 0, _("expected scalar value but found list"));
+	return 1;
+    }
+    if (xlat_c_string(tab, value->v.string, 0, varptr)) {
+	config_error(locus, 0, _("unknown value"));
+	return 1;
+    }
+    return 0;
+}
+
 struct config_keyword keywords[] = {
     { "user", N_("name"), N_("Run with these user privileges."),
       cfg_string, NULL, 0, set_user  },
@@ -502,6 +531,16 @@ struct config_keyword keywords[] = {
     { "server-info", N_("text"),
       N_("Server description to be shown in reply to SHOW SERVER command."),
       cfg_string, &server_info,  },
+    { "show-sys-info", N_("arg: {always|never|auth}"),
+      N_("Show system information in reply to SHOW SERVER command:\n"
+	 "  always      - alwaysshow;\n"
+	 "  never       - never show;\n"
+	 "  auth        - show for authorized users"),
+      cfg_uint, &show_sys_info, 0, set_show_sys_info },
+    { "sys-info-groups", N_("arg"),
+      N_("With `show-sys-info auth', show system information only if "
+	 "the user is member of one of these groups"),
+      cfg_string|CFG_LIST, &ssi_group_list },
     { "max-children", N_("arg"),
       N_("Maximum number of children running simultaneously."),
       cfg_uint, &max_children, 0 },
@@ -576,6 +615,22 @@ static int
 cmp_group_name(const void *item, const void *data)
 {
     return strcmp((char*)item, (char*)data);
+}
+
+int
+show_sys_info_p()
+{
+    switch (show_sys_info) {
+    case ssi_always:
+	return 1;
+    case ssi_never:
+	return 0;
+    case ssi_auth:
+	return ssi_group_list ?
+	        dico_list_intersect_p(ssi_group_list, user_groups,
+				      cmp_group_name) :
+	        (user_name != NULL);
+    }
 }
 
 int
@@ -722,12 +777,38 @@ register_xversion()
 }
 
 
+static void
+get_full_hostname()
+{
+    struct hostent *hp;
+    char *hostpart = xgethostname();
+
+    hp = gethostbyname(hostpart);
+    if (hp) 
+	hostname = xstrdup(hp->h_name);
+    else {
+	char *domainpart = xgetdomainname();
+
+	if (domainpart && domainpart[0] && strcmp(domainpart, "(none)")) {
+	    hostname = xmalloc(strlen(hostpart) + 1
+			       + strlen(domainpart) + 1);
+	    strcpy(hostname, hostpart);
+	    strcat(hostname, ".");
+	    strcat(hostname, domainpart);
+	    free(hostpart);
+	} else
+	    hostname = hostpart;
+	free(domainpart);
+    }
+}
+
+
 int
 main(int argc, char **argv)
 {
     dico_set_program_name(argv[0]);
     log_tag = dico_program_name;
-    hostname = xgethostname();
+    get_full_hostname();
     dictd_init_command_tab();
     dictd_init_strategies();
     udb_init();
@@ -752,7 +833,8 @@ main(int argc, char **argv)
     }
 
     dictd_loader_init();
-    
+
+    begin_timing("server");
     switch (mode) {
     case MODE_DAEMON:
 	dictd_server(argc, argv);

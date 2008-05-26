@@ -24,6 +24,7 @@ int fdmax;
 
 pid_t *childtab;
 unsigned long num_children;
+unsigned long total_forks;
 
 static int
 address_family_to_domain (int family)
@@ -167,6 +168,7 @@ register_child(pid_t pid)
     if (i != (unsigned long)-1)
 	childtab[i] = pid;
     ++num_children;
+    ++total_forks;
 }
 
 static void
@@ -231,6 +233,9 @@ void
 stop_all(int sig)
 {
     unsigned long i;
+
+    if (!childtab)
+	return;
     for (i = 0; i < max_children; i++)
 	if (childtab[i])
 	    kill(sig, childtab[i]);
@@ -240,6 +245,8 @@ void
 stop_children()
 {
     int i;
+    if (!childtab)
+	return;
     stop_all(SIGTERM);
     for (i = 0; i < shutdown_timeout; i++) {
 	cleanup_children(1);
@@ -350,6 +357,7 @@ handle_connection(int listenfd)
 	dico_stream_set_buffer(str, lb_out, 512);
 	status = dictd_loop(str);
 	dico_stream_close(str);
+	dico_stream_destroy(&str);
     } else {
 	pid_t pid = fork();
 	if (pid == -1)
@@ -371,6 +379,7 @@ handle_connection(int listenfd)
 	    dico_stream_set_buffer(str, lb_out, 512);
 	    status = dictd_loop(str);
 	    dico_stream_close(str);
+	    dico_stream_destroy(&str);
 	    exit(status);
 	} else {
 	    register_child(pid);

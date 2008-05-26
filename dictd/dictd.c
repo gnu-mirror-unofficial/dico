@@ -320,9 +320,6 @@ dictd_loop(dico_stream_t str)
 	dictd_handle_command(str, input.argc, input.argv);
     }
     
-    dico_stream_close(str);
-    dico_stream_destroy(&str);
-    
     init_auth_data();
     return 0;
 }

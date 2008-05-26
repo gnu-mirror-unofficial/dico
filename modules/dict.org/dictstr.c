@@ -233,6 +233,7 @@ _dict_read_dzip(struct _dict_stream *str, char *buf, size_t size, size_t *pret)
 	size -= n;
 	buf += n;
 	rdbytes += n;
+	str->offset += n;
 	chunk_num++;
 	chunk_off = 0;
     }

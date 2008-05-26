@@ -20,6 +20,7 @@ static char *dbdir;
 static size_t compare_count;
 static int sort_index;
 static int trim_ws;
+static int show_dictorg_entries;
 
 static void
 memerr(const char *fname)
@@ -34,6 +35,8 @@ struct dico_option init_option[] = {
     { DICO_OPTSTR(dbdir), dico_opt_string, &dbdir },
     { DICO_OPTSTR(sort), dico_opt_bool, &sort_index },
     { DICO_OPTSTR(trim-ws), dico_opt_bool, &trim_ws },
+    { DICO_OPTSTR(show-dictorg-entries), dico_opt_bool,
+      &show_dictorg_entries },
     { NULL }
 };
 
@@ -363,11 +366,15 @@ mod_open(const char *dbname, int argc, char **argv)
     struct dictdb *db;
     char *filename = NULL;
     int sort_option = sort_index;
-    int trimws_option = trim_ws;  
+    int trimws_option = trim_ws;
+    int show_dictorg_option = show_dictorg_entries;
+    
     struct dico_option option[] = {
 	{ DICO_OPTSTR(sort), dico_opt_bool, &sort_option },
 	{ DICO_OPTSTR(database), dico_opt_const_string, &filename },
 	{ DICO_OPTSTR(trim-ws), dico_opt_bool, &trimws_option },
+	{ DICO_OPTSTR(show-dictorg-entries), dico_opt_bool,
+		      &show_dictorg_option },
 	{ NULL }
     };
 	
@@ -408,7 +415,8 @@ mod_open(const char *dbname, int argc, char **argv)
 
     db->dbname = dbname;
     db->basename = filename;
-
+    db->show_dictorg_entries = show_dictorg_option;
+    
     if (open_index(db, trimws_option)) {
 	free_db(db);
 	return NULL;
@@ -770,10 +778,20 @@ _match_all(struct dictdb *db, const char *word,
     return (dico_result_t) res;
 }
 
+#define RESERVED_WORD(db, word)			            \
+    (!(db)->show_dictorg_entries                            \
+	&& strlen(word) >= sizeof(DICTORG_ENTRY_PREFIX)-1   \
+	&& memcmp(word, DICTORG_ENTRY_PREFIX,               \
+		  sizeof(DICTORG_ENTRY_PREFIX)-1) == 0)
+
 dico_result_t
 mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 {
     struct dictdb *db = (struct dictdb *) hp;
+
+    if (RESERVED_WORD(db, word))
+	return NULL;
+    
     if (strat->sel) 
 	return _match_all(db, word, strat->sel, strat->closure);
     else
@@ -785,7 +803,11 @@ mod_define(dico_handle_t hp, const char *word)
 {
     struct dictdb *db = (struct dictdb *) hp;
     struct result res, *rp;
-    int rc = exact_match(db, word, &res);
+    int rc;
+
+    if (RESERVED_WORD(db, word))
+	return NULL;
+    rc = exact_match(db, word, &res);
     if (rc)
 	return NULL;
     rp = malloc(sizeof(*rp));

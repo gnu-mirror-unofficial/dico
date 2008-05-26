@@ -125,6 +125,7 @@ struct dictdb {
     size_t numwords;
     struct index_entry *index;
     struct rev_entry *suf_index;
+    int show_dictorg_entries;
     dico_stream_t stream;
 };
 

@@ -47,6 +47,7 @@ extern int foreground;     /* Run in foreground mode */
 extern int single_process; /* Single process mode */
 extern int log_to_stderr;  /* Log to stderr */
 extern char *config_file;
+extern int config_lint_option;
 extern char *pidfile_name;
 extern dico_list_t listen_addr;
 extern uid_t user_id;
@@ -274,6 +275,7 @@ void dictd_capa_register(const char *name, struct dictd_command *cmd,
 			 int (*init)(void*), void *closure);
 int dictd_capa_add(const char *name);
 void dictd_capa_iterate(int (*fun)(const char*, int, void *), void *closure);
+int dictd_capa_flush(void);
 
 /* mime.c */
 void register_mime(void);

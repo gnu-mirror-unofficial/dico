@@ -80,6 +80,12 @@ BEGIN
    exit(0);
 END   
 
+OPTION(lint,t,,
+       [<Check configuration file syntax and exit.>])
+BEGIN
+   config_lint_option = 1;
+END
+
 OPTIONS_END
 
 void

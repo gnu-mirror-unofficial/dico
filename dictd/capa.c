@@ -24,7 +24,8 @@ struct dictd_capa {
     int enabled;
 };
 
-dico_list_t /* of struct dictd_capa */ capa_list;
+/* List of supported capabilities: */
+static dico_list_t /* of struct dictd_capa */ capa_list;
 
 void
 dictd_capa_register(const char *name, struct dictd_command *cmd,
@@ -55,11 +56,25 @@ dictd_capa_add(const char *name)
 					     _cmp_capa_name);
     if (cp == NULL)
 	return 1;
-    if (cp->cmd)
-	dictd_add_command(cp->cmd);
-    if (cp->init && cp->init(cp->closure))
-	return 1;
     cp->enabled = 1;
+    return 0;
+}
+
+int
+dictd_capa_flush()
+{
+    dico_iterator_t itr;
+    struct dictd_capa *cp;
+    
+    itr = xdico_iterator_create(capa_list);
+    for (cp = dico_iterator_first(itr); cp; cp = dico_iterator_next(itr)) {
+	if (cp->enabled) {
+	    if (cp->init && cp->init(cp->closure))
+		return 1;
+	    if (cp->cmd)
+		dictd_add_command(cp->cmd);
+	}
+    }
     return 0;
 }
 

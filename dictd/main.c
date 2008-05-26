@@ -22,7 +22,8 @@
 int foreground;     /* Run in foreground mode */
 int single_process; /* Single process mode */
 /* Location of the default configuration file */
-char *config_file = SYSCONFIG "/dictd.conf" ; 
+char *config_file = SYSCONFIG "/dictd.conf" ;
+int config_lint_option; /* Check configuration file syntax and exit. */
 /* Location of the pidfile */
 char *pidfile_name = "/var/run/dictd.pid";
 
@@ -740,6 +741,10 @@ main(int argc, char **argv)
     config_set_keywords(keywords);
     if (config_parse(config_file))
 	exit(1);
+    if (dictd_capa_flush())
+	exit(1);
+    if (config_lint_option)
+	exit(0);
     
     if (!log_to_stderr) {
 	openlog(log_tag, LOG_PID, LOG_FACILITY);

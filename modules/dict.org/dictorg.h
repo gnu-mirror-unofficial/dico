@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
@@ -65,6 +66,23 @@
 #define GZ_COMMENT    0x10	/* Zero-terminated, human-readable comment */
 #define GZ_MAX           2	/* Maximum compression                     */
 #define GZ_FAST          4	/* Fasted compression                      */
+
+				/* These are from rfc1952                  */
+#define GZ_OS_FAT        0	/* FAT filesystem (MS-DOS, OS/2, NT/Win32) */
+#define GZ_OS_AMIGA      1	/* Amiga                                   */
+#define GZ_OS_VMS        2	/* VMS (or OpenVMS)                        */
+#define GZ_OS_UNIX       3      /* Unix                                    */
+#define GZ_OS_VMCMS      4      /* VM/CMS                                  */
+#define GZ_OS_ATARI      5      /* Atari TOS                               */
+#define GZ_OS_HPFS       6      /* HPFS filesystem (OS/2, NT)              */
+#define GZ_OS_MAC        7      /* Macintosh                               */
+#define GZ_OS_Z          8      /* Z-System                                */
+#define GZ_OS_CPM        9      /* CP/M                                    */
+#define GZ_OS_TOPS20    10      /* TOPS-20                                 */
+#define GZ_OS_NTFS      11      /* NTFS filesystem (NT)                    */
+#define GZ_OS_QDOS      12      /* QDOS                                    */
+#define GZ_OS_ACORN     13      /* Acorn RISCOS                            */
+#define GZ_OS_UNKNOWN  255      /* unknown                                 */
 
 #define GZ_RND_S1       'R'	/* First magic for random access format    */
 #define GZ_RND_S2       'A'	/* Second magic for random access format   */
@@ -129,4 +147,4 @@ struct strategy_def {
     entry_match_t match;
 };
 
-dico_stream_t dict_stream_create(const char *filename);
+dico_stream_t dict_stream_create(const char *filename, size_t cache_size);

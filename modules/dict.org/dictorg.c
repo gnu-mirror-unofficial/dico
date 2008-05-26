@@ -71,6 +71,9 @@ void
 free_db(struct dictdb *db)
 {
     size_t i;
+    
+    dico_stream_close(db->stream);
+    dico_stream_destroy(&db->stream);
     for (i = 0; i < db->numwords; i++) {
 	if (!db->index[i].word)
 	    break;
@@ -326,7 +329,7 @@ open_stream(struct dictdb *db)
     for (i = 0; i < DICO_ARRAY_SIZE(suff); i++) {
 	name = mkname(db->basename, suff[i]);
 	if (access(name, R_OK) == 0) {
-	    str = dict_stream_create(name);
+	    str = dict_stream_create(name, 0);
 	    if (!str) {
 		dico_log(L_ERR, errno,
 			 _("cannot create stream `%s'"),

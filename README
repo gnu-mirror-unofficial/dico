@@ -33,11 +33,14 @@ with stress on the last syllable.
 The dictd daemon is completely implemented. It provides all the
 functionality required by RFC 2229, except for SASL commands.
 
-For test purposes a database module "outline" is available.  This
-module handles databases in Emacs outline format.
+The package comes with the following database modules:
 
-The dict.org module currently supports plain-text dictionaries. 
-Support for gzipped (dz) dictionaries is in development.
+- dictorg
+ This module handles databases in dict.org format.
+
+- outline
+ Support for databases in Emacs outline format. This module is
+ designed mostly as an example and for testing purposes.
 
 * Building
 

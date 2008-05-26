@@ -22,6 +22,7 @@
 #define DE_UNSUPPORTED_VERSION -3
 #define DE_BAD_HEADER -4
 #define DE_GZIP_SEEK -5
+#define DE_INFLATE -6
 
 struct _dict_chunk {
     unsigned length;             /* Chunk length */
@@ -31,6 +32,7 @@ struct _dict_chunk {
 struct _dict_chunk_cache {
     int num;                     /* Chunk number */
     char *buffer;                /* Cunk contents */
+    size_t size;                 /* Size of data in buffer */
     unsigned refcount;           /* Reference count */
 };
 
@@ -55,7 +57,7 @@ struct _dict_stream {
     unsigned long size;          /* Original file size */
     unsigned long compressed_size; /* Compressed file size */
     size_t offset;               /* Offset in stream */
-
+    char *buffer;                /* Decompression buffer (chunk_size bytes) */
     /* Z stream */
     z_stream      zstream;
     int           zstr_ready;
@@ -76,6 +78,7 @@ cache_create_chunk(struct _dict_stream *str)
 	cp->buffer = (char*) (cp + 1);
 	cp->num = -1;
 	cp->refcount = 0;
+	cp->size = 0;
     }
     return cp;
 }
@@ -142,8 +145,9 @@ static int
 cache_get(struct _dict_stream *str, int chunk_num,
 	  struct _dict_chunk_cache **retptr)
 {
-    int i, rc;
+    int i;
     struct _dict_chunk_cache *cp;
+    size_t rdbytes;
     
     for (i = 0; i < str->cache_used; i++) {
 	if (str->cache[i]->num == chunk_num) {
@@ -157,30 +161,55 @@ cache_get(struct _dict_stream *str, int chunk_num,
     i = cache_alloc(str);
     cp = str->cache[i];
     cp->num = chunk_num;
-    rc = dico_stream_seek(str->transport, str->chunk[chunk_num].offset,
-			  DICO_STREAM_SEEK);
-    if (rc)
+    cache_promote(str, i);
+    if (dico_stream_seek(str->transport, str->chunk[chunk_num].offset,
+			 DICO_SEEK_SET) < 0)
 	return str->transport_error = dico_stream_last_error(str->transport);
-    if (dico_stream_read(str->transport, cp->buffer,
-			 str->chunk[chunk_num].length, NULL) < 0)
+
+    if (!str->zstr_ready) {
+	str->zstream.zalloc    = NULL;
+	str->zstream.zfree     = NULL;
+	str->zstream.opaque    = NULL;
+	str->zstream.next_in   = 0;
+	str->zstream.avail_in  = 0;
+	str->zstream.next_out  = NULL;
+	str->zstream.avail_out = 0;
+	if (inflateInit2(&str->zstream, -15 ) != Z_OK) {
+	    dico_log(L_ERR, 0, _("cannot initialize inflation engine: %s"),
+		     str->zstream.msg);
+	    return DE_INFLATE;
+	}
+	str->zstr_ready = 1;
+    }
+
+    if (dico_stream_read(str->transport, str->buffer,
+			 str->chunk[chunk_num].length, &rdbytes) < 0)
 	return str->transport_error = dico_stream_last_error(str->transport);
+    
+    str->zstream.next_in   = str->buffer;
+    str->zstream.avail_in  = rdbytes;
+    str->zstream.next_out  = cp->buffer;
+    str->zstream.avail_out = str->chunk_size;
+
+    if (inflate(&str->zstream, Z_PARTIAL_FLUSH) != Z_OK) {
+	dico_log(L_ERR, 0, "inflate: %s", str->zstream.msg);
+	return DE_INFLATE;
+    }
+
+    if (str->zstream.avail_in) {
+	dico_log(L_ERR, 0, _("%s:%d: INTERNAL ERROR: "
+			     "inflate did not flush (%d pending, %d avail)"),
+		 __FILE__, __LINE__,
+		 str->zstream.avail_in, str->zstream.avail_out );
+	return DE_INFLATE;
+    }
+    
+    cp->size = str->chunk_size - str->zstream.avail_out;
+	
     *retptr = cp;
     return 0;
 }
     
-
-int
-get_chunk_num(struct _dict_stream *str, off_t offset)
-{
-    int i;
-
-    for (i = 0; i < str->chunk_count; i++) {
-	if (str->chunk[i].offset > offset)
-	    return i-1;
-    }
-    return -1;
-}
-
 
 
 static int
@@ -194,7 +223,17 @@ static int
 _dict_destroy(void *data)
 {
     struct _dict_stream *str = data;
+
+    if (str->zstr_ready) {
+	if (inflateEnd(&str->zstream))
+	    dico_log(L_ERR, 0, _("%s:%d: INTERNAL ERROR: "
+				 "cannot shut down inflation engine: %s"),
+		     __FILE__, __LINE__, str->zstream.msg);
+	    /* Continue anyway */
+   }
+    
     cache_destroy(str);
+    free(str->buffer);
     dico_stream_destroy(&str->transport);
     free(str);
     return 0;
@@ -292,7 +331,10 @@ _dict_open(void *data, int flags)
 
 	    stream_get16(str->transport, &buf16);
 	    str->chunk_size = buf16;
-
+	    str->buffer = malloc(buf16);
+	    if (!str->buffer)
+		return ENOMEM;
+	    
 	    stream_get16(str->transport, &buf16);
 	    str->chunk_count = buf16;
 
@@ -301,12 +343,9 @@ _dict_open(void *data, int flags)
 
 	    str->chunk = calloc(str->chunk_count, sizeof(str->chunk[0]));
 
-	    offset = str->header_length + 1;
 	    for (i = 0; i < str->chunk_count; i++) {
 		stream_get16(str->transport, &buf16);
 		str->chunk[i].length = buf16;
-		str->chunk[i].offset = offset;
-		offset += str->chunk[i].length;
 	    }
 	    str->type = DICTORG_DZIP;
 	} else 
@@ -343,6 +382,13 @@ _dict_open(void *data, int flags)
 		 (unsigned long) (str->header_length + 1));
 	return DE_BAD_HEADER;
     }
+
+    offset = str->header_length + 1;
+    for (i = 0; i < str->chunk_count; i++) {
+	str->chunk[i].offset = offset;
+	offset += str->chunk[i].length;
+    }
+    
     dico_stream_seek(str->transport, -8, DICO_SEEK_END);
     
     stream_get32(str->transport, &buf32);
@@ -382,7 +428,10 @@ _dict_strerror(void *data, int rc)
 	
     case DE_GZIP_SEEK:
 	return _("cannot seek on pure gzip format files");
-	
+
+    case DE_INFLATE:
+	return _("error decompressing stream");
+
     default:
 	return strerror(rc);
     }
@@ -399,8 +448,30 @@ _dict_read_text(struct _dict_stream *str, char *buf, size_t size, size_t *pret)
 static int
 _dict_read_dzip(struct _dict_stream *str, char *buf, size_t size, size_t *pret)
 {
-    /* FIXME */
-    return DE_UNSUPPORTED_FORMAT;
+    int chunk_num = str->offset / str->chunk_size;
+    size_t chunk_off = str->offset - chunk_num * str->chunk_size;
+    size_t rdbytes = 0;
+    int rc;
+    
+    while (size) {
+	struct _dict_chunk_cache *cp;
+	size_t n;
+	
+	rc = cache_get(str, chunk_num, &cp);
+	if (rc)
+	    break;
+	n = cp->size; /* FIXME = str->chunk[chunk_num].length;? */
+	if (n > size)
+	    n = size;
+	memcpy(buf, cp->buffer + chunk_off, n);
+	size -= n;
+	buf += n;
+	rdbytes += n;
+	chunk_num++;
+	chunk_off = 0;
+    }
+    *pret = rdbytes;
+    return rc;
 }
 
 static int
@@ -440,7 +511,6 @@ _dict_seek_dzip(struct _dict_stream *str, off_t needle, int whence,
 		off_t *presult)
 {
     off_t offset;
-    int chunk_num;
     
     switch (whence) {
     case DICO_SEEK_SET:
@@ -461,10 +531,7 @@ _dict_seek_dzip(struct _dict_stream *str, off_t needle, int whence,
 
     if (offset < 0 || offset > str->size) 
 	return EINVAL;
-	
-    chunk_num = get_chunk_num(str, offset);
-    if (chunk_num < 0)
-	return EINVAL;
+
     *presult = str->offset = offset;
     return 0;
 }

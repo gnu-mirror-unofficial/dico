@@ -38,7 +38,7 @@ io_read(void *data, char *buf, size_t size, size_t *pret)
 }
 
 static int
-io_write(void *data, char *buf, size_t size, size_t *pret)
+io_write(void *data, const char *buf, size_t size, size_t *pret)
 {
     struct _iostr *p = data;
     if (dico_stream_write(p->out, buf, size)) {

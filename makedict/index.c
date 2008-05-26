@@ -672,7 +672,7 @@ iterate_db(DB *dbp)
 
     if (verbose)
 	printf("creating additional indexes\n");
-    if (rc = dbp->cursor(dbp, NULL, &cursor, 0))
+    if ((rc = dbp->cursor(dbp, NULL, &cursor, 0)))
 	dico_die(1, L_CRIT, 0, "cannot create cursor: %s", db_strerror(rc));
 
     memset(&key, 0, sizeof key);
@@ -737,7 +737,7 @@ count_xref(DB *dbp)
     if (verbose)
 	printf("Counting cross-references\n");
 
-    if (rc = idbp->cursor(idbp, NULL, &cursor, 0))
+    if ((rc = idbp->cursor(idbp, NULL, &cursor, 0)))
 	dico_die(1, L_CRIT, 0, "cannot create cursor: %s", db_strerror(rc));
 
     memset(&key, 0, sizeof key);

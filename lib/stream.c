@@ -39,7 +39,7 @@ struct dico_stream {
     
     int last_err;
     int (*read) (void *, char *, size_t, size_t *);
-    int (*write) (void *, char *, size_t, size_t *);
+    int (*write) (void *, const char *, size_t, size_t *);
     int (*flush) (void *);
     int (*open) (void *, int);
     int (*close) (void *);
@@ -111,7 +111,7 @@ dico_stream_set_read(dico_stream_t stream,
 
 void
 dico_stream_set_write(dico_stream_t stream,    
-		      int (*writefn) (void *, char *, size_t, size_t *))
+		      int (*writefn) (void *, const char *, size_t, size_t *))
 {
     stream->write = writefn;
 }
@@ -200,7 +200,7 @@ dico_stream_seek(dico_stream_t stream, off_t offset, int whence)
     case DICO_SEEK_END: 
 	bpos = _stream_buffer_offset(stream);
 	if (bpos + offset >= 0 && bpos + offset < _stream_orig_level(stream)) {
-	    if (rc = stream->seek(stream->data, offset, whence, &res)) {
+	    if ((rc = stream->seek(stream->data, offset, whence, &res))) {
 		_stream_seterror(stream, rc, 1);
 		return -1;
 	    }
@@ -302,7 +302,8 @@ dico_stream_read_unbuffered(dico_stream_t stream, char *buf, size_t size,
 }
 
 int
-dico_stream_write_unbuffered(dico_stream_t stream, char *buf, size_t size,
+dico_stream_write_unbuffered(dico_stream_t stream,
+			     const char *buf, size_t size,
 			     size_t *pwrite)
 {
     int rc;
@@ -565,7 +566,7 @@ dico_stream_getline(dico_stream_t stream, char **pbuf, size_t *psize,
 }
 
 int
-dico_stream_write(dico_stream_t stream, char *buf, size_t size)
+dico_stream_write(dico_stream_t stream, const char *buf, size_t size)
 {
     if (stream->buftype == dico_buffer_none)
 	return dico_stream_write_unbuffered(stream, buf, size, NULL);
@@ -596,7 +597,7 @@ dico_stream_write(dico_stream_t stream, char *buf, size_t size)
 }
 
 int
-dico_stream_writeln(dico_stream_t stream, char *buf, size_t size)
+dico_stream_writeln(dico_stream_t stream, const char *buf, size_t size)
 {
     int rc;
     if ((rc = dico_stream_write(stream, buf, size)) == 0)

@@ -1896,7 +1896,7 @@ utf8_wc_hash_string (const unsigned *ws, size_t n_buckets)
 # define HASH_ONE_CHAR(Value, Byte) \
   ((Byte) + ROTATE_LEFT (Value, 16))
 
-  while (wc = *ws++)
+  while ((wc = *ws++))
     value = HASH_ONE_CHAR (value, wc);
   return value % n_buckets;
 }

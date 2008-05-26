@@ -355,6 +355,7 @@ dico_stream_t transcript_stream_create(dico_stream_t transport,
 /* logstr.c */
 dico_stream_t log_stream_create(int level);
 
-
-
+/* getopt.m4 */
+extern void print_help(void);
+extern void print_usage(void);
 

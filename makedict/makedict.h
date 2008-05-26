@@ -102,4 +102,7 @@ int kana_to_romaji(const XChar2b *input, size_t size, romaji_out_fn fun,
 		   void *closure);
 int kana_to_romaji_str(const XChar2b *input, size_t size, char **sptr);
 
+/* getopt.m4 */
+extern void print_help(void);
+extern void print_usage(void);
 

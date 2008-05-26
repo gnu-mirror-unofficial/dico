@@ -67,7 +67,7 @@ print_headers(struct ostream *ostr)
 
 
 static int
-ostream_write(void *data, char *buf, size_t size, size_t *pret)
+ostream_write(void *data, const char *buf, size_t size, size_t *pret)
 {
     struct ostream *ostr = data;
     if (!(ostr->flags & OSTREAM_INITIALIZED)) {

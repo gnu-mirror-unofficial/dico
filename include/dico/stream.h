@@ -44,7 +44,8 @@ void dico_stream_set_size(dico_stream_t stream,
 void dico_stream_set_read(dico_stream_t stream,
 			  int (*readfn) (void *, char *, size_t, size_t *));
 void dico_stream_set_write(dico_stream_t stream,    
-			   int (*writefn) (void *, char *, size_t, size_t *));
+			   int (*writefn) (void *, const char *, size_t,
+					   size_t *));
 void dico_stream_set_flush(dico_stream_t stream, int (*flushfn) (void *));
 void dico_stream_set_close(dico_stream_t stream, int (*closefn) (void *));
 void dico_stream_set_destroy(dico_stream_t stream, int (*destroyfn) (void *));
@@ -62,7 +63,8 @@ int dico_stream_size(dico_stream_t stream, off_t *psize);
 
 int dico_stream_read_unbuffered(dico_stream_t stream, char *buf, size_t size,
 				size_t *pread);
-int dico_stream_write_unbuffered(dico_stream_t stream, char *buf, size_t size,
+int dico_stream_write_unbuffered(dico_stream_t stream,
+				 const char *buf, size_t size,
 				 size_t *pwrite);
 
 int dico_stream_read(dico_stream_t stream, char *buf, size_t size,
@@ -71,8 +73,8 @@ int dico_stream_readln(dico_stream_t stream, char *buf, size_t size,
 		       size_t *pread);
 int dico_stream_getline(dico_stream_t stream, char **pbuf, size_t *psize,
 			size_t *pread);
-int dico_stream_write(dico_stream_t stream, char *buf, size_t size);
-int dico_stream_writeln(dico_stream_t stream, char *buf, size_t size);
+int dico_stream_write(dico_stream_t stream, const char *buf, size_t size);
+int dico_stream_writeln(dico_stream_t stream, const char *buf, size_t size);
 
 const char *dico_stream_strerror(dico_stream_t stream, int rc);
 int dico_stream_last_error(dico_stream_t stream);

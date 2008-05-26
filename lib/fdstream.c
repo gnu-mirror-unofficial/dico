@@ -39,10 +39,10 @@ fd_read(void *data, char *buf, size_t size, size_t *pret)
 }
 
 static int
-fd_write(void *data, char *buf, size_t size, size_t *pret)
+fd_write(void *data, const char *buf, size_t size, size_t *pret)
 {
     struct _stream *p = data;
-    int n = write(p->fd, buf, size);
+    int n = write(p->fd, (char*) buf, size);
     if (n == -1)
 	return errno;
     *pret = n;

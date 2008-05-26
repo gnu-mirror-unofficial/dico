@@ -24,7 +24,7 @@ struct log_stream {
 };
 
 static int
-log_write(void *data, char *buf, size_t size, size_t *pret)
+log_write(void *data, const char *buf, size_t size, size_t *pret)
 {
     struct log_stream *p = data;
     if (pret)

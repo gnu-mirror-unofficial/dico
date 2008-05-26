@@ -189,7 +189,7 @@ convert(uchar *text, int len, struct cvt_tab *tab)
 
     for (i = 0; i < len; i+=2, text+=2) {
 	c = text[0];
-        if (t = tab_lookup(tab, c)) {
+        if ((t = tab_lookup(tab, c))) {
 	    c2 = text[1];
             for ( ; t->in1 == c; t++) {
                 if (t->in2_range[0] <= c2 && c2 <= t->in2_range[1]) {

@@ -493,7 +493,7 @@ outline_open(const char *dbname, int argc, char **argv)
     }
 
     state = STATE_INITIAL;
-    while (ep = read_entry(file, &level)) {
+    while ((ep = read_entry(file, &level))) {
 	switch (state) {
 	case STATE_DICT:
 	    if (level == 2) {

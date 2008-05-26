@@ -83,7 +83,7 @@ transcript_read(void *data, char *buf, size_t size, size_t *pret)
 }
 
 static int
-transcript_write(void *data, char *buf, size_t size, size_t *pret)
+transcript_write(void *data, const char *buf, size_t size, size_t *pret)
 {
     struct transcript_stream *p = data;
     if (dico_stream_write(p->transport, buf, size) == 0) {

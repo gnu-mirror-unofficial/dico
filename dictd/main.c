@@ -334,7 +334,7 @@ set_dict_handler(enum cfg_callback_command cmd,
 	return 1;
     }
 
-    db->command = value->v.string;
+    db->command = (char *) value->v.string;
     if ((rc = dico_argcv_get(value->v.string, NULL, NULL,
 			     &db->argc, &db->argv))) {
 	config_error(locus, rc, _("cannot parse command line `%s'"),

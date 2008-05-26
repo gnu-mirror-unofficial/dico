@@ -65,7 +65,7 @@ filter_read(void *data, char *buf, size_t size, size_t *pret)
 }
 
 static int
-filter_write(void *data, char *buf, size_t size, size_t *pret)
+filter_write(void *data, const char *buf, size_t size, size_t *pret)
 {
     struct filter_stream *fs = data;
     size_t wrsize;

@@ -457,7 +457,7 @@ string_convert(void *target, enum config_data_type type, const char *string)
 	abort();
 	    
     case cfg_string:
-	*(char**)target = string;
+	*(const char**)target = string;
 	break;
 	    
     case cfg_short:

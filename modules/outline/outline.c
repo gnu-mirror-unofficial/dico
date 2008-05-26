@@ -602,8 +602,8 @@ outline_match0(dico_handle_t hp, const char *strat,
     if (match(file, word, res)) {
 	free(res);
 	res = NULL;
-    }
-    res->compare_count = compare_count;
+    } else
+	res->compare_count = compare_count;
     return (dico_result_t) res;
 }
 

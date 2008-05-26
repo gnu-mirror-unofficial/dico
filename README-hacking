@@ -48,6 +48,18 @@ sources reside.
 
 For more information about `bootstrap', run `bootstrap --help'.
 
+* Debugging
+
+To debug dictd, use the following command:
+
+	libtool --mode execute gdb dictd
+
+For debugging from Emacs run:
+
+	M-x gdb RET gud-wrapper radiusd RET
+
+(the script gud-wrapper is located in the ./utils subdirectory)
+
 
 * Copyright information
 

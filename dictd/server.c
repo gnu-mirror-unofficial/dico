@@ -353,8 +353,8 @@ handle_connection(int listenfd)
 	dico_stream_t str;
 
 	str = fd_stream_create(connfd, connfd);
-	dico_stream_set_buffer(str, lb_in, 512);
-	dico_stream_set_buffer(str, lb_out, 512);
+	dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
+	dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
 	status = dictd_loop(str);
 	dico_stream_close(str);
 	dico_stream_destroy(&str);

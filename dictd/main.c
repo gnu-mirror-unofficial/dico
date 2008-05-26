@@ -835,6 +835,7 @@ main(int argc, char **argv)
     dictd_loader_init();
 
     begin_timing("server");
+    dictd_server_init();
     switch (mode) {
     case MODE_DAEMON:
 	dictd_server(argc, argv);

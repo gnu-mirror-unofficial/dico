@@ -256,6 +256,7 @@ void dictd_server(int argc, char **argv);
 int dictd_loop(dico_stream_t stream);
 int dictd_inetd(void);
 void dictd_init_strategies(void);
+void dictd_server_init(void);
 
 dictd_database_t *find_database(const char *name);
 void database_remove_dependent(dictd_handler_t *handler);

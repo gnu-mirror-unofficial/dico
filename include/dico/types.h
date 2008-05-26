@@ -32,6 +32,9 @@
 # define DICO_PRINTFLIKE(fmt,narg) __attribute__ ((__format__ (__printf__, fmt, narg)))
 #endif
 
+/* Maximum size of I/O buffer as per RFC2229 */
+#define DICO_MAX_BUFFER 6144
+
 #define __dico_s_cat3__(a,b,c) a ## b ## c
 #define DICO_EXPORT(module,name) __dico_s_cat3__(module,_LTX_,name)
 

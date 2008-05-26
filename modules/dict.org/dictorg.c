@@ -18,6 +18,7 @@
 
 static char *dbdir;
 static size_t compare_count;
+static int sort_index;
 
 static void
 memerr(const char *fname)
@@ -27,32 +28,36 @@ memerr(const char *fname)
 
 static int register_strategies(void);
 
+
+struct dico_option init_option[] = {
+    { DICO_OPTSTR(dbdir), dico_opt_string, &dbdir },
+    { DICO_OPTSTR(sort), dico_opt_bool, &sort_index },
+    { NULL }
+};
+
 int
 mod_init(int argc, char **argv)
 {
-    if (argc) {
+    if (dico_parseopt(init_option, argc, argv))
+	return 1;
+    if (dbdir) {
 	struct stat st;
 	
-	if (argc != 2) {
-	    dico_log(L_ERR, 0, _("mod_init: wrong number of arguments"));
-	    return 1;
-	}
-	if (stat(argv[1], &st)) {
+	if (stat(dbdir, &st)) {
 	    dico_log(L_ERR, errno, _("mod_init: cannot stat `%s'"),
-		     argv[1]);
+		     dbdir);
 	    return 1;
 	}
 	if (!S_ISDIR(st.st_mode)) {
 	    dico_log(L_ERR, 0, _("mod_init: `%s' is not a directory"),
-		     argv[1]);
+		     dbdir);
 	    return 1;
 	}
-	if (access(argv[1], R_OK)) {
+	if (access(dbdir, R_OK)) {
 	    dico_log(L_ERR, 0, _("mod_init: `%s' is not readable"),
-		     argv[1]);
+		     dbdir);
 	    return 1;
 	}
-	dbdir = strdup(argv[1]);
     }
 
     register_strategies();
@@ -64,11 +69,18 @@ void
 free_db(struct dictdb *db)
 {
     size_t i;
-    /* FIXME */
     for (i = 0; i < db->numwords; i++) {
 	if (!db->index[i].word)
 	    break;
 	free(db->index[i].word);
+    }
+    if (db->suf_index) {
+	for (i = 0; i < db->numwords; i++) {
+	    if (!db->suf_index[i].word)
+		break;
+	    free(db->suf_index[i].word);
+	}
+	free(db->suf_index);
     }
     free(db->index);
     free(db->basename);
@@ -341,35 +353,35 @@ mod_open(const char *dbname, int argc, char **argv)
 {
     struct dictdb *db;
     char *filename;
-    int sort_index = 0;
-    
-    if (argc < 2 || argc > 3) {
-	dico_log(L_ERR, 0, _("mod_open: wrong number of arguments"));
+    int sort = sort_index;
+    struct dico_option option[] = {
+	{ DICO_OPTSTR(sort), dico_opt_bool, &sort },
+	{ DICO_OPTSTR(database), dico_opt_const_string, &filename },
+	{ NULL }
+    };
+	
+    if (dico_parseopt(option, argc, argv))
+	return NULL;
+
+    if (!filename) {
+	dico_log(L_ERR, 0,
+		 _("mod_open(%s): database name not given"),
+		 argv[0]);
 	return NULL;
     }
-
-    if (argv[1][0] != '/') {
+    
+    if (filename[0] != '/') {
 	if (dbdir) {
-	    filename = dico_full_file_name(dbdir, argv[1]);
+	    filename = dico_full_file_name(dbdir, filename);
 	} else {
 	    dico_log(L_ERR, 0,
 		     _("mod_open: `%s' is not an absolute file name"),
-		     argv[1]);
+		     filename);
 	    return NULL;
 	}
     } else
-	filename = strdup(argv[1]);
+	filename = strdup(filename);
 
-    if (argc == 3) {
-	if (strcmp(argv[2], "sort") == 0)
-	    sort_index = 1;
-	else if (strcmp(argv[2], "nosort") == 0)
-	    sort_index = 0;
-	else
-	    dico_log(L_ERR, 0, _("mod_open: ignoring unknown option `%s'"),
-		     argv[2]);
-    }
-    
     if (!filename) {
 	memerr("mod_open");
 	return NULL;
@@ -391,7 +403,7 @@ mod_open(const char *dbname, int argc, char **argv)
 	return NULL;
     }
 
-    if (sort_index)
+    if (sort)
 	qsort(db->index, db->numwords, sizeof(db->index[0]), compare_entry);
     
     if (open_stream(db)) {

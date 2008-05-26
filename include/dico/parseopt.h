@@ -1,5 +1,5 @@
 /* This file is part of Dico.
-   Copyright (C) 1998-2000, 2008 Sergey Poznyakoff
+   Copyright (C) 2008 Sergey Poznyakoff
 
    Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,26 +14,37 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef __dico_h
-#define __dico_h
-
-#include <stdlib.h>
-#include <stdarg.h>
+#ifndef __dico_parseopt_h
+#define __dico_parseopt_h
 
 #include <dico/types.h>
-#include <dico/argcv.h>
-#include <dico/list.h>
-#include <dico/assoc.h>
-#include <dico/stream.h>
-#include <dico/url.h>
-#include <dico/xlat.h>
-#include <dico/strat.h>
-#include <dico/utf8.h>
-#include <dico/filter.h>
-#include <dico/diag.h>
-#include <dico/util.h>
-#include <dico/lbuf.h>
-#include <dico/parseopt.h>
+
+enum dico_opt_type {
+    dico_opt_null,
+    dico_opt_bool,
+    dico_opt_bitmask,
+    dico_opt_bitmask_rev,
+    dico_opt_long,
+    dico_opt_string,
+    dico_opt_enum,
+    dico_opt_const,
+    dico_opt_const_string
+};
+
+struct dico_option {
+    const char *name;
+    size_t len;
+    enum dico_opt_type type;
+    void *data;
+    union {
+	long value;
+	const char **enumstr;
+    } v;
+    int (*func) (struct dico_option *, const char *);
+};
+
+#define DICO_OPTSTR(s) #s, (sizeof(#s) - 1)
+
+int dico_parseopt(struct dico_option *opt, int argc, char **argv);
 
 #endif
-    

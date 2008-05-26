@@ -21,6 +21,7 @@ pkginclude_HEADERS = \
  filter.h\
  lbuf.h\
  list.h\
+ parseopt.h\
  strat.h\
  stream.h\
  types.h\

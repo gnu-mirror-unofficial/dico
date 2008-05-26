@@ -620,7 +620,7 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
 	    free(x.word);
 	    return 1;
 	}
-	for (p = ep - 1;
+	for (p = ep;
 	     p > db->suf_index && compare_rev_prefix(&x, p) == 0;
 	     p--) 
 	    dico_list_insert_sorted(list, p->ptr, compare_entry);

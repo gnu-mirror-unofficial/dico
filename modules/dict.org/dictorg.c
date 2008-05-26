@@ -19,6 +19,7 @@
 static char *dbdir;
 static size_t compare_count;
 static int sort_index;
+static int trim_ws;
 
 static void
 memerr(const char *fname)
@@ -32,6 +33,7 @@ static int register_strategies(void);
 struct dico_option init_option[] = {
     { DICO_OPTSTR(dbdir), dico_opt_string, &dbdir },
     { DICO_OPTSTR(sort), dico_opt_bool, &sort_index },
+    { DICO_OPTSTR(trim-ws), dico_opt_bool, &trim_ws },
     { NULL }
 };
 
@@ -124,7 +126,7 @@ b64_decode(const char *val, size_t len, size_t *presult)
 
 static int
 parse_index_entry(const char *filename, size_t line,
-		  dico_list_t list, char *buf)
+		  dico_list_t list, char *buf, int tws)
 {
     struct utf8_iterator itr;
     struct index_entry idx, *ep;
@@ -158,12 +160,16 @@ parse_index_entry(const char *filename, size_t line,
 	len = end - start;
 
 	if (nfield == 0) {
+	    if (tws) {
+		/* Strip trailing whitespace. */
+		while (len > 0 && start[len-1] == ' ')
+		    --len;
+	    }
 	    idx.word = malloc(len + 1);
 	    if (!idx.word) {
 		memerr("parse_index_entry");
 		return 1;
 	    }
-	    /* FIXME: strip trailing whitespace */
 	    memcpy(idx.word, start, len);
 	    idx.word[len] = 0;
 	    idx.length = len;
@@ -218,7 +224,7 @@ free_index_entry(void *item, void *data)
 }
 
 static int
-read_index(struct dictdb *db, const char *idxname)
+read_index(struct dictdb *db, const char *idxname, int tws)
 {
     struct stat st;
     FILE *fp;
@@ -257,7 +263,7 @@ read_index(struct dictdb *db, const char *idxname)
 	while (fgets(buf, sizeof(buf), fp)) {
 	    i++;
 	    dico_trim_nl(buf);
-	    rc = parse_index_entry(idxname, i, list, buf);
+	    rc = parse_index_entry(idxname, i, list, buf, tws);
 	    if (rc)
 		break;
 	}
@@ -283,7 +289,7 @@ read_index(struct dictdb *db, const char *idxname)
 }
 
 static int
-open_index(struct dictdb *db)
+open_index(struct dictdb *db, int tws)
 {
     char *idxname = mkname(db->basename, "index");
     int rc;
@@ -293,7 +299,7 @@ open_index(struct dictdb *db)
 	return 1;
     }
 
-    rc = read_index(db, idxname);
+    rc = read_index(db, idxname, tws);
     free(idxname);
     return rc;
 }
@@ -352,11 +358,13 @@ dico_handle_t
 mod_open(const char *dbname, int argc, char **argv)
 {
     struct dictdb *db;
-    char *filename;
-    int sort = sort_index;
+    char *filename = NULL;
+    int sort_option = sort_index;
+    int trimws_option = trim_ws;  
     struct dico_option option[] = {
-	{ DICO_OPTSTR(sort), dico_opt_bool, &sort },
+	{ DICO_OPTSTR(sort), dico_opt_bool, &sort_option },
 	{ DICO_OPTSTR(database), dico_opt_const_string, &filename },
+	{ DICO_OPTSTR(trim-ws), dico_opt_bool, &trimws_option },
 	{ NULL }
     };
 	
@@ -398,12 +406,12 @@ mod_open(const char *dbname, int argc, char **argv)
     db->dbname = dbname;
     db->basename = filename;
 
-    if (open_index(db)) {
+    if (open_index(db, trimws_option)) {
 	free_db(db);
 	return NULL;
     }
 
-    if (sort)
+    if (sort_option)
 	qsort(db->index, db->numwords, sizeof(db->index[0]), compare_entry);
     
     if (open_stream(db)) {

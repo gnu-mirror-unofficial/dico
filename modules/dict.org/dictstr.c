@@ -15,7 +15,6 @@
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "dictorg.h"
-#include <netinet/in.h>
 
 #define DE_UNKNOWN_FORMAT -1
 #define DE_UNSUPPORTED_FORMAT -2
@@ -40,6 +39,7 @@ struct _dict_stream {
     int type;                    /* Stream type (see DICTORG_ constants) */
     dico_stream_t transport;     /* Underlying transport stream */
     int transport_error;         /* Last error on transport stream */
+#ifdef USE_LIBZ    
     /* Gzip/dict.org header */ 
     size_t header_length;        /* Header length. */ 
     int method;                  /* Compression method */
@@ -66,10 +66,11 @@ struct _dict_stream {
     size_t cache_size;                /* Max. number of elements in cache */
     size_t cache_used;                /* Actual number of elements in cache */
     struct _dict_chunk_cache **cache; /**/
-    
+#endif
 };
 
 
+#ifdef USE_LIBZ    
 static struct _dict_chunk_cache *
 cache_create_chunk(struct _dict_stream *str)
 {
@@ -209,7 +210,82 @@ cache_get(struct _dict_stream *str, int chunk_num,
     *retptr = cp;
     return 0;
 }
+
+static int
+_dict_read_dzip(struct _dict_stream *str, char *buf, size_t size, size_t *pret)
+{
+    int chunk_num = str->offset / str->chunk_size;
+    size_t chunk_off = str->offset - chunk_num * str->chunk_size;
+    size_t rdbytes = 0;
+    int rc;
     
+    while (size) {
+	struct _dict_chunk_cache *cp;
+	size_t n;
+	
+	rc = cache_get(str, chunk_num, &cp);
+	if (rc)
+	    break;
+	n = cp->size; /* FIXME = str->chunk[chunk_num].length;? */
+	if (n > size)
+	    n = size;
+	memcpy(buf, cp->buffer + chunk_off, n);
+	size -= n;
+	buf += n;
+	rdbytes += n;
+	chunk_num++;
+	chunk_off = 0;
+    }
+    *pret = rdbytes;
+    return rc;
+}
+
+static int
+_dict_seek_dzip(struct _dict_stream *str, off_t needle, int whence,
+		off_t *presult)
+{
+    off_t offset;
+    
+    switch (whence) {
+    case DICO_SEEK_SET:
+	offset = needle;
+	break;
+
+    case DICO_SEEK_CUR:
+	offset = str->offset + needle;
+	break;
+
+    case DICO_SEEK_END:
+	offset = str->size + needle;
+	break;
+
+    default:
+	return EINVAL;
+    }
+
+    if (offset < 0 || offset > str->size) 
+	return EINVAL;
+
+    *presult = str->offset = offset;
+    return 0;
+}
+
+#else
+# define cache_destroy(s)
+static int
+_dict_read_dzip(struct _dict_stream *str, char *buf, size_t size, size_t *pret)
+{
+    return DE_UNSUPPORTED_FORMAT;
+}
+
+static int
+_dict_seek_dzip(struct _dict_stream *str, off_t needle, int whence,
+		off_t *presult)
+{
+    return DE_UNSUPPORTED_FORMAT;
+}
+
+#endif    
 
 
 static int
@@ -230,7 +306,7 @@ _dict_destroy(void *data)
 				 "cannot shut down inflation engine: %s"),
 		     __FILE__, __LINE__, str->zstream.msg);
 	    /* Continue anyway */
-   }
+    }
     
     cache_destroy(str);
     free(str->buffer);
@@ -446,35 +522,6 @@ _dict_read_text(struct _dict_stream *str, char *buf, size_t size, size_t *pret)
 }
 
 static int
-_dict_read_dzip(struct _dict_stream *str, char *buf, size_t size, size_t *pret)
-{
-    int chunk_num = str->offset / str->chunk_size;
-    size_t chunk_off = str->offset - chunk_num * str->chunk_size;
-    size_t rdbytes = 0;
-    int rc;
-    
-    while (size) {
-	struct _dict_chunk_cache *cp;
-	size_t n;
-	
-	rc = cache_get(str, chunk_num, &cp);
-	if (rc)
-	    break;
-	n = cp->size; /* FIXME = str->chunk[chunk_num].length;? */
-	if (n > size)
-	    n = size;
-	memcpy(buf, cp->buffer + chunk_off, n);
-	size -= n;
-	buf += n;
-	rdbytes += n;
-	chunk_num++;
-	chunk_off = 0;
-    }
-    *pret = rdbytes;
-    return rc;
-}
-
-static int
 _dict_read(void *data, char *buf, size_t size, size_t *pret)
 {
     struct _dict_stream *str = data;
@@ -505,37 +552,6 @@ _dict_seek_text(struct _dict_stream *str, off_t needle, int whence,
     *presult = off;
     return 0;
 }
-
-static int
-_dict_seek_dzip(struct _dict_stream *str, off_t needle, int whence,
-		off_t *presult)
-{
-    off_t offset;
-    
-    switch (whence) {
-    case DICO_SEEK_SET:
-	offset = needle;
-	break;
-
-    case DICO_SEEK_CUR:
-	offset = str->offset + needle;
-	break;
-
-    case DICO_SEEK_END:
-	offset = str->size + needle;
-	break;
-
-    default:
-	return EINVAL;
-    }
-
-    if (offset < 0 || offset > str->size) 
-	return EINVAL;
-
-    *presult = str->offset = offset;
-    return 0;
-}
-
 
 static int
 _dict_seek(void *data, off_t needle, int whence, off_t *presult)

@@ -71,8 +71,8 @@ gl_INIT
 # Check for zlib
 AC_CHECK_HEADER(zlib.h,
                 AC_CHECK_LIB(z, inflate,
-                             [AC_DEFINE_UNQUOTED([USE_LIBZ],
-	                         [Define this if you have libz library], 1)
+                             [AC_DEFINE_UNQUOTED([USE_LIBZ], 1,
+			              [Define this if you have libz library])
 	                      AC_SUBST(LIBZ, -lz)]))
 
 LOG_FACILITY="LOG_LOCAL1"
@@ -108,7 +108,8 @@ AH_BOTTOM([
 # Check for Berkeley DB
 db_path=
 db_version=4
-	
+status_dbm=no
+
 AC_ARG_WITH([berkeley-db],
             AC_HELP_STRING([--with-berkeley-db=version],
                            [use this Berkeley DB version]),

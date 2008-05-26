@@ -584,7 +584,7 @@ dico_stream_write(dico_stream_t stream, const void *buf, size_t size)
 	return dico_stream_write_unbuffered(stream, buf, size, NULL);
     else {
 	size_t nbytes = 0;
-	const char *bufp;
+	const char *bufp = buf;
 	
 	while (1) {
 	    size_t n;

@@ -170,6 +170,7 @@ dico_stream_eof(dico_stream_t stream)
     return stream->flags & _STR_EOF;
 }
 
+#define _stream_cleareof(s) ((s)->flags &= ~_STR_EOF)
 #define _stream_advance_buffer(s,n) ((s)->cur += n, (s)->level -= n)
 #define _stream_buffer_offset(s) ((s)->cur - (s)->buffer)
 #define _stream_orig_level(s) ((s)->level + _stream_buffer_offset(s))
@@ -206,6 +207,7 @@ dico_stream_seek(dico_stream_t stream, off_t offset, int whence)
 	    }
 	    offset -= bpos;
 	    _stream_advance_buffer(stream, offset);
+	    _stream_cleareof(stream);
 	    return res - stream->level;
 	}
 	break;
@@ -222,6 +224,7 @@ dico_stream_seek(dico_stream_t stream, off_t offset, int whence)
 	_stream_seterror(stream, rc, 1);
 	return -1;
     }
+    _stream_cleareof(stream);
     return res;
 }
 
@@ -256,7 +259,7 @@ dico_stream_set_buffer(dico_stream_t stream, enum dico_buffer_type type,
 }
 
 int
-dico_stream_read_unbuffered(dico_stream_t stream, char *buf, size_t size,
+dico_stream_read_unbuffered(dico_stream_t stream, void *buf, size_t size,
 			    size_t *pread)
 {
     int rc;
@@ -303,7 +306,7 @@ dico_stream_read_unbuffered(dico_stream_t stream, char *buf, size_t size,
 
 int
 dico_stream_write_unbuffered(dico_stream_t stream,
-			     const char *buf, size_t size,
+			     const void *buf, size_t size,
 			     size_t *pwrite)
 {
     int rc;
@@ -325,15 +328,16 @@ dico_stream_write_unbuffered(dico_stream_t stream,
     
     if (pwrite == NULL) {
 	size_t wrbytes;
-
+	const char *bufp = buf;
+	
 	while (size > 0
-	       && (rc = stream->write(stream->data, buf, size, &wrbytes))
+	       && (rc = stream->write(stream->data, bufp, size, &wrbytes))
 	             == 0) {
 	    if (wrbytes == 0) {
 		rc = EIO;
 		break;
 	    }
-	    buf += wrbytes;
+	    bufp += wrbytes;
 	    size -= wrbytes;
 	    stream->offset += wrbytes;
 	}
@@ -444,15 +448,16 @@ _stream_flush_buffer(dico_stream_t stream)
 }
 
 int
-dico_stream_read(dico_stream_t stream, char *buf, size_t size, size_t *pread)
+dico_stream_read(dico_stream_t stream, void *buf, size_t size, size_t *pread)
 {
     if (stream->buftype == dico_buffer_none)
 	return dico_stream_read_unbuffered(stream, buf, size, pread);
     else {
+	char *bufp = buf;
 	size_t nbytes = 0;
 	while (size) {
 	    size_t n;
-
+	    
 	    if (stream->level == 0 && _stream_fill_buffer(stream)) {
 		if (nbytes)
 		    break;
@@ -462,10 +467,10 @@ dico_stream_read(dico_stream_t stream, char *buf, size_t size, size_t *pread)
 	    n = size;
 	    if (n > stream->level)
 		n = stream->level;
-	    memcpy(buf, stream->cur, n);
+	    memcpy(bufp, stream->cur, n);
 	    _stream_advance_buffer(stream, n);
 	    nbytes += n;
-	    buf += n;
+	    bufp += n;
 	    size -= n;
 	}
 
@@ -501,8 +506,8 @@ dico_stream_readln(dico_stream_t stream, char *buf, size_t size, size_t *pread)
 }
 
 int
-dico_stream_getline(dico_stream_t stream, char **pbuf, size_t *psize,
-		    size_t *pread)
+dico_stream_getdelim(dico_stream_t stream, char **pbuf, size_t *psize,
+		     int delim, size_t *pread)
 {
     int rc;
     char *lineptr = *pbuf;
@@ -552,7 +557,7 @@ dico_stream_getline(dico_stream_t stream, char **pbuf, size_t *psize,
 	lineptr[cur_len] = c;
 	cur_len++;
 
-	if (c == '\n')
+	if (c == delim)
 	    break;
     }
     lineptr[cur_len] = '\0';
@@ -566,12 +571,20 @@ dico_stream_getline(dico_stream_t stream, char **pbuf, size_t *psize,
 }
 
 int
-dico_stream_write(dico_stream_t stream, const char *buf, size_t size)
+dico_stream_getline(dico_stream_t stream, char **pbuf, size_t *psize,
+		    size_t *pread)
+{
+    return dico_stream_getdelim(stream, pbuf, psize, '\n', pread);
+}
+
+int
+dico_stream_write(dico_stream_t stream, const void *buf, size_t size)
 {
     if (stream->buftype == dico_buffer_none)
 	return dico_stream_write_unbuffered(stream, buf, size, NULL);
     else {
 	size_t nbytes = 0;
+	const char *bufp;
 	
 	while (1) {
 	    size_t n;
@@ -585,10 +598,10 @@ dico_stream_write(dico_stream_t stream, const char *buf, size_t size)
 	    n = stream->bufsize - stream->level;
 	    if (n > size)
 		n = size;
-	    memcpy(stream->cur + stream->level, buf, n);
+	    memcpy(stream->cur + stream->level, bufp, n);
 	    stream->level += n;
 	    nbytes += n;
-	    buf += n;
+	    bufp += n;
 	    size -= n;
 	    stream->flags |= _STR_DIRTY;
 	}	    

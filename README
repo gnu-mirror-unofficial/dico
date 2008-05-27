@@ -38,6 +38,10 @@ The package comes with the following database modules:
 - dictorg
  This module handles databases in dict.org format.
 
+- guile
+ An abstract layer for interfacing with database modules written in
+ Guile.
+ 
 - outline
  Support for databases in Emacs outline format. This module is
  designed mostly as an example and for testing purposes.

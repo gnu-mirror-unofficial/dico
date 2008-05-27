@@ -178,6 +178,167 @@ rettype_error(const char *name)
 }
 
 
+long _guile_strategy_tag;
+
+struct _guile_strategy
+{
+    const dico_strategy_t strat;
+};
+
+static SCM
+_make_strategy(const dico_strategy_t strat)
+{
+    struct _guile_strategy *sp;
+
+    sp = scm_gc_malloc (sizeof (struct _guile_strategy), "strategy");
+    sp->strat = strat;
+    SCM_RETURN_NEWSMOB(_guile_strategy_tag, sp);
+}
+
+static scm_sizet
+_guile_strategy_free(SCM message_smob)
+{
+  struct _guile_strategy *sp =
+      (struct _guile_strategy *) SCM_CDR (message_smob);
+  free(sp);
+  return sizeof (struct _guile_strategy);
+}
+
+static int
+_guile_strategy_print(SCM message_smob, SCM port, scm_print_state * pstate)
+{
+    struct _guile_strategy *sp =
+	(struct _guile_strategy *) SCM_CDR (message_smob);
+    scm_puts("#<strategy ", port);
+    scm_puts(sp->strat->name, port);
+    scm_puts(" [", port);
+    scm_puts(sp->strat->descr, port);
+    scm_puts("]>", port);
+    return 1;
+}
+
+SCM
+_guile_strategy_create(SCM owner, const dico_strategy_t strat)
+{
+    struct _guile_strategy *sp;
+
+    sp = scm_gc_malloc(sizeof(struct _guile_strategy), "strategy");
+    sp->strat = strat;
+    SCM_RETURN_NEWSMOB(_guile_strategy_tag, sp);
+}
+
+static void
+_guile_init_strategy()
+{
+    _guile_strategy_tag = scm_make_smob_type("strategy",
+					     sizeof (struct _guile_strategy));
+    scm_set_smob_free(_guile_strategy_tag, _guile_strategy_free);
+    scm_set_smob_print(_guile_strategy_tag, _guile_strategy_print);
+}
+
+
+static long scm_tc16_dico_port;
+struct _guile_dico_port {
+    dico_stream_t str;
+};
+
+static SCM
+_make_dico_port(dico_stream_t str)
+{
+    struct _guile_dico_port *dp;
+    SCM port;
+    scm_port *pt;
+
+    dp = scm_gc_malloc (sizeof (struct _guile_dico_port), "dico-port");
+    dp->str = str;
+    port = scm_cell(scm_tc16_dico_port, 0);
+    pt = scm_add_to_port_table(port);
+    SCM_SETPTAB_ENTRY(port, pt);
+    pt->rw_random = 0;
+    SCM_SET_CELL_TYPE(port,
+		      (scm_tc16_dico_port | SCM_OPN | SCM_WRTNG | SCM_BUF0));
+    SCM_SETSTREAM(port, dp);
+    return port;
+}
+
+#define DICO_PORT(x) ((struct _guile_dico_port *) SCM_STREAM (x))
+
+static SCM
+_dico_port_mark(SCM port)
+{
+    return SCM_BOOL_F;
+}
+
+static void
+_dico_port_flush(SCM port)
+{
+    struct _guile_dico_port *dp = DICO_PORT(port);
+    if (dp && dp->str)
+	dico_stream_flush(dp->str);
+}
+
+static int
+_dico_port_close(SCM port)
+{
+    struct _guile_dico_port *dp = DICO_PORT(port);
+
+    if (dp) {
+	_dico_port_flush(port);
+	SCM_SETSTREAM(port, NULL);
+	free(dp);
+    }
+    return 0;
+}
+
+static scm_sizet
+_dico_port_free(SCM port)
+{
+    _dico_port_close(port);
+    return sizeof(struct _guile_dico_port);
+}
+
+static int
+_dico_port_fill_input(SCM port)
+{
+    return EOF;
+}
+
+static void
+_dico_port_write(SCM port, const void *data, size_t size)
+{
+    struct _guile_dico_port *dp = DICO_PORT(port);
+    dico_stream_write(dp->str, data, size);
+}
+
+static off_t
+_dico_port_seek (SCM port, off_t offset, int whence)
+{
+    struct _guile_dico_port *dp = DICO_PORT(port);
+    return dico_stream_seek(dp->str, offset, whence);
+}
+
+static int
+_dico_port_print(SCM exp, SCM port, scm_print_state *pstate)
+{
+    scm_puts ("#<Dico port>", port);
+    return 1;
+}
+
+static void
+_guile_init_dico_port()
+{
+    scm_tc16_dico_port = scm_make_port_type("dico-port",
+					    _dico_port_fill_input,
+					    _dico_port_write);
+    scm_set_port_mark (scm_tc16_dico_port, _dico_port_mark);
+    scm_set_port_free (scm_tc16_dico_port, _dico_port_free);
+    scm_set_port_print (scm_tc16_dico_port, _dico_port_print);
+    scm_set_port_flush (scm_tc16_dico_port, _dico_port_flush);
+    scm_set_port_close (scm_tc16_dico_port, _dico_port_close);
+    scm_set_port_seek (scm_tc16_dico_port, _dico_port_seek);
+}    
+
+
 static int guile_debug;
 
 static char *guile_init_script;
@@ -251,6 +412,9 @@ mod_init(int argc, char **argv)
 
     scm_init_guile();
     scm_load_goops();
+
+    _guile_init_strategy();
+    _guile_init_dico_port();
 
     if (guile_debug) {
 	SCM_DEVAL_P = 1;
@@ -387,45 +551,117 @@ mod_descr(dico_handle_t hp)
     return mod_get_text(db, descr_proc);
 }
 
+
+
 dico_result_t
 mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 {
-    /* FIXME */
-    return NULL;
+    struct _guile_database *db = (struct _guile_database *)hp;
+    SCM scm_strat = _make_strategy(strat);
+    SCM res;
+	
+    if (guile_call_proc(&res, &guile_proc[match_proc],
+			scm_list_4(scm_cons(SCM_IM_QUOTE,
+					    scm_makfrom0str(db->dbname)),
+				   scm_cons(SCM_IM_QUOTE, db->handle),
+				   scm_cons(SCM_IM_QUOTE, scm_strat),
+				   scm_cons(SCM_IM_QUOTE,
+					    scm_makfrom0str(word)))))
+	return NULL;
+
+    if (res == SCM_BOOL_F || res == SCM_EOL)
+	return NULL;
+    scm_gc_protect_object(res);
+    return (dico_result_t)res;
 }
 
 dico_result_t
 mod_define(dico_handle_t hp, const char *word)
 {
-    /* FIXME */
-    return NULL;
+    struct _guile_database *db = (struct _guile_database *)hp;
+    SCM res;
+	
+    if (guile_call_proc(&res, &guile_proc[define_proc],
+			scm_list_3(scm_cons(SCM_IM_QUOTE,
+					    scm_makfrom0str(db->dbname)),
+				   scm_cons(SCM_IM_QUOTE, db->handle),
+				   scm_cons(SCM_IM_QUOTE,
+					    scm_makfrom0str(word)))))
+	return NULL;
+
+    if (res == SCM_BOOL_F || res == SCM_EOL)
+	return NULL;
+    scm_gc_protect_object(res);
+    return (dico_result_t)res;
 }
 
 int
 mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 {
-    /* FIXME */
-    return 1;
+    int rc;
+    SCM handle = (SCM)rp;
+    SCM res;
+    SCM oport = scm_current_output_port();
+    SCM port = _make_dico_port(str);
+    
+    scm_set_current_output_port(port);
+    
+    rc = guile_call_proc(&res, &guile_proc[output_proc],
+			 scm_list_2(scm_cons(SCM_IM_QUOTE, handle),
+				    scm_cons(SCM_IM_QUOTE,
+					     scm_from_int(n))));
+    scm_set_current_output_port(oport);
+    _dico_port_close(port);
+    if (rc)
+	return 1;
+    return 0;
 }
 
 size_t
 mod_result_count (dico_result_t rp)
 {
-    /* FIXME */
+    SCM handle = (SCM)rp;
+    SCM res;
+    
+    if (guile_call_proc(&res, &guile_proc[result_count_proc],
+			scm_list_1(scm_cons(SCM_IM_QUOTE, handle))))
+	return 0;
+    if (scm_is_integer(res)) 
+	return scm_to_int32(res);
+    else
+	rettype_error(guile_proc[result_count_proc].name);
     return 0;
 }
 
 size_t
 mod_compare_count (dico_result_t rp)
 {
-    /* FIXME */
+    SCM handle = (SCM)rp;
+    if (guile_proc[compare_count_proc].name) {
+	SCM res;
+	
+	if (guile_call_proc(&res, &guile_proc[compare_count_proc],
+			    scm_list_1(scm_cons(SCM_IM_QUOTE, handle))))
+	    return 0;
+	if (scm_is_integer(res)) 
+	    return scm_to_int32(res);
+	else 
+	    rettype_error(guile_proc[compare_count_proc].name);
+    }
     return 0;
 }
 
 void
 mod_free_result(dico_result_t rp)
 {
-    /* FIXME */
+    SCM handle = (SCM)rp;
+    if (guile_proc[free_result_proc].name) {
+	SCM res;
+	
+	guile_call_proc(&res, &guile_proc[free_result_proc],
+			scm_list_1(scm_cons(SCM_IM_QUOTE, handle)));
+    }
+    scm_gc_unprotect_object(handle);
 }
 
 struct dico_handler_module DICO_EXPORT(guile, module) = {

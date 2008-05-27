@@ -17,7 +17,7 @@
 dictdir=@dictdir@
 inputdictpath=@inputdictpath@
 
-ACLOCAL_AMFLAGS = -I m4
+ACLOCAL_AMFLAGS = -I m4 -I am
 
 SUBDIRS=include utils gnu lib libltdl dictd modules makedict tests doc
 #FIXME: add these when ready: client fonts

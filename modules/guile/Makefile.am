@@ -14,6 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-DICO_GUILE_DIR=guile
-SUBDIRS = outline dict.org @BUILD_DICO_GUILE_DIR@
-EXTRA_DIST = sample.c
+moddir=@DICO_MODDIR@
+
+DICO_GUILE_MODULES=guile.la
+mod_LTLIBRARIES=guile.la
+
+guile_la_SOURCES = guile.c
+guile_la_LIBADD = ../../lib/libdico.la @GUILE_LIBS@
+AM_LDFLAGS = -module -avoid-version -no-undefined
+INCLUDES = -I$(top_srcdir)/include @GUILE_INCLUDES@

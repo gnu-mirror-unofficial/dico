@@ -202,6 +202,25 @@ if test $status_dbm != no; then
   AC_SUBST(BUILD_JDICT_PROGS,'$(JDICT_PROGS)')
 fi
 
+# Check for Guile
+AC_ARG_WITH([guile],
+            AC_HELP_STRING([--without-guile],
+                           [do not build guile interface]),
+            [
+case "${withval}" in
+  yes) status_guile=yes ;;
+  no)  status_guile=no ;;
+  *)   AC_MSG_ERROR(bad value ${withval} for --without-guile) ;;
+esac],[status_guile=yes])
+
+if test "$status_guile" = yes; then
+  MU_CHECK_GUILE(,[
+            AC_SUBST(GUILE_LIBS)
+	    AC_SUBST(GUILE_INCLUDES)
+            AC_SUBST([BUILD_DICO_GUILE_DIR],['$(DICO_GUILE_DIR)'])],
+	         [status_guile=no])
+fi
+
 # Check X configuration
 AC_PATH_XTRA
 
@@ -291,6 +310,7 @@ AC_CONFIG_FILES([Makefile
 		 modules/Makefile
 		 modules/outline/Makefile
 		 modules/dict.org/Makefile
+		 modules/guile/Makefile
                  makedict/Makefile
 		 tests/Makefile
 		 doc/Makefile])

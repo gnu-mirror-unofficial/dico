@@ -292,6 +292,10 @@ dico_stream_read_unbuffered(dico_stream_t stream, void *buf, size_t size,
 	    size -= rdbytes;
 	    stream->offset += rdbytes;
 	}
+	if (size) {
+	    _stream_seterror(stream, EIO, 0);
+	    return EIO;
+	}
     } else {
 	rc = stream->read(stream->data, buf, size, pread);
 	if (rc == 0) {
@@ -354,7 +358,7 @@ static int
 _stream_fill_buffer(dico_stream_t stream)
 {
     size_t n;
-    int rc;
+    int rc = 0;
     char c;
     
     switch (stream->buftype) {
@@ -380,7 +384,7 @@ _stream_fill_buffer(dico_stream_t stream)
 	break;
     }
     stream->cur = stream->buffer;
-    return 0;
+    return rc;
 }
 
 static int

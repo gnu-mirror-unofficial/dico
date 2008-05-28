@@ -404,7 +404,7 @@ _stream_buffer_full_p(dico_stream_t stream)
 }
 
 static int
-_stream_flush_buffer(dico_stream_t stream)
+_stream_flush_buffer(dico_stream_t stream, int all)
 {
     char *end;
 		  
@@ -437,6 +437,13 @@ _stream_flush_buffer(dico_stream_t stream)
 		if (rc)
 		    return rc;
 		_stream_advance_buffer(stream, size);
+	    }
+	    if (all && stream->level) {
+		int rc = dico_stream_write_unbuffered(stream, stream->cur,
+						      stream->level, NULL);
+		if (rc)
+		    return rc;
+		_stream_advance_buffer(stream, stream->level);
 	    }
 	}
     }
@@ -593,7 +600,8 @@ dico_stream_write(dico_stream_t stream, const void *buf, size_t size)
 	while (1) {
 	    size_t n;
 
-	    if (_stream_buffer_full_p(stream) && _stream_flush_buffer(stream))
+	    if (_stream_buffer_full_p(stream)
+		&& _stream_flush_buffer(stream, 0))
 		return 1;
 
 	    if (size == 0)
@@ -625,7 +633,7 @@ dico_stream_writeln(dico_stream_t stream, const char *buf, size_t size)
 int
 dico_stream_flush(dico_stream_t stream)
 {
-    if (_stream_flush_buffer(stream))
+    if (_stream_flush_buffer(stream, 1))
 	return 1;
     if (stream->flush)
 	return stream->flush(stream->data);

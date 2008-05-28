@@ -236,6 +236,66 @@ _guile_init_strategy()
     scm_set_smob_print(_guile_strategy_tag, _guile_strategy_print);
 }
 
+#define CELL_IS_STRAT(s) \
+    (!SCM_IMP(s) && SCM_CELL_TYPE(s) == _guile_strategy_tag)
+
+SCM_DEFINE(scm_dico_strat_selector_p, "dico-strat-selector?", 1, 0, 0,
+	   (SCM STRAT),
+	   "Return true if STRAT has a selector.")
+#define FUNC_NAME s_scm_dico_strat_selector_p
+{
+    struct _guile_strategy *sp;
+    
+    SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
+    sp = (struct _guile_strategy *) SCM_CDR(STRAT);
+    return sp->strat->sel ? SCM_BOOL_T : SCM_BOOL_F;
+}
+#undef FUNC_NAME
+
+SCM_DEFINE(scm_dico_strat_select_p, "dico-strat-select?", 3, 0, 0,
+	   (SCM STRAT, SCM WORD, SCM KEY),
+	   "Return true if KEY matches WORD as per strategy selector STRAT.")
+#define FUNC_NAME s_scm_dico_strat_select_p
+{
+    struct _guile_strategy *sp;
+    
+    SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
+    SCM_ASSERT(scm_is_string(WORD), WORD, SCM_ARG2, FUNC_NAME);
+    SCM_ASSERT(scm_is_string(KEY), KEY, SCM_ARG3, FUNC_NAME);
+    sp = (struct _guile_strategy *) SCM_CDR(STRAT);
+    return sp->strat->sel(DICO_SELECT_RUN,
+			  scm_i_string_chars(WORD),
+			  scm_i_string_chars(KEY),
+			  sp->strat->closure) ? SCM_BOOL_T : SCM_BOOL_F;
+}
+#undef FUNC_NAME
+
+SCM_DEFINE(scm_dico_strat_name, "dico-strat-name", 1, 0, 0,
+	   (SCM STRAT),
+	   "Return name of the strategy STRAT.")
+#define FUNC_NAME s_scm_dico_strat_name
+{
+    struct _guile_strategy *sp;
+    
+    SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
+    sp = (struct _guile_strategy *) SCM_CDR(STRAT);
+    return scm_makfrom0str(sp->strat->name);
+}
+#undef FUNC_NAME
+
+SCM_DEFINE(scm_dico_strat_description, "dico-strat-descriprion", 1, 0, 0,
+	   (SCM STRAT),
+	   "Return a textual description of the strategy STRAT.")
+#define FUNC_NAME s_scm_dico_strat_description
+{
+    struct _guile_strategy *sp;
+    
+    SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
+    sp = (struct _guile_strategy *) SCM_CDR(STRAT);
+    return scm_makfrom0str(sp->strat->descr);
+}
+#undef FUNC_NAME
+
 
 static long scm_tc16_dico_port;
 struct _guile_dico_port {
@@ -339,6 +399,20 @@ _guile_init_dico_port()
 }    
 
 
+static void
+_guile_init_funcs (void)
+{
+    scm_c_define_gsubr(s_scm_dico_strat_selector_p, 1, 0, 0,
+		       scm_dico_strat_selector_p);
+    scm_c_define_gsubr(s_scm_dico_strat_select_p, 3, 0, 0,
+		       scm_dico_strat_select_p);
+    scm_c_define_gsubr(s_scm_dico_strat_name, 1, 0, 0,
+		       scm_dico_strat_name);
+    scm_c_define_gsubr(s_scm_dico_strat_description, 1, 0, 0,
+		       scm_dico_strat_description);
+}
+
+
 static int guile_debug;
 
 static char *guile_init_script;
@@ -359,6 +433,19 @@ enum guile_proc_ind {
 };
 
 #define MAX_PROC (free_result_proc+1)
+
+static char *guile_proc_name[] = {
+    "open",
+    "close",
+    "info",
+    "descr",
+    "match",
+    "define",
+    "output",
+    "result_count",
+    "compare_count",
+    "free_result"
+};
 
 struct guile_proc guile_proc[MAX_PROC];
 
@@ -415,7 +502,7 @@ mod_init(int argc, char **argv)
 
     _guile_init_strategy();
     _guile_init_dico_port();
-
+    _guile_init_funcs();
     if (guile_debug) {
 	SCM_DEVAL_P = 1;
 	SCM_BACKTRACE_P = 1;
@@ -439,7 +526,9 @@ mod_init(int argc, char **argv)
 	    case define_proc:
 	    case output_proc:
 	    case result_count_proc:
-		dico_log(L_ERR, 0, _("%s: faulty guile module"), argv[0]);
+		dico_log(L_ERR, 0,
+			 _("%s: faulty guile module - missing `%s'"),
+			 argv[0], guile_proc_name[i]);
 		return 1;
 	    default:
 		break;
@@ -559,7 +648,13 @@ mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
     struct _guile_database *db = (struct _guile_database *)hp;
     SCM scm_strat = _make_strategy(strat);
     SCM res;
-	
+
+    if (strat->sel
+	&& strat->sel(DICO_SELECT_BEGIN, word, NULL, strat->closure)) {
+	dico_log(L_ERR, 0, _("mod_match: initial select failed"));
+	return NULL;
+    }
+    
     if (guile_call_proc(&res, &guile_proc[match_proc],
 			scm_list_4(scm_cons(SCM_IM_QUOTE,
 					    scm_makfrom0str(db->dbname)),
@@ -568,6 +663,9 @@ mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 				   scm_cons(SCM_IM_QUOTE,
 					    scm_makfrom0str(word)))))
 	return NULL;
+
+    if (strat->sel)
+	strat->sel(DICO_SELECT_END, word, NULL, strat->closure);
 
     if (res == SCM_BOOL_F || res == SCM_EOL)
 	return NULL;

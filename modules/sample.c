@@ -97,6 +97,7 @@ mod_free_result(dico_result_t rp)
 }
 
 struct dico_handler_module DICO_EXPORT(sample, module) = {
+    DICO_MODULE_VERSION,
     mod_init,
     mod_open,
     mod_close,

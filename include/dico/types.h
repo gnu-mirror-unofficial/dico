@@ -50,7 +50,10 @@ typedef int (*dico_select_t) (int, const char *, const char *, void *);
 struct dico_strategy;
 #define dico_strategy_t struct dico_strategy *
 
+#define DICO_MODULE_VERSION 1
+
 struct dico_handler_module {
+    int version;
     int (*module_init) (int argc, char **argv);
     dico_handle_t (*module_open) (const char *db, int argc, char **argv);
     int (*module_close) (dico_handle_t hp);

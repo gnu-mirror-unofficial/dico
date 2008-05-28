@@ -42,6 +42,8 @@ libdico_la_SOURCES=\
  utf8.c\
  util.c
 
+libdico_la_LDFLAGS = -version-info 0:0:0
+
 libxdico_a_SOURCES=\
  iputil.c\
  jiscvt.c\

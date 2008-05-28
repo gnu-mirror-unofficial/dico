@@ -751,6 +751,7 @@ outline_free_result(dico_result_t rp)
 }
 
 struct dico_handler_module DICO_EXPORT(outline, module) = {
+    DICO_MODULE_VERSION,
     outline_init,
     outline_open,
     outline_close,

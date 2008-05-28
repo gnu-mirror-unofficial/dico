@@ -345,7 +345,7 @@ _dico_port_close(SCM port)
     if (dp) {
 	_dico_port_flush(port);
 	SCM_SETSTREAM(port, NULL);
-	free(dp);
+	scm_gc_free(dp, sizeof(struct _guile_dico_port), "dico-port");
     }
     return 0;
 }
@@ -354,7 +354,7 @@ static scm_sizet
 _dico_port_free(SCM port)
 {
     _dico_port_close(port);
-    return sizeof(struct _guile_dico_port);
+    return 0;
 }
 
 static int
@@ -601,6 +601,8 @@ mod_open(const char *dbname, int argc, char **argv)
 	free(db);
 	return NULL;
     }
+    if (db->handle == SCM_EOL || db->handle == SCM_BOOL_F)
+	return NULL;
     scm_gc_protect_object(db->handle);
     return (dico_handle_t)db;
 }

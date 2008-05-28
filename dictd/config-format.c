@@ -145,15 +145,18 @@ format_block_statement(FILE *stream, struct config_keyword *kwp, int level)
     if (kwp->argname)
 	fprintf(stream, " <%s>", gettext(kwp->argname));
     fprintf(stream, " {\n");
-    format_statement_array(stream, kwp->kwd, level + 1);
+    format_statement_array(stream, kwp->kwd, 0, level + 1);
     format_level (stream, level);
     fprintf(stream, "}\n");
 }
 
 void
-format_statement_array(FILE *stream, struct config_keyword *kwp, int level)
+format_statement_array(FILE *stream, struct config_keyword *kwp, int n,
+		       int level)
 {
-    for (; kwp->ident; kwp++) {
+    for (; kwp->ident; kwp++, n++) {
+	if (n)
+	    fputc('\n', stream);
 	if (kwp->type == cfg_section)
 	    format_block_statement(stream, kwp, level);
 	else

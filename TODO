@@ -1,1 +1,21 @@
-Plenty :^)
+Dico TODO list.
+
+
+* Documentation.
+
+* Guile modules for www.runasimi.org and ellinika.gnu.org.ua.
+
+* A module for kanjidic/edict.
+
+* X client for the above.
+
+* Command line client (dico).
+
+* I18n
+
+
+Local variables:
+mode: outline
+paragraph-separate: "[ 	]*$"
+end:
+

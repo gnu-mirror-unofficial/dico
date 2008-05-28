@@ -607,7 +607,11 @@ struct config_keyword keywords[] = {
 void
 config_help()
 {
-    format_statement_array(stdout, keywords, 0);
+    static char docstring[] =
+	N_("Configuration file structure for dictd.\n"
+	   "For more information, use `info dico'.");
+    format_docstring(stdout, docstring, 0);
+    format_statement_array(stdout, keywords, 1, 0);
 }
 
 

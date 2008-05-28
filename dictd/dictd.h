@@ -190,8 +190,9 @@ char *line_finish0(void);
 int quote_char(int c);
 int unquote_char(int c);
 
+void format_docstring(FILE *stream, const char *docstring, int level);
 void format_statement_array(FILE *stream, struct config_keyword *kwp,
-			    int level);
+			    int n, int level);
 void config_help(void);
 
 

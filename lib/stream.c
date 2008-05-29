@@ -387,6 +387,9 @@ _stream_fill_buffer(dico_stream_t stream)
     return rc;
 }
 
+#define BUFFER_FULL_P(s) \
+    ((s)->cur + (s)->level == (s)->buffer + (s)->bufsize)
+
 static int
 _stream_buffer_full_p(dico_stream_t stream)
 {
@@ -395,10 +398,11 @@ _stream_buffer_full_p(dico_stream_t stream)
 	break;
 
     case dico_buffer_line:
-	return memchr(stream->cur, '\n', stream->level) != NULL;
+	return BUFFER_FULL_P(stream)
+	       || memchr(stream->cur, '\n', stream->level) != NULL;
 
     case dico_buffer_full:
-	return stream->cur + stream->level == stream->buffer + stream->bufsize;
+	return BUFFER_FULL_P(stream);
     }
     return 0;
 }
@@ -438,7 +442,7 @@ _stream_flush_buffer(dico_stream_t stream, int all)
 		    return rc;
 		_stream_advance_buffer(stream, size);
 	    }
-	    if (all && stream->level) {
+	    if ((all && stream->level) !|| BUFFER_FULL_P(stream)) {
 		int rc = dico_stream_write_unbuffered(stream, stream->cur,
 						      stream->level, NULL);
 		if (rc)

@@ -431,7 +431,7 @@ suffix_match(struct outline_file *file, const char *word, struct result *res)
 
 
 int
-outline_close(dico_handle_t hp)
+outline_free_db (dico_handle_t hp)
 {
     size_t i;
     struct outline_file *file = (struct outline_file *) hp;
@@ -452,7 +452,7 @@ outline_close(dico_handle_t hp)
 }
 
 dico_handle_t
-outline_open(const char *dbname, int argc, char **argv)
+outline_init_db(const char *dbname, int argc, char **argv)
 {
     FILE *fp;
     struct outline_file *file;
@@ -527,7 +527,7 @@ outline_open(const char *dbname, int argc, char **argv)
     file->index = calloc(count, sizeof(file->index[0]));
     if (!file->index) {
 	dico_log(L_ERR, 0, "not enough memory");
-	outline_close((dico_handle_t)file);
+	outline_free_db((dico_handle_t)file);
 	return NULL;
     }
 
@@ -753,8 +753,10 @@ outline_free_result(dico_result_t rp)
 struct dico_handler_module DICO_EXPORT(outline, module) = {
     DICO_MODULE_VERSION,
     outline_init,
-    outline_open,
-    outline_close,
+    outline_init_db,
+    outline_free_db,
+    NULL,
+    NULL,
     outline_info,
     outline_descr,
     outline_match,

@@ -238,12 +238,52 @@ init_databases()
     dictd_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
-	if (dictd_open_database_handler(dp)) {
+	if (dictd_init_database(dp)) {
 	    dico_log(L_NOTICE, 0, _("removing database %s"), dp->name);
 	    dico_iterator_remove_current(itr);
 	    dictd_database_free(dp);
 	}
     }
+    dico_iterator_destroy(&itr);
+}
+
+void
+dictd_close_databases()
+{
+    dico_iterator_t itr = xdico_iterator_create(database_list);
+    dictd_database_t *dp;
+
+    for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
+	if (dictd_close_database(dp)) 
+	    dico_log(L_NOTICE, 0, _("error closing database %s"), dp->name);
+    }
+    dico_iterator_destroy(&itr);
+}
+
+static void
+open_databases()
+{
+    dico_iterator_t itr = xdico_iterator_create(database_list);
+    dictd_database_t *dp;
+
+    for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
+	if (dictd_open_database(dp)) {
+	    dico_log(L_NOTICE, 0, _("removing database %s"), dp->name);
+	    dico_iterator_remove_current(itr);
+	    dictd_database_free(dp);
+	}
+    }
+    dico_iterator_destroy(&itr);
+}
+
+static void
+close_databases()
+{
+    dico_iterator_t itr = xdico_iterator_create(database_list);
+    dictd_database_t *dp;
+
+    for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) 
+	dictd_close_database(dp);
     dico_iterator_destroy(&itr);
 }
 
@@ -309,6 +349,9 @@ dictd_loop(dico_stream_t str)
 				       log_stream_create(L_DEBUG),
 				       NULL);
     }
+
+    open_databases();
+    
     initial_banner(str);
 
     while (!got_quit && get_input_line(str, &buf, &size, &rdbytes) == 0) {
@@ -318,7 +361,8 @@ dictd_loop(dico_stream_t str)
 	    continue;
 	dictd_handle_command(str, input.argc, input.argv);
     }
-    
+
+    close_databases();    
     init_auth_data();
     return 0;
 }

@@ -53,9 +53,11 @@ struct dico_strategy;
 #define DICO_MODULE_VERSION 1
 
 struct dico_handler_module {
-    int version;
+    unsigned version;
     int (*module_init) (int argc, char **argv);
-    dico_handle_t (*module_open) (const char *db, int argc, char **argv);
+    dico_handle_t (*module_init_db) (const char *db, int argc, char **argv);
+    int (*module_free_db) (dico_handle_t hp);
+    int (*module_open) (dico_handle_t hp);
     int (*module_close) (dico_handle_t hp);
     char *(*module_db_info) (dico_handle_t hp);
     char *(*module_db_descr) (dico_handle_t hp);
@@ -63,7 +65,8 @@ struct dico_handler_module {
 				   const dico_strategy_t strat,
 				   const char *word);
     dico_result_t (*module_define) (dico_handle_t hp, const char *word);
-    int (*module_output_result) (dico_result_t rp, size_t n, dico_stream_t str);
+    int (*module_output_result) (dico_result_t rp, size_t n,
+				 dico_stream_t str);
     size_t (*module_result_count) (dico_result_t rp);
     size_t (*module_compare_count) (dico_result_t rp);
     void (*module_free_result) (dico_result_t rp);

@@ -31,6 +31,15 @@ dictd_loader_init()
     dico_list_iterate(module_load_path, _add_load_dir, NULL);
 }
 
+#define MODULE_ASSERT(cond)					\
+    if (!(cond)) {						\
+	lt_dlclose(handle);					\
+	dico_log(L_ERR, 0, _("%s: faulty module: (%s) failed"), \
+		 argv[0],					\
+	         #cond);					\
+	return 1;						\
+    }
+
 static int
 dictd_load_module0(dictd_handler_t *hptr, int argc, char **argv)
 {
@@ -45,22 +54,19 @@ dictd_load_module0(dictd_handler_t *hptr, int argc, char **argv)
     }
 
     pmod = (struct dico_handler_module *) lt_dlsym(handle, "module");
-    if (!pmod) {
-	lt_dlclose(handle);
-	dico_log(L_ERR, 0, _("%s: faulty module"), argv[0]);
-	return 1;
-    }
+    MODULE_ASSERT(pmod->version <= DICO_MODULE_VERSION);
+    MODULE_ASSERT(pmod);
+    MODULE_ASSERT(pmod->module_init_db);
+    MODULE_ASSERT(pmod->module_free_db);
+    MODULE_ASSERT(pmod->module_match);
+    MODULE_ASSERT(pmod->module_define);
+    MODULE_ASSERT(pmod->module_output_result);
+    MODULE_ASSERT(pmod->module_result_count);
+    MODULE_ASSERT(pmod->module_free_result);
 
-    if (!pmod->module_match
-	|| !pmod->module_define
-	|| !pmod->module_output_result
-	|| !pmod->module_result_count
-	|| !pmod->module_free_result) {
-	lt_dlclose(handle);
-	dico_log(L_ERR, 0, _("%s: faulty module"), argv[0]);
-	return 1;
-    }
-    
+    if (pmod->module_open || pmod->module_close)
+	MODULE_ASSERT(pmod->module_open && pmod->module_close);
+	
     if (pmod->module_init && pmod->module_init(argc, argv)) {
 	lt_dlclose(handle);
 	dico_log(L_ERR, 0, _("%s: initialization failed"), argv[0]);
@@ -80,7 +86,8 @@ dictd_load_module(dictd_handler_t *hptr)
     int rc;
 	
     if ((rc = dico_argcv_get(hptr->command, NULL, NULL, &argc, &argv))) {
-	dico_log(L_ERR, rc, _("cannot parse command line `%s'"), hptr->command);
+	dico_log(L_ERR, rc, _("cannot parse command line `%s'"),
+		 hptr->command);
 	return 1;
     }
 
@@ -92,14 +99,15 @@ dictd_load_module(dictd_handler_t *hptr)
 }
 
 int
-dictd_open_database_handler(dictd_database_t *dp)
+dictd_init_database(dictd_database_t *dp)
 {
     dictd_handler_t *hptr = dp->handler;
 
-    if (hptr->module->module_open) {
-	dp->mod = hptr->module->module_open(dp->name, dp->argc, dp->argv);
+    if (hptr->module->module_init_db) {
+	dp->mod = hptr->module->module_init_db(dp->name, dp->argc, dp->argv);
 	if (!dp->mod) {
-	    dico_log(L_ERR, 0, _("cannot open module `%s'"), dp->command);
+	    dico_log(L_ERR, 0, _("cannot initialize database `%s'"),
+		     dp->command);
 	    return 1;
 	}
     }
@@ -107,7 +115,22 @@ dictd_open_database_handler(dictd_database_t *dp)
 }
 
 int
-dictd_close_database_handler(dictd_database_t *dp)
+dictd_open_database(dictd_database_t *dp)
+{
+    dictd_handler_t *hptr = dp->handler;
+
+    if (hptr->module->module_open) {
+	if (hptr->module->module_open(dp->mod)) {
+	    dico_log(L_ERR, 0, _("cannot open database `%s'"),
+		     dp->command);
+	    return 1;
+	}
+    }
+    return 0;
+}
+
+int
+dictd_close_database(dictd_database_t *dp)
 {
     int rc;
     
@@ -115,7 +138,23 @@ dictd_close_database_handler(dictd_database_t *dp)
 	dictd_handler_t *hptr = dp->handler;
 	if (hptr->module->module_close) 
 	    rc = hptr->module->module_close(dp->mod);
-	dp->mod = NULL;
+    } else
+	rc = 0;
+    return rc;
+}
+
+/* FIXME: Unused so far */
+int
+dictd_free_database(dictd_database_t *dp)
+{
+    int rc;
+    
+    if (dp->mod) {
+	dictd_handler_t *hptr = dp->handler;
+	if (hptr->module->module_free_db) {
+	    rc = hptr->module->module_free_db(dp->mod);
+	    dp->mod = NULL;
+	}
     } else
 	rc = 0;
     return rc;

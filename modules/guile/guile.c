@@ -451,6 +451,8 @@ struct guile_proc guile_proc[MAX_PROC];
 
 struct _guile_database {
     const char *dbname;
+    int argc;
+    char **argv;
     SCM handle;
 };
 
@@ -547,8 +549,32 @@ mod_init(int argc, char **argv)
 
     return 0;
 }
-    
-int
+
+static dico_handle_t
+mod_init_db(const char *dbname, int argc, char **argv)
+{
+    struct _guile_database *db;
+
+    db = malloc(sizeof(*db));
+    if (!db) {
+	memerr("mod_init_db");
+	return NULL;
+    }
+    db->dbname = dbname;
+    db->argc = argc;
+    db->argv = argv;
+    return (dico_handle_t)db;
+}
+
+static int
+mod_free_db(dico_handle_t hp)
+{
+    struct _guile_database *db = (struct _guile_database *)hp;
+    free(db);
+    return 0;
+}
+
+static int
 mod_close(dico_handle_t hp)
 {
     struct _guile_database *db = (struct _guile_database *)hp;
@@ -561,7 +587,6 @@ mod_close(dico_handle_t hp)
 				   scm_cons(SCM_IM_QUOTE, db->handle)));
     scm_gc_unprotect_object(db->handle);
 
-    free(db);
     return 0;
 }
 
@@ -582,29 +607,21 @@ argv_to_scm(int argc, char **argv)
     return scm_first;
 }
  
-dico_handle_t
-mod_open(const char *dbname, int argc, char **argv)
+static int
+mod_open(dico_handle_t dp)
 {
-    struct _guile_database *db;
-
-    db = malloc(sizeof(*db));
-    if (!db) {
-	memerr("mod_open");
-	return NULL;
-    }
-    db->dbname = dbname;
+    struct _guile_database *db = (struct _guile_database *)dp;
     if (guile_call_proc(&db->handle, &guile_proc[open_proc],
 			scm_list_2(scm_cons(SCM_IM_QUOTE,
 					    scm_makfrom0str(db->dbname)),
 			           scm_cons(SCM_IM_QUOTE,
-					    argv_to_scm(argc, argv))))) {
-	free(db);
-	return NULL;
-    }
+					    argv_to_scm(db->argc,
+							db->argv))))) 
+	return 1;
     if (db->handle == SCM_EOL || db->handle == SCM_BOOL_F)
-	return NULL;
+	return 1;
     scm_gc_protect_object(db->handle);
-    return (dico_handle_t)db;
+    return 0;
 }
 
 static char *
@@ -628,14 +645,14 @@ mod_get_text(struct _guile_database *db, int n)
     return NULL;
 }    
 
-char *
+static char *
 mod_info(dico_handle_t hp)
 {
     struct _guile_database *db = (struct _guile_database *)hp;
     return mod_get_text(db, info_proc);
 }
 
-char *
+static char *
 mod_descr(dico_handle_t hp)
 {
     struct _guile_database *db = (struct _guile_database *)hp;
@@ -644,7 +661,7 @@ mod_descr(dico_handle_t hp)
 
 
 
-dico_result_t
+static dico_result_t
 mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 {
     struct _guile_database *db = (struct _guile_database *)hp;
@@ -675,7 +692,7 @@ mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
     return (dico_result_t)res;
 }
 
-dico_result_t
+static dico_result_t
 mod_define(dico_handle_t hp, const char *word)
 {
     struct _guile_database *db = (struct _guile_database *)hp;
@@ -695,7 +712,7 @@ mod_define(dico_handle_t hp, const char *word)
     return (dico_result_t)res;
 }
 
-int
+static int
 mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 {
     int rc;
@@ -717,7 +734,7 @@ mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
     return 0;
 }
 
-size_t
+static size_t
 mod_result_count (dico_result_t rp)
 {
     SCM handle = (SCM)rp;
@@ -733,7 +750,7 @@ mod_result_count (dico_result_t rp)
     return 0;
 }
 
-size_t
+static size_t
 mod_compare_count (dico_result_t rp)
 {
     SCM handle = (SCM)rp;
@@ -751,7 +768,7 @@ mod_compare_count (dico_result_t rp)
     return 0;
 }
 
-void
+static void
 mod_free_result(dico_result_t rp)
 {
     SCM handle = (SCM)rp;
@@ -767,6 +784,8 @@ mod_free_result(dico_result_t rp)
 struct dico_handler_module DICO_EXPORT(guile, module) = {
     DICO_MODULE_VERSION,
     mod_init,
+    mod_init_db,
+    mod_free_db,
     mod_open,
     mod_close,
     mod_info,

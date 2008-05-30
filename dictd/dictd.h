@@ -331,8 +331,11 @@ void init_auth_data(void);
 /* loader.c */
 void dictd_loader_init(void);
 int dictd_load_module(dictd_handler_t *hptr);
-int dictd_open_database_handler(dictd_database_t *dp);
-int dictd_close_database_handler(dictd_database_t *dp);
+int dictd_init_database(dictd_database_t *dp);
+int dictd_open_database(dictd_database_t *dp);
+int dictd_close_database(dictd_database_t *dp);
+int dictd_free_database(dictd_database_t *dp);
+
 int dictd_database_get_strats(dictd_database_t *dp);
 
 char *dictd_get_database_descr(dictd_database_t *db);

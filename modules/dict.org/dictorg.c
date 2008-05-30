@@ -311,7 +311,7 @@ open_index(struct dictdb *db, int tws)
 }
 
 int
-mod_close(dico_handle_t hp)
+mod_free_db(dico_handle_t hp)
 {
     struct dictdb *db = (struct dictdb *) hp;
     free_db(db);
@@ -361,7 +361,7 @@ open_stream(struct dictdb *db)
 static int compare_entry(const void *a, const void *b);
 
 dico_handle_t
-mod_open(const char *dbname, int argc, char **argv)
+mod_init_db(const char *dbname, int argc, char **argv)
 {
     struct dictdb *db;
     char *filename = NULL;
@@ -383,7 +383,7 @@ mod_open(const char *dbname, int argc, char **argv)
 
     if (!filename) {
 	dico_log(L_ERR, 0,
-		 _("mod_open(%s): database name not given"),
+		 _("mod_init_db(%s): database name not given"),
 		 argv[0]);
 	return NULL;
     }
@@ -393,7 +393,7 @@ mod_open(const char *dbname, int argc, char **argv)
 	    filename = dico_full_file_name(dbdir, filename);
 	} else {
 	    dico_log(L_ERR, 0,
-		     _("mod_open: `%s' is not an absolute file name"),
+		     _("mod_init_db: `%s' is not an absolute file name"),
 		     filename);
 	    return NULL;
 	}
@@ -401,14 +401,14 @@ mod_open(const char *dbname, int argc, char **argv)
 	filename = strdup(filename);
 
     if (!filename) {
-	memerr("mod_open");
+	memerr("mod_init_db");
 	return NULL;
     }
     
     db = malloc(sizeof(*db));
     if (!db) {
 	free(filename);
-	memerr("mod_open");
+	memerr("mod_init_db");
 	return NULL;
     }
     memset(db, 0, sizeof(*db));
@@ -890,8 +890,10 @@ mod_free_result(dico_result_t rp)
 struct dico_handler_module DICO_EXPORT(dictorg, module) = {
     DICO_MODULE_VERSION,
     mod_init,
-    mod_open,
-    mod_close,
+    mod_init_db,
+    mod_free_db,
+    NULL,
+    NULL,
     mod_info,
     mod_descr,
     mod_match,

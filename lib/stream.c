@@ -442,7 +442,7 @@ _stream_flush_buffer(dico_stream_t stream, int all)
 		    return rc;
 		_stream_advance_buffer(stream, size);
 	    }
-	    if ((all && stream->level) !|| BUFFER_FULL_P(stream)) {
+	    if ((all && stream->level) || BUFFER_FULL_P(stream)) {
 		int rc = dico_stream_write_unbuffered(stream, stream->cur,
 						      stream->level, NULL);
 		if (rc)

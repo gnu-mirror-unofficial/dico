@@ -27,7 +27,7 @@ static int multiline_unescape;         /* Unescape here-document contents */
 static int (*char_to_strip)(char);     /* Strip matching characters of each
 					  here-document line */
 
-gd_locus_t locus;
+dictd_locus_t locus;
 static ino_t source_inode;
 static struct obstack stk;
     
@@ -62,7 +62,7 @@ fillbuf(char *buf, int max_size)
 
 struct buffer_ctx {
     struct buffer_ctx *prev;
-    gd_locus_t locus;
+    dictd_locus_t locus;
     ino_t i_node;
     FILE *yyin;
     LEX_BUFFER_STATE state;

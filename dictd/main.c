@@ -94,7 +94,7 @@ int timing_option;
 /* Configuration */
 int
 set_user(enum cfg_callback_command cmd,
-	 gd_locus_t *locus,
+	 dictd_locus_t *locus,
 	 void *varptr,
 	 config_value_t *value,
 	 void *cb_data)
@@ -117,7 +117,7 @@ set_user(enum cfg_callback_command cmd,
 }
 
 static int set_supp_group(enum cfg_callback_command cmd,
-			  gd_locus_t *locus,
+			  dictd_locus_t *locus,
 			  void *varptr,
 			  config_value_t *value,
 			  void *cb_data);
@@ -126,7 +126,7 @@ static int
 set_supp_group_iter(void *item, void *data)
 {
     return set_supp_group(callback_set_value,
-			  (gd_locus_t *)data,
+			  (dictd_locus_t *)data,
 			  NULL,
 			  (config_value_t *)item,
 			  NULL);
@@ -134,7 +134,7 @@ set_supp_group_iter(void *item, void *data)
 	
 static int
 set_supp_group(enum cfg_callback_command cmd,
-	       gd_locus_t *locus,
+	       dictd_locus_t *locus,
 	       void *varptr,
 	       config_value_t *value,
 	       void *cb_data)
@@ -158,7 +158,7 @@ set_supp_group(enum cfg_callback_command cmd,
 
 int
 set_mode(enum cfg_callback_command cmd,
-	 gd_locus_t *locus,
+	 dictd_locus_t *locus,
 	 void *varptr,
 	 config_value_t *value,
 	 void *cb_data)
@@ -200,7 +200,7 @@ static struct xlat_tab syslog_facility_tab[] = {
 
 int
 set_log_facility(enum cfg_callback_command cmd,
-		 gd_locus_t *locus,
+		 dictd_locus_t *locus,
 		 void *varptr,
 		 config_value_t *value,
 		 void *cb_data)
@@ -222,7 +222,7 @@ set_log_facility(enum cfg_callback_command cmd,
 
 int
 set_handler_type(enum cfg_callback_command cmd,
-		 gd_locus_t *locus,
+		 dictd_locus_t *locus,
 		 void *varptr,
 		 config_value_t *value,
 		 void *cb_data)
@@ -244,7 +244,7 @@ set_handler_type(enum cfg_callback_command cmd,
 
 int
 set_handler(enum cfg_callback_command cmd,
-	    gd_locus_t *locus,
+	    dictd_locus_t *locus,
 	    void *varptr,
 	    config_value_t *value,
 	    void *cb_data)
@@ -281,7 +281,7 @@ set_handler(enum cfg_callback_command cmd,
 
 int
 set_database(enum cfg_callback_command cmd,
-	     gd_locus_t *locus,
+	     dictd_locus_t *locus,
 	     void *varptr,
 	     config_value_t *value,
 	     void *cb_data)
@@ -324,7 +324,7 @@ cmp_handler_ident(const void *item, const void *data)
 
 int
 set_dict_handler(enum cfg_callback_command cmd,
-		 gd_locus_t *locus,
+		 dictd_locus_t *locus,
 		 void *varptr,
 		 config_value_t *value,
 		 void *cb_data)
@@ -359,7 +359,7 @@ set_dict_handler(enum cfg_callback_command cmd,
 }
 
 int enable_capability(enum cfg_callback_command cmd,
-		      gd_locus_t *locus,
+		      dictd_locus_t *locus,
 		      void *varptr,
 		      config_value_t *value,
 		      void *cb_data);
@@ -368,7 +368,7 @@ int
 set_capability(void *item, void *data)
 {
     return enable_capability(callback_set_value,
-			     (gd_locus_t *) data,
+			     (dictd_locus_t *) data,
 			     NULL,
 			     (config_value_t *) item,
 			     NULL);
@@ -376,7 +376,7 @@ set_capability(void *item, void *data)
 
 int
 enable_capability(enum cfg_callback_command cmd,
-		  gd_locus_t *locus,
+		  dictd_locus_t *locus,
 		  void *varptr,
 		  config_value_t *value,
 		  void *cb_data)
@@ -390,7 +390,7 @@ enable_capability(enum cfg_callback_command cmd,
 
 int
 set_defstrat(enum cfg_callback_command cmd,
-	     gd_locus_t *locus,
+	     dictd_locus_t *locus,
 	     void *varptr,
 	     config_value_t *value,
 	     void *cb_data)
@@ -462,7 +462,7 @@ struct config_keyword kwd_user_db[] = {
 
 int
 user_db_config(enum cfg_callback_command cmd,
-	       gd_locus_t *locus,
+	       dictd_locus_t *locus,
 	       void *varptr,
 	       config_value_t *value,
 	       void *cb_data)
@@ -497,7 +497,7 @@ user_db_config(enum cfg_callback_command cmd,
 
 int
 set_show_sys_info(enum cfg_callback_command cmd,
-		  gd_locus_t *locus,
+		  dictd_locus_t *locus,
 		  void *varptr,
 		  config_value_t *value,
 		  void *cb_data)

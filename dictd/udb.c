@@ -81,7 +81,7 @@ udb_def_cmp(const void *item, const void *data)
 int
 udb_create(dictd_user_db_t *pdb,
 	   const char *urlstr, const char *qpw, const char *qgrp,
-	   gd_locus_t *locus)
+	   dictd_locus_t *locus)
 {
     dico_url_t url;
     int rc;

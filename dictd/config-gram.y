@@ -175,7 +175,7 @@ yyerror(char *s)
 }
 
 void
-config_error(gd_locus_t *locus, int errcode, const char *fmt, ...)
+config_error(dictd_locus_t *locus, int errcode, const char *fmt, ...)
 {
     va_list ap;
 
@@ -270,7 +270,7 @@ stmt_end(struct config_keyword *kwp)
 
 int
 fake_callback(enum cfg_callback_command cmd,
-	      gd_locus_t *locus,
+	      dictd_locus_t *locus,
 	      void *varptr,
 	      config_value_t *value,
 	      void *cb_data)

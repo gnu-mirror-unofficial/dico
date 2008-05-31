@@ -97,9 +97,9 @@ void get_options(int argc, char *argv[]);
 typedef struct {
     char *file;
     int line;
-} gd_locus_t;
+} dictd_locus_t;
 
-extern gd_locus_t locus;
+extern dictd_locus_t locus;
 
 
 /* Configuration file stuff */
@@ -150,7 +150,7 @@ typedef struct {
 
 typedef int (*config_callback_fn) (
     enum cfg_callback_command cmd,
-    gd_locus_t *       /* locus */,
+    dictd_locus_t *       /* locus */,
     void *             /* varptr */,
     config_value_t *   /* value */,
     void *             /* cb_data */
@@ -179,7 +179,7 @@ typedef union {
 int yylex(void);
 int yyerror(char *); 
 
-void config_error(gd_locus_t *locus, int errcode, const char *fmt, ...)
+void config_error(dictd_locus_t *locus, int errcode, const char *fmt, ...)
     DICO_PRINTFLIKE(3,4);
 int config_lex_begin(const char *name);
 void config_lex_end(void);
@@ -321,7 +321,7 @@ extern dictd_user_db_t user_db;
 void udb_init(void);
 int udb_create(dictd_user_db_t *pdb,
 	       const char *urlstr, const char *qpw, const char *qgrp,
-	       gd_locus_t *locus);
+	       dictd_locus_t *locus);
 
 int udb_open(dictd_user_db_t db);
 int udb_close(dictd_user_db_t db);

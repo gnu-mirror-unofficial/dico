@@ -596,7 +596,8 @@ argv_to_scm(int argc, char **argv)
     SCM scm_first = SCM_EOL, scm_last;
 
     for (; argc; argc--, argv++) {
-	SCM new = scm_cons(scm_makfrom0str(*argv), SCM_EOL);
+	SCM new = scm_cons(scm_cons(SCM_IM_QUOTE, scm_makfrom0str(*argv)), 
+                           SCM_EOL);
 	if (scm_first == SCM_EOL) 
 	    scm_last = scm_first = new;
 	else {
@@ -612,11 +613,9 @@ mod_open(dico_handle_t dp)
 {
     struct _guile_database *db = (struct _guile_database *)dp;
     if (guile_call_proc(&db->handle, &guile_proc[open_proc],
-			scm_list_2(scm_cons(SCM_IM_QUOTE,
-					    scm_makfrom0str(db->dbname)),
-			           scm_cons(SCM_IM_QUOTE,
-					    argv_to_scm(db->argc,
-							db->argv))))) 
+			scm_cons(scm_cons(SCM_IM_QUOTE,
+					   scm_makfrom0str(db->dbname)),
+					   argv_to_scm(db->argc, db->argv)))) 
 	return 1;
     if (db->handle == SCM_EOL || db->handle == SCM_BOOL_F)
 	return 1;

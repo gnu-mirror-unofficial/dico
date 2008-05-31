@@ -40,7 +40,7 @@ extern int dico_argcv_get_np (const char *command, int len,
 			      int flags,
 			      int *pargc, char ***pargv, char **endp);
   
-extern int dico_argcv_string (int argc, char **argv, char **string);
+extern int dico_argcv_string (int argc, const char **argv, char **string);
 extern void dico_argcv_free   (int argc, char **argv);
 extern void dico_argv_free (char **argv);
 

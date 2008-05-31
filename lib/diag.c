@@ -24,6 +24,7 @@
 #include <string.h>
 #include <ctype.h>
 
+const char *dico_invocation_name;
 const char *dico_program_name;
 
 void
@@ -31,6 +32,7 @@ dico_set_program_name(char *name)
 {
     const char *progname;
 
+    dico_invocation_name = name;
     if (!name)
 	progname = name;
     else {

@@ -20,7 +20,9 @@
 #define obstack_chunk_alloc malloc
 #define obstack_chunk_free free
 #include <obstack.h>
-
+#include <unistd.h>
+#include <fcntl.h>
+    
 static char *multiline_delimiter;
 static size_t multiline_delimiter_len;
 static int multiline_unescape;         /* Unescape here-document contents */
@@ -28,7 +30,6 @@ static int (*char_to_strip)(char);     /* Strip matching characters of each
 					  here-document line */
 
 dictd_locus_t locus;
-static ino_t source_inode;
 static struct obstack stk;
     
 static void multiline_begin(char *);
@@ -36,137 +37,15 @@ static void multiline_add(char *);
 static void multiline_finish(void);
 static char *multiline_strip_tabs(char *text);
 static int ident();
-static void config_include(void);
 static int isemptystr(char *text);
 
-static int
-fillbuf(char *buf, int max_size)
-{
-    if (feof(yyin))
-	return 0;
-    else
-	return fread(buf, 1, max_size, yyin);
-} 
- 
 #undef YY_INPUT
-#define YY_INPUT(buf,result,max_size) result = fillbuf(buf, max_size)
-#define LEX_BUFFER_STATE YY_BUFFER_STATE
-#define SET_BUFFER_STATE(s) do { \
-        (s) = YY_CURRENT_BUFFER; \
-        yy_switch_to_buffer(yy_create_buffer(yyin, YY_BUF_SIZE)); \
-} while (0)
-#define RESTORE_BUFFER_STATE(s) do { \
-        yy_delete_buffer(YY_CURRENT_BUFFER); \
-        yy_switch_to_buffer(s); \
-} while (0)
-
-struct buffer_ctx {
-    struct buffer_ctx *prev;
-    dictd_locus_t locus;
-    ino_t i_node;
-    FILE *yyin;
-    LEX_BUFFER_STATE state;
-};
-
-static struct buffer_ctx *context_stack;
-
-static struct buffer_ctx *ctx_lookup(ino_t ino);
-static int push_source(const char *name);
-static int pop_source(void);
-
-struct buffer_ctx *
-ctx_lookup(ino_t ino)
-{
-    struct buffer_ctx *ctx;
-
-    for (ctx = context_stack; ctx; ctx = ctx->prev)
-	if (ctx->i_node == ino)
-	    break;
-    return ctx;
-}
-        
-int
-push_source(const char *name)
-{
-    FILE *fp;
-    struct buffer_ctx *ctx;
-    struct stat st;
-        
-    if (stat(name, &st)) {
-	config_error(&locus, errno, _("cannot stat `%s'"), name);
-	return 1;
-    }
-
-    if (locus.file && st.st_ino == source_inode) {
-	yyerror(_("recursive inclusion"));
-	return 1;
-    }
-    if ((ctx = ctx_lookup(st.st_ino))) {
-	yyerror(_("recursive inclusion"));
-	if (ctx->prev)
-	    config_error(&ctx->locus, 0,
-			 _("`%s' already included here"), name);
-      else
-	  config_error(&locus, 0,
-		       _("`%s' already included at top level"), name);
-      return 1;
-    }
-                
-    fp = fopen(name, "r");
-    if (!fp) {
-	config_error(&locus, errno, _("cannot open `%s'"), name);
-	return 1;
-    }
-
-    /* Push current context */
-    if (locus.file) {
-	ctx = xmalloc(sizeof (*ctx));
-	ctx->locus = locus;
-	ctx->i_node = source_inode;
-	ctx->yyin = yyin;
-	ctx->prev = context_stack;
-	context_stack = ctx;
-      
-	/* Switch to the new context */
-	yyin = fp;
-	SET_BUFFER_STATE(ctx->state);
-    } else
-	yyrestart(fp);
-  
-    locus.file = strdup(name);
-    locus.line = 1;
-    source_inode = st.st_ino;
-
-    return 0;
-}
-
-int
-pop_source()
-{
-    struct buffer_ctx *ctx;
-
-    if (yyin)
-	fclose(yyin);
-
-    if (locus.file)
-	free(locus.file);
-    if (!context_stack) {
-	yyin = NULL;
-	locus.file = NULL;
-	return 1;
-    }
-    /* Restore previous context */
-    locus = context_stack->locus;
-    locus.line++; /* because the #include rule did not increment it */
-    source_inode = context_stack->i_node;
-    RESTORE_BUFFER_STATE(context_stack->state);
-    ctx = context_stack->prev;
-    free(context_stack);
-    context_stack = ctx;
-
-    return 0;
-}
-
+#define YY_INPUT(buf,result,max_size) do {                  \
+	if (preprocessor)				    \
+	    result = fread(buf, 1, max_size, yyin);	    \
+	else                                                \
+	    result = pp_fill_buffer(buf, max_size);	    \
+    } while (0)
 
 %}
     
@@ -175,6 +54,7 @@ pop_source()
 
 WS [ \t\f][ \t\f]*
 ID [a-zA-Z_][a-zA-Z_0-9-]+
+P [1-9][0-9]*
 
 %%
          /* C-style comments */
@@ -183,8 +63,9 @@ ID [a-zA-Z_][a-zA-Z_0-9-]+
 <COMMENT>"*"+[^*/\n]*   /* eat up '*'s not followed by '/'s */
 <COMMENT>\n             ++locus.line;
 <COMMENT>"*"+"/"        BEGIN(INITIAL);
-         /* Preprocessor directives (an extension) */
-#[ \t]*include.*\n      { config_include(); }
+         /* Line directive */
+^[ \t]*#[ \t]*{P}[ \t]+\".*\".*\n parse_line_cpp(yytext, &locus);
+^[ \t]*#[ \t]*line[ \t].*\n parse_line(yytext,  &locus);
          /* End-of-line comments */
 #.*\n     { locus.line++; }
 #.*     /* end-of-file comment */;
@@ -238,83 +119,52 @@ ID [a-zA-Z_][a-zA-Z_0-9-]+
 .        return yytext[0];
 %%
 
+pid_t pp_pid;
+
 int
 yywrap()
 {
-  return pop_source();
-}
-
-static char *
-get_file_name(char *p, char *endp, int *usepath)
-{
-    char exp, *name, *startp;
-    int n;
-  
-    if (usepath)
-	*usepath = 0;
-    switch (*p) {
-    case '"':
-	exp = '"';
-	break;
-
-    case '<':
-	exp = '>';
-	if (usepath)
-	    *usepath = 1;
-	break;
-
-    default:
-	yyerror(_("preprocessor syntax"));
-	return NULL;
-    }
-
-    for (startp = ++p; p < endp && *p != exp; p++)
-	;
-
-    if (*p != exp) {
-	yyerror(_("missing closing quote in preprocessor statement"));
-	return NULL;
-    }
-  
-    n = p - startp;
-    name = xmalloc(n + 1);
-    memcpy(name, startp, n);
-    name[n] = 0;
-    return name;
-}
-
-void
-config_include()
-{
-    char *p, *endp = yytext + yyleng, *name;
-    int usepath;
-    
-    p = strstr(yytext, "include");
-    for (p += 7; p < endp && isspace(*p); p++)
-	;
-
-    name = get_file_name(p, endp, &usepath);
-    if (!name)
-	return;
-    if (access(name, R_OK)) 
-	config_error(&locus, errno, _("cannot access `%s'"), name);
-    else 
-	push_source(name);
-    free(name);
+    if (yyin)
+	pp_extrn_shutdown(pp_pid);
+    else
+	pp_done();
+    locus.file = NULL;
+    return 1;
 }
 
 int
 config_lex_begin(const char *name)
 {
     obstack_init(&stk);
-    return push_source(name);
+    if (preprocessor) {
+	int fd;
+	int argc;
+	const char **argv;
+	
+	fd = open(name, O_RDONLY);
+	if (fd == -1) {
+	    dico_log(L_ERR, errno, _("Cannot open `%s'"), name);
+	    return 1;
+	}
+	close(fd);
+
+	pp_make_argcv(&argc, &argv);
+	yyin = pp_extrn_start(argc, argv, &pp_pid);
+	if (!yyin) {
+	    dico_log(L_ERR, errno,
+		     _("Unable to start external preprocessor `%s'"),
+		     preprocessor);
+	    return 1;
+	}
+    } else
+	return pp_init(name);
+
+    return 0;
 }
 
 void
 config_lex_end()
 {
-    while (pop_source() == 0)
-	;
 }
 
 int

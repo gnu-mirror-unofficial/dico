@@ -33,6 +33,7 @@
 #define L_CONS      0x8000
 
 extern const char *dico_program_name;
+extern const char *dico_invocation_name;
 void dico_set_program_name(char *name);
 
 typedef void (*dico_log_printer_t) (int /* lvl */,

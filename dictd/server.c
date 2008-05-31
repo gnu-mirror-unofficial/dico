@@ -432,16 +432,6 @@ server_loop()
     return 0;
 }
 
-
-#if defined HAVE_SYSCONF && defined _SC_OPEN_MAX
-# define getmaxfd() sysconf(_SC_OPEN_MAX)
-#elif defined (HAVE_GETDTABLESIZE)
-# define getmaxfd() getdtablesize()
-#else
-# define getmaxfd() 256
-#endif
-
-
 void
 dictd_server(int argc, char **argv)
 {

@@ -43,6 +43,37 @@ BEGIN
    log_to_stderr = 1;
 END
 
+OPTION(syslog,,,
+       [<Output diagnostic to syslog (default).>])
+BEGIN
+   log_to_stderr = 0;
+END
+
+OPTION(,E,,
+       [<Preprocess the config file and exit>])
+BEGIN
+   mode = MODE_PREPROC;
+END
+
+OPTION(preprocessor,,PROG,
+       [<Use PROG as a preprocessor for config file.>])
+BEGIN
+   preprocessor = optarg;
+END
+
+OPTION(no-preprocessor,,,
+       [<Do not use external preprocessor.>])
+BEGIN
+   preprocessor = NULL;
+END
+
+OPTION(include-dir,I,DIR,
+       [<Add the directory DIR to the list of directories\n
+        to be searched for header files>])
+BEGIN
+   add_include_dir(optarg); 
+END
+
 OPTION(single-process, s,,
        [<Single-process mode.>])
 BEGIN
@@ -58,7 +89,8 @@ END
 OPTION(debug, x, LEVEL-SPEC,
        [<Set debug verbosity level.>])
 BEGIN
-   /*set_debug_level(optarg);*/;
+   debug_level_str = optarg;
+   debug_level = atoi(optarg);
 END
 
 OPTION(trace-grammar,,,

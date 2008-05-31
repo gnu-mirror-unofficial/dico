@@ -202,6 +202,44 @@ if test $status_dbm != no; then
   AC_SUBST(BUILD_JDICT_PROGS,'$(JDICT_PROGS)')
 fi
 
+AC_ARG_WITH([preprocessor],
+            AC_HELP_STRING([--without-preprocessor],
+                           [do not use external preprocessor]),
+            [
+case "${withval}" in
+yes) use_ext_pp=yes ;;
+no)  use_ext_pp=no ;;
+*)   AC_MSG_ERROR(bad value ${withval} for --with-preprocessor) ;;
+esac],[use_ext_pp=yes])
+
+if test $use_ext_pp != no; then
+  # Check for default preprocessor
+  AC_ARG_VAR([DEFAULT_PREPROCESSOR],
+             [Set default preprocessor name])
+  if test -z "$DEFAULT_PREPROCESSOR" ; then
+    DEFAULT_PREPROCESSOR="m4 -s"
+  fi
+  
+  save_PATH=$PATH
+  PREPROC_OPTIONS=`echo $DEFAULT_PREPROCESSOR | sed -n 's/[[^ ]][[^ ]]* //p'`
+  case "$DEFAULT_PREPROCESSOR" in
+  /*) PATH=`expr $DEFAULT_PREPROCESSOR : '\(.*\)/.*'`:$PATH
+      DEFAULT_PREPROCESSOR=`expr $DEFAULT_PREPROCESSOR : '.*/\(.*\)'`;;
+  esac
+  AC_PATH_PROG(PPBIN, $DEFAULT_PREPROCESSOR)
+  DEFAULT_PREPROCESSOR=$PPBIN
+  if test -n "$DEFAULT_PREPROCESSOR"; then
+    DEFAULT_PREPROCESSOR="$DEFAULT_PREPROCESSOR $PREPROC_OPTIONS"
+    case $PPBIN in
+    *m4) AC_SUBST(PP_SETUP_FILE,'pp-setup');; # Install default pp-setup
+    esac
+  fi
+  PATH=$save_PATH
+  DEFAULT_PREPROCESSOR="\\\"$DEFAULT_PREPROCESSOR\\\""
+else
+  DEFAULT_PREPROCESSOR=NULL
+fi
+
 # Check for Guile
 AC_ARG_WITH([guile],
             AC_HELP_STRING([--without-guile],

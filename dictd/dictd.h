@@ -42,6 +42,14 @@
 #include <xdico.h>
 #include <c-strcase.h>
 
+#if defined HAVE_SYSCONF && defined _SC_OPEN_MAX
+# define getmaxfd() sysconf(_SC_OPEN_MAX)
+#elif defined (HAVE_GETDTABLESIZE)
+# define getmaxfd() getdtablesize()
+#else
+# define getmaxfd() 256
+#endif
+
 extern int mode;
 extern int foreground;     /* Run in foreground mode */
 extern int single_process; /* Single process mode */
@@ -70,7 +78,9 @@ extern int timing_option;
 extern char *user_name;
 extern dico_list_t user_groups; 
 extern int transcript;
-
+extern const char *preprocessor;
+extern int debug_level;
+extern char *debug_level_str;
 extern unsigned long total_forks;
 
 struct dico_stat {
@@ -89,8 +99,9 @@ extern struct dico_stat current_stat, total_stat;
 
 #define DICT_PORT 2628
 
-#define MODE_DAEMON 0
-#define MODE_INETD  1
+#define MODE_DAEMON  0 
+#define MODE_INETD   1
+#define MODE_PREPROC 2
 
 void get_options(int argc, char *argv[]);
 
@@ -271,6 +282,7 @@ size_t database_count(void);
 int database_iterate(dico_list_iterator_t fun, void *data);
 int database_visible_p(const dictd_database_t *db);
 int show_sys_info_p(void);
+void dictd_log_setup(void);
 
 
 typedef void (*dictd_cmd_fn) (dico_stream_t str, int argc, char **argv);
@@ -380,4 +392,19 @@ dico_stream_t log_stream_create(int level);
 /* getopt.m4 */
 extern void print_help(void);
 extern void print_usage(void);
+
+/* pp.c */
+void include_path_setup(void);
+void add_include_dir(char *dir);
+void parse_line_cpp(char *text, dictd_locus_t *ploc);
+int parse_line(char *text, dictd_locus_t *ploc);
+int pp_init(const char *name);
+void pp_done(void);
+int preprocess_config(const char *extpp);
+void pp_make_argcv(int *pargc, const char ***pargv);
+FILE *pp_extrn_start(int argc, const char **argv, pid_t *ppid);
+void pp_extrn_shutdown(pid_t pid);
+size_t pp_fill_buffer(char *buf, size_t size);
+
+
 

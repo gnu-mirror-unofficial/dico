@@ -31,6 +31,10 @@ char *pidfile_name = "/var/run/dictd.pid";
 /* Operation mode */
 int mode = MODE_DAEMON;
 
+/* Debug verbosity level */
+int debug_level;
+char *debug_level_str;
+
 /* Maximum number of children in allowed in daemon mode. */
 unsigned int max_children;
 /* Wait this number of seconds for all subprocesses to terminate. */
@@ -806,6 +810,15 @@ get_full_hostname()
     }
 }
 
+void
+dictd_log_setup()
+{
+    if (!log_to_stderr) {
+	openlog(log_tag, LOG_PID, log_facility);
+	dico_set_log_printer(syslog_log_printer);
+    }
+}    
+
 
 int
 main(int argc, char **argv)
@@ -821,8 +834,13 @@ main(int argc, char **argv)
     register_xversion();
     register_lev();
     register_regex();
+    include_path_setup();
     config_lex_trace(0);
     get_options(argc, argv);
+
+    if (mode == MODE_PREPROC)
+	return preprocess_config(preprocessor);
+
     config_set_keywords(keywords);
     if (config_parse(config_file))
 	exit(1);
@@ -831,11 +849,8 @@ main(int argc, char **argv)
     if (config_lint_option)
 	exit(0);
     
-    if (!log_to_stderr) {
-	openlog(log_tag, LOG_PID, log_facility);
-	dico_set_log_printer(syslog_log_printer);
-    }
-
+    dictd_log_setup();
+    
     dictd_loader_init();
 
     begin_timing("server");
@@ -846,8 +861,8 @@ main(int argc, char **argv)
 
     case MODE_INETD:
 	return dictd_inetd();
-    }
 
+    }
 	
     return 0;
 }

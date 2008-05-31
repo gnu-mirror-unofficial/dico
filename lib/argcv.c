@@ -468,7 +468,7 @@ argv_free (char **argv)
 /* Make a argv an make string separated by ' '.  */
 
 int
-argcv_string (int argc, char **argv, char **pstring)
+argcv_string (int argc, const char **argv, char **pstring)
 {
   size_t i, j, len;
   char *buffer;

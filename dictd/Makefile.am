@@ -32,6 +32,7 @@ dictd_SOURCES=\
  main.c\
  mime.c\
  ostream.c\
+ pp.c\
  regex.c\
  server.c\
  stat.c\
@@ -40,7 +41,16 @@ dictd_SOURCES=\
 
 noinst_HEADERS=dictd.h config-gram.h
 
-AM_CFLAGS = -DSYSCONFIG=\"$(sysconfdir)\" -DDICO_MODDIR=\"$(DICO_MODDIR)\" 
+incdir=$(pkgdatadir)/$(VERSION)/include
+inc_DATA = $(PP_SETUP_FILE)
+
+AM_CFLAGS = \
+ -DSYSCONFIG=\"$(sysconfdir)\"\
+ -DDICO_MODDIR=\"$(DICO_MODDIR)\"\
+ -DDEFAULT_VERSION_INCLUDE_DIR=\"$(incdir)\"\
+ -DDEFAULT_INCLUDE_DIR=\"$(pkgdatadir)/include\"\
+ -DDEFAULT_PREPROCESSOR="$(DEFAULT_PREPROCESSOR)"
+
 AM_YFLAGS = -dtv
 AM_LFLAGS = -dvp
 
@@ -63,4 +73,4 @@ SUFFIXES=.opt .c
 	m4 -s $(top_srcdir)/utils/getopt.m4 $< | sed '1d' > $@
 
 BUILT_SOURCES=cmdline.c 
-EXTRA_DIST=cmdline.opt 
+EXTRA_DIST=cmdline.opt pp-setup

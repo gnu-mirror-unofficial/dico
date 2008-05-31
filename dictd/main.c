@@ -832,7 +832,7 @@ main(int argc, char **argv)
 	exit(0);
     
     if (!log_to_stderr) {
-	openlog(log_tag, LOG_PID, LOG_FACILITY);
+	openlog(log_tag, LOG_PID, log_facility);
 	dico_set_log_printer(syslog_log_printer);
     }
 

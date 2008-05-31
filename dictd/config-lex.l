@@ -173,7 +173,7 @@ pop_source()
     
 %x COMMENT ML STR
 
-WS [ \t][ \t]*
+WS [ \t\f][ \t\f]*
 ID [a-zA-Z_][a-zA-Z_0-9-]+
 
 %%

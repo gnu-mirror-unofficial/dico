@@ -24,7 +24,7 @@ dictd_quit(dico_stream_t str, int argc, char **argv)
 {
     got_quit = 1;
     stream_writez(str, "221 bye");
-    report_timing(str, "dictd");
+    report_current_timing(str, "dictd");
     stream_writez(str, "\r\n");
 }
 
@@ -189,6 +189,17 @@ dictd_show_server(dico_stream_t str, int argc, char **argv)
 }
 
 void
+dictd_status(dico_stream_t str, int argc, char **argv)
+{
+    stream_writez(str, "210");
+    if (timing_option) 
+	report_timing(str, timer_get_temp("server"), &total_stat);
+    else
+	stream_writez(str, "No timing data available");
+    stream_writez(str, "\r\n");
+}
+
+void
 dictd_client(dico_stream_t str, int argc, char **argv)
 {
     dico_log(L_INFO, 0, "Client info: %s", argv[1]);
@@ -263,7 +274,8 @@ struct dictd_command command_tab[] = {
       dictd_show_server },
     { "CLIENT", 2, "info", "identify client to server",
       dictd_client },
-    { "STATUS", 1, NULL, "display timing information" },
+    { "STATUS", 1, NULL, "display timing information",
+      dictd_status },
     { "HELP", 1, NULL, "display this help information",
       dictd_help },
     { "QUIT", 1, NULL, "terminate connection", dictd_quit },

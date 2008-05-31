@@ -72,9 +72,14 @@ extern dico_list_t user_groups;
 extern int transcript;
 
 extern unsigned long total_forks;
-extern unsigned num_defines;
-extern unsigned num_matches;
-extern unsigned num_compares;
+
+struct dico_stat {
+    unsigned long defines;
+    unsigned long matches;
+    unsigned long compares;
+};
+
+extern struct dico_stat current_stat, total_stat;
 
 #ifndef LOG_FACILITY
 # define LOG_FACILITY LOG_LOCAL1
@@ -360,7 +365,9 @@ dico_stream_t dictd_ostream_create(dico_stream_t str, const char *type,
 
 /* stat.c */
 void begin_timing(const char *name);
-void report_timing(dico_stream_t stream, const char *name);
+void report_timing(dico_stream_t stream, xdico_timer_t t,
+		   struct dico_stat *sp);
+void report_current_timing(dico_stream_t stream, const char *name);
 
 /* xscript.c */
 dico_stream_t transcript_stream_create(dico_stream_t transport,

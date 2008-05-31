@@ -234,15 +234,15 @@ dictd_word_first(dico_stream_t stream, const char *word,
 	    
 	    if (count) {
 		if (strat)
-		    num_matches = count;
+		    current_stat.matches = count;
 		else
-		    num_defines = count;
+		    current_stat.defines = count;
 		if (mp->module_compare_count)
-		    num_compares = mp->module_compare_count(res);
+		    current_stat.compares = mp->module_compare_count(res);
 		stream_printf(stream, begfmt, (unsigned long) count);
 		proc(db, res, word, stream, count);
 		stream_writez(stream, (char*) endmsg);
-		report_timing(stream, tid);
+		report_current_timing(stream, tid);
 		dico_stream_write(stream, "\r\n", 2);
 	    }
 	    
@@ -294,7 +294,7 @@ dictd_word_all(dico_stream_t stream, const char *word,
 
 	    total += count;
 	    if (mp->module_compare_count)
-		num_compares += mp->module_compare_count(res);
+		current_stat.compares += mp->module_compare_count(res);
 	    rp = xmalloc(sizeof(*rp));
 	    rp->db = db;
 	    rp->res = res;
@@ -311,9 +311,9 @@ dictd_word_all(dico_stream_t stream, const char *word,
 	itr = xdico_iterator_create(reslist);
 	
 	if (strat)
-	    num_matches = total;
+	    current_stat.matches = total;
 	else
-	    num_defines = total;
+	    current_stat.defines = total;
 	stream_printf(stream, begfmt, (unsigned long) total);
 	for (rp = dico_iterator_first(itr); rp; rp = dico_iterator_next(itr)) {
 	    proc(rp->db, rp->res, word, stream, rp->count);
@@ -321,7 +321,7 @@ dictd_word_all(dico_stream_t stream, const char *word,
 	    free(rp);
 	}
 	stream_writez(stream, (char*) endmsg);
-	report_timing(stream, tid);
+	report_current_timing(stream, tid);
 	dico_stream_write(stream, "\r\n", 2);
 	dico_iterator_destroy(&itr);
     }
@@ -368,15 +368,15 @@ dictd_match_word_db(dictd_database_t *db, dico_stream_t stream,
     if (count == 0) 
 	dico_stream_writeln(stream, nomatch, nomatch_len);
     else {
-	num_matches = count;
+	current_stat.matches = count;
 	if (mp->module_compare_count)
-	    num_compares = mp->module_compare_count(res);
+	    current_stat.compares = mp->module_compare_count(res);
 	stream_printf(stream, "152 %lu matches found: list follows\r\n",
 		      (unsigned long) count);
 	print_matches(db, res, word, stream, count);
 	dico_stream_write(stream, ".\r\n", 3);
 	stream_writez(stream, "250 Command complete");
-	report_timing(stream, "match");
+	report_current_timing(stream, "match");
 	dico_stream_write(stream, "\r\n", 2);
     }
     
@@ -447,14 +447,14 @@ dictd_define_word_db(dictd_database_t *db, dico_stream_t stream,
     if (count == 0) 
 	dico_stream_writeln(stream, nomatch, nomatch_len);
     else {
-	num_defines = count;
+	current_stat.defines = count;
 	if (mp->module_compare_count)
-	    num_compares = mp->module_compare_count(res);
+	    current_stat.compares = mp->module_compare_count(res);
 	stream_printf(stream, "150 %lu definitions found: list follows\r\n",
 		      (unsigned long) count);
 	print_definitions(db, res, word, stream, count);
 	stream_writez(stream, "250 Command complete");
-	report_timing(stream, "define");
+	report_current_timing(stream, "define");
 	dico_stream_write(stream, "\r\n", 2);
     }
     

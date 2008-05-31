@@ -16,14 +16,15 @@
 
 #include <dictd.h>
 
-size_t num_defines;
-size_t num_matches;
-size_t num_compares;
+struct dico_stat current_stat, total_stat;
 
 void
 clear_stats()
 {
-    num_defines = num_matches = num_compares = 0;
+    total_stat.defines += current_stat.defines;
+    total_stat.matches += current_stat.matches;
+    total_stat.compares += current_stat.compares;
+    memset(&current_stat, 0, sizeof(current_stat));
 }
 
 void
@@ -36,20 +37,30 @@ begin_timing(const char *name)
 }
 
 void
-report_timing(dico_stream_t stream, const char *name)
+report_timing(dico_stream_t stream, xdico_timer_t t, struct dico_stat *sp)
+{
+    dico_stream_write(stream, " [", 2);
+    if (sp)
+	stream_printf(stream, "d/m/c = %lu/%lu/%lu ",
+		      (unsigned long) sp->defines,
+		      (unsigned long) sp->matches,
+		      (unsigned long) sp->compares);
+    timer_format_time(stream, timer_get_real(t));
+    dico_stream_write(stream, "r ", 2);
+    timer_format_time(stream, timer_get_user(t));
+    dico_stream_write(stream, "u ", 2);
+    timer_format_time(stream, timer_get_system(t));
+    dico_stream_write(stream, "s]", 2);
+}
+
+void
+report_current_timing(dico_stream_t stream, const char *name)
 {
     if (timing_option) {
 	xdico_timer_t t = timer_stop(name);
-	stream_printf(stream, " [d/m/c = %lu/%lu/%lu ",
-	              (unsigned long) num_defines,
-		      (unsigned long) num_matches,
-		      (unsigned long) num_compares);
+	report_timing(stream, t, &current_stat);
 	clear_stats();
-	timer_format_time(stream, timer_get_real(t));
-	dico_stream_write(stream, "r ", 2);
-	timer_format_time(stream, timer_get_user(t));
-	dico_stream_write(stream, "u ", 2);
-	timer_format_time(stream, timer_get_system(t));
-	dico_stream_write(stream, "s]", 2);
     }
 }
+
+    

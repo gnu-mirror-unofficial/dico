@@ -365,6 +365,7 @@ dictd_match_word_db(dictd_database_t *db, dico_stream_t stream,
     res = mp->module_match(db->mod, strat, word);
     
     if (!res) {
+	access_log_status(nomatch, nomatch);
 	dico_stream_writeln(stream, nomatch, nomatch_len);
 	return;
     }
@@ -446,6 +447,7 @@ dictd_define_word_db(dictd_database_t *db, dico_stream_t stream,
 
     res = mp->module_define(db->mod, word);
     if (!res) {
+	access_log_status(nomatch, nomatch);
 	dico_stream_writeln(stream, nomatch, nomatch_len);
 	return;
     }

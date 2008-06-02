@@ -18,6 +18,8 @@
 #include <fprintftime.h>
 #include <xgethostname.h>
 
+#define UINTMAX_STRSIZE_BOUND INT_BUFSIZE_BOUND(uintmax_t)
+
 
 static char status[2][4];
 
@@ -95,7 +97,7 @@ add_instr(alog_printer_fn prt, const char *fmt, size_t fmtsize)
     struct alog_instr *p;
     if (fmt == NULL)
 	fmtsize = 0;
-    p = xmalloc(sizeof(*p) + (fmtsize ? (fmtsize + 1) : 0));
+    p = xzalloc(sizeof(*p) + (fmtsize ? (fmtsize + 1) : 0));
     p->prt = prt;
     if (fmtsize) {
 	p->arg = (char*) (p + 1);
@@ -167,16 +169,19 @@ alog_local_ip(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 static void
 alog_response_size(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 {
-    /* FIXME */
-    print_str(fp, "0");
+    char buf[UINTMAX_STRSIZE_BOUND];
+    print_str(fp, umaxtostr(total_bytes_out, buf));
 }
 
 static void
 alog_response_size_clf(FILE *fp, struct alog_instr *instr,
 		       int argc, char **argv)
 {
-    /* FIXME */
-    print_str(fp, "-");
+    char buf[UINTMAX_STRSIZE_BOUND];
+    if (total_bytes_out)
+	print_str(fp, umaxtostr(total_bytes_out, buf));
+    else
+	print_str(fp, "-");
 }
 
 static void
@@ -188,8 +193,10 @@ alog_client(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 static void
 alog_time_ms(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 {
-    /* FIXME */
-    print_str(fp, "-");
+    char buf[UINTMAX_STRSIZE_BOUND];
+    xdico_timer_t t = timer_get(argv[0]);
+    double s = timer_get_real(t);
+    print_str(fp, umaxtostr((uintmax_t)(s * 1e6), buf));
 }
 
 static void
@@ -312,8 +319,9 @@ alog_time(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 static void
 alog_process_time(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 {
-    /* FIXME */
-    print_str(fp, "-");
+    char buf[UINTMAX_STRSIZE_BOUND];
+    xdico_timer_t t = timer_get(argv[0]);
+    print_str(fp, umaxtostr((uintmax_t)timer_get_real(t), buf));
 }
 
 static void
@@ -517,7 +525,7 @@ access_log(int argc, char **argv)
 static int
 free_cache(void *item, void *data)
 {
-    struct alog_instr *p;
+    struct alog_instr *p = item;
     if (p->cache) {
 	free(p->cache);
 	p->cache = NULL;

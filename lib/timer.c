@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <hash.h>
+#include <ctype.h>
 #include <xalloc.h>
 
 struct timer_slot {
@@ -40,12 +41,23 @@ struct timer_slot {
 
 static Hash_table *timer_table;
 
+static size_t
+hash_string_ci (const char *string, size_t n_buckets)
+{
+    size_t value = 0;
+    unsigned char ch;
+    
+    for (; (ch = *string); string++)
+	value = (value * 31 + tolower(ch)) % n_buckets;
+    return value;
+}
+
 /* Calculate the hash of a string.  */
 static size_t
 timer_hasher(void const *data, unsigned n_buckets)
 {
     const struct timer_slot *t = data;
-    return hash_string(t->name, n_buckets);
+    return hash_string_ci(t->name, n_buckets);
 }
 
 /* Compare two strings for equality.  */
@@ -54,7 +66,7 @@ timer_compare(void const *data1, void const *data2)
 {
     const struct timer_slot *t1 = data1;
     const struct timer_slot *t2 = data2;
-    return strcmp(t1->name, t2->name) == 0;
+    return strcasecmp(t1->name, t2->name) == 0;
 }
 
 /* Allocate a timer structure */
@@ -101,7 +113,7 @@ timer_start(const char *name)
 
 #define DIFFTIME(now,then)\
    (((now).tv_sec - (then).tv_sec) \
-    + ((now).tv_usec - (then).tv_usec)/1000000)
+    + ((double)((now).tv_usec - (then).tv_usec))/1000000)
 
 static void
 _timer_stop(xdico_timer_t t)

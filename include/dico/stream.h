@@ -87,6 +87,10 @@ int dico_stream_flush(dico_stream_t stream);
 int dico_stream_close(dico_stream_t stream);
 void dico_stream_destroy(dico_stream_t *stream);
 
+off_t dico_stream_bytes_in(dico_stream_t stream);
+off_t dico_stream_bytes_out(dico_stream_t stream);
+
+
 
 /* FD streams */
 dico_stream_t dico_fd_stream_create(int fd, int flags);

@@ -18,6 +18,8 @@
 
 extern int option_mime;
 
+off_t total_bytes_out;
+
 #define OSTREAM_INITIALIZED       0x01
 #define OSTREAM_DESTROY_TRANSPORT 0x02
 
@@ -70,15 +72,22 @@ static int
 ostream_write(void *data, const char *buf, size_t size, size_t *pret)
 {
     struct ostream *ostr = data;
+    off_t nbytes = dico_stream_bytes_out(ostr->transport);
+    int rc;
+    
     if (!(ostr->flags & OSTREAM_INITIALIZED)) {
 	if (option_mime && print_headers(ostr))
-	    return 1;
+	    return dico_stream_last_error(ostr->transport);
 	ostr->flags |= OSTREAM_INITIALIZED;
     }
     if (buf[0] == '.' && dico_stream_write(ostr->transport, ".", 1))
-	return 1;
+	return dico_stream_last_error(ostr->transport);
     *pret = size;
-    return dico_stream_write(ostr->transport, buf, size);
+    rc = dico_stream_write(ostr->transport, buf, size);
+    if (rc == 0)
+	total_bytes_out += dico_stream_bytes_out(ostr->transport) -
+	                    nbytes;
+    return rc;
 }
 
 static int

@@ -35,7 +35,7 @@ struct dico_stream {
     char *cur;
 
     int flags;
-    off_t offset;
+    off_t bytes_in, bytes_out;
     
     int last_err;
     int (*read) (void *, char *, size_t, size_t *);
@@ -78,7 +78,7 @@ dico_stream_open(dico_stream_t stream)
     int rc;
     if (stream->open && (rc = stream->open(stream->data, stream->flags))) 
 	return _stream_seterror(stream, rc, 1);
-    stream->offset = 0;
+    stream->bytes_in = stream->bytes_out = 0;
     return 0;
 }
 
@@ -290,7 +290,7 @@ dico_stream_read_unbuffered(dico_stream_t stream, void *buf, size_t size,
 	    }
 	    buf += rdbytes;
 	    size -= rdbytes;
-	    stream->offset += rdbytes;
+	    stream->bytes_in += rdbytes;
 	}
 	if (size) {
 	    _stream_seterror(stream, EIO, 0);
@@ -301,7 +301,7 @@ dico_stream_read_unbuffered(dico_stream_t stream, void *buf, size_t size,
 	if (rc == 0) {
 	    if (*pread == 0)
 		stream->flags |= _STR_EOF;
-	    stream->offset += *pread;
+	    stream->bytes_in += *pread;
 	}
     }
     _stream_seterror(stream, rc, rc != 0);
@@ -343,12 +343,12 @@ dico_stream_write_unbuffered(dico_stream_t stream,
 	    }
 	    bufp += wrbytes;
 	    size -= wrbytes;
-	    stream->offset += wrbytes;
+	    stream->bytes_out += wrbytes;
 	}
     } else {
 	rc = stream->write(stream->data, buf, size, pwrite);
 	if (rc == 0)
-	    stream->offset += *pwrite;
+	    stream->bytes_out += *pwrite;
     }
     _stream_seterror(stream, rc, rc != 0);
     return rc;
@@ -673,3 +673,14 @@ dico_stream_destroy(dico_stream_t *stream)
     *stream = NULL;
 }
 
+off_t
+dico_stream_bytes_in(dico_stream_t stream)
+{
+    return stream->bytes_in;
+}
+
+off_t
+dico_stream_bytes_out(dico_stream_t stream)
+{
+    return stream->bytes_out;
+}

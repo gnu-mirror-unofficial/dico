@@ -192,9 +192,11 @@ void
 dictd_status(dico_stream_t str, int argc, char **argv)
 {
     stream_writez(str, "210");
-    if (timing_option) 
-	report_timing(str, timer_get_temp("server"), &total_stat);
-    else
+    if (timing_option) {
+	xdico_timer_t t = timer_get_temp("server");
+	report_timing(str, t, &total_stat);
+	free(t);
+    } else
 	stream_writez(str, "No timing data available");
     stream_writez(str, "\r\n");
 }
@@ -214,6 +216,7 @@ dictd_match(dico_stream_t str, int argc, char **argv)
     const char *word = argv[3];
     const dico_strategy_t strat = dico_strategy_find(argv[2]);
     
+    total_bytes_out = 0;
     if (!strat) 
 	stream_writez(str,
 		      "551 Invalid strategy, use \"SHOW STRAT\" "
@@ -240,6 +243,7 @@ dictd_define(dico_stream_t str, int argc, char **argv)
     char *dbname = argv[1];
     char *word = argv[2];
     
+    total_bytes_out = 0;
     if (strcmp(dbname, "!") == 0) {
 	dictd_define_word_first(str, word);
     } else if (strcmp(dbname, "*") == 0) {

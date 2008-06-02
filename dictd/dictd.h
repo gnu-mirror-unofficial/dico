@@ -40,6 +40,7 @@
 #include <ltdl.h>
 
 #include <xdico.h>
+#include <inttostr.h>
 #include <c-strcase.h>
 
 #if defined HAVE_SYSCONF && defined _SC_OPEN_MAX
@@ -379,6 +380,7 @@ void dictd_define_word_first(dico_stream_t stream, const char *word);
 void dictd_define_word_all(dico_stream_t stream, const char *word);
 
 /* ostream.c */
+extern off_t total_bytes_out;
 dico_stream_t dictd_ostream_create(dico_stream_t str, const char *type,
                                    const char *enc);
 

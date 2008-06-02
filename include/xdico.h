@@ -63,7 +63,6 @@ double timer_get_real(xdico_timer_t t);
 double timer_get_user(xdico_timer_t t);
 double timer_get_system(xdico_timer_t t);
 void timer_format_time(dico_stream_t stream, double t);
-xdico_timer_t timer_get_temp(const char *name);
 
 #endif
     

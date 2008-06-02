@@ -166,9 +166,8 @@ dictd_show_server(dico_stream_t str, int argc, char **argv)
 	double x, fph;
 	
 	stream_writez(str, " up ");
-	t = timer_get_temp("server");
+	t = timer_stop("server");
 	x = timer_get_real(t);
-	free(t);
 	timer_format_time(str, x);
 	if (mode == MODE_DAEMON && !single_process) {
 	    x /= 3600;
@@ -192,11 +191,9 @@ void
 dictd_status(dico_stream_t str, int argc, char **argv)
 {
     stream_writez(str, "210");
-    if (timing_option) {
-	xdico_timer_t t = timer_get_temp("server");
-	report_timing(str, t, &total_stat);
-	free(t);
-    } else
+    if (timing_option) 
+	report_timing(str, timer_stop("server"), &total_stat);
+    else
 	stream_writez(str, "No timing data available");
     stream_writez(str, "\r\n");
 }

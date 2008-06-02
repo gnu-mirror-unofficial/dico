@@ -116,7 +116,7 @@ timer_start(const char *name)
     + ((double)((now).tv_usec - (then).tv_usec))/1000000)
 
 static void
-_timer_stop(xdico_timer_t t)
+_timer_compute(xdico_timer_t t)
 {
     struct timeval  real;
     struct rusage   rusage;
@@ -136,18 +136,8 @@ xdico_timer_t
 timer_stop(const char *name)
 {
     xdico_timer_t t = timer_get(name);
-    _timer_stop(t);
+    _timer_compute(t);
     return t;
-}
-
-xdico_timer_t
-timer_get_temp(const char *name)
-{
-    xdico_timer_t t = timer_get(name);
-    xdico_timer_t ret = xmalloc(sizeof(*ret));
-    *ret = *t;
-    _timer_stop(ret);
-    return ret;
 }
 
 xdico_timer_t

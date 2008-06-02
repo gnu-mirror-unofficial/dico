@@ -244,6 +244,7 @@ dictd_word_first(dico_stream_t stream, const char *word,
 		stream_writez(stream, (char*) endmsg);
 		report_current_timing(stream, tid);
 		dico_stream_write(stream, "\r\n", 2);
+		access_log_status(begfmt, endmsg);
 	    }
 	    
 	    mp->module_free_result(res);
@@ -251,8 +252,10 @@ dictd_word_first(dico_stream_t stream, const char *word,
 	}
     }
     dico_iterator_destroy(&itr);
-    if (!db)
+    if (!db) {
+	access_log_status(nomatch, nomatch);
 	dico_stream_writeln(stream, nomatch, nomatch_len);
+    }
 }
 
 struct dbres {
@@ -305,9 +308,10 @@ dictd_word_all(dico_stream_t stream, const char *word,
 
     dico_iterator_destroy(&itr);
 
-    if (total == 0)
+    if (total == 0) {
+	access_log_status(nomatch, nomatch);
 	dico_stream_writeln(stream, nomatch, nomatch_len);
-    else {
+    } else {
 	itr = xdico_iterator_create(reslist);
 	
 	if (strat)
@@ -324,6 +328,7 @@ dictd_word_all(dico_stream_t stream, const char *word,
 	report_current_timing(stream, tid);
 	dico_stream_write(stream, "\r\n", 2);
 	dico_iterator_destroy(&itr);
+	access_log_status(begfmt, endmsg);
     }
     dico_list_destroy(&reslist, NULL, NULL);
 }
@@ -365,9 +370,10 @@ dictd_match_word_db(dictd_database_t *db, dico_stream_t stream,
     }
 
     count = mp->module_result_count(res);
-    if (count == 0) 
+    if (count == 0) {
+	access_log_status(nomatch, nomatch);
 	dico_stream_writeln(stream, nomatch, nomatch_len);
-    else {
+    } else {
 	current_stat.matches = count;
 	if (mp->module_compare_count)
 	    current_stat.compares = mp->module_compare_count(res);
@@ -378,6 +384,7 @@ dictd_match_word_db(dictd_database_t *db, dico_stream_t stream,
 	stream_writez(stream, "250 Command complete");
 	report_current_timing(stream, "match");
 	dico_stream_write(stream, "\r\n", 2);
+	access_log_status("152", "250");
     }
     
     mp->module_free_result(res);
@@ -444,9 +451,10 @@ dictd_define_word_db(dictd_database_t *db, dico_stream_t stream,
     }
 
     count = mp->module_result_count(res);
-    if (count == 0) 
+    if (count == 0) {
+	access_log_status(nomatch, nomatch);
 	dico_stream_writeln(stream, nomatch, nomatch_len);
-    else {
+    } else {
 	current_stat.defines = count;
 	if (mp->module_compare_count)
 	    current_stat.compares = mp->module_compare_count(res);
@@ -456,6 +464,7 @@ dictd_define_word_db(dictd_database_t *db, dico_stream_t stream,
 	stream_writez(stream, "250 Command complete");
 	report_current_timing(stream, "define");
 	dico_stream_write(stream, "\r\n", 2);
+	access_log_status("150", "250");
     }
     
     mp->module_free_result(res);

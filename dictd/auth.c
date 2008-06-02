@@ -115,6 +115,8 @@ init_auth_data()
 {
     free(user_name);
     user_name = NULL;
+    free(client_id);
+    client_id = NULL;
     dico_list_destroy(&user_groups, _free_group, NULL);
 }
 

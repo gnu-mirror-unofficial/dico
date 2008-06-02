@@ -330,13 +330,17 @@ sig_child(int sig)
     need_cleanup = 1;
 }
 
+struct sockaddr client_addr;
+int client_addrlen;
+
 int
 handle_connection(int listenfd)
 {
-    sockaddr_union_t addr;
-    int addrlen = sizeof addr;
-    int connfd = accept(listenfd, (struct sockaddr *)&addr, &addrlen);
     int status = 0;
+    int connfd;
+
+    client_addrlen = sizeof(client_addr);
+    connfd = accept(listenfd, &client_addr, &client_addrlen);
     
     if (connfd == -1) {
 	if (errno == EINTR)
@@ -346,6 +350,7 @@ handle_connection(int listenfd)
 	/*exit (EXIT_FAILURE);*/
     }
 
+    
     /*FIXME: log_connection(&addr, addrlen);*/
 
     if (single_process) {

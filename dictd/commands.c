@@ -202,6 +202,7 @@ dictd_status(dico_stream_t str, int argc, char **argv)
 void
 dictd_client(dico_stream_t str, int argc, char **argv)
 {
+    xdico_assign_string(&client_id, argv[1]);
     dico_log(L_INFO, 0, "Client info: %s", argv[1]);
     stream_writez(str, "250 ok\r\n");
 }
@@ -230,6 +231,7 @@ dictd_match(dico_stream_t str, int argc, char **argv)
 	else
 	    dictd_match_word_db(db, str, strat, word);
     }
+    access_log(argc, argv);
 }
 
 void
@@ -251,6 +253,7 @@ dictd_define(dico_stream_t str, int argc, char **argv)
 	else
 	    dictd_define_word_db(db, str, word);
     }
+    access_log(argc, argv);
 }
 
 

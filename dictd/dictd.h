@@ -75,13 +75,19 @@ extern dico_list_t module_load_path;
 extern dico_list_t handler_list;
 extern dico_list_t database_list;
 extern int timing_option;
+extern char *client_id;
 extern char *user_name;
-extern dico_list_t user_groups; 
+extern dico_list_t user_groups;
 extern int transcript;
 extern const char *preprocessor;
 extern int debug_level;
 extern char *debug_level_str;
 extern unsigned long total_forks;
+extern char *access_log_format;
+extern char *access_log_file;
+
+extern struct sockaddr client_addr;
+extern int client_addrlen;
 
 struct dico_stat {
     unsigned long defines;
@@ -283,6 +289,7 @@ int database_iterate(dico_list_iterator_t fun, void *data);
 int database_visible_p(const dictd_database_t *db);
 int show_sys_info_p(void);
 void dictd_log_setup(void);
+char *get_full_hostname(void);
 
 
 typedef void (*dictd_cmd_fn) (dico_stream_t str, int argc, char **argv);
@@ -406,5 +413,10 @@ FILE *pp_extrn_start(int argc, const char **argv, pid_t *ppid);
 void pp_extrn_shutdown(pid_t pid);
 size_t pp_fill_buffer(char *buf, size_t size);
 
+/* accesslog.c */
+void access_log_status(const char *first, const char *last);
+void access_log(int argc, char **argv);
+void compile_access_log(void);
+void access_log_free_cache(void);
 
 

@@ -3,6 +3,7 @@
 
 c-strcase
 crypto/md5
+fprintftime
 inttostr
 inttypes
 getline

@@ -49,6 +49,7 @@ void xdico_list_prepend(struct list *list, void *data);
 dico_assoc_list_t xdico_assoc_create(void);
 void xdico_assoc_add(dico_assoc_list_t assoc, const char *key,
 		     const char *value);
+char *xdico_assign_string(char **dest, char *str);
 
 
 /* Timer */

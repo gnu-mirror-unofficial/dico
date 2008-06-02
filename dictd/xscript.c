@@ -96,6 +96,13 @@ transcript_write(void *data, const char *buf, size_t size, size_t *pret)
 }
 
 static int
+transcript_flush(void *data)
+{
+    struct transcript_stream *p = data;
+    return dico_stream_flush(p->transport);
+}
+
+static int
 transcript_destroy(void *data)
 {
     struct transcript_stream *p = data;
@@ -138,9 +145,11 @@ transcript_stream_create(dico_stream_t transport, dico_stream_t logstr,
     
     dico_stream_set_read(stream, transcript_read);
     dico_stream_set_write(stream, transcript_write);
+    dico_stream_set_flush(stream, transcript_flush);
     dico_stream_set_destroy(stream, transcript_destroy);
     dico_stream_set_error_string(stream, transcript_strerror);
     dico_stream_set_buffer(stream, dico_buffer_line, 1024);
+
     return stream;
 }
 

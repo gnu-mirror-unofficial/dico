@@ -92,3 +92,12 @@ xdico_assoc_add(dico_assoc_list_t assoc, const char *key, const char *value)
 	xalloc_die();
 }
 
+char *
+xdico_assign_string(char **dest, char *str)
+{
+    if (*dest)
+	free (*dest);
+    return *dest = str ? xstrdup (str) : NULL;
+}
+    
+

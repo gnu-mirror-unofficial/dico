@@ -1,5 +1,10 @@
 /* A sample configuration for dictd */
 
+capability (mime,xversion);
+timing yes;
+access-log-file "<BUILDDIR>/tests/access_log";
+access-log-format "%h %l %u %t \"%r\" %>s %b \"\" \"%C\"";
+
 module-load-path "<BUILDDIR>/modules/outline";
 
 handler outline {
@@ -30,5 +35,4 @@ server-info <<EOT
 This is a test Dico server.
 EOT
 
-capability (mime,xversion);
 

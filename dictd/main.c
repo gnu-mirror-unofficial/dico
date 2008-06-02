@@ -87,6 +87,9 @@ dico_list_t /* of dictd_database_t */ database_list;
 
 int require_auth; /* Require authentication */
 
+/* From CLIENT command: */
+char *client_id;
+
 /* In authenticated state: */
 char *user_name;  /* User name */
 dico_list_t /* of char * */ user_groups; /* List of groups he is member of */
@@ -558,6 +561,12 @@ struct config_keyword keywords[] = {
     { "log-print-severity", N_("arg"),
       N_("Prefix diagnostics messages with their severity."),
       cfg_bool, &log_print_severity, 0 },
+    { "access-log-format", N_("fmt"),
+      N_("Set format string for access log file."),
+      cfg_string, &access_log_format, },
+    { "access-log-file", N_("name"),
+      N_("Set access log file name."),
+      cfg_string, &access_log_file },
     { "transcript", N_("arg"), N_("Log session transcript."),
       cfg_bool, &transcript },
     { "pidfile", N_("name"),
@@ -785,29 +794,31 @@ register_xversion()
 }
 
 
-static void
+char *
 get_full_hostname()
 {
     struct hostent *hp;
     char *hostpart = xgethostname();
-
+    char *ret;
+	
     hp = gethostbyname(hostpart);
     if (hp) 
-	hostname = xstrdup(hp->h_name);
+	ret = xstrdup(hp->h_name);
     else {
 	char *domainpart = xgetdomainname();
 
 	if (domainpart && domainpart[0] && strcmp(domainpart, "(none)")) {
-	    hostname = xmalloc(strlen(hostpart) + 1
+	    ret = xmalloc(strlen(hostpart) + 1
 			       + strlen(domainpart) + 1);
-	    strcpy(hostname, hostpart);
-	    strcat(hostname, ".");
-	    strcat(hostname, domainpart);
+	    strcpy(ret, hostpart);
+	    strcat(ret, ".");
+	    strcat(ret, domainpart);
 	    free(hostpart);
 	} else
-	    hostname = hostpart;
+	    ret = hostpart;
 	free(domainpart);
     }
+    return ret;
 }
 
 void
@@ -825,7 +836,7 @@ main(int argc, char **argv)
 {
     dico_set_program_name(argv[0]);
     log_tag = dico_program_name;
-    get_full_hostname();
+    hostname = get_full_hostname();
     dictd_init_command_tab();
     dictd_init_strategies();
     udb_init();
@@ -846,6 +857,7 @@ main(int argc, char **argv)
 	exit(1);
     if (dictd_capa_flush())
 	exit(1);
+    compile_access_log();
     if (config_lint_option)
 	exit(0);
     

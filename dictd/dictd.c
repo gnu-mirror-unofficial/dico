@@ -364,6 +364,7 @@ dictd_loop(dico_stream_t str)
 
     close_databases();    
     init_auth_data();
+    access_log_free_cache();
     return 0;
 }
 
@@ -373,5 +374,9 @@ dictd_inetd()
     dico_stream_t str = fd_stream_create(0, 1);
     dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
     dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
+
+    client_addrlen = sizeof(client_addr);
+    if (getsockname (0, &client_addr, &client_addrlen) == -1)
+	client_addrlen = 0;
     return dictd_loop(str);
 }

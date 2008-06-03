@@ -378,5 +378,10 @@ dictd_inetd()
     client_addrlen = sizeof(client_addr);
     if (getsockname (0, &client_addr, &client_addrlen) == -1)
 	client_addrlen = 0;
+
+    server_addrlen = sizeof(server_addr);
+    if (getsockname (1, &server_addr, &server_addrlen) == -1)
+	server_addrlen = 0;
+    
     return dictd_loop(str);
 }

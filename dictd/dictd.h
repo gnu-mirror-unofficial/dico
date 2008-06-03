@@ -43,6 +43,8 @@
 #include <inttostr.h>
 #include <c-strcase.h>
 
+#define UINTMAX_STRSIZE_BOUND INT_BUFSIZE_BOUND(uintmax_t)
+
 #if defined HAVE_SYSCONF && defined _SC_OPEN_MAX
 # define getmaxfd() sysconf(_SC_OPEN_MAX)
 #elif defined (HAVE_GETDTABLESIZE)
@@ -87,6 +89,8 @@ extern unsigned long total_forks;
 extern char *access_log_format;
 extern char *access_log_file;
 
+extern struct sockaddr server_addr;
+extern int server_addrlen;
 extern struct sockaddr client_addr;
 extern int client_addrlen;
 

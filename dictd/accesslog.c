@@ -18,9 +18,6 @@
 #include <fprintftime.h>
 #include <xgethostname.h>
 
-#define UINTMAX_STRSIZE_BOUND INT_BUFSIZE_BOUND(uintmax_t)
-
-
 static char status[2][4];
 
 void
@@ -123,34 +120,73 @@ alog_print(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 #define _S_UN_NAME(sa, salen) \
     ((salen < offsetof (struct sockaddr_un,sun_path)) ? "" : (sa)->sun_path)
 
+static char *
+sockaddr_to_hostname(struct sockaddr *sa, int resolve)
+{
+    struct sockaddr_in *s_in;
+    char *ret;
+    
+    switch (sa->sa_family) {
+    case AF_INET:
+	s_in = (struct sockaddr_in*)sa;
+	if (resolve) {
+	    struct hostent *hp;
+	    hp = gethostbyaddr((char*) &s_in->sin_addr,
+			       sizeof(s_in->sin_addr),
+			       AF_INET);
+	    if (hp)
+		return xstrdup(hp->h_name);
+	}
+	ret = xstrdup(inet_ntoa(s_in->sin_addr));
+	break;
+	
+    case AF_UNIX:
+	ret = xstrdup("localhost");
+	break;
+		
+    default:
+	ret = xstrdup("{unsupported family}");
+    }
+
+    return ret;
+}
+
+static char *
+sockaddr_to_portname(struct sockaddr *sa, int salen)
+{
+    struct sockaddr_in *s_in;
+    struct sockaddr_un *s_un;
+    char buf[UINTMAX_STRSIZE_BOUND];
+    char *ret;
+    
+    switch (sa->sa_family) {
+    case AF_UNIX:
+	s_un = (struct sockaddr_un*)sa;
+	if (_S_UN_NAME(s_un, salen)[0] == 0)
+	    ret = xstrdup("{AF_UNIX}");
+	else
+	    ret = xstrdup(s_un->sun_path);
+	break;
+
+    case AF_INET:
+	s_in = (struct sockaddr_in*)sa;
+	ret = xstrdup(umaxtostr(ntohs(s_in->sin_port), buf));
+	break;
+
+    default:
+	ret = xstrdup("{unsupported family}");
+    }
+    return ret;
+}
+	
 static void
 alog_remote_ip(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 {
     if (!instr->cache) {
 	if (client_addrlen == 0) 
 	    instr->cache = xstrdup("stdin");
-	else {
-	    struct sockaddr_in *s_in;
-	    struct sockaddr_un *s_un;
-		
-	    switch (client_addr.sa_family) {
-	    case AF_INET:
-		s_in = (struct sockaddr_in*)&client_addr;
-		instr->cache = xstrdup(inet_ntoa(s_in->sin_addr));
-		break;
-
-	    case AF_UNIX:
-		s_un = (struct sockaddr_un*)&client_addr;
-		if (_S_UN_NAME(s_un, client_addrlen)[0] == 0)
-		    instr->cache = xstrdup("{AF_UNIX}");
-		else
-		    instr->cache = xstrdup(s_un->sun_path);
-		break;
-		
-	    default:
-		instr->cache = xstrdup("{unsupported family}");
-	    }
-	}
+	else 
+	    instr->cache = sockaddr_to_hostname(&client_addr, 0);
     }
     print_str(fp, instr->cache);
 }
@@ -159,9 +195,10 @@ static void
 alog_local_ip(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 {
     if (!instr->cache) {
-	char *hostpart = xgethostname();
-	struct hostent *hp = gethostbyname(hostpart);
-	instr->cache = xstrdup(hp ? hp->h_name : "0.0.0.0");
+	if (server_addrlen == 0) 
+	    instr->cache = xstrdup("stdin");
+	else 
+	    instr->cache = sockaddr_to_hostname(&server_addr, 0);
     }
     print_str(fp, instr->cache);
 }
@@ -205,32 +242,8 @@ alog_remote_host(FILE *fp, struct alog_instr *instr, int argc, char **argv)
     if (!instr->cache) {
 	if (client_addrlen == 0) 
 	    instr->cache = xstrdup("stdin");
-	else {
-	    struct sockaddr_in *s_in;
-	    struct sockaddr_un *s_un;
-	    struct hostent *hp;
-	    
-	    switch (client_addr.sa_family) {
-	    case AF_INET:
-		s_in = (struct sockaddr_in*)&client_addr;
-		hp = gethostbyaddr((char*) &s_in->sin_addr,
-				   sizeof(s_in->sin_addr),
-				   AF_INET);
-		instr->cache = xstrdup(inet_ntoa(s_in->sin_addr));
-		break;
-
-	    case AF_UNIX:
-		s_un = (struct sockaddr_un*)&client_addr;
-		if (_S_UN_NAME(s_un, client_addrlen)[0] == 0)
-		    instr->cache = xstrdup("{AF_UNIX}");
-		else
-		    instr->cache = xstrdup(s_un->sun_path);
-		break;
-		
-	    default:
-		instr->cache = xstrdup("{unsupported family}");
-	    }
-	}
+	else
+	    instr->cache = sockaddr_to_hostname(&client_addr, 1);
     }
     print_str(fp, instr->cache);
 }
@@ -260,8 +273,11 @@ alog_strategy(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 static void
 alog_server_port(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 {
-    /* FIXME */
-    print_str(fp, "-");
+    if (server_addrlen == 0)
+	print_str(fp, "-");
+    else if (!instr->cache)
+	instr->cache = sockaddr_to_portname(&server_addr, server_addrlen);
+    print_str(fp, instr->cache);
 }
 
 static void

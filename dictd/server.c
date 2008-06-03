@@ -18,13 +18,22 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-int *fdtab;
-size_t fdcount;
+struct dictd_server {
+    int fd;               /* Socket descriptor */
+    struct sockaddr *addr;
+    int addrlen;
+};
+
+struct dictd_server *srvtab;
+size_t srvcount;
 int fdmax;
 
 pid_t *childtab;
 unsigned long num_children;
 unsigned long total_forks;
+
+struct sockaddr server_addr;
+int server_addrlen;
 
 static int
 address_family_to_domain (int family)
@@ -52,8 +61,8 @@ open_sockets()
     int socklen;
     char *p;
     
-    fdcount = dico_list_count(listen_addr);
-    if (fdcount == 0) {
+    srvcount = dico_list_count(listen_addr);
+    if (srvcount == 0) {
 	/* Provide defaults */
 	struct sockaddr_in *sp = xmalloc(sizeof(*sp));
 	
@@ -63,9 +72,9 @@ open_sockets()
 	sp->sin_addr.s_addr = INADDR_ANY;
 	sp->sin_port = htons(DICT_PORT);
 	xdico_list_append(listen_addr, sp);
-	fdcount = 1;
+	srvcount = 1;
     }
-    fdtab = xcalloc(fdcount, sizeof fdtab[0]);
+    srvtab = xcalloc(srvcount, sizeof srvtab[0]);
     fdmax = 0;
     itr = xdico_iterator_create(listen_addr);
     for (i = 0, sp = dico_iterator_first(itr); sp;
@@ -126,14 +135,17 @@ open_sockets()
 	    continue;
 	}
 
-	fdtab[i++] = fd;
+	srvtab[i].addr = &sp->s;
+	srvtab[i].addrlen = socklen;
+	srvtab[i].fd = fd;
+	i++;
 	if (fd > fdmax)
 	    fdmax = fd;
     }
     dico_iterator_destroy(&itr);
-    fdcount = i;
+    srvcount = i;
 
-    if (fdcount == 0)
+    if (srvcount == 0)
 	dico_die(1, L_ERR, 0, _("No sockets opened"));
 }
 
@@ -142,11 +154,11 @@ close_sockets()
 {
     size_t i;
 
-    for (i = 0; i < fdcount; i++)
-	close(fdtab[i]);
-    free(fdtab);
-    fdtab = NULL;
-    fdcount = 0;
+    for (i = 0; i < srvcount; i++) 
+	close(srvtab[i].fd);
+    free(srvtab);
+    srvtab = NULL;
+    srvcount = 0;
     fdmax = 0;
 }
 
@@ -172,7 +184,7 @@ register_child(pid_t pid)
 }
 
 static void
-print_status (pid_t pid, int status, int expect_term)
+print_status(pid_t pid, int status, int expect_term)
 {
     if (WIFEXITED(status)) {
 	if (WEXITSTATUS(status) == 0)
@@ -334,11 +346,15 @@ struct sockaddr client_addr;
 int client_addrlen;
 
 int
-handle_connection(int listenfd)
+handle_connection(int n)
 {
     int status = 0;
     int connfd;
+    int listenfd = srvtab[n].fd;
 
+    server_addr = *srvtab[n].addr;
+    server_addrlen = srvtab[n].addrlen;
+    
     client_addrlen = sizeof(client_addr);
     connfd = accept(listenfd, &client_addr, &client_addrlen);
     
@@ -400,9 +416,9 @@ server_loop()
     size_t i;
     fd_set fdset;
 
-    FD_ZERO (&fdset);
-    for (i = 0; i < fdcount; i++)
-	FD_SET (fdtab[i], &fdset);
+    FD_ZERO(&fdset);
+    for (i = 0; i < srvcount; i++)
+	FD_SET(srvtab[i].fd, &fdset);
     
     for (;;) {
 	int rc;
@@ -430,9 +446,9 @@ server_loop()
 	    return 1;
 	}
 
-	for (i = 0; i < fdcount; i++)
-	    if (FD_ISSET(fdtab[i], &rdset))
-		handle_connection(fdtab[i]);
+	for (i = 0; i < srvcount; i++)
+	    if (FD_ISSET(srvtab[i].fd, &rdset))
+		handle_connection(i);
     }
     return 0;
 }

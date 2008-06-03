@@ -28,7 +28,14 @@ extern "C" {
 #endif
 
 #define DICO_ARGCV_RETURN_DELIMS 0x01
-  
+
+enum dico_argcv_quoting_style {
+    dico_argcv_quoting_octal,
+    dico_argcv_quoting_hex
+};
+
+extern enum dico_argcv_quoting_style dico_argcv_quoting_style;
+    
 extern int dico_argcv_get    (const char *command, const char *delim,
 			      const char *cmnt,
 			      int *argc, char ***argv);

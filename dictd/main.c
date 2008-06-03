@@ -858,6 +858,7 @@ main(int argc, char **argv)
     register_regex();
     include_path_setup();
     config_lex_trace(0);
+    dico_argcv_quoting_style = dico_argcv_quoting_hex;
     get_options(argc, argv);
 
     if (mode == MODE_PREPROC)

@@ -108,7 +108,13 @@ add_instr(alog_printer_fn prt, const char *fmt, size_t fmtsize)
 static void
 print_str(FILE *fp, const char *arg)
 {
-    fwrite(arg, strlen(arg), 1, fp); 
+    size_t len;
+    if (!arg) {
+	arg = "-";
+	len = 1;
+    } else
+	len = strlen(arg);
+    fwrite(arg, len, 1, fp); 
 }
 
 static void
@@ -224,7 +230,7 @@ alog_response_size_clf(FILE *fp, struct alog_instr *instr,
 static void
 alog_client(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 {
-    print_str(fp, client_id ? client_id : "-");
+    print_str(fp, client_id);
 }
 
 static void
@@ -257,7 +263,7 @@ alog_command_verb(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 static void
 alog_logname(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 {
-    print_str(fp, identity_name ? identity_name : "-");
+    print_str(fp, identity_name);
 }
 
 static void
@@ -342,7 +348,7 @@ alog_process_time(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 static void
 alog_remote_user(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 {
-    print_str(fp, user_name ? user_name : "-");
+    print_str(fp, user_name);
 }
 
 static void

@@ -39,6 +39,11 @@
 #define argcv_quoted_length  dico_argcv_quoted_length
 #define argcv_unquote_copy   dico_argcv_unquote_copy 
 #define argcv_quote_copy     dico_argcv_quote_copy     
+#define argcv_quoting_style  dico_argcv_quoting_style
+#define argcv_quoting_octal  dico_argcv_quoting_octal
+#define argcv_quoting_hex    dico_argcv_quoting_hex 
+
+enum argcv_quoting_style argcv_quoting_style;
 
 /*
  * takes a string and splits it into several strings, breaking at ' '
@@ -229,10 +234,22 @@ argcv_quoted_length (const char *str, int *quote)
 	}
       else if (*str != '\t' && *str != '\\' && isprint (*str))
 	len++;
-      else if (argcv_quote_char (*str) != -1)
-	len += 2;
       else
-	len += 4;
+	{
+	  switch (argcv_quoting_style)
+	    {
+	    case argcv_quoting_octal:
+	      if (argcv_quote_char (*str) != -1)
+		len += 2;
+	      else
+		len += 4;
+	      break;
+
+	    case argcv_quoting_hex:
+	      len += 3;
+	      break;
+	    }
+	}
     }
   return len;
 }
@@ -339,16 +356,30 @@ argcv_quote_copy (char *dst, const char *src)
 	*dst++ = *src;      
       else
 	{
-	  int c = argcv_quote_char (*src);
-	  *dst++ = '\\';
-	  if (c != -1)
-	    *dst++ = c;
-	  else
+	  char tmp[4];
+
+	  switch (argcv_quoting_style)
 	    {
-	      char tmp[4];
-	      snprintf (tmp, sizeof tmp, "%03o", *(unsigned char*)src);
+	    case argcv_quoting_octal:
+	      {
+		int c = argcv_quote_char (*src);
+		*dst++ = '\\';
+		if (c != -1)
+		  *dst++ = c;
+		else
+		  {
+		    snprintf (tmp, sizeof tmp, "%03o", *(unsigned char*)src);
+		    memcpy (dst, tmp, 3);
+		    dst += 3;
+		  }
+		break;
+	      }
+
+	    case argcv_quoting_hex:
+	      snprintf (tmp, sizeof tmp, "%%%02X", *(unsigned char*)src);
 	      memcpy (dst, tmp, 3);
 	      dst += 3;
+	      break;
 	    }
 	}
     }

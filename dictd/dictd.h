@@ -88,6 +88,9 @@ extern char *debug_level_str;
 extern unsigned long total_forks;
 extern char *access_log_format;
 extern char *access_log_file;
+extern int identity_check;
+extern char *identity_name;
+extern char *ident_keyfile;
 
 extern struct sockaddr server_addr;
 extern int server_addrlen;
@@ -425,4 +428,7 @@ void access_log(int argc, char **argv);
 void compile_access_log(void);
 void access_log_free_cache(void);
 
+/* ident.c */
+char *query_ident_name(struct sockaddr_in *srv_addr,
+		       struct sockaddr_in *clt_addr);
 

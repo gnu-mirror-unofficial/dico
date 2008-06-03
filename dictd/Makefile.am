@@ -27,6 +27,7 @@ dictd_SOURCES=\
  dbtext.c\
  dictd.c\
  fdio.c\
+ ident.c\
  lev.c\
  logstr.c\
  loader.c\

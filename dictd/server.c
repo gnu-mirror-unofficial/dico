@@ -357,6 +357,10 @@ handle_connection(int n)
     
     client_addrlen = sizeof(client_addr);
     connfd = accept(listenfd, &client_addr, &client_addrlen);
+
+    if (identity_check && server_addr.sa_family == AF_INET) 
+	identity_name = query_ident_name((struct sockaddr_in *)&server_addr,
+					 (struct sockaddr_in *)&client_addr);
     
     if (connfd == -1) {
 	if (errno == EINTR)

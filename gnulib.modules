@@ -2,6 +2,7 @@
 # A module name per line. Empty lines and comments are ignored.
 
 c-strcase
+crypto/des
 crypto/md5
 fprintftime
 inttostr

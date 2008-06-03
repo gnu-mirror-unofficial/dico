@@ -94,6 +94,11 @@ char *client_id;
 char *user_name;  /* User name */
 dico_list_t /* of char * */ user_groups; /* List of groups he is member of */
 
+/* Information from AUTH check: */
+int identity_check;     /* Enable identity check */
+char *identity_name;    /* Name received from AUTH query. */
+char *ident_keyfile;    /* Keyfile for decrypting AUTH replies. */
+
 /* Provide timing information */
 int timing_option;
 
@@ -548,6 +553,12 @@ struct config_keyword keywords[] = {
       N_("With `show-sys-info auth', show system information only if "
 	 "the user is member of one of these groups"),
       cfg_string|CFG_LIST, &ssi_group_list },
+    { "identity-check", N_("arg"),
+      N_("Enable identification check using AUTH protocol (RFC 1413)"),
+      cfg_bool, &identity_check },
+    { "ident-keyfile", N_("name"),
+      N_("Name of the file containing the keys for decrypting AUTH replies."),
+      cfg_string, &ident_keyfile },
     { "max-children", N_("arg"),
       N_("Maximum number of children running simultaneously."),
       cfg_uint, &max_children, 0 },

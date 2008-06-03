@@ -257,8 +257,7 @@ alog_command_verb(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 static void
 alog_logname(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 {
-    /* FIXME */
-    print_str(fp, "-");
+    print_str(fp, identity_name ? identity_name : "-");
 }
 
 static void

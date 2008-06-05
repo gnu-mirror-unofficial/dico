@@ -18,7 +18,8 @@ info_TEXINFOS=dico.texi
 dico_TEXINFOS=\
  fdl.texi\
  macros.texi\
- rendition.texi
+ rendition.texi\
+ strftime.texi
 
 EXTRA_DIST = \
  check-docs.sh\

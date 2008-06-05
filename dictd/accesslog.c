@@ -360,8 +360,12 @@ alog_conf_hostname(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 static void
 alog_hostname(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 {
-    if (!instr->cache)
-	instr->cache = get_full_hostname();
+    if (!instr->cache) {
+	if (server_addrlen == 0) 
+	    instr->cache = xstrdup("stdin");
+	else 
+	    instr->cache = sockaddr_to_hostname(&server_addr, 0);
+    }
     print_str(fp, instr->cache);
 }
 
@@ -416,10 +420,9 @@ static struct alog_tab alog_tab[] = {
     { 'T', alog_process_time },
     /* Remote user from AUTH. */
     { 'u', alog_remote_user },
-    /*  The host name of the server serving the request. */
+    /*  The configured host name of the server serving the request. */
     { 'v', alog_conf_hostname },
-    /* * Actual host name of the server (in case it was overridden
-       in conffile) */
+    /*  The host name of the server serving the request. */
     { 'V', alog_hostname },
 #if 0
     /* FIXME: */

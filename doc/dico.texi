@@ -73,6 +73,9 @@ documents @command{dico} Version @value{VERSION}.
 * Preface::             
 * Intro::                Introduction to Dico.
 * Building::             Building the Package.
+* Dictd::                The dictd daemon.
+* Modules::              Dictd modules shipped with Dico.
+* Interface::            How to write your own Dico module.
 * Reporting Bugs::       How to Report a Bug.
 
 Appendices
@@ -82,8 +85,20 @@ Appendices
 * Concept Index::        Index of Concepts.
 
 @detailmenu
-@end detailmenu
+ --- The Detailed Node Listing ---
 
+The @command{dictd} daemon.
+
+* Configuration::
+* Dictd Invocation::
+
+Modules
+
+* Outline::
+* Dictorg::
+* Guile::
+
+@end detailmenu
 @end menu
 
 @node Preface
@@ -93,9 +108,62 @@ Appendices
 @node Intro
 @chapter Introduction to @command{Dico}
 @UNREVISED
+@dfn{Dico} is a flexible modular dictionary system.  It consists of a
+daemon complying with @acronym{RFC} 2229 and a set of modules for
+handling various dictionary formats@footnote{Command-line and
+X-based client programs will be added in the nearest future.}.  In
+contrast to existing implementations of @acronym{RFC} 2229,
+@command{dico} does not impose a specific dictionary format.  Instead,
+it is built in a modular fashion.  The daemon itself, @command{dictd},
+is responsible for protocol interaction, but knows nothing about
+dictionary formats.  Whenever it needs to access a database, it calls
+a @dfn{module}, which is responsible for fetching the actual data.
 
 @node Building
 @chapter Building the Package
+@UNREVISED
+
+@node Dictd
+@chapter The @command{dictd} daemon.
+@UNREVISED
+
+@menu
+* Configuration::
+* Dictd Invocation::
+@end menu
+
+@node Configuration
+@section Configuration
+@UNREVISED
+
+@node Dictd Invocation
+@section Dictd Invocation
+@UNREVISED
+
+@node Modules
+@chapter Modules
+@UNREVISED
+
+@menu
+* Outline::
+* Dictorg::
+* Guile::
+@end menu
+
+@node Outline
+@section The @command{outline} module.
+@UNREVISED
+
+@node Dictorg
+@section The @command{dictorg} module.
+@UNREVISED
+
+@node Guile
+@section The @command{guile} module.
+@UNREVISED
+
+@node Interface
+@chapter Dico Module Interface
 @UNREVISED
 
 @node Reporting Bugs

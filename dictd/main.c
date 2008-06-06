@@ -633,7 +633,7 @@ config_help()
 {
     static char docstring[] =
 	N_("Configuration file structure for dictd.\n"
-	   "For more information, use `info dico'.");
+	   "For more information, use `info dico configuration'.");
     format_docstring(stdout, docstring, 0);
     format_statement_array(stdout, keywords, 1, 0);
 }

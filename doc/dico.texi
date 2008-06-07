@@ -107,22 +107,128 @@ Modules
 
 @node Intro
 @chapter Introduction to @command{Dico}
-@UNREVISED
-@dfn{Dico} is a flexible modular dictionary system.  It consists of a
-daemon complying with @acronym{RFC} 2229 and a set of modules for
-handling various dictionary formats@footnote{Command-line and
-X-based client programs will be added in the nearest future.}.  In
-contrast to existing implementations of @acronym{RFC} 2229,
-@command{dico} does not impose a specific dictionary format.  Instead,
-it is built in a modular fashion.  The daemon itself, @command{dictd},
-is responsible for protocol interaction, but knows nothing about
-dictionary formats.  Whenever it needs to access a database, it calls
-a @dfn{module}, which is responsible for fetching the actual data.
+@cindex Dico overview
+@cindex two-layer model
+@cindex protocol layer
+@cindex database layer
+@cindex RFC 2229
+@cindex DICT protocol
+@dfn{Dico} is an implementation of @acronym{DICT} dictionary server
+(described in @acronym{RFC} 2229) and a set of accompanying utilities.
+Dico's @command{dictd} server uses two-layer model.  The @dfn{protocol
+layer} is responsible for correct @acronym{DICT} protocol dialog and
+is served by the @command{dictd} daemon itself.  The @dfn{database
+layer} is responsible for look ups in dictionary databases.  This
+layer is handled by external @dfn{loadable modules}.  Thus, Dico
+does not impose any specific dictionary database format.  A single
+server can handle databases in various formats, provided that
+appropriate modules are available.  Several database modules are
+shipped with Dico:
+
+@table @asis
+@item dictorg
+@cindex dictorg database format
+  This module provides full support for the format designed by
+the @cite{@acronym{DICT} development group} (@uref{http://dict.org}).
+This is a @i{de facto} standard for @acronym{DICT} databases.  A
+number of dictionary databases in this format are provided by the
+@cite{FreeDict} project (@uref{http://freedict.org}).
+
+@item guile
+  This module provides an interface to Guile, the @dfn{GNU's
+Ubiquitous Intelligent Language for Extensions}
+(@uref{http://www.gnu.org/software/guile}) and allows to write
+database modules in Scheme programming language.
+
+@item outline
+  This module handles simple databases in GNU Emacs @dfn{outline}
+format.  It is designed mostly for test purposes.
+@end table
+
+  This manual describes how to configure and use the Dico dictionary
+system.  It also describes the @acronym{API} for writing
+@command{Dico} database modules both in @acronym{C} and in
+@acronym{Scheme}.
 
 @node Building
 @chapter Building the Package
 @UNREVISED
+  Building @command{dico} is quite straightforward.  You run
+@command{./configure}, then @command{make}, followed by @command{make
+install}, and you are done.
 
+  The actions the @command{configure} script performs can be altered
+using a set of command line options and variables.  Some of these
+options are generic, i.e. common for all packages using the GNU
+@command{autoconf} system.  For a detailed description of these option
+see the @file{INSTALL} file shipped with the sources.  Yet another
+options are specific for @command{Dico}.  We will describe them in
+this chapter.
+
+@menu
+* Default Preprocessor::
+* Guile Support::
+* Other Settings::
+@end menu
+
+@node Default Preprocessor
+@section Default Preprocessor
+@cindex Default preprocessor
+@cindex preprocessor, default
+@vrindex DEFAULT_PREPROCESSOR     
+  The runtime configuration system uses @command{m4} to preprocess
+the configuration file.  This makes the configuration extremely
+flexible.  We recommend to use GNU m4 as a preprocessor@footnote{@uref{http://www.gnu.org/software/m4}}.  However, any
+other implementation of @command{m4} may be used.  The @command{configure}
+script tries to determine full file name of the preprocessor binary
+and the necessary command line options.  In case it makes a wrong
+guess, you can instruct it to use a particular preprocessor by using
+@env{DEFAULT_PREPROCESSOR} configuration variable.  For example, the
+following @command{configure} invocation instructs it to use
+@command{/usr/local/bin/gm4}:
+
+@smallexample
+$ ./configure DEFAULT_PREPROCESSOR="/usr/local/bin/gm4 -s"
+@end smallexample
+
+Note the use of @option{-s} preprocessor option.  It instructs
+@command{m4} to produce line directives which help @command{dictd}
+produce correct diagnostics about eventual configuration errors.
+Unless your @command{m4} implementation does not have this feature, we
+recommend to always use it in @env{DEFAULT_PREPROCESSOR} value.
+
+@opindex --without-preprocessor, configuration option
+Finally, if you do not wish to use preprocessor at all, you can
+disable it using @option{--without-preprocessor} option to
+@command{configure}.
+
+@node Guile Support
+@section Guile Support
+@cindex guile, configuration
+  The @dfn{GNU's Ubiquitous Intelligent Language for Extensions}, or
+@dfn{Guile}@footnote{@uref{http://www.gnu.org/software/guile}.}  can
+be used to write database modules for @command{dico}.  This requires
+Guile version 1.8.4 or newer.  The @command{configure} script will
+probe for the presence of Guile on your system and automatically
+enable its use if its version number is high enough.
+
+@opindex --without-guile, configuration option
+  If you do not wish to use Guile, use @option{--without-guile} to
+disable it.
+
+@node Other Settings
+@section Other Configure Settings
+
+@vrindex LOG_FACILITY
+  The @command{dictd} daemon uses @command{syslogd} for diagnostics.
+The default syslog facility can be set using @env{LOG_FACILITY}
+configuration variable.  Its allowed arguments are @samp{user},
+@samp{daemon}, @samp{auth}, @samp{authpriv}, @samp{mail}, @samp{cron},
+and @samp{local0} through @samp{local7}.  Case is not significant.  In
+addition, these words can be prefixed with @samp{log_}.
+
+  By default, the @samp{daemon} facility is used.
+  
 @node Dictd
 @chapter The @command{dictd} daemon.
 @UNREVISED
@@ -135,6 +241,335 @@ a @dfn{module}, which is responsible for fetching the actual data.
 @node Configuration
 @section Configuration
 @UNREVISED
+
+@menu
+* Syntax::            Configuration file syntax.
+* Server Settings::
+* Authorisation::
+* Security Settings::
+* Logging and Debuging::
+* Access Log::
+* General Settings::
+* Capabilities::
+* Handlers::
+* Databases::
+* Tuning::
+* Preprocessor::      Using preprocessor to improve the configuration.
+@end menu
+
+@node Syntax
+@subsection Configuration File Syntax
+@UNREVISED
+
+@node Server Settings
+@subsection Control Server Behavior
+@UNREVISED
+  Server settings control how @command{dictd} is executed on the
+server machine.
+
+@deffn {Configuration} user @var{string}
+@end deffn
+
+@deffn {Configuration} group @var{string}
+# Supplementary group to retain with the user privileges.
+@end deffn
+
+@deffn {Configuration} mode @var{enum}
+# Operation mode: daemon|inetd
+@end deffn
+
+@deffn {Configuration} listen @var{list};
+# Listen on these addresses.
+@end deffn
+
+@deffn {Configuration} pidfile @var{string}
+# Store PID of the master process in this file.
+@end deffn
+
+@deffn {Configuration} max-children @var{number}
+# Maximum number of children running simultaneously.
+@end deffn
+
+@deffn {Configuration} shutdown-timeout @var{number}
+# Wait this number of seconds for all children to terminate.
+@end deffn
+
+@deffn {Configuration} inactivity-timeout @var{number}
+# Set inactivity timeouit.
+@end deffn
+
+@deffn {Configuration} identity-check @var{boolean}
+# Enable identification check using AUTH protocol (RFC 1413)
+@end deffn
+
+@deffn {Configuration} ident-keyfile @var{string}
+# Name of the file containing the keys for decrypting AUTH replies.
+@end deffn
+
+@node Authorisation
+@subsection Authorisation
+@UNREVISED
+
+@FIXME{
+capability auth;
+}
+
+@smallexample
+@group
+# Define user database for authentication.
+user-db <url: string> @{
+  # Password file or query.
+  get-password <arg: string>;
+
+  # File containing user group information or a query to retrieve it.
+  get-groups <arg: string>;
+@}
+@end group
+@end smallexample
+
+@deffn {Block} user-db @var{string}
+# Define user database for authentication.
+@end deffn
+
+@deffn {user-db statement} get-password @var{string}
+  # Password file or query.
+@end deffn
+
+@deffn {user-db statement} get-groups @var{string}
+  # File containing user group information or a query to retrieve it.
+@end deffn
+
+
+
+@node Security Settings
+@subsection Security Settings
+@UNREVISED
+
+@deffn {Configuration} show-sys-info @var{enum}
+# Show system information in reply to SHOW SERVER command:
+#   always      - alwaysshow;
+#   never       - never show;
+#   auth        - show for authorized users
+@end deffn
+
+@deffn {Configuration} sys-info-groups @var{list}
+# With `show-sys-info auth', show system information only if the user is member
+# of one of these groups
+@end deffn
+
+@deffn {Configuration} require-auth @var{boolean}
+# Require authentication for access to databases.
+@end deffn
+
+@FIXME{
+@smallexample
+database @{
+  # Require authentication for access to this database.
+  require-auth <arg: boolean>;
+
+  # The database is visible only for users from these groups
+  groups <arg: list of string>;
+@}
+@end smallexample
+}
+
+@node Logging and Debuging
+@subsection Logging and Debuging
+@UNREVISED
+
+@deffn {Configuration} log-tag @var{string}
+# Tag syslog diagnostics with this tag.
+@end deffn
+
+@deffn {Configuration} log-facility @var{string}
+# Set syslog facility. Arg is one of the following: user, daemon, auth,
+# authpriv, mail, cron, local0 through local7 (case-insensitive), or a facility
+# number.
+@end deffn
+
+@deffn {Configuration} log-print-severity @var{boolean}
+# Prefix diagnostics messages with their severity.
+@end deffn
+
+@deffn {Configuration} transcript @var{boolean}
+# Log session transcript.
+@end deffn
+
+@node Access Log
+@subsection Access Log
+@UNREVISED
+
+@deffn {Configuration} access-log-file @var{string}
+# Set access log file name.
+@end deffn
+
+@deffn {Configuration} access-log-format @var{string}
+# Set format string for access log file.
+@example
+  access-log-format "%h %l %u %t \"%r\" %>s %b"
+
+  %%          The percent sign
+  %a          Remote IP-address
+  %A          Local IP-address
+  %B          Size of response in bytes.
+  %b          Size of response in bytes in CLF format, i.e. a '-' rather
+              than a 0 when no bytes are sent.
+  %C          *Remote client (from CLIENT command). 
+  %D          The time taken to serve the request, in microseconds.
+  %h          Remote host
+  %H          *Request command werb (DEFINE or MATCH)
+  %l          Remote logname (from identd, if supplied). This will return a
+              dash unless identity-check is set to true.
+  %m          *The search strategy
+  %p          The canonical port of the server serving the request
+  %P          The process ID of the child that serviced the request.
+  %q          *The database from the request.
+  %r          Full request
+  %@{N@}R       *Nth token from the request. N is 0-based.
+  %s          Status. %>s is also accepted.
+  %t          Time the request was received (standard english format)
+  %@{format@}t  The time, in the form given by format, which should be in
+              strftime(3) format. (potentially localized)
+  %T          The time taken to serve the request, in seconds.
+  %u          Remote user from AUTH.
+  %v          The host name of the server serving the request.
+  %V          *Actual host name of the server (in case it was overridden
+              in conffile).
+  %I          Bytes received, including request and headers. Cannot be zero.
+  %O          Bytes sent, including headers. Cannot be zero. 
+  %W          *The word from the request
+@end example
+@end deffn    
+
+@node General Settings
+@subsection General Settings
+@UNREVISED
+
+@deffn {Configuration} server-info @var{string}
+# Server description to be shown in reply to SHOW SERVER command.
+@end deffn
+
+@deffn {Configuration} initial-banner-text @var{string}
+# Display this text in the initial 220 banner
+@end deffn
+
+@deffn {Configuration} help-text @var{string}
+# Display this text in reply to the HELP command. If text begins with a +,
+# usual command summary is displayed before it.
+@end deffn
+
+@deffn {Configuration} hostname @var{string}
+# Override the host name.
+@end deffn
+
+@deffn {Configuration} default-strategy @var{string}
+# Set the name of the default matching strategy.
+@end deffn
+
+@node Capabilities
+@subsection Server Capabilities
+
+@deffn {Configuration} capability @var{list}
+# Request additional capabilities.
+@end deffn
+
+@node Handlers
+@subsection Database Modules
+
+@deffn {Configuration} module-load-path @var{list}
+# List of directories searched for handler modules.
+@end deffn
+
+@smallexample
+@group
+# Define a database handler.
+handler <name: string> @{
+  # Command line.
+  command <arg: string>;
+@}
+@end group
+@end smallexample
+
+@deffn {Configuration} handler @var{string}
+# Define a database handler.
+@end deffn
+
+@deffn {Configuration} command @var{string}
+@end deffn
+
+@node Databases
+@subsection Databases
+@UNREVISED
+
+@deffn {Configuration} database
+# Define a dictionary database.
+
+@deffn {Database} name @var{string}
+  # Dictionary name (a single word).
+@end deffn
+
+@deffn {Database} description @var{string}
+  # Short description, to be shown in reply to SHOW DB command.
+@end deffn
+
+@deffn {Database}  info @var{string}
+  # Full description of the database, to be shown in reply to SHOW INFO command.
+@end deffn
+
+@deffn {Database} handler @var{string}
+# Name of the handler for this database.
+@end deffn
+
+@deffn {Database} require-auth @var{boolean}
+  # Require authentication for access to this database.
+@end deffn
+
+@deffn {Database} groups @var{list}
+  # The database is visible only for users from these groups
+@end deffn
+
+@deffn {Database} content-type @var{string}
+  # Content type for MIME replies.
+@end deffn
+
+@deffn {Database} content-transfer-encoding @var{string}
+  # Content transfer encoding for MIME replies.
+@end deffn
+@end deffn
+
+@node Tuning
+@subsection Tuning
+
+@deffn {Configuration} timing @var{boolean}
+# Provide timing information after successful completion of an operation.
+@end deffn
+
+@node Preprocessor
+@subsection Using Preprocessor to Improve the Configuration.
+@UNREVISED
+
+@smallexample
+@group
+m4_define(`defdb', `
+database {
+        name "$1";
+        handler "dictorg database=$1";m4_dnl
+m4_ifelse(`$2',,,`
+        description "$2";')
+}
+')
+@end group
+@end smallexample
+
+@smallexample
+@group
+defdb(eng-swa)
+defdb(swa-eng)
+defdb(afr-eng,Afrikaans-English Dictionary)
+defdb(eng-afr,English-Afrikaans Dictionary)
+@end group
+@end smallexample
+
 
 @node Dictd Invocation
 @section Dictd Invocation

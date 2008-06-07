@@ -545,7 +545,7 @@ struct config_keyword keywords[] = {
       cfg_string, &server_info,  },
     { "show-sys-info", N_("arg: {always|never|auth}"),
       N_("Show system information in reply to SHOW SERVER command:\n"
-	 "  always      - alwaysshow;\n"
+	 "  always      - always show;\n"
 	 "  never       - never show;\n"
 	 "  auth        - show for authorized users"),
       cfg_uint, &show_sys_info, 0, set_show_sys_info },

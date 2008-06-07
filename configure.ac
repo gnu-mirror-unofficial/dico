@@ -75,16 +75,17 @@ AC_CHECK_HEADER(zlib.h,
 			              [Define this if you have libz library])
 	                      AC_SUBST(LIBZ, -lz)]))
 
-LOG_FACILITY="LOG_LOCAL1"
+LOG_FACILITY="LOG_DAEMON"
 
 AC_ARG_VAR([LOG_FACILITY],
 	   [Default syslog facility])
 if test -n "$LOG_FACILITY"; then
-   case $LOG_FACILITY in
+   logfacility=`echo $LOG_FACILITY | tr a-z A-Z`
+   case $logfacility in
    USER|DAEMON|AUTH|AUTHPRIV|MAIL|CRON|LOCAL[[0-7]])
-      LOG_FACILITY=LOG_$LOG_FACILITY;;
+      LOG_FACILITY=LOG_$logfacility;;
    LOG_USER|LOG_DAEMON|LOG_AUTH|LOG_AUTHPRIV|LOG_MAIL|LOG_CRON|LOG_LOCAL[[0-7]])
-      ;;
+      LOG_FACILITY=$logfacility;;
    *) AC_MSG_ERROR([Invalid value of LOG_FACILITY]);;
    esac
 fi		      

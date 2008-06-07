@@ -260,6 +260,210 @@ addition, these words can be prefixed with @samp{log_}.
 @node Syntax
 @subsection Configuration File Syntax
 @UNREVISED
+  A Dico configuration consists of statements and comments.
+
+  There are three classes of lexical tokens: keywords, values, and
+separators. Blanks, tabs, newlines and comments, collectively called
+@dfn{white space} are ignored excepty as they serve to separate
+tokens.  Some white space is required to separate otherwise adjacent 
+keywors and values.
+
+@menu
+* Comments::
+* Statements::
+@end menu
+
+@node Comments
+@subsubsection Comments
+@cindex Comments in a configuration file
+@cindex single-line comments
+  @dfn{Comments} may appear anywhere where white space may appear in the
+configuration file.  There are two kinds of comments:
+single-line and multi-line comments.  @dfn{Single-line} comments start
+with @samp{#} or @samp{//} and continue to the end of the line:
+
+@smallexample
+# This is a comment
+// This too is a comment
+@end smallexample
+
+@cindex multi-line comments
+  @dfn{Multi-line} or @dfn{C-style} comments start with the two
+characters @samp{/*} (slash, star) and continue until the first
+occurrence of @samp{*/} (star, slash).
+
+  Multi-line comments cannot be nested.
+
+@node Statements
+@subsubsection Statements
+@cindex statements, configuration file
+@cindex configuration file statements
+@cindex statement, simple
+@cindex simple statements
+  A @dfn{simple statement} consists of a keyword and value
+separated by any amount of whitespace.  Simple statement is terminated
+with a semicolon (@samp{;}), unless it contains a @dfn{here-document}
+(see below), in which case semicolon is optional.
+
+  Examples of simple statements:
+
+@smallexample
+timing yes;
+access-log-file /var/log/access_log;
+@end smallexample
+
+  A @dfn{keyword} begins with a letter and may contain letters,
+decimal digits, underscores (@samp{_}) and dashes (@samp{-}).
+Examples of keywords are: @samp{group}, @samp{identity-check}.
+
+  A @dfn{value} can be one of the following:
+
+@table @asis
+@item number
+  A number is a sequence of decimal digits.
+
+@item unquoted string
+@cindex string, unquoted
+  An unquoted string may contain letters, digits, and any of the
+following characters: @samp{_}, @samp{-}, @samp{.}, @samp{/},
+@samp{:}.
+
+@item quoted string
+@cindex quoted string
+@cindex string, quoted
+@cindex escape sequence
+  A quoted string is any sequence of characters enclosed in
+double-quotes (@samp{"}).  A backslash appearing within a quoted
+string introduces an @dfn{escape sequence}, which is replaced
+with a single character according to the following rules:
+
+@float Table, backslash-interpretation
+@caption{Backslash escapes}
+@multitable @columnfractions 0.30 .5
+@item Sequence @tab Replaced with
+@item \a @tab Audible bell character (@acronym{ASCII} 7)
+@item \b @tab Backspace character (@acronym{ASCII} 8)
+@item \f @tab Form-feed character (@acronym{ASCII} 12)
+@item \n @tab Newline character (@acronym{ASCII} 10)
+@item \r @tab Carriage return character (@acronym{ASCII} 13)
+@item \t @tab Horizontal tabulation character (@acronym{ASCII} 9)
+@item \\ @tab A single backslash (@samp{\})
+@item \" @tab A double-quote.
+@end multitable
+@end float
+
+  In addition, the sequence @samp{\@var{newline}} is removed from
+the string.  This allows to split long strings over several
+physical lines, e.g.:
+
+@smallexample
+@group
+"a long string may be\
+ split over several lines"
+@end group
+@end smallexample
+
+  If the character following a backslash is not one of those specified
+above, the backslash is ignored and a warning is issued.
+
+  Two or more adjacent quoted strings are concatenated, which gives
+another way to split long strings over several lines to improve
+readability.  The following fragment produces the same result as the
+example above:
+
+@smallexample
+@group
+"a long string may be"
+" split over several lines"
+@end group
+@end smallexample
+
+@item Here-document
+@cindex here-document
+  @dfn{Here-document} is a special construct that allows to introduce
+strings of text containing embedded newlines.  
+
+  The @code{<<@var{word}} construct instructs the parser to read all
+the following lines up to the line containing only @var{word}, with
+possible trailing blanks.  Any lines thus read are concatenated
+together into a single string.  For example:
+
+@smallexample
+@group
+<<EOT
+A multiline
+string
+EOT
+@end group
+@end smallexample
+
+  Body of a here-document is interpreted the same way as
+double-quoted string, unless @var{word} is preceded by a backslash
+(e.g. @samp{<<\EOT}) or enclosed in double-quotes, in which case
+the text is read as is, without interpretation of escape sequences.
+
+  If @var{word} is prefixed with @code{-} (a dash), then all leading
+tab characters are stripped from input lines and the line containing
+@var{word}.  Furthermore, if @code{-} is followed by a single space,
+all leading whitespace is stripped from them.  This allows to indent
+here-documents in a natural fashion.  For example:
+
+@smallexample
+@group
+<<- TEXT
+    All leading whitespace will be
+    ignored when reading these lines.
+TEXT
+@end group
+@end smallexample
+
+  As a ``syntactical sugar'', statements containing here-documents are
+not required to end with a semicolon.  If, however, a semicolon is
+used, it may not appear on the same line with the terminating
+@var{word} delimiter, e.g.:
+
+@smallexample
+help-text <<-EOT
+        A sample help text.
+EOT
+;
+@end smallexample
+
+@item list
+@cindex list
+  A @dfn{list} is a comma-separated list of values.  Lists are
+delimited by parentheses.  The following example shows a statement
+whose value is a list of strings:
+
+@smallexample
+capability (mime,auth);
+@end smallexample
+
+  In any case where a list is appropriate, a single value is allowed
+without being a member of a list: it is equivalent to a list with a
+single member.  This means that, e.g. @samp{capability mime;} is
+equivalent to @samp{capability (mime);}.
+
+@end table
+
+@cindex statement, block
+@cindex block statement
+  A @dfn{block statement} introduces a logical group of another
+statements.  It consists of a keyword, followed by an optional value,
+and a sequence of statements enclosed in curly braces, as shown in
+the example below:
+
+@smallexample
+@group
+handler outline @{
+        type loadable;
+        command "outline";
+@}
+@end group
+@end smallexample
+
+  The closing curly brace may be followed by a semicolon, although
+this is not required.
 
 @node Server Settings
 @subsection Control Server Behavior
@@ -267,43 +471,147 @@ addition, these words can be prefixed with @samp{log_}.
   Server settings control how @command{dictd} is executed on the
 server machine.
 
+@anchor{user statement}
 @deffn {Configuration} user @var{string}
+Run with the privileges of this user.  @command{Dictd} does not
+require root privileges, so it is recommended to always use this
+statement when running @command{dictd} in daemon mode.
+@FIXME-xref{operation modes}. 
+
+Example:
+@smallexample
+user nobody;
+@end smallexample
 @end deffn
 
-@deffn {Configuration} group @var{string}
-# Supplementary group to retain with the user privileges.
+@anchor{group statement}
+@deffn {Configuration} group @var{list}
+If @code{user} is given, @command{dictd} will drop all supplementary
+groups and switch to the principal group of that user.  Sometimes,
+however, it may be necessary to retain one or more supplementary
+groups.  For example, this might be necessary to access dictionary
+databases.  The @code{group} statement retains the supplementary
+groups listed in @var{list}, e.g.:
+
+@smallexample
+user nobody
+group (man, dict)
+@end smallexample
+
+This statement is ignored if @code{user} statement is not present or
+if @command{dictd} is running in inetd mode. @FIXME-xref{operation modes}.
 @end deffn
 
 @deffn {Configuration} mode @var{enum}
-# Operation mode: daemon|inetd
+Sets server operation mode. The argument is one of:
+
+@table @asis
+@item daemon
+Run in daemon mode.
+
+@item inetd
+Run in inetd mode.
+@end table
+
+@FIXME-xref{operation modes}.
+This statement is overridden by the @option{--inetd} command line
+option. @FIXME-xref{--inetd}.
 @end deffn
 
 @deffn {Configuration} listen @var{list};
-# Listen on these addresses.
+Specify @acronym{IP} addresses and ports to listen on in daemon mode.
+By default, @command{dictd} will listen on port 2628 on all existing
+interfaces.  Use @code{listen} statement to abridge the list of
+interfaces to listen on, or to change the port number. 
+
+Elements of @var{list} can have the following form:
+
+@table @asis
+@item @var{host}:@var{port}
+  Specifies an @acronym{IP}v4 socket to listen on.  The @var{host}
+part is either a host name or an @acronym{IP} in ``dotted-quad''
+form.  The @var{port} part is either a numeric port number or a
+symbolic service name which is found in @file{/etc/services} file.
+
+  Either of the two parts may be omitted.  If @var{host} is omitted,
+it defaults to @samp{0.0.0.0}, which means ``listen on all
+interfaces''.  If @var{port} is omitted, it defaults to 2628.  In this
+case the colon may be omitted, too.
+
+  Examples:
+  
+@smallexample
+listen localhost:2628;
+listen 127.0.0.1;
+listen :2628;
+@end smallexample
+
+@item @var{filename}
+  Specifies the name of a @acronym{UNIX} socket to listen on.
+@end table
+
+  The following statement instructs @command{dictd} to listen on
+the address @samp{10.10.10.1}, port 2628 and on the @acronym{UNIX}
+socket @file{/var/run/dict}:
+
+@smallexample
+listen (10.10.10.1, /var/run/dict);
+@end smallexample
+
 @end deffn
 
 @deffn {Configuration} pidfile @var{string}
-# Store PID of the master process in this file.
+Store @acronym{PID} of the master process in this file.
+Default is @file{@var{localstatedir}/run/dictd.pid}. 
+Notice that the privileges of this default directory are
+may be insufficient for @command{dictd} to write there after switching
+to users privileges (@pxref{user statement}).  One solution to this is
+to create a subdirectory with the same owner as given by @code{user}
+statement and to point the @acronym{PID} file there:
+
+@smallexample
+pidfile /var/run/dict/dictd.pid;
+@end smallexample
+
+Another solution is to make @acronym{PID} directory group-writable and
+to add the owner group to the @code{group} statement (@pxref{group
+statement}).
+
+@FIXME{I am not sure this is quite right.  Should `make install'
+create the $localstate/run/dict directory?  But then, make doesn't
+know what user to set as its owner...}
 @end deffn
 
 @deffn {Configuration} max-children @var{number}
-# Maximum number of children running simultaneously.
-@end deffn
-
-@deffn {Configuration} shutdown-timeout @var{number}
-# Wait this number of seconds for all children to terminate.
+Sets maximum number of sub-processes that can run simultaneously.
+This is equivalent to the number of clients that can simultaneously
+use the server.  The default is 64 sub-processes.
 @end deffn
 
 @deffn {Configuration} inactivity-timeout @var{number}
-# Set inactivity timeouit.
+Set inactivity timeout to the @var{number} of seconds.  The server
+will disconnect automatically if remote client did not send any
+command within this number of seconds.  Setting timeout to 0 disables
+inactivity timeout (the default).
+
+Using this statement along with @code{max-children} allows to control
+the server load.
+@end deffn
+
+@deffn {Configuration} shutdown-timeout @var{number}
+When the master server is shutting down, wait this number of seconds for all
+children to terminate.  Default is 5 seconds.
 @end deffn
 
 @deffn {Configuration} identity-check @var{boolean}
-# Enable identification check using AUTH protocol (RFC 1413)
+Enable identification check using @acronym{AUTH} protocol
+(@acronym{RFC} 1413).  The received user name or @acronym{UID} can
+be shown in access log using @code{%l} format (@pxref{Access Log}).
 @end deffn
 
 @deffn {Configuration} ident-keyfile @var{string}
-# Name of the file containing the keys for decrypting AUTH replies.
+Use encryption keys from the named file to decrypt @acronym{AUTH}
+replies encrypted using @acronym{DES}.
 @end deffn
 
 @node Authorisation
@@ -551,12 +859,12 @@ handler <name: string> @{
 @smallexample
 @group
 m4_define(`defdb', `
-database {
+database @{
         name "$1";
         handler "dictorg database=$1";m4_dnl
 m4_ifelse(`$2',,,`
         description "$2";')
-}
+@}
 ')
 @end group
 @end smallexample

@@ -72,7 +72,7 @@ P [1-9][0-9]*
 "//".*\n  { locus.line++; }
 "//".*    /* end-of-file comment */;
         /* Identifiers */
-^[ \t]*{ID}          return ident();
+<INITIAL>{ID}           return ident();
          /* Strings */
 [a-zA-Z0-9_\./:-]+    { line_begin();
                         line_add(yytext, yyleng);
@@ -83,10 +83,12 @@ P [1-9][0-9]*
                         line_add(yytext + 1, yyleng - 2);
                         line_finish();
                         return QSTRING; }
-\"[^\\"\n]*\\.        { BEGIN(STR);
+\"[^\\"\n]*\\. |
+\"[^\\"\n]*\\\n        { BEGIN(STR);
                         line_begin();
 		        line_add_unescape_last(yytext + 1, yyleng - 1); }
-<STR>[^\\"\n]*\\.     { line_add_unescape_last(yytext, yyleng); }
+<STR>[^\\"\n]*\\. |
+<STR>\"[^\\"\n]*\\\n  { line_add_unescape_last(yytext, yyleng); }
 <STR>[^\\"\n]*\"      { BEGIN(INITIAL);
                         if (yyleng > 1) 
                           line_add(yytext, yyleng - 1); 
@@ -116,7 +118,8 @@ P [1-9][0-9]*
 {WS}     ;
          /* Other tokens */
 \n       { locus.line++; } 
-.        return yytext[0];
+[,;{}()] return yytext[0];
+.        config_error(&locus, 0, _("stray character \\%03o"), yytext[0]);
 %%
 
 pid_t pp_pid;
@@ -184,7 +187,7 @@ multiline_strip_tabs(char *text)
     return text;
 }
 
-static char quote_transtab[] = "\\\\a\ab\bf\fn\nr\rt\t";
+static char quote_transtab[] = "\\\\\"\"a\ab\bf\fn\nr\rt\t";
 
 int
 unquote_char(int c)
@@ -195,7 +198,7 @@ unquote_char(int c)
 	if (*p == c)
 	    return p[1];
     }
-    return c;
+    return 0;
 }
 
 int
@@ -207,7 +210,23 @@ quote_char(int c)
 	if (p[1] == c)
 	    return p[0];
     }
-    return c;
+    return 0;
+}
+
+static void
+unescape_to_obstack(int c)
+{
+    if (c != '\n') {
+	int t = unquote_char(c);
+	if (t)
+	    obstack_1grow(&stk, t);
+	else {
+	    config_warning(&locus, 0,
+			   _("unknown escape sequence '\\%c'"),
+			   c);
+	    obstack_1grow(&stk, c);
+	}
+    }
 }
 
 void
@@ -221,8 +240,7 @@ void
 line_add_unescape_last(char *text, size_t len)
 {
     obstack_grow(&stk, text, len - 2);
-    if (text[len - 1] != '\n')
-	obstack_1grow(&stk, unquote_char(text[len - 1]));
+    unescape_to_obstack(text[len - 1]);
 }
 
 void
@@ -231,8 +249,7 @@ multiline_add(char *s)
     if (multiline_unescape) {
 	for (; *s; s++) {
 	    if (*s == '\\') {
-		if (s[1] != '\n')
-		    obstack_1grow(&stk, unquote_char(s[1]));
+		unescape_to_obstack(s[1]);
 		++s;
 	    } else
 		obstack_1grow(&stk, *s);

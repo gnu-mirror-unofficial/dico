@@ -109,6 +109,7 @@ value   : string
 string  : STRING
         | MSTRING
         | QSTRING
+        | IDENT
         | slist
         ;
 
@@ -175,18 +176,45 @@ yyerror(char *s)
 }
 
 void
+config_diag(dictd_locus_t *locus, int category, int errcode,
+	    const char *fmt, va_list ap)
+{
+    char *pfx;
+    char *newfmt;
+    
+    if (category == L_WARN) 
+	pfx = _("warning: ");
+    else 
+	pfx = NULL;
+    
+    if (!locus || !locus->file) 
+	asprintf(&newfmt, "%s%s", pfx ? pfx : "", fmt);
+    else {
+	asprintf(&newfmt, "%s:%d: %s%s",
+		 locus->file, locus->line,
+		 pfx ? pfx : "", fmt);
+    }
+    dico_vlog(category, errcode, newfmt, ap);
+    free (newfmt);
+}
+
+void
+config_warning(dictd_locus_t *locus, int errcode, const char *fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    config_diag(locus, L_WARN, errcode, fmt, ap);
+    va_end(ap);
+}    
+
+void
 config_error(dictd_locus_t *locus, int errcode, const char *fmt, ...)
 {
     va_list ap;
 
     va_start(ap, fmt);
-    if (!locus || !locus->file)
-	dico_vlog(L_ERR, errcode, fmt, ap);
-    else {
-	fprintf(stderr, "%s:%d: ", locus->file, locus->line);
-	vfprintf(stderr, fmt, ap);
-	fprintf(stderr, "\n");
-    }
+    config_diag(locus, L_ERR, errcode, fmt, ap);
     va_end(ap);
     config_error_count++;
 }

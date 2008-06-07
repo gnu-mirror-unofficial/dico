@@ -206,6 +206,8 @@ int yyerror(char *);
 
 void config_error(dictd_locus_t *locus, int errcode, const char *fmt, ...)
     DICO_PRINTFLIKE(3,4);
+void config_warning(dictd_locus_t *locus, int errcode, const char *fmt, ...)
+    DICO_PRINTFLIKE(3,4);
 int config_lex_begin(const char *name);
 void config_lex_end(void);
 void config_set_keywords(struct config_keyword *kwd);

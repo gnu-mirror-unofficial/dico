@@ -48,6 +48,7 @@ inc_DATA = $(PP_SETUP_FILE)
 
 AM_CFLAGS = \
  -DSYSCONFIG=\"$(sysconfdir)\"\
+ -DLOCALSTATEDIR=\"$(localstatedir)\"\
  -DDICO_MODDIR=\"$(DICO_MODDIR)\"\
  -DDEFAULT_VERSION_INCLUDE_DIR=\"$(incdir)\"\
  -DDEFAULT_INCLUDE_DIR=\"$(pkgdatadir)/include\"\

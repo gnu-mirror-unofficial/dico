@@ -26,7 +26,7 @@ int single_process; /* Single process mode */
 char *config_file = SYSCONFIG "/dictd.conf" ;
 int config_lint_option; /* Check configuration file syntax and exit. */
 /* Location of the pidfile */
-char *pidfile_name = "/var/run/dictd.pid";
+char *pidfile_name = LOCALSTATEDIR "/run/dictd.pid";
 
 /* Operation mode */
 int mode = MODE_DAEMON;
@@ -36,7 +36,7 @@ int debug_level;
 char *debug_level_str;
 
 /* Maximum number of children in allowed in daemon mode. */
-unsigned int max_children;
+unsigned int max_children = 64;
 /* Wait this number of seconds for all subprocesses to terminate. */
 unsigned int shutdown_timeout = 5;
 /* Inactivity timeout */
@@ -587,7 +587,7 @@ struct config_keyword keywords[] = {
       N_("Wait this number of seconds for all children to terminate."),
       cfg_uint, &shutdown_timeout },
     { "inactivity-timeout", N_("seconds"),
-      N_("Set inactivity timeouit."),
+      N_("Set inactivity timeout."),
       cfg_uint, &inactivity_timeout },
     { "listen", N_("addr"), N_("Listen on these addresses."),
       cfg_sockaddr|CFG_LIST, &listen_addr,  },

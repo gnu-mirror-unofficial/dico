@@ -44,7 +44,7 @@ access_log_status(const char *first, const char *last)
   %C          *Remote client (from CLIENT command). 
   %D          The time taken to serve the request, in microseconds.
   %h          Remote host
-  %H          *Request command werb (DEFINE or MATCH)
+  %H          *Request command verb (DEFINE or MATCH)
   %l          Remote logname (from identd, if supplied). This will return a
               dash unless identity-check is set to true.
   %m          *The search strategy
@@ -393,7 +393,7 @@ static struct alog_tab alog_tab[] = {
     { 'D', alog_time_ms },
     /* Remote host */
     { 'h', alog_remote_host },
-    /* * Request command werb (DEFINE or MATCH) */
+    /* * Request command verb (DEFINE or MATCH) */
     { 'H', alog_command_verb },
     /* Remote logname (from identd, if supplied). This will return a
        dash unless identity-check is set to true. */

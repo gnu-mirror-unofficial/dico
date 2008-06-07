@@ -426,49 +426,55 @@ string_to_sockaddr(sockaddr_union_t *s, const char *string)
 	strcpy(s->s_un.sun_path, string);
     } else {
 	char *p = strchr(string, ':');
-	char *host;
 	size_t len;
 	struct sockaddr_in sa;
-	struct servent *serv;
 
 	sa.sin_family = AF_INET;
-	if (!p) {
-	    config_error(&locus, 0,
-			 _("%s: not a valid socket address"),
-			 string);
-	    return 1;
-	}
-	len = p - string;
-	host = xmalloc(len + 1);
-	memcpy(host, string, len);
-	host[len] = 0;
-	
-	if (string_to_host(&sa.sin_addr, host)) {
-	    config_error(&locus, 0,
-			 _("%s: not a valid IP address or hostname"), host);
-	    free(host);
-	    return 1;
-	}
-	free(host);
+	if (p) 
+	    len = p - string;
+	else
+	    len = strlen (string);
 
-	p++;
-	serv = getservbyname(p, "tcp");
-	if (serv != NULL)
-	    sa.sin_port = serv->s_port;
+	if (len == 0)
+	    sa.sin_addr.s_addr = INADDR_ANY;
 	else {
-	    unsigned long l;
-	    char *q;
+	    char *host = xmalloc(len + 1);
+	    memcpy(host, string, len);
+	    host[len] = 0;
 	    
-	    /* Not in services, maybe a number? */
-	    l = strtoul(p, &q, 0);
-
-	    if (*p || l > USHRT_MAX) {
+	    if (string_to_host(&sa.sin_addr, host)) {
 		config_error(&locus, 0,
-			     _("%s: not a valid port number"), p);
+			     _("%s: not a valid IP address or hostname"),
+			     host);
+		free(host);
 		return 1;
 	    }
-	    sa.sin_port = htons(l);
+	    free(host);
 	}
+	
+	if (p) {
+	    struct servent *serv;
+
+	    p++;
+	    serv = getservbyname(p, "tcp");
+	    if (serv != NULL)
+		sa.sin_port = serv->s_port;
+	    else {
+		unsigned long l;
+		char *q;
+		
+		/* Not in services, maybe a number? */
+		l = strtoul(p, &q, 0);
+
+		if (*q || l > USHRT_MAX) {
+		    config_error(&locus, 0,
+				 _("%s: not a valid port number"), p);
+		    return 1;
+		}
+		sa.sin_port = htons(l);
+	    }
+	} else
+	    sa.sin_port = htons(DICT_PORT);
 	s->s_in = sa;
     }
     return 0;

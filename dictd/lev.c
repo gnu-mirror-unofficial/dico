@@ -61,7 +61,7 @@ void
 register_lev()
 {
     static struct dictd_command cmd =
-	{ "XLEVDIST", 2, "distance", "Set Levenshtein distance",
+	{ "XLEV", 2, "distance", "Set Levenshtein distance",
 	  dictd_xlevdist };
     dico_strategy_add(&levstrat);
     dico_strategy_add(&dlevstrat);

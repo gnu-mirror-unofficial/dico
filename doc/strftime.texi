@@ -7,7 +7,7 @@
 
 @cindex time formats, for @option{--time-format} option
   This appendix documents the time format specifications understood by
-the @samp{%t} log format specifier (@FIXME-pxref{access-log-format}).
+the @samp{%t} log format specifier (@pxref{Access Log}).
 Essentially, it is a reproduction of the man page for GNU
 @code{strftime} function.
 

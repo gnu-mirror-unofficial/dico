@@ -245,7 +245,7 @@ addition, these words can be prefixed with @samp{log_}.
 @menu
 * Syntax::            Configuration file syntax.
 * Server Settings::
-* Authorisation::
+* Authorization::
 * Security Settings::
 * Logging and Debuging::
 * Access Log::
@@ -384,6 +384,7 @@ example above:
 @end group
 @end smallexample
 
+@anchor{here-document}
 @item Here-document
 @cindex here-document
   @dfn{Here-document} is a special construct that allows to introduce
@@ -621,8 +622,8 @@ Use encryption keys from the named file to decrypt @acronym{AUTH}
 replies encrypted using @acronym{DES}.
 @end deffn
 
-@node Authorisation
-@subsection Authorisation
+@node Authorization
+@subsection Authorization
 @UNREVISED
 
 @FIXME{
@@ -660,7 +661,7 @@ user-db <url: string> @{
 @UNREVISED
 
 @deffn {Configuration} show-sys-info @var{enum}
-This statements controls whether to show system information in reply
+This statement controls whether to show system information in reply
 to @code{SHOW SERVER} command.  Allowed values are:
 
 @table @asis
@@ -672,7 +673,7 @@ Never show it.  This is the default.
 
 @item auth
 Show the system information for authorized users only
-(@pxref{Authorisation}).  See also @code{sys-info-groups} below, which
+(@pxref{Authorization}).  See also @code{sys-info-groups} below, which
 modifies this setting.
 @end table
 
@@ -705,7 +706,7 @@ sys-info-groups (admin,wheel);
 @deffn {Configuration} require-auth @var{boolean}
 Require authentication for access to databases.  If
 @code{require-auth} is set to @code{true}, all databases become
-visible only for authenticated users (@pxref{Authorisation}).  Default
+visible only for authenticated users (@pxref{Authorization}).  Default
 is @code{false}.
 
 The effect of this statement is modified by the @code{require-auth}
@@ -726,7 +727,9 @@ database @{
 
 @node Logging and Debuging
 @subsection Logging and Debuging
-@UNREVISED
+@cindex logging, configuration
+  The directive described in this subsection provide basic logging
+capabilities.  
 
 @deffn {Configuration} log-tag @var{string}
 Prefix syslog messages with this string.  By default, the program name
@@ -770,8 +773,14 @@ some remote client.  Never use it in a production environment.
 
 @node Access Log
 @subsection Access Log
-@UNREVISED
-
+@cindex access log
+@cindex logging requests
+@cindex Apache
+  Dico provides a feature similar to Apache's @code{CustomLog}, which
+allows to keep a log of @code{MATCH} and @code{DEFINE} requests.  To
+enable this feature, specify the name of the log file using the
+following directive:
+  
 @deffn {Configuration} access-log-file @var{string}
 Set access log file name.
 
@@ -780,12 +789,18 @@ access-log-file /var/log/dico/access.log;
 @end smallexample
 @end deffn
 
+  The format of log file entries is specified using
+@code{access-log-format} directive:
+
 @deffn {Configuration} access-log-format @var{string}
 Set format string for access log file.
+@end deffn
 
-@smallexample
-access-log-format "%h %l %u %t \"%r\" %>s %b";
-@end smallexample
+@cindex % formats
+  Its argument can contain literal characters, which are copied into
+the log file verbatim, and @dfn{format specifiers}, i.e. special
+sequences which begin with @samp{%} and are replaced in the log file
+as shown in the table below.
 
 @table @asis
 @item %%
@@ -869,7 +884,8 @@ The time taken to serve the request, in seconds.
 Remote user from @code{AUTH} command.
 
 @item %v
-The host name of the server serving the request.
+The host name of the server serving the request.  @xref{hostname
+directive}.
 
 @item %V
 Actual host name of the server (in case it was overridden in
@@ -878,48 +894,181 @@ configuration).
 @item %W
 The word from the request.
 @end table
-@end deffn    
 
-For the reference, here is the list of format specifiers having
-different meaning than in Apache: @samp{%C}, @samp{%H}, @samp{%m},
+  For the reference, here is the list of format specifiers that
+have different meaning than in Apache: @samp{%C}, @samp{%H}, @samp{%m},
 @samp{%q}.  The following format specifiers are unique to Dico:
 @samp{%@{@var{n}@}R}, @samp{%V}, @samp{%W}.
 
+  Absense of the @code{access-log-format} directive is equivalent to
+the following statement:
+
+@smallexample
+access-log-format "%h %l %u %t \"%r\" %>s %b";
+@end smallexample
+
+@cindex webalizer
+  It was chosen so as to be compatible with Apache access logs and 
+be easily parsable by existing log analyzing tools, such as
+@command{webalizer}.
+
+  Extending this format string with the client name produces a log
+format similar to Apache @samp{combined log}:
+
+@smallexample
+access-log-format "%h %l %u %t \"%r\" %>s %b \"\" \"%C\"";
+@end smallexample
+
+
 @node General Settings
 @subsection General Settings
-@UNREVISED
+  The settings in this subsection configure basic behavior of the
+@acronym{DICT} daemon.
+  
+@deffn {Configuration} initial-banner-text @var{string}
+Display the @var{string} in the textual part of the initial server
+reply.
 
-@deffn {Configuration} server-info @var{string}
-# Server description to be shown in reply to SHOW SERVER command.
+@anchor{initial reply}
+When connection is established, the server sends an initial reply to
+the client, that looks like in the example below:
+
+@smallexample
+220 Trurl.gnu.org.ua <auth.mime> <520.1212912026@@Trurl.gnu.org.ua>
+@end smallexample
+
+The part of this reply after the host name and the first angle
+bracket is modifiable and can contain arbitrary text.  You can use
+@code{initial-banner-text} to append any additional information
+there.  Note, that @var{string} may not contain newlines.  For
+example:
+
+@smallexample
+initial-banner-text "Please authenticate yourself,";
+@end smallexample
+
+This statement produces the following initial reply (split over two
+lines for readability):
+
+@smallexample
+220 Trurl.gnu.org.ua Please authenticate yourself,
+  <auth.mime> <520.1212912026@@Trurl.gnu.org.ua>
+@end smallexample
 @end deffn
 
-@deffn {Configuration} initial-banner-text @var{string}
-# Display this text in the initial 220 banner
+@anchor{hostname directive}
+@deffn {Configuration} hostname @var{string}
+Set the hostname.  By default, the server determines it automatically.  If,
+however, it makes a wrong guess, you can fix it using this directive.
+
+The server hostname is used, among others, in the initial reply after
+@samp{220} code (see above) and may also be displayed in the access
+log file using @samp{%v} escape (@pxref{Access Log}).
+@end deffn
+
+@deffn {Configuration} server-info @var{string}
+Set server description to be shown in reply to @code{SHOW SERVER} command.
+
+The first line of the reply, after the usual @samp{114} response line,
+shows the name of host where the server is running.  If the settings
+of @code{show-sys-info} and @code{sys-info-groups} (@pxref{Security
+Settings}) allow, some additional information about the system is
+printed.
+
+The lines that follow are taken from the @code{server-info}
+directive.  It is common to specify @var{string} using
+``here-document'' syntax (@pxref{here-document}), e.g.:
+
+@smallexample
+server-info <<EOT
+Welcome to the FOO dictionary service.
+
+Contact <dict@@foo.org> if you have questions or
+suggestions.
+EOT
+@end smallexample
+
 @end deffn
 
 @deffn {Configuration} help-text @var{string}
-# Display this text in reply to the HELP command. If text begins with a +,
-# usual command summary is displayed before it.
-@end deffn
+Set the text to be displayed in reply to the @acronym{HELP} command.
 
-@deffn {Configuration} hostname @var{string}
-# Override the host name.
+The default reply to @acronym{HELP} command displays a list of
+commands understood by the server with a short description of each.
+
+You can use @command{help-text} directive to @emph{append} arbitrary
+text to that output, provided that you begin @var{string} with a
+plus sign, e.g.:
+
+@smallexample
+help-text <<-EOT
+  +
+  The commands beginning with an X are extensions.
+EOT
+@end smallexample
+
+If @var{string} begins with any character, except @samp{+}, it will
+replace the default help output.  For example:
+
+@smallexample
+help-text <<-EOT
+  There is no help.
+  See RFC 2229 for detailed information.
+EOT
+@end smallexample
 @end deffn
 
 @deffn {Configuration} default-strategy @var{string}
-# Set the name of the default matching strategy.
+Set the name of the default matching strategy
+(@FIXME-pxref{strategies}).  By default, Levenshtein matching is used,
+which is equivalent to
+
+@smallexample
+default-strategy lev;
+@end smallexample
 @end deffn
 
 @node Capabilities
 @subsection Server Capabilities
+  @dfn{Capabilities} are certain server features that can be enabled
+or disabled at the system administrator's will. 
 
 @deffn {Configuration} capability @var{list}
-# Request additional capabilities.
+Request additional capabilities from @var{list}.
 @end deffn
+
+  The argument to @code{capability} directive must contain names
+of existing Dico capabilities.  These are listed in the following
+table:
+
+@table @asis
+@item auth
+The @code{AUTH} command is supported. @xref{Authorization}.
+
+@item mime
+The @code{OPTION MIME} command is supported.  Notice that
+@acronym{RFC} 2229 requires all servers to support that command, so
+you should always specify this capability.
+
+@item xversion
+The @code{XVERSION} command is supported.  It is a Dico extension that
+displays the @command{dictd} implementation and version number. 
+@FIXME-xref{extended and experimental commands}.
+
+@item xlev
+The @code{XLEV} command is supported.  This command allows to set and
+query maximal Levenshtein distance for @code{lev} matching strategy.
+@FIXME-xref{matching strategies}. @FIXME-xref{extended and
+experimental commands}. 
+@end table
+
+  Capabilities set using the @command{capability} directive are
+displayed in the initial server reply (@pxref{initial reply}), and
+appropriate entries are added to the @code{HELP} command output.
 
 @node Handlers
 @subsection Database Modules
-
+@UNREVISED
 @deffn {Configuration} module-load-path @var{list}
 # List of directories searched for handler modules.
 @end deffn

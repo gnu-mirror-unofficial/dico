@@ -60,6 +60,19 @@ Software Foundation raise funds for GNU development.''
 @insertcopying
 @end titlepage
 
+@headings off
+@page
+@w{ }
+@sp 9
+@quotation
+@i{D@'edi@'e @`a la m@'emoire de Jacques Brel.}
+@end quotation
+@w{ }
+@page
+@w{ }
+@page
+@headings on
+
 @ifnottex
 @node Top
 @top Dico
@@ -177,15 +190,16 @@ this chapter.
 @cindex preprocessor, default
 @vrindex DEFAULT_PREPROCESSOR     
   The runtime configuration system uses @command{m4} to preprocess
-the configuration file.  This makes the configuration extremely
-flexible.  We recommend to use GNU m4 as a preprocessor@footnote{@uref{http://www.gnu.org/software/m4}}.  However, any
-other implementation of @command{m4} may be used.  The @command{configure}
-script tries to determine full file name of the preprocessor binary
-and the necessary command line options.  In case it makes a wrong
-guess, you can instruct it to use a particular preprocessor by using
-@env{DEFAULT_PREPROCESSOR} configuration variable.  For example, the
-following @command{configure} invocation instructs it to use
-@command{/usr/local/bin/gm4}:
+the configuration file (@pxref{Preprocessor}, which makes the
+configuration extremely flexible.  We recommend to use GNU m4 as a
+preprocessor@footnote{@uref{http://www.gnu.org/software/m4}}.
+However, any other implementation of @command{m4} may be used.  The
+@command{configure} script tries to determine full file name of the
+preprocessor binary and the necessary command line options.  In case
+it makes a wrong guess, you can instruct it to use a particular
+preprocessor by using @env{DEFAULT_PREPROCESSOR} configuration
+variable.  For example, the following @command{configure} invocation
+instructs it to use @command{/usr/local/bin/gm4}:
 
 @smallexample
 $ ./configure DEFAULT_PREPROCESSOR="/usr/local/bin/gm4 -s"
@@ -270,6 +284,7 @@ keywors and values.
 
 @menu
 * Comments::
+* Pragmatic Comments::
 * Statements::
 @end menu
 
@@ -293,6 +308,60 @@ characters @samp{/*} (slash, star) and continue until the first
 occurrence of @samp{*/} (star, slash).
 
   Multi-line comments cannot be nested.
+
+@node Pragmatic Comments
+@subsubsection Pragmatic Comments
+@UNREVISED
+@cindex comments, pragmatic
+@cindex pragmatic comments
+  Pragmatic comments are similar to usual comments, except that they
+cause some changes in the way the configuration is parsed.  Pragmatic
+comments begin with a @samp{#} sign and end with the next physical
+newline character.  As of Dico version @value{VERSION}, the following
+pragmatic comments are understood:
+
+@table @code
+@kwindex #include
+@item #include <@var{file}>
+@itemx #include @var{file}
+Include the contents of the file @var{file}.  If @var{file} is an
+absolute file name, both forms are equivalent.  Otherwise, the form
+with angle brackets searches for the file in the @dfn{include 
+search path}, while the second one looks for it in the current working
+directory first, and, if not found there, in the include search
+path.
+
+The default include search path is:
+
+@enumerate 1
+@item @file{@var{prefix}/share/dico/@value{VERSION}/include}
+@item @file{@var{prefix}/share/dico/include}
+@end enumerate
+
+@noindent
+Where @var{prefix} is the installation prefix.
+
+  New directories can be appended in front of it using @option{-I}
+(@option{--include}) command line option (@FIXME-pxref{--include}).  
+
+@kwindex #include_once
+@item #include_once <@var{file}>
+@itemx #include_once @var{file}
+  Same as @code{#include}, except that, if the @var{file} has already
+been included, it will not be included again.
+
+@kwindex #line
+@item #line @var{num}
+@itemx #line @var{num} "@var{file}"
+  This line causes @command{dictd} to believe, for purposes of error
+diagnostics, that the line number of the next source line is given by
+@var{num} and the current input file is named by @var{file}.
+If the latter is absent, the remembered file name does not change.
+
+@item # @var{num} "@var{file}"
+  This is a special form of @code{#line} statement, understood for
+compatibility with the @sc{c} preprocessor.
+@end table
 
 @node Statements
 @subsubsection Statements
@@ -710,7 +779,7 @@ visible only for authenticated users (@pxref{Authorization}).  Default
 is @code{false}.
 
 The effect of this statement is modified by the @code{require-auth}
-statement in @code{database} group (@pxref{pre-database require-auth}).
+statement in @code{database} group (@pxref{per-database require-auth}).
 @end deffn
 
 @FIXME{
@@ -1067,33 +1136,109 @@ displayed in the initial server reply (@pxref{initial reply}), and
 appropriate entries are added to the @code{HELP} command output.
 
 @node Handlers
-@subsection Database Modules
-@UNREVISED
-@deffn {Configuration} module-load-path @var{list}
-# List of directories searched for handler modules.
+@subsection Database Modules and Handlers
+@cindex database module, defined
+  A @dfn{database module} is an external piece of software designed to
+handle a particular format of dictionary databases.  This piece of
+software is built as a shared library so that @command{dictd} can load
+at run time.
+
+@cindex database handler, defined
+  A @dfn{handler} is an instance of a database module loaded by
+@command{dictd} and configured for a specific database or a set of
+databases. 
+
+  Database handlers are defined using the following block statement:
+  
+@deffn {Configuration} handler @var{string}
+Define a database handler.  Argument sets a unique name which will
+be used by subsequent parts of the configuration to refer to this
+handler.  The @code{handler} statement is a block statement.  The only
+sub-statement allowed within it is @code{command} statement:
+
+@deffn {handler config} command @var{string}
+Set the command line for this handler.  It is similar to shell's
+command line: it consists of a name of database module, optionally
+followed by a whitespace-separated list of its arguments. Just as in
+shell, the name of the module specifies the disk file which should be
+loaded.  Arguments are passed to modules @dfn{initialization function}
+(@FIXME-pxref{module_init}).
 @end deffn
+@end deffn
+
+For example:
 
 @smallexample
 @group
-# Define a database handler.
-handler <name: string> @{
-  # Command line.
-  command <arg: string>;
+handler dict @{
+  command "dictorg dbdir=/var/dictdb";
 @}
 @end group
 @end smallexample
 
-@deffn {Configuration} handler @var{string}
-# Define a database handler.
-@end deffn
+This statement defines a handler named @samp{dict}, which loads
+the module @file{dictorg} and passes its initialization function a
+single argument, @samp{dbdir=/var/dictdb}.  If the module name is not
+an absolute file name, as in this example, the loadable module will be
+searched in the module load path.
 
-@deffn {Configuration} command @var{string}
+@cindex module load path
+@cindex load path
+  A @dfn{module load path} is an internal list of directories which
+@command{dictd} scans in order to find a loadable file name specified
+in @code{command} statement of a @code{handler} block.  By default the
+order of search is as follows:
+
+@enumerate 1
+@item
+Dico module directory: @file{$prefix/lib/dico}.
+
+@item
+Additional search directories specified with the
+@code{module-load-path} directive (see below).
+
+@item
+@vrindex LTDL_LIBRARY_PATH
+The value of the environment variable @env{LTDL_LIBRARY_PATH}.
+
+@item
+@flindex /etc/ld.so.conf
+@vrindex LD_LIBRARY_PATH
+The system dependent library search path (e.g. on Linux it is set
+by the contents of the file @file{/etc/ld.so.conf} and the value of
+the environment variable @env{LD_LIBRARY_PATH}.
+@end enumerate
+
+The value of @env{LTDL_LIBRARY_PATH} and @env{LD_LIBRARY_PATH} must be a
+colon-separated list of absolute directories, for example,
+@samp{/usr/lib/mypkg:/lib/foo}.
+
+In any of these directories, @command{dictd} first attempts to find and
+load the given filename.  If this fails, it tries to append the
+following suffixes to it:
+
+@enumerate 1
+@item
+the libtool archive suffix @samp{.la}
+
+@item
+the suffix used for native dynamic libraries on the host platform,
+e.g., @samp{.so}, @samp{.sl}, etc. 
+@end enumerate
+
+@deffn {Configuration} module-load-path @var{list}
+This directive adds the directories listend in its argument to the
+module load path.  Example:
+
+@smallexample
+module-load-path (/usr/lib/dico,/usr/local/dico/lib);
+@end smallexample
 @end deffn
 
 @node Databases
 @subsection Databases
 @UNREVISED
-
+  
 @deffn {Configuration} database
 # Define a dictionary database.
 
@@ -1113,7 +1258,7 @@ handler <name: string> @{
 # Name of the handler for this database.
 @end deffn
 
-@anchor{pre-database require-auth}
+@anchor{per-database require-auth}
 @deffn {Database} require-auth @var{boolean}
   # Require authentication for access to this database.
 @end deffn
@@ -1134,13 +1279,88 @@ handler <name: string> @{
 @node Tuning
 @subsection Tuning
 
+  While tuning your server, it might be necessary to get timing
+information which shows how much time is spent serving certain
+requests.  This can be achieved using @code{timing} configuration
+directive:
+
 @deffn {Configuration} timing @var{boolean}
-# Provide timing information after successful completion of an operation.
+Provide timing information after successful completion of an
+operation.  This information is displayed after the following
+requests: @code{MATCH}, @code{DEFINE}, and @code{QUIT}.  It consists
+of the following parts:
+
+@smallexample
+[d/m/c = @var{nd}/@var{nm}/@var{nc} @var{RT}r @var{UT}u @var{ST}s]
+@end smallexample
+
+@noindent
+where:
+
+@table @var
+@item nd
+Number of processed define requests.  It is @samp{0} after a
+@code{MATCH} request.
+
+@item nm
+Number of processed match requests.  It is @samp{0} after a
+@code{DEFINE} request. 
+
+@item nc
+Number of comparisons made.  This value may be inaccurate if the
+underlying database module is not able to count comparisons.
+
+@item RT
+Real time spent serving the request.
+
+@item UT
+Time in user space spent serving the request.
+
+@item ST
+Time in kernel space spent serving the request.
+@end table
+
+An example of a server reply with timing information follows:
+
+@smallexample
+250 Command complete [d/m/c = 0/63/107265 2.293r 1.120u 0.010s]
+@end smallexample
 @end deffn
+
+You can also add timing information to your access log files, see
+@ref{Access Log, %T}.
 
 @node Preprocessor
 @subsection Using Preprocessor to Improve the Configuration.
 @UNREVISED
+@cindex preprocessor
+@cindex m4
+  Before parsing configuration file, @command{dico} preprocesses
+it.  The built-in preprocessor handles only file inclusion
+(@FIXME-pxref{include}) and @code{#line} statements, while the rest of
+traditional facilities, such as macro expansion, is supported via
+@command{m4}, which is used as an external preprocessor. 
+
+  The detailed description of @command{m4} facilities lies far beyond
+the scope of this document.  You will find a complete user manual in
+@ref{Top, GNU M4 manual, GNU M4, m4, GNU M4 macro processor}.  For the 
+rest of this subection we assume the reader is sufficiently
+acquainted with @command{m4} macro processor.
+
+@flindex pp-setup
+  The external preprocessor is invoked with @option{-s} flag, instructing
+it to include line synchronization information in its output, which
+is then used by the parser to display meaningful diagnostic
+information.  The initial set of macro definitions is supplied by the
+@file{pp-setup} file, located in
+@file{@var{$prefix}/share/dico/@var{version}/include} directory (where
+@var{version} means the version of the Dico package).
+
+The default @file{pp-setup} file renames all @command{m4} built-in
+macro names so they all start with the prefix @samp{m4_}.  This
+is similar to GNU m4 @option{--prefix-builtin} options, but has an
+advantage that it works with non-GNU @command{m4} implementations as
+well.  
 
 @smallexample
 @group

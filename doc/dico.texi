@@ -73,6 +73,11 @@ Software Foundation raise funds for GNU development.''
 @page
 @headings on
 
+@page
+@summarycontents
+@page
+@contents
+
 @ifnottex
 @node Top
 @top Dico
@@ -311,7 +316,6 @@ occurrence of @samp{*/} (star, slash).
 
 @node Pragmatic Comments
 @subsubsection Pragmatic Comments
-@UNREVISED
 @cindex comments, pragmatic
 @cindex pragmatic comments
   Pragmatic comments are similar to usual comments, except that they
@@ -362,6 +366,10 @@ If the latter is absent, the remembered file name does not change.
   This is a special form of @code{#line} statement, understood for
 compatibility with the @sc{c} preprocessor.
 @end table
+
+  In fact, these statements provide a rudimentary preprocessing
+features.  For more sophisticated ways to modify configuration before
+parsing, see @ref{Preprocessor}.
 
 @node Statements
 @subsubsection Statements
@@ -1237,44 +1245,120 @@ module-load-path (/usr/lib/dico,/usr/local/dico/lib);
 
 @node Databases
 @subsection Databases
-@UNREVISED
-  
+@cindex databases, defining
+  Dictionary databases are defined using @code{database} block
+statement.
+
 @deffn {Configuration} database
-# Define a dictionary database.
+Define a dictionary database.  At least two sub-statements must be
+defined for each database: @code{name} and @code{handler}.
+@end deffn
 
 @deffn {Database} name @var{string}
-  # Dictionary name (a single word).
-@end deffn
-
-@deffn {Database} description @var{string}
-  # Short description, to be shown in reply to SHOW DB command.
-@end deffn
-
-@deffn {Database}  info @var{string}
-  # Full description of the database, to be shown in reply to SHOW INFO command.
+Set the name of this database (a single word).  This name will be used
+to identify this database in @acronym{DICT} commands.
 @end deffn
 
 @deffn {Database} handler @var{string}
-# Name of the handler for this database.
+Specify the name of a handler for this database and any arguments for
+it.  This handler must be previously defined using @code{handler}
+statement (@pxref{Handlers}).  
 @end deffn
+
+For example, the following fragment defines a database named
+@samp{en-de}, which is handled by @samp{dictord} handler.  The handler
+is passed one argument, @code{database=en-de}:
+
+@smallexample
+database @{
+        name "en-de";
+        handler "dictorg database=en-de";
+@}
+@end smallexample
+
+More directives are available to fine-tune the database.
+
+@deffn {Database} description @var{string}
+Supply a short description, to be shown in reply to @command{SHOW DB}
+command.  The @var{string} may not contain new-lines.
+
+Use this statement if the database itself does not supply a
+description, or if its description is malformed.
+
+In any case, if @code{description} directive is specified, its value
+takes precedence over description string retrieved from the database
+itself. 
+@end deffn
+
+@deffn {Database} info @var{string}
+Supply a full description of the database.  This description is shown
+in reply to @code{SHOW INFO} command.  The @var{string} is usually a
+multi-line text, so it is common to use here-document syntax
+(@pxref{here-document}), e.g.:
+
+@smallexample
+@group
+info <<- EOT
+   This is a foo-bar dictionary.
+   Copyright (C) 2008 foo-bar dict group.
+   Distributed under the terms of GNU Free
+   Documentation license.
+EOT
+@end group
+@end smallexample
+
+Use this statement if the database itself does not supply a full
+description, or if its full description is malformed.
+
+As with @code{description}, the value of @code{info} takes precedence
+over info strings retrieved from the database.
+@end deffn
+
+The following two directives control the content type and transfer
+encoding used when formatting replies from this database if
+@code{OPTION MIME} is in effect:
+
+@deffn {Database} content-type @var{string}
+Set the content type of the reply.  E.g.:
+
+@smallexample
+directory @{
+   name "foo";
+   handler "dictorg";
+   content-type "text/html";
+   ...
+@}   
+@end smallexample
+@end deffn
+
+@deffn {Database} content-transfer-encoding @var{enum}
+Set transfer encoding to use when sending @acronym{MIME} replies for
+this database.  Allowed values for @var{enum} are:
+
+@table @asis
+@item base64
+Use @acronym{BASE64} encoding.
+
+@item quoted-printable
+Use quoted-printable encoding.
+@end table
+@end deffn
+
+The following group of configuration directives allows to control access
+to the database.
 
 @anchor{per-database require-auth}
 @deffn {Database} require-auth @var{boolean}
-  # Require authentication for access to this database.
+When @code{true}, only authenticated users can access this database.  
 @end deffn
 
 @deffn {Database} groups @var{list}
-  # The database is visible only for users from these groups
+The argument is a list of group names.  When used with
+@code{require-auth yes}, the database is accessible only to
+authenticated users which are members of one of the groups listed in
+@var{list}. 
 @end deffn
 
-@deffn {Database} content-type @var{string}
-  # Content type for MIME replies.
-@end deffn
-
-@deffn {Database} content-transfer-encoding @var{string}
-  # Content transfer encoding for MIME replies.
-@end deffn
-@end deffn
 
 @node Tuning
 @subsection Tuning
@@ -1337,14 +1421,19 @@ You can also add timing information to your access log files, see
 @cindex m4
   Before parsing configuration file, @command{dico} preprocesses
 it.  The built-in preprocessor handles only file inclusion
-(@FIXME-pxref{include}) and @code{#line} statements, while the rest of
-traditional facilities, such as macro expansion, is supported via
-@command{m4}, which is used as an external preprocessor. 
+and @code{#line} statements (@pxref{Pragmatic Comments}), while the
+rest of traditional preprocessing facilities, such as macro expansion,
+is supported via @command{m4}, which is used as an external preprocessor. 
 
   The detailed description of @command{m4} facilities lies far beyond
 the scope of this document.  You will find a complete user manual in
-@ref{Top, GNU M4 manual, GNU M4, m4, GNU M4 macro processor}.  For the 
-rest of this subection we assume the reader is sufficiently
+@ifnothtml
+@ref{Top, GNU M4 manual, GNU M4, m4, GNU M4 macro processor}.
+@end ifnothtml
+@ifhtml
+@uref{http://www.gnu.org/software/m4/manual}.
+@end ifhtml
+For the rest of this subection we assume the reader is sufficiently
 acquainted with @command{m4} macro processor.
 
 @flindex pp-setup
@@ -1362,8 +1451,19 @@ is similar to GNU m4 @option{--prefix-builtin} options, but has an
 advantage that it works with non-GNU @command{m4} implementations as
 well.  
 
+As an example of how the use of preprocessor may improve
+@command{dictd} configuration, consider the following fragment from
+one of the working installations.  This installation offers quite a
+few Freedict dictionaries.  The database definition for each of them
+is almost the same, except for the dictionary name and eventual
+description entry for several databases that miss it.  So, we define
+the following macro:
+
 @smallexample
 @group
+# defdb(@sc{name}[, @sc{descr}])
+# @r{Produce a standard definition for a database @sc{name}}.
+# @r{If @sc{descr} is given, use it as the database description}.
 m4_define(`defdb', `
 database @{
         name "$1";
@@ -1375,15 +1475,21 @@ m4_ifelse(`$2',,,`
 @end group
 @end smallexample
 
+It takes two arguments.  The first one, @sc{name} defines the dictionary
+name visible in the output of @code{SHOW DB} command.  Optional second
+argument may be used to supply a description string for the databases
+that miss it.
+
+Given this macro, the database definitions look like:
+
 @smallexample
 @group
 defdb(eng-swa)
 defdb(swa-eng)
-defdb(afr-eng,Afrikaans-English Dictionary)
-defdb(eng-afr,English-Afrikaans Dictionary)
+defdb(afr-eng, Afrikaans-English Dictionary)
+defdb(eng-afr, English-Afrikaans Dictionary)
 @end group
 @end smallexample
-
 
 @node Dictd Invocation
 @section Dictd Invocation

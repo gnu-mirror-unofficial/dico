@@ -370,6 +370,26 @@ set_dict_handler(enum cfg_callback_command cmd,
     return 0;
 }
 
+int
+set_dict_encoding(enum cfg_callback_command cmd,
+		  dictd_locus_t *locus,
+		  void *varptr,
+		  config_value_t *value,
+		  void *cb_data)
+{
+    if (value->type != TYPE_STRING) {
+	config_error(locus, 0, _("expected scalar value but found list"));
+	return 1;
+    }
+    if (strcmp (value->v.string, "quoted-printable") == 0
+	|| strcmp (value->v.string, "base64") == 0) {
+	*(const char**)varptr = value->v.string;
+	return 0;
+    }
+    config_error(locus, 0, _("unknown encoding type: %s"), value->v.string);
+    return 1;
+}
+
 int enable_capability(enum cfg_callback_command cmd,
 		      dictd_locus_t *locus,
 		      void *varptr,
@@ -450,7 +470,8 @@ struct config_keyword kwd_database[] = {
     /* FIXME: Install a callback to verify if arg is acceptable. */
     { "content-transfer-encoding", N_("arg"),
       N_("Content transfer encoding for MIME replies."),
-      cfg_string, NULL, offsetof(dictd_database_t, content_transfer_encoding) },
+      cfg_string, NULL, offsetof(dictd_database_t, content_transfer_encoding),
+      set_dict_encoding },
     { NULL }
 };
 

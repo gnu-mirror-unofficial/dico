@@ -270,7 +270,6 @@ char *
 query_ident_name(struct sockaddr_in *srv_addr, struct sockaddr_in *clt_addr)
 {
     int fd;
-    int flags;
     char buf[UINTMAX_STRSIZE_BOUND];
     struct sockaddr_in s;
     ssize_t bytes;

@@ -42,8 +42,8 @@ void process_ident(struct config_keyword *kwp, config_value_t *value);
 %token <string> IDENT STRING QSTRING MSTRING
 %type <string> string slist
 %type <list> slist0
-%type <value> value tag
-%type <list> values list
+%type <value> value tag vallist
+%type <list> values list vlist
 %type <kw> ident
 
 %%
@@ -59,16 +59,9 @@ stmt    : simple
         | block
         ;
 
-simple  : ident value ';'
+simple  : ident vallist ';'
           {
 	      process_ident($1, &$2);
-	  }
-        | ident MSTRING
-          {
-	      config_value_t value;
-	      value.type = TYPE_STRING;
-	      value.v.string = $2;
-	      process_ident($1, &value);
 	  }
         ;
 
@@ -87,11 +80,40 @@ ident   : IDENT
         ;
 
 tag     : /* empty */
-         {
+          {
 	     $$.type = TYPE_STRING;
 	     $$.v.string = NULL;
-	 }
+	  }
         | value
+        ;
+
+vallist : vlist
+          {
+	      size_t n;
+	      if ((n = dico_list_count($1)) == 1) {
+		  $$ = *(config_value_t *)dico_list_item($1, 0);
+	      } else {
+		  size_t i;
+		  
+		  $$.type = TYPE_ARRAY;
+		  $$.v.arg.c = n;
+		  $$.v.arg.v = xcalloc(n, sizeof($$.v.arg.v[0]));
+		  for (i = 0; i < n; i++)
+		      $$.v.arg.v[i] = *(config_value_t *)dico_list_item($1, i);
+	      }
+	      dico_list_destroy(&$1, NULL, NULL);	      
+	  }
+	;
+
+vlist   : value
+          {
+	      $$ = xdico_list_create();
+	      xdico_list_append($$, config_value_dup(&$1));
+	  }
+        | vlist value
+          {
+	      xdico_list_append($1, config_value_dup(&$2));
+	  }
         ;
 
 value   : string
@@ -104,11 +126,14 @@ value   : string
 	      $$.type = TYPE_LIST;
 	      $$.v.list = $1;
 	  }
-        ;
+        | MSTRING
+          {
+	      $$.type = TYPE_STRING;
+	      $$.v.string = $1;
+	  }	      
+        ;        
 
 string  : STRING
-        | MSTRING
-        | QSTRING
         | IDENT
         | slist
         ;
@@ -127,11 +152,10 @@ slist   : slist0
 	  }
         ;
 
-slist0  : QSTRING QSTRING
+slist0  : QSTRING 
           {
 	      $$ = xdico_list_create();
 	      xdico_list_append($$, $1);
-	      xdico_list_append($$, $2);
 	  }
         | slist0 QSTRING
           {
@@ -628,7 +652,13 @@ process_ident(struct config_keyword *kwp, config_value_t *value)
 		      target,
 		      value,
 		      &kwp->callback_data);
-    else if (value->type == TYPE_LIST) {
+    else if (value->type == TYPE_ARRAY) {
+	config_error(&locus, 0,
+		     _("INTERNAL ERROR at %s:%d: "
+		       "argument array must be handled by a callback"),
+		     __FILE__, __LINE__);
+	return;
+    } else if (value->type == TYPE_LIST) {
 	if (CFG_IS_LIST(kwp->type)) {
 	    dico_iterator_t itr = xdico_iterator_create(value->v.list);
 	    enum config_data_type type = CFG_TYPE(kwp->type);

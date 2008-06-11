@@ -164,12 +164,17 @@ enum cfg_callback_command {
 
 #define TYPE_STRING 0
 #define TYPE_LIST   1
+#define TYPE_ARRAY  2
 
-typedef struct {
+typedef struct config_value {
     int type;
     union {
 	dico_list_t list;
 	const char *string;
+	struct {
+	    size_t c;
+	    struct config_value *v;
+	} arg;
     } v;
 } config_value_t;
 
@@ -228,6 +233,19 @@ void format_statement_array(FILE *stream, struct config_keyword *kwp,
 void config_help(void);
 
 
+/* acl.c */
+typedef struct dictd_acl *dictd_acl_t;
+
+dictd_acl_t dictd_acl_create(const char *name, dictd_locus_t *locus);
+int dictd_acl_check(dictd_acl_t acl);
+
+int parse_acl_line(dictd_locus_t *locus, int allow, dictd_acl_t acl,
+		   config_value_t *value);
+
+int dictd_acl_install(dictd_acl_t acl, dictd_locus_t *locus);
+dictd_acl_t dictd_acl_lookup(const char *name);
+
+
 /* Dictd-specific streams */
 dico_stream_t fd_stream_create(int ifd, int oufd);
 
@@ -276,13 +294,7 @@ typedef struct dictd_database {
     char *command;            /* Handler command line (for diagnostics) */
 } dictd_database_t;
 
-enum ssi_mode {
-    ssi_never,
-    ssi_always,
-    ssi_auth
-};
-
-extern enum ssi_mode show_sys_info;
+extern dictd_acl_t show_sys_info;
 extern dico_list_t ssi_group_list;
 
 void dictd_server(int argc, char **argv);

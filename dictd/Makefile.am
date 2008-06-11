@@ -17,6 +17,7 @@
 bin_PROGRAMS=dictd
 dictd_SOURCES=\
  accesslog.c\
+ acl.c\
  auth.c\
  capa.c\
  cmdline.c\

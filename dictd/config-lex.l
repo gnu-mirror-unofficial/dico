@@ -37,7 +37,7 @@ static void multiline_add(char *);
 static void multiline_finish(void);
 static char *multiline_strip_tabs(char *text);
 static int ident();
-static int isemptystr(char *text);
+static int isemptystr(int off);
 
 #undef YY_INPUT
 #define YY_INPUT(buf,result,max_size) do {                  \
@@ -103,10 +103,9 @@ P [1-9][0-9]*
 "<<"(-" "?)?\"{ID}\"[ \t]*\n {
                         BEGIN(ML); multiline_begin(yytext+2); locus.line++; }
 <ML>.*\n { char *p = multiline_strip_tabs(yytext);
-           locus.line++;
 	   
            if (!strncmp(p, multiline_delimiter, multiline_delimiter_len)
-	       && isemptystr(p + multiline_delimiter_len))
+	       && isemptystr(p + multiline_delimiter_len - yytext))
 	     {
 	       free(multiline_delimiter);
 	       multiline_delimiter = NULL;
@@ -114,7 +113,8 @@ P [1-9][0-9]*
 	       multiline_finish();
 	       return MSTRING;
 	     }
-	    multiline_add(p); } 
+           locus.line++;
+	   multiline_add(p); } 
 {WS}     ;
          /* Other tokens */
 \n       { locus.line++; } 
@@ -171,11 +171,19 @@ config_lex_end()
 }
 
 int
-isemptystr(char *text)
+isemptystr(int off)
 {
-    for (; *text && isspace(*text); text++)
+    for (; yytext[off] && isspace(yytext[off]); off++)
 	;
-    return *text == 0;
+    if (yytext[off] == ';' || yytext[off] == ',') {
+	int i;
+	for (i = off + 1; yytext[i]; i++) 
+	    if (!isspace(yytext[i]))
+		return 0;
+	yyless(off);
+	return 1;
+    }
+    return yytext[off] == 0;
 }
 
 char *
@@ -301,9 +309,12 @@ multiline_begin(char *p)
 	multiline_delimiter_len = strcspn(p, " \t");
 	multiline_unescape = 1;
     }
-    
+
+    /* Remove trailing newline */
+    multiline_delimiter_len--;
     multiline_delimiter = xmalloc(multiline_delimiter_len + 1);
     memcpy(multiline_delimiter, p, multiline_delimiter_len);
+    multiline_delimiter[multiline_delimiter_len] = 0;
     line_begin();
 }
 

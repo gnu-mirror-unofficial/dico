@@ -52,7 +52,7 @@ int transcript;
 /* Server information (for SHOW INFO command) */
 const char *server_info;
 
-enum ssi_mode show_sys_info = ssi_never;
+dictd_acl_t show_sys_info;
 dico_list_t /* of char * */ ssi_group_list;
 
 /* This host name */
@@ -85,7 +85,8 @@ dico_list_t /* of dictd_handler_t */ handler_list;
 /* List of configured dictionaries */
 dico_list_t /* of dictd_database_t */ database_list;
 
-int require_auth; /* Require authentication */
+/* FIXME: dictd_acl_t global_acl; */
+int require_auth; 
 
 /* From CLIENT command: */
 char *client_id;
@@ -104,6 +105,82 @@ int timing_option;
 
 
 /* Configuration */
+
+int
+allow_cb(enum cfg_callback_command cmd,
+	 dictd_locus_t *locus,
+	 void *varptr,
+	 config_value_t *value,
+	 void *cb_data)
+{
+    dictd_acl_t acl = varptr;
+    parse_acl_line(locus, 1, acl, value);
+    return 0;
+}
+
+int
+deny_cb(enum cfg_callback_command cmd,
+	dictd_locus_t *locus,
+	void *varptr,
+	config_value_t *value,
+	void *cb_data)
+{
+    dictd_acl_t acl = varptr;
+    parse_acl_line(locus, 0, acl, value);
+    return 0;
+}
+
+int
+acl_cb(enum cfg_callback_command cmd,
+       dictd_locus_t *locus,
+       void *varptr,
+       config_value_t *value,
+       void *cb_data)
+{
+    void **pdata = cb_data;
+    dictd_acl_t acl;
+    
+    switch (cmd) {
+    case callback_section_begin:
+	if (value->type != TYPE_STRING) 
+	    config_error(locus, 0, _("URL must be a string"));
+	else if (!value->v.string)
+	    config_error(locus, 0, _("empty URL"));
+	else {
+	    dictd_locus_t defn_loc;
+	    acl = dictd_acl_create(value->v.string, locus);
+	    if (dictd_acl_install(acl, &defn_loc)) {
+		config_error(locus, 0,
+			     _("redefinition of ACL %s"),
+			     value->v.string);
+		config_error(&defn_loc, 0,
+			     _("location of the previous definition"));
+		return 1;
+	    }
+	    *pdata = acl;
+	}
+	break;
+
+    case callback_section_end:
+    case callback_set_value:
+	break;
+    }	
+    return 0;
+}
+
+struct config_keyword kwd_acl[] = {
+    { "allow", N_("[all|authenticated|group <grp: list>] [from <addr: list>]"),
+      N_("Allow access"),
+      cfg_string, NULL, 0,
+      allow_cb },
+    { "deny", N_("[all|authenticated|group <grp: list>] [from <addr: list>]"),
+      N_("Deny access"),
+      cfg_string, NULL, 0,
+      deny_cb },
+    { NULL }
+};
+
+
 int
 set_user(enum cfg_callback_command cmd,
 	 dictd_locus_t *locus,
@@ -535,19 +612,14 @@ set_show_sys_info(enum cfg_callback_command cmd,
 		  config_value_t *value,
 		  void *cb_data)
 {
-    static struct xlat_tab tab[] = {
-	{ "never", ssi_never },
-	{ "always", ssi_always },
-	{ "auth", ssi_auth },
-	{ NULL }
-    };
-    
     if (value->type != TYPE_STRING) {
 	config_error(locus, 0, _("expected scalar value but found list"));
 	return 1;
     }
-    if (xlat_c_string(tab, value->v.string, 0, varptr)) {
-	config_error(locus, 0, _("unknown value"));
+    show_sys_info = dictd_acl_lookup(value->v.string);
+    if (!show_sys_info) {
+	config_error(locus, 0, _("ACL not defined: `%s'"),
+		     value->v.string);
 	return 1;
     }
     return 0;
@@ -564,12 +636,9 @@ struct config_keyword keywords[] = {
     { "server-info", N_("text"),
       N_("Server description to be shown in reply to SHOW SERVER command."),
       cfg_string, &server_info,  },
-    { "show-sys-info", N_("arg: {always|never|auth}"),
-      N_("Show system information in reply to SHOW SERVER command:\n"
-	 "  always      - always show;\n"
-	 "  never       - never show;\n"
-	 "  auth        - show for authorized users"),
-      cfg_uint, &show_sys_info, 0, set_show_sys_info },
+    { "show-sys-info", N_("arg: acl"),
+      N_("Show system information if arg matches."),
+      cfg_string, &show_sys_info, 0, set_show_sys_info },
     { "sys-info-groups", N_("arg"),
       N_("With `show-sys-info auth', show system information only if "
 	 "the user is member of one of these groups"),
@@ -642,6 +711,8 @@ struct config_keyword keywords[] = {
     { "handler", N_("name: string"), N_("Define a database handler."),
       cfg_section, NULL, 0, set_handler, NULL,
       kwd_handler },
+    { "acl", N_("name: string"), N_("Define an ACL."),
+      cfg_section, NULL, 0, acl_cb, NULL, kwd_acl },
     { "user-db", N_("url: string"),
       N_("Define user database for authentication."),
       cfg_section, &user_db_cfg, 0, user_db_config, NULL,
@@ -660,26 +731,18 @@ config_help()
 }
 
 
+int
+show_sys_info_p()
+{
+    if (!show_sys_info)
+	return 1;
+    return dictd_acl_check(show_sys_info);
+}
+
 static int
 cmp_group_name(const void *item, const void *data)
 {
     return strcmp((char*)item, (char*)data);
-}
-
-int
-show_sys_info_p()
-{
-    switch (show_sys_info) {
-    case ssi_always:
-	return 1;
-    case ssi_never:
-	return 0;
-    case ssi_auth:
-	return ssi_group_list ?
-	        dico_list_intersect_p(ssi_group_list, user_groups,
-				      cmp_group_name) :
-	        (user_name != NULL);
-    }
 }
 
 int

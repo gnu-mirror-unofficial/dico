@@ -83,7 +83,7 @@ Software Foundation raise funds for GNU development.''
 @top Dico
 
 This edition of the @cite{Dico Manual}, last updated @value{UPDATED},
-documents @command{dico} Version @value{VERSION}.
+documents Dico Version @value{VERSION}.
 
 @end ifnottex
 
@@ -124,7 +124,7 @@ Modules
 @UNREVISED
 
 @node Intro
-@chapter Introduction to @command{Dico}
+@chapter Introduction to Dico
 @cindex Dico overview
 @cindex two-layer model
 @cindex protocol layer
@@ -165,13 +165,12 @@ format.  It is designed mostly for test purposes.
 
   This manual describes how to configure and use the Dico dictionary
 system.  It also describes the @acronym{API} for writing
-@command{Dico} database modules both in @acronym{C} and in
+Dico database modules both in @acronym{C} and in
 @acronym{Scheme}.
 
 @node Building
 @chapter Building the Package
-@UNREVISED
-  Building @command{dico} is quite straightforward.  You run
+  Building Dico is quite straightforward.  You run
 @command{./configure}, then @command{make}, followed by @command{make
 install}, and you are done.
 
@@ -180,8 +179,7 @@ using a set of command line options and variables.  Some of these
 options are generic, i.e. common for all packages using the GNU
 @command{autoconf} system.  For a detailed description of these option
 see the @file{INSTALL} file shipped with the sources.  Yet another
-options are specific for @command{Dico}.  We will describe them in
-this chapter.
+options are specific for Dico.  We will describe them in this chapter.
 
 @menu
 * Default Preprocessor::
@@ -226,7 +224,7 @@ disable it using @option{--without-preprocessor} option to
 @cindex guile, configuration
   The @dfn{GNU's Ubiquitous Intelligent Language for Extensions}, or
 @dfn{Guile}@footnote{@uref{http://www.gnu.org/software/guile}.}  can
-be used to write database modules for @command{dico}.  This requires
+be used to write database modules for Dico.  This requires
 Guile version 1.8.4 or newer.  The @command{configure} script will
 probe for the presence of Guile on your system and automatically
 enable its use if its version number is high enough.
@@ -250,25 +248,127 @@ addition, these words can be prefixed with @samp{log_}.
   
 @node Dictd
 @chapter The @command{dictd} daemon.
-@UNREVISED
+@cindex @command{dictd}, description
+  The main component of Dico is @command{dictd} daemon.  It is
+responsible for serving client requests and for coordinating the work
+of dictionary modules.
+
+@cindex @command{dictd}, operation modes
+There are two @dfn{operation modes}: @samp{daemon} and @samp{inetd}.
 
 @menu
+* Daemon Mode::
+* Inetd Mode::
 * Configuration::
 * Dictd Invocation::
 @end menu
 
+@node Daemon Mode
+@section Daemon Operation Mode
+@cindex operation modes of @command{dictd}
+@cindex daemon operation mode
+  The @samp{daemon} mode is enabled by @code{mode daemon} statement in
+the configuration file (@pxref{mode statement})).  It is also the
+default mode.  In daemon mode @command{dictd} listens for incoming 
+requests on one or several interfaces.  Unless the
+@command{--foreground} option is specified, it disconnects from the 
+controlling terminal and switches to background (becomes a
+@dfn{daemon}).  When an incoming connection arrives, it forks a
+subprocess for handling it.
+
+@cindex signals handled by @command{dictd}
+@cindex SIGTERM
+@cindex SIGQUIT
+@cindex SIGINT
+@cindex SIGHUP
+  In this mode the following signals cause @command{dictd} to
+terminate: @samp{SIGTERM}, @samp{SIGQUIT}, and @samp{SIGINT}.  The
+@samp{SIGHUP} signal causes the program to restart.  This works only
+if both the program name and its configuration file name (if given
+using @option{--config} option) are absolute file names.
+
+@cindex SIGHUP handling
+@cindex restart procedure
+@cindex restarting @command{dictd}
+  Upon receiving @samp{SIGHUP}, @command{dictd} first verifies if the
+configuration file does not contain fatal errors.  To do that, the
+program executes a copy of itself with @option{--lint} option
+(@pxref{--lint}) and analyzes its return value.  Only if this check
+passes, @command{dictd} restarts itself.  This ensures that the daemon
+will not terminate due to unnoticed errors in its configuration file.
+
+@cindex termination procedure
+@cindex terminating @command{dictd}
+  Upon receiving @samp{SIGTERM}, @samp{SIGQUIT}, or @samp{SIGINT}, the
+program stops accepting incoming requests and sends the @samp{SIGTERM}
+signal to all active subprocesses.  Then it waits a predefined amount
+of time for all processes to terminate (@pxref{shutdown-timeout}).
+Any subprocesses that do not terminate after this time are sent
+@samp{SIGKILL} signal.  Then, the database modules are unloaded and
+@command{dictd} terminates.
+
+  Several command line options are provided that modify the behavior
+of @command{dictd} in this mode.  These options are mainly designed
+for debugging and error-hunting purposes.
+
+@xopindex{foreground, introduced}
+@xopindex{stderr, introduced}
+  The @option{--foreground} option instructs the server to not
+disconnect from the controlling terminal and to remain in the
+foreground.  It is often used with @option{--stderr} option, 
+which instructs @command{dictd} to output all diagnostic to the
+standard error output, instead of syslog which is used by default.
+
+@node Inetd Mode
+@section Inetd Operation Mode
+@cindex inetd operation mode
+@xopindex{inetd, introduced}
+@flindex inetd.conf
+  In @samp{inetd} operation mode @command{inetd} receives requests
+from standard input and sends its replies to the standard output.
+This mode is enabled by @code{mode inetd} statement (@pxref{mode
+statement}) in configuration file, or by the @option{--inetd} command
+line option (@pxref{--inetd}).  This mode is usually used when
+invoking @command{dictd} from @file{inetd.conf} file, as in example
+below:
+
+@smallexample
+dict  stream  tcp  nowait  nobody /usr/local/bin/dictd --inetd
+@end smallexample
+  
 @node Configuration
 @section Configuration
 @cindex configuration file
+@flindex dictd.conf
+@xopindex{config, introduced}
   Upon startup, @command{dictd} reads its settings and database
 definitions from a @dfn{configuration file} @file{dictd.conf}.  By
 default it is located in @var{$sysconfidr} (i.e., in most cases
 @file{/usr/local/etc}, or @file{/etc}), but an alternative location
 may be specified using @option{--config} command line option
-(@FIXME-pxref{--config}).
+(@pxref{--config}).
 
-  The server refuses to start up if it encountered any errors in the
-configuration file.
+  If any errors are encountered in the configuration file, the program
+reports them on the standard error and exits with a non-zero status.
+
+@xopindex{lint, introduced}
+  To test the configuration file without starting the server use
+@option{--lint} (@option{-t}) command line option.  It causes
+@command{dictd} to check configuration file and to exit with status 0
+if no errors were detected, and withs status 1 otherwise.
+
+@opindex -E, introduced
+@xopindex{no-preprocessor, introduced}
+  Before parsing, configuration file is preprocessed using
+@command{m4} (@pxref{Preprocessor}).  To see the preprocessed
+configuration without actually parsing it, use @option{-E} command
+line option.  To avoid preprocessing it, use
+@option{--no-preprocessor} option.
+
+@xopindex{config-help, introduced}
+  The rest of this section describes the configuration file syntax in
+detail.  You can receive a concise summary of all configuration
+directives any time by running @command{dictd --config-help}.
 
 @menu
 * Syntax::               Configuration file syntax.
@@ -288,7 +388,6 @@ configuration file.
 
 @node Syntax
 @subsection Configuration File Syntax
-@UNREVISED
   A Dico configuration consists of statements and comments.
 
   There are three classes of lexical tokens: keywords, values, and
@@ -356,7 +455,7 @@ The default include search path is:
 Where @var{prefix} is the installation prefix.
 
   New directories can be appended in front of it using @option{-I}
-(@option{--include}) command line option (@FIXME-pxref{--include}).  
+(@option{--include-dir}) command line option (@pxref{--include-dir}).  
 
 @kwindex #include_once
 @item #include_once <@var{file}>
@@ -561,7 +660,6 @@ this is not required.
 
 @node Server Settings
 @subsection Server Settings
-@UNREVISED
   Server settings control how @command{dictd} is executed on the
 server machine.
 
@@ -570,7 +668,7 @@ server machine.
 Run with the privileges of this user.  @command{Dictd} does not
 require root privileges, so it is recommended to always use this
 statement when running @command{dictd} in daemon mode.
-@FIXME-xref{operation modes}. 
+@xref{Daemon Mode}. 
 
 Example:
 @smallexample
@@ -588,28 +686,28 @@ databases.  The @code{group} statement retains the supplementary
 groups listed in @var{list}, e.g.:
 
 @smallexample
-user nobody
-group (man, dict)
+user nobody;
+group (man, dict);
 @end smallexample
 
 This statement is ignored if @code{user} statement is not present or
-if @command{dictd} is running in inetd mode. @FIXME-xref{operation modes}.
+if @command{dictd} is running in inetd mode.  @xref{Inetd Mode}. 
 @end deffn
 
+@anchor{mode statement}
 @deffn {Configuration} mode @var{enum}
 Sets server operation mode. The argument is one of:
 
 @table @asis
 @item daemon
-Run in daemon mode.
+Run in daemon mode.  @xref{Daemon Mode}, for a detailed description.
 
 @item inetd
-Run in inetd mode.
+Run in inetd mode.  @xref{Inetd Mode}, for a detailed description.
 @end table
 
-@FIXME-xref{operation modes}.
 This statement is overridden by the @option{--inetd} command line
-option. @FIXME-xref{--inetd}.
+option. @xref{--inetd}.
 @end deffn
 
 @deffn {Configuration} listen @var{list};
@@ -692,6 +790,7 @@ Using this statement along with @code{max-children} allows to control
 the server load.
 @end deffn
 
+@anchor{shutdown-timeout}
 @deffn {Configuration} shutdown-timeout @var{number}
 When the master server is shutting down, wait this number of seconds for all
 children to terminate.  Default is 5 seconds.
@@ -762,7 +861,8 @@ acl @var{name} @{
 
 The @var{name} parameter specifies a unique name for that
 @acronym{ACL}.  This name will be used by another configuration
-statements (@FIXME-pxref{}) to refer to that @acronym{ACL}.
+statements (@xref{Security Settings}, and @pxref{Database Visibility})
+to refer to that @acronym{ACL}. 
 
 A part between the curly braces (denoted by @var{definitions} above),
 id a list of @dfn{access statements}.  Each such statement begins with
@@ -947,8 +1047,8 @@ Prefix diagnostics messages with a string identifying their severity.
 
 @deffn {Configuration} transcript @var{boolean}
 Log session transcript.  The lines received from client are prefixed
-with @samp{C:}, those sent in reply are marked with @samp{S:}.  Here's
-am exerpts from the transcript output:
+with @samp{C:}, those sent in reply are marked with @samp{S:}.  Here is
+an exerpt from the transcript output:
 
 @smallexample
 S: 220 Trurl.gnu.org.ua dictd (dico 1.99.90) <mime.xversion>
@@ -1578,10 +1678,9 @@ You can also add timing information to your access log files, see
 
 @node Preprocessor
 @subsection Using Preprocessor to Improve the Configuration.
-@UNREVISED
 @cindex preprocessor
 @cindex m4
-  Before parsing configuration file, @command{dico} preprocesses
+  Before parsing configuration file, Dico preprocesses
 it.  The built-in preprocessor handles only file inclusion
 and @code{#line} statements (@pxref{Pragmatic Comments}), while the
 rest of traditional preprocessing facilities, such as macro expansion,
@@ -1600,9 +1699,9 @@ acquainted with @command{m4} macro processor.
 
 @flindex pp-setup
   The external preprocessor is invoked with @option{-s} flag, instructing
-it to include line synchronization information in its output, which
-is then used by the parser to display meaningful diagnostic
-information.  The initial set of macro definitions is supplied by the
+it to include line synchronization information in its output.  This
+information is then used by the parser to display meaningful
+diagnostic.  An initial set of macro definitions is supplied by the 
 @file{pp-setup} file, located in
 @file{@var{$prefix}/share/dico/@var{version}/include} directory (where
 @var{version} means the version of the Dico package).
@@ -1614,18 +1713,18 @@ advantage that it works with non-GNU @command{m4} implementations as
 well.  
 
 As an example of how the use of preprocessor may improve
-@command{dictd} configuration, consider the following fragment from
-one of the working installations.  This installation offers quite a
-few Freedict dictionaries.  The database definition for each of them
+@command{dictd} configuration, consider the following fragment taken
+from one of the installations of Dico.  This installation offers quite
+a few Freedict dictionaries.  The database definition for each of them
 is almost the same, except for the dictionary name and eventual
-description entry for several databases that miss it.  So, we define
-the following macro:
+description entry for several databases that miss it.  To avoid
+repeating the same text over again, we define the following macro:
 
 @smallexample
 @group
 # defdb(@sc{name}[, @sc{descr}])
 # @r{Produce a standard definition for a database @sc{name}}.
-# @r{If @sc{descr} is given, use it as the database description}.
+# @r{If @sc{descr} is given, use it as a description}.
 m4_define(`defdb', `
 database @{
         name "$1";
@@ -1655,7 +1754,106 @@ defdb(eng-afr, English-Afrikaans Dictionary)
 
 @node Dictd Invocation
 @section Dictd Invocation
-@UNREVISED
+@cindex invocation
+@cindex command line options
+@cindex options, @command{dictd}.
+   This section summarizes @command{dictd} command line options.
+   
+@table @option
+@opsummary{config}
+@item --config=@var{file}
+Read this configuration file istead of the default
+@file{@var{$sysconfdir}/dictd.conf}.  @xref{Configuration}.
+
+@opsummary{foreground}
+@item -f
+@itemx --foreground
+Operate in foreground.  @xref{Daemon Mode}.
+
+@opsummary{stderr}
+@item --stderr
+Output diagnostic to stderr.  @xref{Daemon Mode, --stderr}.
+
+@opsummary{syslog}
+@item --syslog
+After successful startup, output any diagnostic to syslog.  This is
+the default.
+
+@item -E
+Preprocess configuration file and exit.  @xref{Preprocessor}.
+
+@opsummary{preprocessor}
+@item --preprocessor=@var{prog}
+Use @var{prog} as a preprocessor for configuration file.  The default
+preprocessor command line is @command{m4 -s}, unless overridden while
+configuring the package (@pxref{Default Preprocessor}).
+
+@xref{Preprocessor}.
+
+@opsummary{no-preprocessor}
+@item --no-preprocessor
+Do not use external preprocessor.  @xref{Preprocessor}.
+
+@opsummary{include-dir}
+@item -I @var{dir}
+@itemx --include-dir=@var{dir}
+Add the directory @var{dir} to the list of directories to be searched for
+preprocessor include files.  @xref{Preprocessor}.
+
+@opsummary{single-process}
+@item -s
+@itemx --single-process
+In daemon mode, process connections in the main process, without
+starting subprocesses for each connection (@pxref{Daemon Mode}).  This
+means that the daemon is able to serve only one client at a time.  The
+@option{--single-process} option is provided for debugging purposes
+only.  Never use it in production environment.
+
+@opsummary{inetd}
+@item -i
+@itemx --inetd
+Run in inetd mode.  @xref{Inetd Mode}.
+
+@opsummary{debug}
+@item -x
+@itemx --debug=@var{level}
+Set debug verbosity level.  The @var{level} argument is an integer 
+ranging from @samp{0} (no debugging) to @samp{100} (maximum debugging
+information_.
+
+@opsummary{trace-grammar}
+@item --trace-grammar
+Trace parsing of the config file.  The option is provided for debuging
+purposes. 
+
+@opsummary{trace-lex}
+@item --trace-lex
+Trace config file lexer.  The option is provided for debuging
+purposes. 
+
+@opsummary{config-help}
+@item --config-help
+Show configuration file summary.  @xref{Configuration}.
+
+@opsummary{lint}
+@item -t
+@itemx --lint
+Check configuration file syntax and exit with code @samp{0} if it is
+OK, or with @samp{1} if there are errors.  @xref{Configuration}.
+
+@opsummary{help}
+@item -h
+@itemx --help
+Display a short command line option summary and exit.
+
+@opsummary{usage}
+@item --usage
+List all available command line options and exit.
+
+@opsummary{version}
+@item --version
+Print program version and exit.
+@end table
 
 @node Modules
 @chapter Modules

@@ -50,7 +50,7 @@ BEGIN
 END
 
 OPTION(,E,,
-       [<Preprocess the config file and exit>])
+       [<Preprocess configuration file and exit>])
 BEGIN
    mode = MODE_PREPROC;
 END
@@ -68,8 +68,8 @@ BEGIN
 END
 
 OPTION(include-dir,I,DIR,
-       [<Add the directory DIR to the list of directories\n
-        to be searched for header files>])
+       [<Add the directory DIR to the list of directories
+        to be searched for preprocessor include files>])
 BEGIN
    add_include_dir(optarg); 
 END
@@ -94,7 +94,7 @@ BEGIN
 END
 
 OPTION(trace-grammar,,,
-       [<Trace parsing of the config file.>])
+       [<Trace parsing of configuration file.>])
 BEGIN
    config_gram_trace(1);
 END

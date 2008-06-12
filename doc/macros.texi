@@ -3,6 +3,7 @@
 @end macro
 
 @macro opsummary{option}
+@c option --\option\
 @ifclear ANCHOR--\option\
 @set ANCHOR--\option\ 1
 @anchor{--\option\}

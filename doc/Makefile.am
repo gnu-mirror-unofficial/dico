@@ -39,8 +39,8 @@ check-format:
 
 check-options:
 	@check-docs.sh options \
-	   '/OPTIONS_BEGIN/,/OPTIONS_END/s/OPTION( *\([^,]*\),.*/\1/pg' \
-	   's/@opindex *\([^@,]*\).*/\1/p' \
+	   '/OPTIONS_BEGIN/,/OPTIONS_END/s/OPTION( *\([^,][^,]*\),.*/\1/pg' \
+	   's/@c option --\(.*\)/\1/p' \
 	   $(top_srcdir)/dictd/cmdline.opt -- \
 	   $(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I $(srcdir) -E - \
 		$(info_TEXINFOS) 

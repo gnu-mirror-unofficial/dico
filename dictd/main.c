@@ -559,8 +559,8 @@ struct config_keyword kwd_database[] = {
       cfg_string, NULL, offsetof(dictd_database_t, info) },
     { "handler", N_("name"), N_("Name of the handler for this database."),
       cfg_string, NULL, 0, set_dict_handler },
-    { "apply-acl", N_("arg: acl"),
-      N_("ACL for this database"),
+    { "visibility-acl", N_("arg: acl"),
+      N_("ACL controlling visibility of this database"),
       cfg_string, NULL, offsetof(dictd_database_t, acl), apply_acl_cb },
     { "content-type", N_("arg"), N_("Content type for MIME replies."),
       cfg_string, NULL, offsetof(dictd_database_t, content_type) },
@@ -698,8 +698,8 @@ struct config_keyword keywords[] = {
       N_("Provide timing information after successful completion of an "
 	 "operation."),
       cfg_bool, &timing_option },
-    { "apply-acl", N_("arg: acl"),
-      N_("Apply this ACL to all databases."),
+    { "visibility-acl", N_("arg: acl"),
+      N_("Set ACL to control visibility of all databases."),
       cfg_string, &global_acl, 0, apply_acl_cb },
     { "connection-acl", N_("arg: acl"),
       N_("Apply this ACL to incoming connections."),
@@ -937,12 +937,45 @@ dictd_log_setup()
     }
 }    
 
+/* When requested restart by a SIGHUP, the daemon first starts
+   a copy of itself with the `--lint' option to verify
+   configuration settings.  This subsidiary process should use
+   the same logging parameters as its ancestor.  In order to ensure
+   that, the logging settings are passed to the lint child using
+   __DICTD_LOGGING__ environment variable. */
+
+void
+dictd_log_encode_envar()
+{
+    char *p;
+    asprintf(&p, "%d:%d:%s", log_facility, log_print_severity, log_tag);
+    setenv(DICTD_LOGGING_ENVAR, p, 1);
+}
+
+void
+dictd_log_pre_setup()
+{
+    char *str = getenv(DICTD_LOGGING_ENVAR);
+    if (str) {
+	char *p;
+	log_facility = strtoul(str, &p, 10);
+	if (*p == ':') {
+	    log_print_severity = strtoul(p + 1, &p, 10);
+	    if (*p == ':') 
+		log_tag = p + 1;
+	}
+	log_to_stderr = 0;
+	dictd_log_setup();
+    }
+}
+
 
 int
 main(int argc, char **argv)
 {
     dico_set_program_name(argv[0]);
     log_tag = dico_program_name;
+    dictd_log_pre_setup();
     hostname = get_full_hostname();
     dictd_init_command_tab();
     dictd_init_strategies();

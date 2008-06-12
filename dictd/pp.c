@@ -772,3 +772,43 @@ pp_extrn_shutdown(pid_t pid)
     int status;
     waitpid(pid, &status, 0);
 }
+
+void
+run_lint()
+{
+    size_t n = 0;
+    int argc;
+    const char **argv;
+    dico_iterator_t itr;
+    char *cp;
+
+    n = dico_list_count(include_path);
+    argc = 9 + 2 * n;
+    argv = xcalloc(argc + 1, sizeof argv[0]);
+	
+    argc = 0;
+    argv[argc++] = dico_invocation_name;
+    argv[argc++] = "--lint";
+    argv[argc++] = "--preprocessor";
+    argv[argc++] = preprocessor;
+    if (log_to_stderr)
+	argv[argc++] = "--stderr";
+    else 
+	dictd_log_encode_envar();
+    itr = xdico_iterator_create(include_path);
+    for (cp = dico_iterator_first(itr); cp; cp = dico_iterator_next(itr)) {
+	argv[argc++] = "-I";
+	argv[argc++] = cp;
+    }
+    dico_iterator_destroy(&itr);
+    argv[argc++] = "--config";
+    argv[argc++] = config_file;
+    if (debug_level) {
+	argv[argc++] = "--debug";
+	argv[argc++] = debug_level_str;
+    }
+    argv[argc] = NULL;
+    
+    execv(argv[0], (char**) argv);
+}
+

@@ -259,7 +259,16 @@ addition, these words can be prefixed with @samp{log_}.
 
 @node Configuration
 @section Configuration
-@UNREVISED
+@cindex configuration file
+  Upon startup, @command{dictd} reads its settings and database
+definitions from a @dfn{configuration file} @file{dictd.conf}.  By
+default it is located in @var{$sysconfidr} (i.e., in most cases
+@file{/usr/local/etc}, or @file{/etc}), but an alternative location
+may be specified using @option{--config} command line option
+(@FIXME-pxref{--config}).
+
+  The server refuses to start up if it encountered any errors in the
+configuration file.
 
 @menu
 * Syntax::               Configuration file syntax.
@@ -866,25 +875,45 @@ acl common @{
 @end group
 @end smallexample
 
+@xref{Security Settings}, for information on how to control daemon
+security settings.
 
-The following subsection describes how to use @acronym{ACL}s to
-control security settings of your server.
+@xref{Database Visibility}, for a detailed description on how to use
+@acronym{ACL}s to control access to databases.  
 
 @node Security Settings
 @subsection Security Settings
-@UNREVISED
+  This subsection describes configuration settings that control access
+to various resources served by @command{dictd}.
 
 @deffn {Configuration} connection-acl @var{acl-name}
+  Use @acronym{ACL} @var{acl-name} to control incoming connections.
+The @acronym{ACL} itself must be defined before this statement.  It is
+senseless, although syntactically correct, to use @var{user-group} 
+(see previous subsection) in it, because authentication is performed
+after connection is established.
+
+@smallexample
+@group
+acl incoming-conn @{
+   allow from 213.130.0.0/19;
+   deny any;
+@}
+
+connection-acl incoming-conn;
+@end group
+@end smallexample
 @end deffn
 
 @deffn {Configuration} show-sys-info @var{acl-name}
-This statement controls whether to show system information in reply
+  This statement controls whether to show system information in reply
 to @code{SHOW SERVER} command.  The information will be shown only
 if @acronym{ACL} @var{acl-name} allows it.
 
-The system information shown includes the following data: the name
-of the package and its version, the name of the system where it was
-built and the kernel version thereof, the host name, total operational
+@cindex system information
+The system information shown includes the following data: name
+of the package and its version, name of the system where it was
+built and the kernel version thereof, host name, total operational
 time of the daemon, number of subprocesses executed so far and average
 usage frequency.  For example:
 
@@ -893,19 +922,6 @@ dictd (dico @value{VERSION}) on Linux 2.6.24.4,
 dict.example.net up 110+04:42:58, 19647044 forks (6867.9/hour)
 @end smallexample
 @end deffn
-
-@deffn {Configuration} apply-acl @var{acl-name}
-@FIXME{Describe}
-@end deffn
-
-@FIXME{
-@smallexample
-database @{
-  # Require authentication for access to this database.
-  apply-acl <arg: boolean>;
-@}
-@end smallexample
-}
 
 @node Logging and Debuging
 @subsection Logging and Debuging
@@ -1167,7 +1183,7 @@ Welcome to the FOO dictionary service.
 
 Contact <dict@@foo.org> if you have questions or
 suggestions.
-EOT
+EOT;
 @end smallexample
 
 @end deffn
@@ -1186,7 +1202,7 @@ plus sign, e.g.:
 help-text <<-EOT
   +
   The commands beginning with an X are extensions.
-EOT
+EOT;
 @end smallexample
 
 If @var{string} begins with any character, except @samp{+}, it will
@@ -1196,7 +1212,7 @@ replace the default help output.  For example:
 help-text <<-EOT
   There is no help.
   See RFC 2229 for detailed information.
-EOT
+EOT;
 @end smallexample
 @end deffn
 
@@ -1408,7 +1424,7 @@ info <<- EOT
    Copyright (C) 2008 foo-bar dict group.
    Distributed under the terms of GNU Free
    Documentation license.
-EOT
+EOT;
 @end group
 @end smallexample
 
@@ -1449,15 +1465,67 @@ Use quoted-printable encoding.
 @end table
 @end deffn
 
-@anchor{per-database acl}
-@deffn {Database} apply-acl @var{acl-name}
-@FIXME{Describe}
+@menu
+* Database Visibility::
+@end menu
+
+@node Database Visibility
+@subsubsection Database Visibility
+@cindex database visibility
+@cindex visibility, database
+  A property called @dfn{database visibility} is associated with each
+dictionary database.  It determines whether the database appears in
+the output of @code{SHOW DB} command, and takes part in dictionary
+searches.
+
+  By default, all databases are defined as publicly visible.  You can,
+however, abridge their visibility on global as well as on
+per-directory basis.  This can be achieved using @dfn{visibility
+@acronym{ACL}s}.
+
+  In general, the visibility of a database is controlled by two access
+control lists: global visibility @acronym{ACL} and database visibility
+@acronym{ACL}.  The latter takes precedence over the former.
+
+  Both @acronym{ACL}s are defined using @code{visibility-acl} statement:
+
+@deffn {Configuration} visibility-acl @var{acl-name}
+Set name of an @acronym{ACL} controlling database visibility.  If used
+in global scope, this statement sets global visibility @acronym{ACL}.
+If used within a @code{database} block, it sets visibility
+@acronym{ACL} for that particular database.
 @end deffn
+
+  Consider the following example:
+
+@smallexample
+acl glob-vis @{
+  allow authenticated;
+  deny all;
+@}  
+
+acl local-nets @{
+  allow from (192.168.10.0/24, /tmp/dictd.sock);
+@}
+
+visibility-acl glob-vis;
+
+database @{
+  name "terms";
+  visibility-acl local-nets;
+@}
+@end smallexample
+
+In this configuration, the @samp{terms} database is visible to
+everybody coming from the @samp{192.168.10.0/24} network and from
+the @acronym{UNIX} socket @file{/tmp/dictd.sock}, without
+authorization.  It is not visible to users coming from elsewhere,
+unless they authenticate themselves.
 
 @node Tuning
 @subsection Tuning
 
-  While tuning your server, it might be necessary to get timing
+  While tuning your server, it is often necessary to get timing
 information which shows how much time is spent serving certain
 requests.  This can be achieved using @code{timing} configuration
 directive:

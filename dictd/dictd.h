@@ -112,6 +112,7 @@ extern struct dico_stat current_stat, total_stat;
 #define DICTD_DEFAULT_STRATEGY "lev"
 
 #define DICT_PORT 2628
+#define DICTD_LOGGING_ENVAR "__DICTD_LOGGING__"
 
 #define MODE_DAEMON  0 
 #define MODE_INETD   1
@@ -309,6 +310,8 @@ size_t database_count(void);
 int database_iterate(dico_list_iterator_t fun, void *data);
 int show_sys_info_p(void);
 void dictd_log_setup(void);
+void dictd_log_pre_setup(void);
+void dictd_log_encode_envar(void);
 char *get_full_hostname(void);
 void check_db_visibility(void);
 void reset_db_visibility(void);
@@ -436,6 +439,7 @@ void pp_make_argcv(int *pargc, const char ***pargv);
 FILE *pp_extrn_start(int argc, const char **argv, pid_t *ppid);
 void pp_extrn_shutdown(pid_t pid);
 size_t pp_fill_buffer(char *buf, size_t size);
+void run_lint();
 
 /* accesslog.c */
 void access_log_status(const char *first, const char *last);

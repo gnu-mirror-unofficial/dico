@@ -423,6 +423,75 @@ handle_connection(int n)
     return status;
 }
 
+static int
+pre_restart_lint_internal()
+{
+    pid_t pid;
+    time_t ts;
+    pid = fork();
+    if (pid == 0)
+	run_lint();
+    else if (pid == -1) {
+	dico_log(L_ERR, errno, _("fork failed"));
+	return 1;
+    }
+    /* Master process */
+    ts = time(NULL);
+    while (1) {
+	int status;
+	pid_t n = waitpid(pid, &status, WNOHANG);
+	if (n == pid) {
+	    /* Child exited, examine status */
+	    if (WIFEXITED(status)) {
+		if (WEXITSTATUS(status) == 0) {
+		    /* OK to restart */
+		    return 0;
+		} else {
+		    dico_log(L_NOTICE, 0,
+			     _("refusing to restart due to errors in "
+			       "configuration file"));
+		    return 1;
+		}
+	    } else {
+		dico_log(L_NOTICE, 0,
+			 _("refusing to restart due to unexpected "
+			   "return status of configuration checker"));
+		print_status(pid, status, 0);
+		return 1;
+	    }
+	} else if (pid == 0) {
+	    if (time(NULL) - ts > 5) {
+		dico_log(L_NOTICE, 0,
+			 _("refusing to restart: "
+			   "configuration checker did not exit within "
+			   "5 seconds"));
+		kill(pid, SIGKILL);
+		break;
+	    }
+	} else if (errno == EINTR || errno == EAGAIN)
+	    continue;
+	else {
+	    dico_log(L_ERR, errno, _("waitpid failed"));
+	    dico_log(L_NOTICE, 0, _("refusing to restart"));
+	    kill(pid, SIGKILL);
+	    break;
+	}
+    }
+    return 1;
+}
+
+static int
+pre_restart_lint()
+{
+    int rc;
+    RETSIGTYPE (*sf)(int);
+    
+    sf = signal(SIGCHLD, SIG_DFL);
+    rc = pre_restart_lint_internal();
+    signal(SIGCHLD, sf);
+    return rc;
+}
+
 int
 server_loop()
 {
@@ -451,8 +520,14 @@ server_loop()
 	rdset = fdset;
 	rc = select (fdmax + 1, &rdset, NULL, NULL, NULL);
 	if (rc == -1 && errno == EINTR) {
-	    if (stop || restart)
+	    if (stop)
 		break;
+	    else if (restart) {
+		if (pre_restart_lint() == 0)
+		    break;
+		else
+		    restart = 0;
+	    }
 	    continue;
 	} else if (rc < 0) {
 	    dico_log(L_CRIT, errno, _("select error"));

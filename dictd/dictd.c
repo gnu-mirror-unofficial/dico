@@ -351,7 +351,7 @@ dictd_loop(dico_stream_t str)
     }
 
     open_databases();
-    
+    check_db_visibility();
     initial_banner(str);
 
     while (!got_quit && get_input_line(str, &buf, &size, &rdbytes) == 0) {

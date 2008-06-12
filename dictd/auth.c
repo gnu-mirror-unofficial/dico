@@ -75,6 +75,7 @@ dictd_auth(dico_stream_t str, int argc, char **argv)
 {
     if (auth(argv[1], argv[2]) == 0) {
 	stream_writez(str, "230 Authentication successful");
+	check_db_visibility();
     } else
 	stream_writez(str,
 		      "531 Access denied, "
@@ -120,5 +121,6 @@ init_auth_data()
     free(identity_name);
     identity_name = NULL;
     dico_list_destroy(&user_groups, _free_group, NULL);
+    reset_db_visibility();
 }
 

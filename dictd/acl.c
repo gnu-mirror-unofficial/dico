@@ -34,6 +34,7 @@ struct acl_entry {
     dictd_locus_t locus;
     int allow;
     int authenticated;
+    dictd_acl_t acl;
     dico_list_t groups;
     dico_list_t sockaddrs;
 };
@@ -66,7 +67,8 @@ create_acl_sockaddr(int family, int len)
     return p;
 }
 
-/* allow|deny [all|authenticated|group <grp: list>] [from <addr: list>] */
+/* allow|deny [all|authenticated|group <grp: list>]
+              [acl <name: string>] [from <addr: list>] */
 
 static int
 _parse_token (struct acl_entry *entry, config_value_t *value)
@@ -216,7 +218,40 @@ _parse_from(struct acl_entry *entry, size_t argc, config_value_t *argv)
     }
     return 0;
 }
-	
+
+static int
+_parse_sub_acl(struct acl_entry *entry, size_t argc, config_value_t *argv)
+{
+    if (argc == 0)
+	return 0;
+    if (strcmp (argv->v.string, "acl") == 0) {
+	argc--;
+	argv++;
+	if (argc == 0) {
+	    config_error(&entry->locus, 0,
+			 _("expected ACL name, but found end of statement"));
+	    return 1;
+	}
+
+	if (argv->type != TYPE_STRING) {
+	    config_error(&entry->locus, 0,
+			 _("expected string, but found list"));
+	    return 1;
+	}
+
+	entry->acl = dictd_acl_lookup(argv->v.string);
+
+	if (!entry->acl) {
+	    config_error(&entry->locus, 0, _("ACL not defined: `%s'"),
+			 argv->v.string);
+	    return 1;
+	}
+	argc--;
+	argv++;
+    }
+    return _parse_from(entry, argc, argv);
+}
+    
 static int
 _parse_group(struct acl_entry *entry, size_t argc, config_value_t *argv)
 {
@@ -225,7 +260,7 @@ _parse_group(struct acl_entry *entry, size_t argc, config_value_t *argv)
 	argv++;
 	if (argc == 0) {
 	    config_error(&entry->locus, 0,
-			 _("expected group list but found end of statement"));
+			 _("expected group list, but found end of statement"));
 	    return 1;
 	}
 	if (argv->type == TYPE_STRING) {
@@ -235,8 +270,8 @@ _parse_group(struct acl_entry *entry, size_t argc, config_value_t *argv)
 	    entry->groups = argv->v.list;
 	argc--;
 	argv++;
-    } 
-    return _parse_from(entry, argc, argv);
+    }  
+    return _parse_sub_acl(entry, argc, argv);
 }
 	
 static int
@@ -246,7 +281,7 @@ _parse_acl(struct acl_entry *entry, size_t argc, config_value_t *argv)
 	config_error(&entry->locus, 0, _("expected string but found list"));
 	return 1;
     } else if (_parse_token(entry, argv) == 0)
-	return _parse_from(entry, argc - 1, argv + 1);
+	return _parse_sub_acl(entry, argc - 1, argv + 1);
     else
 	return _parse_group (entry, argc, argv);
 }
@@ -284,7 +319,7 @@ parse_acl_line(dictd_locus_t *locus, int allow, dictd_acl_t acl,
 
 
 /* ACL verification */
-/* FIXME: Duplicated in main.c */
+
 static int
 cmp_group_name(const void *item, const void *data)
 {
@@ -351,6 +386,10 @@ _acl_check(struct acl_entry *ent)
 	    return result;
     }	
 
+    result = dictd_acl_check(ent->acl, 1);
+    if (!result)
+	return result;
+    
     if (ent->sockaddrs) {
 	result = 0;
 	dico_list_iterate(ent->sockaddrs, _check_sockaddr, &result);
@@ -378,10 +417,10 @@ _acl_check_cb(void *item, void *data)
 }
     
 int
-dictd_acl_check(dictd_acl_t acl)
+dictd_acl_check(dictd_acl_t acl, int result)
 {
-    int result = 1;
-    dico_list_iterate(acl->list, _acl_check_cb, &result);
+    if (acl) 
+	dico_list_iterate(acl->list, _acl_check_cb, &result);
     return result;
 }
 
@@ -435,3 +474,4 @@ dictd_acl_lookup(const char *name)
     samp.name = (char*) name;
     return hash_lookup(acl_table, &samp);
 }
+

@@ -21,7 +21,7 @@ help-text <<-EOT
 	+
 	This is a test configuration. Please, edit dictd.conf to suit your
 	needs.
-EOT
+EOT;
 
 user nobody;
 listen (localhost:dict, "/tmp/dict.sock");
@@ -33,6 +33,7 @@ pidfile <BUILDDIR>/tests/dictd.pid;
 
 server-info <<EOT
 This is a test Dico server.
-EOT
+EOT;
+
 
 

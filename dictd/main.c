@@ -53,7 +53,6 @@ int transcript;
 const char *server_info;
 
 dictd_acl_t show_sys_info;
-dico_list_t /* of char * */ ssi_group_list;
 
 /* This host name */
 char *hostname;
@@ -85,8 +84,7 @@ dico_list_t /* of dictd_handler_t */ handler_list;
 /* List of configured dictionaries */
 dico_list_t /* of dictd_database_t */ database_list;
 
-/* FIXME: dictd_acl_t global_acl; */
-int require_auth; 
+dictd_acl_t global_acl;
 
 /* From CLIENT command: */
 char *client_id;
@@ -179,6 +177,27 @@ struct config_keyword kwd_acl[] = {
       deny_cb },
     { NULL }
 };
+
+int
+apply_acl_cb(enum cfg_callback_command cmd,
+	     dictd_locus_t *locus,
+	     void *varptr,
+	     config_value_t *value,
+	     void *cb_data)
+{
+    dictd_acl_t *pacl = varptr;
+
+    if (value->type != TYPE_STRING) {
+	config_error(locus, 0, _("expected scalar value"));
+	return 1;
+    }
+    if ((*pacl =  dictd_acl_lookup(value->v.string)) == NULL) {
+	config_error(locus, 0, _("no such ACL: `%s'"),
+		     value->v.string);
+	return 1;
+    }
+    return 0;
+}
 
 
 int
@@ -536,12 +555,9 @@ struct config_keyword kwd_database[] = {
       cfg_string, NULL, offsetof(dictd_database_t, info) },
     { "handler", N_("name"), N_("Name of the handler for this database."),
       cfg_string, NULL, 0, set_dict_handler },
-    { "require-auth", N_("arg"),
-      N_("Require authentication for access to this database."),
-      cfg_bool, NULL, offsetof(dictd_database_t, require_auth) },
-    { "groups", N_("arg"),
-      N_("The database is visible only for users from these groups"),
-      cfg_string|CFG_LIST, NULL, offsetof(dictd_database_t, groups) },
+    { "apply-acl", N_("arg: acl"),
+      N_("ACL for this database"),
+      cfg_string, NULL, offsetof(dictd_database_t, acl), apply_acl_cb },
     { "content-type", N_("arg"), N_("Content type for MIME replies."),
       cfg_string, NULL, offsetof(dictd_database_t, content_type) },
     /* FIXME: Install a callback to verify if arg is acceptable. */
@@ -605,26 +621,6 @@ user_db_config(enum cfg_callback_command cmd,
     return 0;
 }
 
-int
-set_show_sys_info(enum cfg_callback_command cmd,
-		  dictd_locus_t *locus,
-		  void *varptr,
-		  config_value_t *value,
-		  void *cb_data)
-{
-    if (value->type != TYPE_STRING) {
-	config_error(locus, 0, _("expected scalar value but found list"));
-	return 1;
-    }
-    show_sys_info = dictd_acl_lookup(value->v.string);
-    if (!show_sys_info) {
-	config_error(locus, 0, _("ACL not defined: `%s'"),
-		     value->v.string);
-	return 1;
-    }
-    return 0;
-}
-
 struct config_keyword keywords[] = {
     { "user", N_("name"), N_("Run with these user privileges."),
       cfg_string, NULL, 0, set_user  },
@@ -638,11 +634,7 @@ struct config_keyword keywords[] = {
       cfg_string, &server_info,  },
     { "show-sys-info", N_("arg: acl"),
       N_("Show system information if arg matches."),
-      cfg_string, &show_sys_info, 0, set_show_sys_info },
-    { "sys-info-groups", N_("arg"),
-      N_("With `show-sys-info auth', show system information only if "
-	 "the user is member of one of these groups"),
-      cfg_string|CFG_LIST, &ssi_group_list },
+      cfg_string, &show_sys_info, 0, apply_acl_cb },
     { "identity-check", N_("arg"),
       N_("Enable identification check using AUTH protocol (RFC 1413)"),
       cfg_bool, &identity_check },
@@ -702,9 +694,9 @@ struct config_keyword keywords[] = {
       N_("Provide timing information after successful completion of an "
 	 "operation."),
       cfg_bool, &timing_option },
-    { "require-auth", N_("arg"),
-      N_("Require authentication for access to databases."),
-      cfg_bool, &require_auth },
+    { "apply-acl", N_("arg: acl"),
+      N_("Apply ACLs from arg to incoming connections"),
+      cfg_string, &global_acl, 0, apply_acl_cb },
     { "database", NULL, N_("Define a dictionary database."),
       cfg_section, NULL, 0, set_database, NULL,
       kwd_database },
@@ -736,22 +728,35 @@ show_sys_info_p()
 {
     if (!show_sys_info)
 	return 1;
-    return dictd_acl_check(show_sys_info);
+    return dictd_acl_check(show_sys_info, 1);
 }
 
-static int
-cmp_group_name(const void *item, const void *data)
+void
+reset_db_visibility()
 {
-    return strcmp((char*)item, (char*)data);
+    dictd_database_t *db;
+    dico_iterator_t itr;
+
+    itr = xdico_iterator_create(database_list);
+    for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) 
+	db->visible = 1;
+    dico_iterator_destroy(&itr);
 }
 
-int
-database_visible_p(const dictd_database_t *db)
+void
+check_db_visibility()
 {
-    return ((!db->groups || dico_list_intersect_p(db->groups, user_groups,
-						  cmp_group_name))
-	    && (user_name || !(db->require_auth || require_auth)));
+    dictd_database_t *db;
+    dico_iterator_t itr;
+    int global = dictd_acl_check(global_acl, 1);
+    
+    itr = xdico_iterator_create(database_list);
+    for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
+	db->visible = dictd_acl_check(db->acl, global);
+    }
+    dico_iterator_destroy(&itr);
 }
+
 
 static int
 cmp_database_name(const void *item, const void *data)

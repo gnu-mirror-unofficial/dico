@@ -237,7 +237,7 @@ void config_help(void);
 typedef struct dictd_acl *dictd_acl_t;
 
 dictd_acl_t dictd_acl_create(const char *name, dictd_locus_t *locus);
-int dictd_acl_check(dictd_acl_t acl);
+int dictd_acl_check(dictd_acl_t acl, int res);
 
 int parse_acl_line(dictd_locus_t *locus, int allow, dictd_acl_t acl,
 		   config_value_t *value);
@@ -280,8 +280,8 @@ typedef struct dictd_database {
     char *descr;  /* Description (SHOW DB) */
     char *info;   /* Info (SHOW INFO) */
 
-    int require_auth;         /* Visible only for authenticated users */
-    dico_list_t groups;       /* Visible only for users from these groups */
+    dictd_acl_t  acl;  /* ACL for this database */
+    int visible;       /* Result of the last dictd_acl_check */
     
     dico_handle_t mod;        /* Dico module handler */
 
@@ -294,9 +294,6 @@ typedef struct dictd_database {
     char *command;            /* Handler command line (for diagnostics) */
 } dictd_database_t;
 
-extern dictd_acl_t show_sys_info;
-extern dico_list_t ssi_group_list;
-
 void dictd_server(int argc, char **argv);
 int dictd_loop(dico_stream_t stream);
 int dictd_inetd(void);
@@ -308,10 +305,12 @@ void database_remove_dependent(dictd_handler_t *handler);
 void dictd_database_free(dictd_database_t *dp);
 size_t database_count(void);
 int database_iterate(dico_list_iterator_t fun, void *data);
-int database_visible_p(const dictd_database_t *db);
 int show_sys_info_p(void);
 void dictd_log_setup(void);
 char *get_full_hostname(void);
+void check_db_visibility(void);
+void reset_db_visibility(void);
+#define database_visible_p(db) ((db)->visible)
 
 
 typedef void (*dictd_cmd_fn) (dico_stream_t str, int argc, char **argv);

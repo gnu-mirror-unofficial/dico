@@ -262,9 +262,10 @@ addition, these words can be prefixed with @samp{log_}.
 @UNREVISED
 
 @menu
-* Syntax::            Configuration file syntax.
+* Syntax::               Configuration file syntax.
 * Server Settings::
 * Authorization::
+* ACL::                  Access Control Lists
 * Security Settings::
 * Logging and Debuging::
 * Access Log::
@@ -273,7 +274,7 @@ addition, these words can be prefixed with @samp{log_}.
 * Handlers::
 * Databases::
 * Tuning::
-* Preprocessor::      Using preprocessor to improve the configuration.
+* Preprocessor::         Using preprocessor to improve the configuration.
 @end menu
 
 @node Syntax
@@ -501,16 +502,16 @@ TEXT
 @end group
 @end smallexample
 
-  As a ``syntactical sugar'', statements containing here-documents are
-not required to end with a semicolon.  If, however, a semicolon is
-used, it may not appear on the same line with the terminating
-@var{word} delimiter, e.g.:
+  It is important that the terminating delimiter be the only token on
+its line.  The only exception to this rule is allowed if a
+here-document appears as the last element of a statement.  In this
+case a semicolon can be placed on the same line with its terminating 
+delimiter, as in: 
 
 @smallexample
 help-text <<-EOT
         A sample help text.
-EOT
-;
+EOT;
 @end smallexample
 
 @item list
@@ -550,7 +551,7 @@ handler outline @{
 this is not required.
 
 @node Server Settings
-@subsection Control Server Behavior
+@subsection Server Settings
 @UNREVISED
   Server settings control how @command{dictd} is executed on the
 server machine.
@@ -732,27 +733,154 @@ user-db <url: string> @{
 @end deffn
 @end deffn
 
+@node ACL
+@subsection Access Control Lists
+@cindex @acronym{ACL}
+@cindex access control lists
+@dfn{Access control lists}, or @acronym{ACL}s for short, are lists of
+permissions that can be applied to certain @command{dictd} objects.
+They can be used to control who can connect to the dictionary server
+and what resources are offered to whom.
+
+@kwindex acl
+An @acronym{ACL} is defined using @code{acl} block statement:
+
+@smallexample
+acl @var{name} @{
+  @var{definitions}
+@}
+@end smallexample
+
+The @var{name} parameter specifies a unique name for that
+@acronym{ACL}.  This name will be used by another configuration
+statements (@FIXME-pxref{}) to refer to that @acronym{ACL}.
+
+A part between the curly braces (denoted by @var{definitions} above),
+id a list of @dfn{access statements}.  Each such statement begins with
+one of the following keywords:  
+
+@deffn {ACL} allow @var{user-group} @var{sub-acl} @var{host-list}
+Allow access to resource.
+@end deffn
+
+@deffn {ACL} deny @var{user-group} @var{sub-acl} @var{host-list}
+Deny access to resource.
+@end deffn
+
+All three parts of each such statement are optional, but at least one
+of them must be present.
+
+The @var{user-group} part specifies which users match this entry.
+Allowed values are the following:
+
+@table @code
+@kwindex all
+@item all
+All users.
+
+@kwindex authenticated
+@item authenticated
+Only authenticated users.
+
+@kwindex group
+@item group @var{group-list}
+Authenticated users which are members of at least one of groups listed in
+@var{group-list}.
+@end table
+
+The @var{sub-acl} part, if present, allows to branch to another
+@acronym{ACL}.  The syntax of this group is:
+
+@smallexample
+acl @var{name}
+@end smallexample
+
+@noindent
+where @var{name} is the name of a previously defined @acronym{ACL}.
+
+Finally, the @var{host-list} group allows to match client addresses.
+It consists of a @code{from} keyword followed by a list of
+@dfn{address specifiers}.  Allowed address specifiers are:
+
+@table @asis
+@item @var{addr}
+Matches if the client @acronym{IP} equals @var{addr}.
+The latter may be given either as an @acronym{IP}
+address or as a host name, in which case it will be resolved and the
+first of its @acronym{IP} addresses will be used.
+
+
+@item @var{addr}/@var{netlen}
+Matches if first @var{netlen} bits from the client @acronym{IP}
+address equal to @var{addr}.  The network mask length, @var{netlen}
+must be an integer number in the range from 0 to 32.  The address part,
+@var{addr}, is as described above. 
+
+@item @var{addr}/@var{netmask}
+The specifier matches if the result of logical @acronym{AND} between
+the client @acronym{IP} address and @var{netmask} equals to
+@var{addr}.  The network mask must be specified in ``dotted quad''
+form, e.g. @samp{255.255.255.224}.
+
+@item @var{filename}
+Matches if connection was received from a @acronym{UNIX} socket
+@var{filename}, which must be given as an absolute file name.
+@end table
+
+To summarize, the syntax of an access statement is:
+
+@smallexample
+allow|deny [all|authenticated|group @var{group-list}]
+           [acl @var{name}] [from @var{addr-list}]
+@end smallexample
+
+@noindent
+where square brackets denote optional parts and vertical bar means
+@samp{one of}.
+
+When an @acronym{ACL} is applied to a particular object, its entries
+are tried in turn until one of them matches, or the end of list is
+reached.  If a matched entry is found, its command verb, @code{allow}
+or @code{deny}, defines the result of @acronym{ACL} match.  If the end
+of list is reached, the result is @samp{allow}, unless explicitly
+specified otherwise.
+
+For example, the following statement defines an @acronym{ACL} named
+@samp{common}, that allows access to anybody who is using local
+@acronym{UNIX} socket @file{/tmp/dictd.sock} or who comes from a local
+network @samp{192.168.10.0/24}.  Any authenticated users are allowed,
+provided that they are allowed by another @acronym{ACL} @samp{my-nets}
+(which should have been defined before this definition).  Users 
+coming from the network @samp{10.10.0.0/24} are allowed if they
+authenticate themselves and are members of groups @samp{dictd} or
+@samp{users}.  Access is denied for anybody else:
+
+@smallexample
+@group
+acl common @{
+    allow all from ("/tmp/dictd.sock", "192.168.10.0/24");
+    allow authenticated acl "my-nets";
+    allow group ("dictd", "users") from "10.10.0.0/24";
+    deny all;
+@}
+@end group
+@end smallexample
+
+
+The following subsection describes how to use @acronym{ACL}s to
+control security settings of your server.
 
 @node Security Settings
 @subsection Security Settings
 @UNREVISED
 
-@deffn {Configuration} show-sys-info @var{enum}
+@deffn {Configuration} connection-acl @var{acl-name}
+@end deffn
+
+@deffn {Configuration} show-sys-info @var{acl-name}
 This statement controls whether to show system information in reply
-to @code{SHOW SERVER} command.  Allowed values are:
-
-@table @asis
-@item always
-Always show system information.
-
-@item never
-Never show it.  This is the default.
-
-@item auth
-Show the system information for authorized users only
-(@pxref{Authorization}).  See also @code{sys-info-groups} below, which
-modifies this setting.
-@end table
+to @code{SHOW SERVER} command.  The information will be shown only
+if @acronym{ACL} @var{acl-name} allows it.
 
 The system information shown includes the following data: the name
 of the package and its version, the name of the system where it was
@@ -766,38 +894,15 @@ dict.example.net up 110+04:42:58, 19647044 forks (6867.9/hour)
 @end smallexample
 @end deffn
 
-@deffn {Configuration} sys-info-groups @var{list}
-This statement modifies the effect of @code{show-sys-info auth;}: when
-both statements are used, the system information will be displayed
-only if the user has authenticated himself @emph{and} he is a member
-of one of the groups listed in @var{list}.
-
-For example:
-
-@smallexample
-show-sys-info auth;
-sys-info-groups (admin,wheel);
-@end smallexample
-@end deffn
-
-@deffn {Configuration} require-auth @var{boolean}
-Require authentication for access to databases.  If
-@code{require-auth} is set to @code{true}, all databases become
-visible only for authenticated users (@pxref{Authorization}).  Default
-is @code{false}.
-
-The effect of this statement is modified by the @code{require-auth}
-statement in @code{database} group (@pxref{per-database require-auth}).
+@deffn {Configuration} apply-acl @var{acl-name}
+@FIXME{Describe}
 @end deffn
 
 @FIXME{
 @smallexample
 database @{
   # Require authentication for access to this database.
-  require-auth <arg: boolean>;
-
-  # The database is visible only for users from these groups
-  groups <arg: list of string>;
+  apply-acl <arg: boolean>;
 @}
 @end smallexample
 }
@@ -1344,21 +1449,10 @@ Use quoted-printable encoding.
 @end table
 @end deffn
 
-The following group of configuration directives allows to control access
-to the database.
-
-@anchor{per-database require-auth}
-@deffn {Database} require-auth @var{boolean}
-When @code{true}, only authenticated users can access this database.  
+@anchor{per-database acl}
+@deffn {Database} apply-acl @var{acl-name}
+@FIXME{Describe}
 @end deffn
-
-@deffn {Database} groups @var{list}
-The argument is a list of group names.  When used with
-@code{require-auth yes}, the database is accessible only to
-authenticated users which are members of one of the groups listed in
-@var{list}. 
-@end deffn
-
 
 @node Tuning
 @subsection Tuning

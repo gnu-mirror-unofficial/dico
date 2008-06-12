@@ -245,6 +245,8 @@ int parse_acl_line(dictd_locus_t *locus, int allow, dictd_acl_t acl,
 int dictd_acl_install(dictd_acl_t acl, dictd_locus_t *locus);
 dictd_acl_t dictd_acl_lookup(const char *name);
 
+extern dictd_acl_t connect_acl;
+
 
 /* Dictd-specific streams */
 dico_stream_t fd_stream_create(int ifd, int oufd);

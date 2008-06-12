@@ -175,7 +175,7 @@ isemptystr(int off)
 {
     for (; yytext[off] && isspace(yytext[off]); off++)
 	;
-    if (yytext[off] == ';' || yytext[off] == ',') {
+    if (yytext[off] == ';') {
 	int i;
 	for (i = off + 1; yytext[i]; i++) 
 	    if (!isspace(yytext[i]))

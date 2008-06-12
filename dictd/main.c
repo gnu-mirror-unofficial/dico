@@ -84,7 +84,11 @@ dico_list_t /* of dictd_handler_t */ handler_list;
 /* List of configured dictionaries */
 dico_list_t /* of dictd_database_t */ database_list;
 
+/* Global Dictionary ACL */
 dictd_acl_t global_acl;
+
+/* ACL for incoming connections */
+dictd_acl_t connect_acl;
 
 /* From CLIENT command: */
 char *client_id;
@@ -141,9 +145,9 @@ acl_cb(enum cfg_callback_command cmd,
     switch (cmd) {
     case callback_section_begin:
 	if (value->type != TYPE_STRING) 
-	    config_error(locus, 0, _("URL must be a string"));
+	    config_error(locus, 0, _("ACL name must be a string"));
 	else if (!value->v.string)
-	    config_error(locus, 0, _("empty URL"));
+	    config_error(locus, 0, _("missing ACL name"));
 	else {
 	    dictd_locus_t defn_loc;
 	    acl = dictd_acl_create(value->v.string, locus);
@@ -695,8 +699,11 @@ struct config_keyword keywords[] = {
 	 "operation."),
       cfg_bool, &timing_option },
     { "apply-acl", N_("arg: acl"),
-      N_("Apply ACLs from arg to incoming connections"),
+      N_("Apply this ACL to all databases."),
       cfg_string, &global_acl, 0, apply_acl_cb },
+    { "connection-acl", N_("arg: acl"),
+      N_("Apply this ACL to incoming connections."),
+      cfg_string, &connect_acl, 0, apply_acl_cb },
     { "database", NULL, N_("Define a dictionary database."),
       cfg_section, NULL, 0, set_database, NULL,
       kwd_database },

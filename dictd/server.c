@@ -370,6 +370,15 @@ handle_connection(int n)
 	/*exit (EXIT_FAILURE);*/
     }
 
+    if (dictd_acl_check(connect_acl, 1) == 0) {
+	char *p = sockaddr_to_astr(&client_addr, client_addrlen);
+	dico_log(L_NOTICE, 0,
+		 _("connection from %s denied"),
+		 p);
+	free(p);
+	close(connfd);
+	return 0;
+    }
     
     /*FIXME: log_connection(&addr, addrlen);*/
 
@@ -386,7 +395,7 @@ handle_connection(int n)
     } else {
 	pid_t pid = fork();
 	if (pid == -1)
-	    dico_log(LOG_ERR, errno, "fork");
+	    dico_log(L_ERR, errno, "fork");
 	else if (pid == 0) {
 	    /* Child.  */
 	    dico_stream_t str;

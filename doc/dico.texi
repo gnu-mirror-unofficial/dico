@@ -1858,6 +1858,14 @@ Print program version and exit.
 @node Modules
 @chapter Modules
 @UNREVISED
+  Dico comes with a set of loadable modules for handling several
+database formats and for extending its functionality.  The modules
+are binary loadable files, installed in
+@file{@var{$prefix}/lib/dico}.  They are configured via @dfn{command
+line arguments}, passed to the @code{command} configuration directive
+(@pxref{Handlers, command}) for per-module configuration, and to
+@code{handler} directive (@pxref{Databases, handler}, for per-database
+configuration). 
 
 @menu
 * Outline::
@@ -1867,12 +1875,175 @@ Print program version and exit.
 
 @node Outline
 @section The @command{outline} module.
-@UNREVISED
+@cindex outline module
+  The @command{outline} module supports databases written in
+@dfn{Emacs outline mode}.  It is not designed for storing large
+amounts of data, its purpose rather is to handle small databases that
+can be composed easily and quickly using the Emacs editor.
+
+@cindex outline mode
+  The outline mode is described in @ref{Outline Mode, Outline Mode,
+Outline Mode, emacs, The Emacs Editor}.  In short it is a usual plain
+text file, containing @dfn{header lines} and @dfn{body lines}.  Header
+lines start with one or more stars, the number of starts indicating
+the depth of heading in the document structure: one star for chapters,
+two stars for sections, etc.  Body lines are anything that is not
+header lines.
+
+@cindex outline dictionary
+  The outline dictionary must have at least a chapter named
+@samp{Dictionary}, that contains dictionary corpus.  Within it, each
+subsection is treated as a dictionary article, its header line giving
+the headword, and its body lines supplying the article itself.  Apart
+from this, two more chapters have special meaning.  The
+@samp{Description} chapter gives a short description to be displayed
+on @code{SHOW DB} command, and the @samp{Info} chapter supplies a full
+database description for @code{SHOW INFO} output.  Both chapters are
+optional.
+
+  All three reserved chapter names are case-insensitive.
+
+  To summarize, the structure of an outline database is:
+
+@smallexample
+* Description
+@var{line}
+   
+* Info
+@var{text}
+
+* Dictionary
+
+** @var{line}
+@var{text}
+
+[@r{any number of entries follows}]
+@end smallexample
+
+@cindex Ambrose Bierce
+@cindex Devil's Dictionary
+@flindex devils.out
+  The Dico package is shipped with Ambrose Bierce's @cite{Devil's
+Dictionary} in ouline format, see @file{tests/devils.out}.
+
+  Outline module initialization does not require any command line
+parameters, specifying @code{command "outline";} is enough.  To
+declare a database, supply its full file name to @code{handler}
+directive, as shown in the example below:
+
+@smallexample
+@group
+handler outline @{
+   command "outline";
+@}
+
+database @{
+   name "devdict";
+   handler "outline /var/db/devils.out";
+@}
+@end group
+@end smallexample
 
 @node Dictorg
 @section The @command{dictorg} module.
-@UNREVISED
+@cindex dictorg module
+  The @command{dictorg} module supports dictionaries in the format
+designed by @cite{@acronym{DICT} development group}
+(@uref{http://dict.org}).  Lots of free dictionaries in this format
+are available from @uref{http://freedict.org, @cite{FreeDict}
+project}.
 
+  A dictionary in this format consists of two files: a @dfn{dictionary
+database file}, named @file{@var{name}.dict} or
+@file{@var{name}.dict.dz} (a compressed form), and an @dfn{index file},
+which lists article headwords and corresponding offsets in the
+database.  The index file is named @file{@var{name}.index}.  The
+common part of these two file names, @var{name}, is called the @dfn{base
+name} for that dictionary.
+
+@cindex dictorg handler definition
+  An instance of the @command{dictorg} module is created using the
+following statement:
+
+@smallexample
+handler @var{inst-name} @{
+    command "dictorg [@var{options}]";
+@}
+@end smallexample
+
+@noindent
+where square brackets denote optional part.  Valid @var{options} are
+the following:
+
+@cindex dictorg initialization options
+@table @option
+@kwindex dbdir
+@item dbdir=@var{dir}
+Look for databases in directory @var{dir}.
+
+@kwindex show-dictorg-entries
+@item show-dictorg-entries
+@dfn{Dictorg entries} are special database entries that keep some
+service information, such as database description, etc.  Such entries
+are marked with headwords that begin with @samp{00-database-}.  By
+default they are exempt from database look-ups and cannot be retrieved
+using @code{MATCH} or @code{DEFINE} command.
+
+Using @option{show-dictorg-entries} removes this limitation and makes
+these entries behave as other database entries.
+
+@kwindex sort
+@item sort
+Sort the database index after loading.  This option is designed for
+use with some databases that have malformed indexes.  At the time of
+this writing the @samp{eng-swa} database from @cite{FreeDict} requires
+this option.
+
+Using @code{sort} may considerably slow down initial database loading.
+
+@kwindex trim-ws
+@item trim-ws
+Remove trailing whitespace from dictionary headwords at start up.
+This might be necessary for some databases.
+@end table
+
+The values set via these options become defaults for all databases
+using this module instance, unless overridden in their declarations.
+
+@cindex dictorg database declaration
+A database that uses this module must be declared as follows:
+
+@smallexample
+@group
+database @{
+    handler "@var{inst-name} database=@var{file} [@var{options}]";
+    ...
+@}
+@end group
+@end smallexample
+
+@noindent
+where @var{inst-name} is the instance name used in the @code{handler}
+declaration above.
+
+@kwindex database
+  The @code{database} argument specifies the base name of the
+database.  Unless @var{file} begins with a slash, the value of
+@code{dbdir} initialization option is prepended to it.  If
+@code{dbdir} is not given and @var{file} does not begin with a slash,
+an error is signalled.
+
+@kwindex noshow-dictorg-entries
+@kwindex nosort
+@kwindex notrim-ws
+  The @var{options} above are the same options as described in
+initialization procedure: @code{show-dictorg-entries}, @code{sort},
+and @code{trim-ws}.  If used, they override initialization settings for
+that particular database.  Forms prefixed with @samp{no} may be used
+to disable the corresponidng option for this database.  For example, 
+@code{notrim-ws} cancels the effect of @code{trim-ws} used when
+initializing the module instance.
+ 
 @node Guile
 @section The @command{guile} module.
 @UNREVISED
@@ -1884,7 +2055,7 @@ Print program version and exit.
 @node Reporting Bugs
 @chapter How to Report a Bug
 @UNREVISED
-
+  
 @node Time and Date Formats
 @appendix Time and Date Formats
 @include strftime.texi

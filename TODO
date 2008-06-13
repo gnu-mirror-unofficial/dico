@@ -2,8 +2,9 @@ Dico TODO list.
 
 
 * Documentation.
+** Add a pointer to ellinika.gnu.org.ua:dict
 
-* Guile modules for www.runasimi.org and ellinika.gnu.org.ua.
+* Guile module for www.runasimi.org.
 
 * A module for kanjidic/edict.
 

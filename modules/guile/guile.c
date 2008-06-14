@@ -583,9 +583,7 @@ mod_close(dico_handle_t hp)
 
     if (guile_proc[close_proc].name)
 	guile_call_proc(&res, &guile_proc[close_proc],
-			scm_list_2(scm_cons(SCM_IM_QUOTE,
-					    scm_makfrom0str(db->dbname)),
-				   scm_cons(SCM_IM_QUOTE, db->handle)));
+			scm_list_1(scm_cons(SCM_IM_QUOTE, db->handle)));
     scm_gc_unprotect_object(db->handle);
 
     return 0;
@@ -615,8 +613,8 @@ mod_open(dico_handle_t dp)
     struct _guile_database *db = (struct _guile_database *)dp;
     if (guile_call_proc(&db->handle, &guile_proc[open_proc],
 			scm_cons(scm_cons(SCM_IM_QUOTE,
-					   scm_makfrom0str(db->dbname)),
-					   argv_to_scm(db->argc, db->argv)))) 
+					  scm_makfrom0str(db->dbname)),
+				 argv_to_scm(db->argc, db->argv)))) 
 	return 1;
     if (db->handle == SCM_EOL || db->handle == SCM_BOOL_F)
 	return 1;
@@ -631,9 +629,7 @@ mod_get_text(struct _guile_database *db, int n)
 	SCM res;
 	
 	if (guile_call_proc(&res, &guile_proc[n],
-			    scm_list_2(scm_cons(SCM_IM_QUOTE,
-						scm_makfrom0str(db->dbname)),
-				       scm_cons(SCM_IM_QUOTE, db->handle))))
+			    scm_list_1(scm_cons(SCM_IM_QUOTE, db->handle))))
 	    return NULL;
 	if (scm_is_string(res)) 
 	    return strdup(scm_i_string_chars(res));
@@ -675,9 +671,7 @@ mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
     }
     
     if (guile_call_proc(&res, &guile_proc[match_proc],
-			scm_list_4(scm_cons(SCM_IM_QUOTE,
-					    scm_makfrom0str(db->dbname)),
-				   scm_cons(SCM_IM_QUOTE, db->handle),
+			scm_list_3(scm_cons(SCM_IM_QUOTE, db->handle),
 				   scm_cons(SCM_IM_QUOTE, scm_strat),
 				   scm_cons(SCM_IM_QUOTE,
 					    scm_makfrom0str(word)))))
@@ -699,9 +693,7 @@ mod_define(dico_handle_t hp, const char *word)
     SCM res;
 	
     if (guile_call_proc(&res, &guile_proc[define_proc],
-			scm_list_3(scm_cons(SCM_IM_QUOTE,
-					    scm_makfrom0str(db->dbname)),
-				   scm_cons(SCM_IM_QUOTE, db->handle),
+			scm_list_2(scm_cons(SCM_IM_QUOTE, db->handle),
 				   scm_cons(SCM_IM_QUOTE,
 					    scm_makfrom0str(word)))))
 	return NULL;

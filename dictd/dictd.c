@@ -217,14 +217,15 @@ sig_alarm(int sig)
 }
 
 static void
-load_handlers()
+load_modules()
 {
-    dico_iterator_t itr = xdico_iterator_create(handler_list);
-    dictd_handler_t *hp;
+    dico_iterator_t itr = xdico_iterator_create(modinst_list);
+    dictd_module_instance_t *inst;
 
-    for (hp = dico_iterator_first(itr); hp; hp = dico_iterator_next(itr)) {
-	if (dictd_load_module(hp)) {
-	    database_remove_dependent(hp);
+    for (inst = dico_iterator_first(itr); inst;
+	 inst = dico_iterator_next(itr)) {
+	if (dictd_load_module(inst)) {
+	    database_remove_dependent(inst);
 	    dico_iterator_remove_current(itr);
 	}
     }
@@ -326,7 +327,7 @@ dictd_init_strategies()
 void
 dictd_server_init()
 {
-    load_handlers();
+    load_modules();
     init_databases();
     if (!dico_get_default_strategy()) 
 	dico_set_default_strategy(DICTD_DEFAULT_STRATEGY);

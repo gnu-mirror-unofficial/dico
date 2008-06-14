@@ -105,10 +105,44 @@ Appendices
 @detailmenu
  --- The Detailed Node Listing ---
 
+Building the Package
+
+* Default Preprocessor::
+* Guile Support::
+* Other Settings::
+
 The @command{dictd} daemon.
 
+* Daemon Mode::
+* Inetd Mode::
 * Configuration::
 * Dictd Invocation::
+
+Configuration
+
+* Syntax::               Configuration file syntax.
+* Server Settings::
+* Authorization::
+* ACL::                  Access Control Lists
+* Security Settings::
+* Logging and Debuging::
+* Access Log::
+* General Settings::
+* Capabilities::
+* Handlers::
+* Databases::
+* Tuning::
+* Preprocessor::         Using preprocessor to improve the configuration.
+
+Configuration File Syntax
+
+* Comments::
+* Pragmatic Comments::
+* Statements::
+
+Databases
+
+* Database Visibility::
 
 Modules
 
@@ -648,8 +682,7 @@ the example below:
 
 @smallexample
 @group
-handler outline @{
-        type loadable;
+load-module outline @{
         command "outline";
 @}
 @end group
@@ -1379,13 +1412,13 @@ databases.
 
   Database handlers are defined using the following block statement:
   
-@deffn {Configuration} handler @var{string}
-Define a database handler.  Argument sets a unique name which will
-be used by subsequent parts of the configuration to refer to this
+@deffn {Configuration} load-module @var{string}
+Create an instance of a database module.  The argument specifies a unique name
+which will be used by subsequent parts of the configuration to refer to this
 handler.  The @code{handler} statement is a block statement.  The only
 sub-statement allowed within it is @code{command} statement:
 
-@deffn {handler config} command @var{string}
+@deffn {load-module config} command @var{string}
 Set the command line for this handler.  It is similar to shell's
 command line: it consists of a name of database module, optionally
 followed by a whitespace-separated list of its arguments. Just as in
@@ -1399,7 +1432,7 @@ For example:
 
 @smallexample
 @group
-handler dict @{
+load-module dict @{
   command "dictorg dbdir=/var/dictdb";
 @}
 @end group
@@ -1415,7 +1448,7 @@ searched in the module load path.
 @cindex load path
   A @dfn{module load path} is an internal list of directories which
 @command{dictd} scans in order to find a loadable file name specified
-in @code{command} statement of a @code{handler} block.  By default the
+in @code{command} statement of a @code{load-module} block.  By default the
 order of search is as follows:
 
 @enumerate 1
@@ -1482,7 +1515,7 @@ to identify this database in @acronym{DICT} commands.
 
 @deffn {Database} handler @var{string}
 Specify the name of a handler for this database and any arguments for
-it.  This handler must be previously defined using @code{handler}
+it.  This handler must be previously defined using @code{load-module}
 statement (@pxref{Handlers}).  
 @end deffn
 
@@ -1933,7 +1966,7 @@ directive, as shown in the example below:
 
 @smallexample
 @group
-handler outline @{
+load-module outline @{
    command "outline";
 @}
 
@@ -1966,7 +1999,7 @@ name} for that dictionary.
 following statement:
 
 @smallexample
-handler @var{inst-name} @{
+load-module @var{inst-name} @{
     command "dictorg [@var{options}]";
 @}
 @end smallexample
@@ -2023,7 +2056,7 @@ database @{
 @end smallexample
 
 @noindent
-where @var{inst-name} is the instance name used in the @code{handler}
+where @var{inst-name} is the instance name used in the @code{load-module}
 declaration above.
 
 @kwindex database
@@ -2068,7 +2101,7 @@ initializing the module instance.
 @comment node-name,  next,  previous,  up
 @unnumbered Concept Index
 
-This is a general index of all issues discussed in this manual
+This is a general index of all issues discussed in this manual.
 
 @printindex cp
 

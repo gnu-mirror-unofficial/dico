@@ -75,7 +75,7 @@ extern char *help_text;
 extern const char *server_info;
 extern char *msg_id;
 extern dico_list_t module_load_path;
-extern dico_list_t handler_list;
+extern dico_list_t modinst_list;
 extern dico_list_t database_list;
 extern int timing_option;
 extern char *client_id;
@@ -259,24 +259,19 @@ void stream_write_multiline(dico_stream_t str, const char *text);
 
 /* */
 
-enum dictd_handler_type {
-    handler_loadable
-    /* FIXME: More types to come:
-       handler_guile,
-       handler_extern
-       etc.
-     */
-    
-};
-
-typedef struct dictd_handler {
+typedef struct dictd_module {
     char *ident;
-    enum dictd_handler_type type;
-    char *command;
-
-    struct dico_handler_module *module;
+    struct dico_handler_module *hmod; 
     lt_dlhandle handle;
-} dictd_handler_t;
+    size_t refcount;
+} dictd_module_t;
+    
+typedef struct dictd_module_instance {
+    char *ident;
+    char *command;
+    dictd_module_t *module;
+    dico_instance_t inst_handle;
+} dictd_module_instance_t;
 
 typedef struct dictd_database {
     char *name;   /* Dictionary name */
@@ -286,12 +281,13 @@ typedef struct dictd_database {
     dictd_acl_t  acl;  /* ACL for this database */
     int visible;       /* Result of the last dictd_acl_check */
     
-    dico_handle_t mod;        /* Dico module handler */
+    dico_handle_t mod_handle;        /* Dico module handle */
 
     char *content_type;
     char *content_transfer_encoding;
     
-    dictd_handler_t *handler; /* Pointer to the handler structure */
+    dictd_module_instance_t *instance; /* Pointer to the module instance
+					  structure */
     int argc;                 /* Handler arguments: count */
     char **argv;              /*  ... and pointers */
     char *command;            /* Handler command line (for diagnostics) */
@@ -304,7 +300,7 @@ void dictd_init_strategies(void);
 void dictd_server_init(void);
 
 dictd_database_t *find_database(const char *name);
-void database_remove_dependent(dictd_handler_t *handler);
+void database_remove_dependent(dictd_module_instance_t *inst);
 void dictd_database_free(dictd_database_t *dp);
 size_t database_count(void);
 int database_iterate(dico_list_iterator_t fun, void *data);
@@ -380,7 +376,7 @@ void init_auth_data(void);
 
 /* loader.c */
 void dictd_loader_init(void);
-int dictd_load_module(dictd_handler_t *hptr);
+int dictd_load_module(dictd_module_instance_t *hptr);
 int dictd_init_database(dictd_database_t *dp);
 int dictd_open_database(dictd_database_t *dp);
 int dictd_close_database(dictd_database_t *dp);

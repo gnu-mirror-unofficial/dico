@@ -7,8 +7,7 @@ access-log-format "%h %l %u %t \"%r\" %>s %b \"\" \"%C\"";
 
 module-load-path "<BUILDDIR>/modules/outline";
 
-handler outline {
-	type loadable;
+load-module outline {
 	command "outline";
 }
 

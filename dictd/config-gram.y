@@ -654,9 +654,8 @@ process_ident(struct config_keyword *kwp, config_value_t *value)
 		      &kwp->callback_data);
     else if (value->type == TYPE_ARRAY) {
 	config_error(&locus, 0,
-		     _("INTERNAL ERROR at %s:%d: "
-		       "argument array must be handled by a callback"),
-		     __FILE__, __LINE__);
+		     _("too many arguments to `%s'; missing semicolon?"),
+		     kwp->ident);
 	return;
     } else if (value->type == TYPE_LIST) {
 	if (CFG_IS_LIST(kwp->type)) {

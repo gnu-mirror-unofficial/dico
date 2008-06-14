@@ -78,8 +78,8 @@ dico_list_t /* of gid_t */ group_list;
 /* List of directories to search for handler modules. */
 dico_list_t /* of char * */ module_load_path;
 
-/* List of configured database handlers */
-dico_list_t /* of dictd_handler_t */ handler_list;
+/* List of configured database module instances */
+dico_list_t /* of dictd_module_instance_t */ modinst_list;
 
 /* List of configured dictionaries */
 dico_list_t /* of dictd_database_t */ database_list;
@@ -333,55 +333,32 @@ set_log_facility(enum cfg_callback_command cmd,
 }
 
 int
-set_handler_type(enum cfg_callback_command cmd,
-		 dictd_locus_t *locus,
-		 void *varptr,
-		 config_value_t *value,
-		 void *cb_data)
+load_module_cb(enum cfg_callback_command cmd,
+	       dictd_locus_t *locus,
+	       void *varptr,
+	       config_value_t *value,
+	       void *cb_data)
 {
-    static struct xlat_tab tab[] = {
-	{ "loadable", handler_loadable },
-	{ NULL }
-    };
-    if (value->type != TYPE_STRING) {
-	config_error(locus, 0, _("expected scalar value but found list"));
-	return 1;
-    }
-    if (xlat_c_string(tab, value->v.string, XLAT_ICASE, varptr)) {
-	config_error(locus, 0, _("unknown handler type"));
-	return 1;
-    }
-    return 0;
-}
-
-int
-set_handler(enum cfg_callback_command cmd,
-	    dictd_locus_t *locus,
-	    void *varptr,
-	    config_value_t *value,
-	    void *cb_data)
-{
-    dictd_handler_t *han;
+    dictd_module_instance_t *inst;
     void **pdata = cb_data;
     
     switch (cmd) {
     case callback_section_begin:
-	han = xzalloc(sizeof(*han));
-	han->type = handler_loadable;
+	inst = xzalloc(sizeof(*inst));
 	if (value->type != TYPE_STRING) 
 	    config_error(locus, 0, _("tag must be a string"));
 	else if (value->v.string == NULL) 
 	    config_error(locus, 0, _("missing tag"));
 	else
-	    han->ident = strdup(value->v.string);
-	*pdata = han;
+	    inst->ident = strdup(value->v.string);
+	*pdata = inst;
 	break;
 	
     case callback_section_end:
-	if (!handler_list)
-	    handler_list = xdico_list_create();
-	han = *pdata;
-	xdico_list_append(handler_list, han);
+	if (!modinst_list)
+	    modinst_list = xdico_list_create();
+	inst = *pdata;
+	xdico_list_append(modinst_list, inst);
 	*pdata = NULL;
 	break;
 	
@@ -426,12 +403,12 @@ set_database(enum cfg_callback_command cmd,
 }
 
 static int
-cmp_handler_ident(const void *item, const void *data)
+cmp_modinst_ident(const void *item, const void *data)
 {
-    const dictd_handler_t *han = item;
-    if (!han->ident)
+    const dictd_module_instance_t *inst = item;
+    if (!inst->ident)
 	return 1;
-    return strcmp(han->ident, (const char*)data);
+    return strcmp(inst->ident, (const char*)data);
 }
 
 int
@@ -441,7 +418,7 @@ set_dict_handler(enum cfg_callback_command cmd,
 		 config_value_t *value,
 		 void *cb_data)
 {
-    dictd_handler_t *han;
+    dictd_module_instance_t *inst;
     dictd_database_t *db = varptr;
     int rc;
     
@@ -459,13 +436,13 @@ set_dict_handler(enum cfg_callback_command cmd,
 	return 1;
     } 
 
-    han = dico_list_locate(handler_list, db->argv[0], cmp_handler_ident);
-    if (!han) {
+    inst = dico_list_locate(modinst_list, db->argv[0], cmp_modinst_ident);
+    if (!inst) {
 	config_error(locus, 0, _("%s: handler not declared"), db->argv[0]);
 	/* FIXME: Free memory */
 	return 1;
     }
-    db->handler = han;
+    db->instance = inst;
     
     return 0;
 }
@@ -538,12 +515,9 @@ set_defstrat(enum cfg_callback_command cmd,
     return 0;
 }
 
-struct config_keyword kwd_handler[] = {
-    { "type", N_("type"), N_("Type of this handler"),
-      cfg_string, NULL, offsetof(dictd_handler_t, type),
-      set_handler_type },
+struct config_keyword kwd_load_module[] = {
     { "command", N_("arg"), N_("Command line."),
-      cfg_string, NULL, offsetof(dictd_handler_t, command) },
+      cfg_string, NULL, offsetof(dictd_module_instance_t, command) },
     { NULL }
 };
 
@@ -689,7 +663,7 @@ struct config_keyword keywords[] = {
     { "capability", N_("arg"), N_("Request additional capabilities."),
       cfg_string|CFG_LIST, NULL, 0, enable_capability },
     { "module-load-path", N_("path"),
-      N_("List of directories searched for handler modules."),
+      N_("List of directories searched for database modules."),
       cfg_string|CFG_LIST, &module_load_path },
     { "default-strategy", N_("name"),
       N_("Set the name of the default matching strategy."),
@@ -707,9 +681,9 @@ struct config_keyword keywords[] = {
     { "database", NULL, N_("Define a dictionary database."),
       cfg_section, NULL, 0, set_database, NULL,
       kwd_database },
-    { "handler", N_("name: string"), N_("Define a database handler."),
-      cfg_section, NULL, 0, set_handler, NULL,
-      kwd_handler },
+    { "load-module", N_("name: string"), N_("Load a module instance."),
+      cfg_section, NULL, 0, load_module_cb, NULL,
+      kwd_load_module },
     { "acl", N_("name: string"), N_("Define an ACL."),
       cfg_section, NULL, 0, acl_cb, NULL, kwd_acl },
     { "user-db", N_("url: string"),
@@ -822,13 +796,13 @@ database_iterate(dico_list_iterator_t fun, void *data)
 
 /* Remove all dictionaries that depend on the given handler */
 void
-database_remove_dependent(dictd_handler_t *handler)
+database_remove_dependent(dictd_module_instance_t *inst)
 {
     dico_iterator_t itr = xdico_iterator_create(database_list);
     dictd_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
-	if (dp->handler == handler) {
+	if (dp->instance == inst) {
 	    dico_log(L_NOTICE, 0, _("removing database %s"), dp->name);
 	    dico_iterator_remove_current(itr);
 	    dictd_database_free(dp); 

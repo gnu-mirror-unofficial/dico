@@ -232,7 +232,7 @@ find_matcher(const char *strat)
 }
 
 int
-outline_init(int argc, char **argv, dico_instance_t *pinst DICO_ARG_UNUSED)
+outline_init(int argc, char **argv)
 {
     int i;
     for (i = 0; i < DICO_ARRAY_SIZE(strat_tab); i++) 
@@ -452,8 +452,7 @@ outline_free_db (dico_handle_t hp)
 }
 
 dico_handle_t
-outline_init_db(dico_instance_t inst DICO_ARG_UNUSED,
-		const char *dbname, int argc, char **argv)
+outline_init_db(const char *dbname, int argc, char **argv)
 {
     FILE *fp;
     struct outline_file *file;

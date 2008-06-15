@@ -16,28 +16,6 @@
 
 #include <dictd.h>
 
-
-/* Module functions */
-
-/* List of loaded database modules */
-dico_list_t /* of dictd_module_t */ module_list;
-
-static int
-cmp_module_ident(const void *item, const void *data)
-{
-    const dictd_module_t *mod = item;
-    if (!mod->ident)
-	return 1;
-    return strcmp(mod->ident, (const char*)data);
-}
-
-static dictd_module_t *
-find_module(const char *ident)
-{
-    return dico_list_locate(module_list, ident, cmp_module_ident);
-}
-
-
 /* Load path */
 static int
 _add_load_dir (void *item, void *unused)
@@ -67,63 +45,41 @@ static int
 dictd_load_module0(dictd_module_instance_t *inst, int argc, char **argv)
 {
     lt_dlhandle handle;
-    dictd_module_t *module = find_module(argv[0]);
     struct dico_handler_module *pmod;    
-    dico_instance_t inst_handle;
-    
-    if (module) {
-	pmod = module->hmod;
-	if (!(pmod->capabilities & DICO_CAPA_MULTI_INSTANCE)) {
-	    dico_log(L_ERR, 0,
-		     _("cannot load module %s twice: "
-		       "module does not support multiple instances"),
-		     argv[0]);
-	    return 1;
-	}
-    } else {	     
-	handle = lt_dlopenext(argv[0]);
-	if (!handle) {
-	    dico_log(L_ERR, 0, _("cannot load module %s: %s"), argv[0],
-		     lt_dlerror());
-	    return 1;
-	}
 
-	pmod = (struct dico_handler_module *) lt_dlsym(handle, "module");
-	MODULE_ASSERT(pmod);
-	MODULE_ASSERT(pmod->version <= DICO_MODULE_VERSION);
-	MODULE_ASSERT(pmod->module_init
-		      || !(pmod->capabilities & DICO_CAPA_MULTI_INSTANCE));
-	MODULE_ASSERT(pmod->module_init_db);
-	MODULE_ASSERT(pmod->module_free_db);
-	MODULE_ASSERT(pmod->module_match);
-	MODULE_ASSERT(pmod->module_define);
-	MODULE_ASSERT(pmod->module_output_result);
-	MODULE_ASSERT(pmod->module_result_count);
-	MODULE_ASSERT(pmod->module_free_result);
-
-	if (pmod->module_open || pmod->module_close)
-	    MODULE_ASSERT(pmod->module_open && pmod->module_close);
+    if (inst->handle) {
+	dico_log(L_ERR, 0, _("module %s already loaded"), argv[0]);
+	return 1;
+    }
+	
+    handle = lt_dlopenext(argv[0]);
+    if (!handle) {
+	dico_log(L_ERR, 0, _("cannot load module %s: %s"), argv[0],
+		 lt_dlerror());
+	return 1;
     }
     
-    if (pmod->module_init && pmod->module_init(argc, argv, &inst_handle)) {
-	if (!module) 
-	    lt_dlclose(handle);
+    pmod = (struct dico_handler_module *) lt_dlsym(handle, "module");
+    MODULE_ASSERT(pmod);
+    MODULE_ASSERT(pmod->version <= DICO_MODULE_VERSION);
+    MODULE_ASSERT(pmod->module_init_db);
+    MODULE_ASSERT(pmod->module_free_db);
+    MODULE_ASSERT(pmod->module_match);
+    MODULE_ASSERT(pmod->module_define);
+    MODULE_ASSERT(pmod->module_output_result);
+    MODULE_ASSERT(pmod->module_result_count);
+    MODULE_ASSERT(pmod->module_free_result);
+
+    if (pmod->module_open || pmod->module_close)
+	MODULE_ASSERT(pmod->module_open && pmod->module_close);
+    
+    if (pmod->module_init && pmod->module_init(argc, argv)) {
+	lt_dlclose(handle);
 	dico_log(L_ERR, 0, _("%s: initialization failed"), argv[0]);
 	return 1;
     }
 
-    if (!module) {
-	module = xmalloc(sizeof(*module));
-	module->ident = xstrdup(argv[0]);
-	module->hmod = pmod;
-	module->handle = handle;
-	module->refcount = 0;
-    }
-    module->refcount++;
-    
-    inst->module = module;
-    if (pmod->capabilities & DICO_CAPA_MULTI_INSTANCE)
-	inst->inst_handle = inst_handle;
+    inst->module = pmod;
     return 0;
 }
 
@@ -152,11 +108,9 @@ dictd_init_database(dictd_database_t *dp)
 {
     dictd_module_instance_t *inst = dp->instance;
 
-    if (inst->module->hmod->module_init_db) {
-	dp->mod_handle = inst->module->hmod->module_init_db(inst->inst_handle,
-							    dp->name,
-							    dp->argc,
-							    dp->argv);
+    if (inst->module->module_init_db) {
+	dp->mod_handle = inst->module->module_init_db(dp->name,
+						      dp->argc, dp->argv);
 	if (!dp->mod_handle) {
 	    dico_log(L_ERR, 0, _("cannot initialize database `%s'"),
 		     dp->command);
@@ -171,8 +125,8 @@ dictd_open_database(dictd_database_t *dp)
 {
     dictd_module_instance_t *inst = dp->instance;
 
-    if (inst->module->hmod->module_open) {
-	if (inst->module->hmod->module_open(dp->mod_handle)) {
+    if (inst->module->module_open) {
+	if (inst->module->module_open(dp->mod_handle)) {
 	    dico_log(L_ERR, 0, _("cannot open database `%s'"),
 		     dp->command);
 	    return 1;
@@ -188,8 +142,8 @@ dictd_close_database(dictd_database_t *dp)
     
     if (dp->mod_handle) {
 	dictd_module_instance_t *inst = dp->instance;
-	if (inst->module->hmod->module_close) 
-	    rc = inst->module->hmod->module_close(dp->mod_handle);
+	if (inst->module->module_close) 
+	    rc = inst->module->module_close(dp->mod_handle);
     } else
 	rc = 0;
     return rc;
@@ -203,8 +157,8 @@ dictd_free_database(dictd_database_t *dp)
     
     if (dp->mod_handle) {
 	dictd_module_instance_t *inst = dp->instance;
-	if (inst->module->hmod->module_free_db) {
-	    rc = inst->module->hmod->module_free_db(dp->mod_handle);
+	if (inst->module->module_free_db) {
+	    rc = inst->module->module_free_db(dp->mod_handle);
 	    dp->mod_handle = NULL;
 	}
     } else
@@ -219,8 +173,8 @@ dictd_get_database_descr(dictd_database_t *db)
 	return db->descr;
     else {
 	dictd_module_instance_t *inst = db->instance;
-	if (inst->module->hmod->module_db_descr)
-	    return inst->module->hmod->module_db_descr(db->mod_handle);
+	if (inst->module->module_db_descr)
+	    return inst->module->module_db_descr(db->mod_handle);
     }
     return NULL;
 }
@@ -239,8 +193,8 @@ dictd_get_database_info(dictd_database_t *db)
 	return db->info;
     else {
 	dictd_module_instance_t *inst = db->instance;
-	if (inst->module->hmod->module_db_info)
-	    return inst->module->hmod->module_db_info(db->mod_handle);
+	if (inst->module->module_db_info)
+	    return inst->module->module_db_info(db->mod_handle);
     }
     return NULL;
 }
@@ -274,7 +228,7 @@ dictd_word_first(dico_stream_t stream, const char *word,
     itr = xdico_iterator_create(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
 	if (database_visible_p(db)) {
-	    struct dico_handler_module *mp = db->instance->module->hmod;
+	    struct dico_handler_module *mp = db->instance->module;
 	    dico_result_t res = strat ?
 		            mp->module_match(db->mod_handle, strat, word) :
 		            mp->module_define(db->mod_handle, word);
@@ -333,7 +287,7 @@ dictd_word_all(dico_stream_t stream, const char *word,
     itr = xdico_iterator_create(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
 	if (database_visible_p(db)) {
-	    struct dico_handler_module *mp = db->instance->module->hmod;
+	    struct dico_handler_module *mp = db->instance->module;
 	    dico_result_t res = strat ?
 		              mp->module_match(db->mod_handle, strat, word) :
 		              mp->module_define(db->mod_handle, word);
@@ -373,7 +327,7 @@ dictd_word_all(dico_stream_t stream, const char *word,
 	stream_printf(stream, begfmt, (unsigned long) total);
 	for (rp = dico_iterator_first(itr); rp; rp = dico_iterator_next(itr)) {
 	    proc(rp->db, rp->res, word, stream, rp->count);
-	    rp->db->instance->module->hmod->module_free_result(rp->res);
+	    rp->db->instance->module->module_free_result(rp->res);
 	    free(rp);
 	}
 	stream_writez(stream, (char*) endmsg);
@@ -391,7 +345,7 @@ print_matches(dictd_database_t *db, dico_result_t res,
 	      dico_stream_t stream, size_t count)
 {
     size_t i;
-    struct dico_handler_module *mp = db->instance->module->hmod;
+    struct dico_handler_module *mp = db->instance->module;
     dico_stream_t ostr = dictd_ostream_create(stream, db->content_type,
 	                                      db->content_transfer_encoding);
 
@@ -409,7 +363,7 @@ void
 dictd_match_word_db(dictd_database_t *db, dico_stream_t stream,
 		    const dico_strategy_t strat, const char *word)
 {
-    struct dico_handler_module *mp = db->instance->module->hmod;
+    struct dico_handler_module *mp = db->instance->module;
     dico_result_t res;
     size_t count;
     
@@ -472,7 +426,7 @@ print_definitions(dictd_database_t *db, dico_result_t res,
 {
     size_t i;
     char *descr = dictd_get_database_descr(db);
-    struct dico_handler_module *mp = db->instance->module->hmod;
+    struct dico_handler_module *mp = db->instance->module;
     for (i = 0; i < count; i++) {
 	dico_stream_t ostr;
 	stream_printf(stream, "151 \"%s\" %s \"%s\"\r\n",
@@ -491,7 +445,7 @@ void
 dictd_define_word_db(dictd_database_t *db, dico_stream_t stream,
 		     const char *word)
 {
-    struct dico_handler_module *mp = db->instance->module->hmod;
+    struct dico_handler_module *mp = db->instance->module;
     dico_result_t res;
     size_t count;
     

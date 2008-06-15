@@ -492,7 +492,7 @@ struct dico_option init_option[] = {
 };
 
 int
-mod_init(int argc, char **argv, dico_instance_t *pinst DICO_ARG_UNUSED)
+mod_init(int argc, char **argv)
 {
     int i;
     
@@ -551,8 +551,7 @@ mod_init(int argc, char **argv, dico_instance_t *pinst DICO_ARG_UNUSED)
 }
 
 static dico_handle_t
-mod_init_db(dico_instance_t inst DICO_ARG_UNUSED,
-	    const char *dbname, int argc, char **argv)
+mod_init_db(const char *dbname, int argc, char **argv)
 {
     struct _guile_database *db;
 

@@ -259,18 +259,11 @@ void stream_write_multiline(dico_stream_t str, const char *text);
 
 /* */
 
-typedef struct dictd_module {
-    char *ident;
-    struct dico_handler_module *hmod; 
-    lt_dlhandle handle;
-    size_t refcount;
-} dictd_module_t;
-    
 typedef struct dictd_module_instance {
     char *ident;
     char *command;
-    dictd_module_t *module;
-    dico_instance_t inst_handle;
+    struct dico_handler_module *module; 
+    lt_dlhandle handle;
 } dictd_module_instance_t;
 
 typedef struct dictd_database {

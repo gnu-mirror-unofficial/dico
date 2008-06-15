@@ -41,7 +41,7 @@ struct dico_option init_option[] = {
 };
 
 int
-mod_init(int argc, char **argv, dico_instance_t *pinst DICO_ARG_UNUSED)
+mod_init(int argc, char **argv)
 {
     if (dico_parseopt(init_option, argc, argv))
 	return 1;
@@ -361,8 +361,7 @@ open_stream(struct dictdb *db)
 static int compare_entry(const void *a, const void *b);
 
 dico_handle_t
-mod_init_db(dico_instance_t inst DICO_ARG_UNUSED,
-	    const char *dbname, int argc, char **argv)
+mod_init_db(const char *dbname, int argc, char **argv)
 {
     struct dictdb *db;
     char *filename = NULL;

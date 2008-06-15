@@ -41,7 +41,6 @@
 typedef struct dico_line_buffer *dico_linebuf_t;
 typedef struct dico_stream *dico_stream_t;
 
-typedef struct dico_instance_struct *dico_instance_t;
 typedef struct dico_handle_struct *dico_handle_t;
 typedef struct dico_result_struct *dico_result_t;
 #define DICO_SELECT_BEGIN 0
@@ -55,14 +54,12 @@ struct dico_strategy;
 
 #define DICO_CAPA_NONE 0
 #define DICO_CAPA_DEFAULT DICO_CAPA_NONE
-#define DICO_CAPA_MULTI_INSTANCE 0x0001
 
 struct dico_handler_module {
     unsigned version;
     unsigned capabilities;
-    int (*module_init) (int argc, char **argv, dico_instance_t *pinst);
-    dico_handle_t (*module_init_db) (dico_instance_t,
-				     const char *db, int argc, char **argv);
+    int (*module_init) (int argc, char **argv);
+    dico_handle_t (*module_init_db) (const char *db, int argc, char **argv);
     int (*module_free_db) (dico_handle_t hp);
     int (*module_open) (dico_handle_t hp);
     int (*module_close) (dico_handle_t hp);

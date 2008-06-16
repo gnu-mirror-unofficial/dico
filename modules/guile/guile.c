@@ -213,7 +213,7 @@ _guile_strategy_free(SCM message_smob)
   struct _guile_strategy *sp =
       (struct _guile_strategy *) SCM_CDR (message_smob);
   free(sp);
-  return sizeof (struct _guile_strategy);
+  return 0;
 }
 
 static int
@@ -591,6 +591,7 @@ mod_init(int argc, char **argv)
     if (guile_init_script && guile_load(guile_init_script)) {
 	dico_log(L_ERR, 0, _("mod_init: cannot load init script %s"), 
 		 guile_init_script);
+	return 1;
     }
 
     if (guile_init_fun && init_vtab(guile_init_fun, NULL, global_vtab))

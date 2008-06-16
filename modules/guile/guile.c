@@ -147,34 +147,46 @@ guile_redirect_output(char *filename)
     scm_set_current_error_port(port);
 }
 
-struct guile_proc {
-    char *name;
-    SCM symbol;
-};
+static char *
+proc_name(SCM proc)
+{
+    return scm_to_locale_string(
+	          scm_symbol_to_string(scm_procedure_name(proc)));
+}
+
+static void
+str_rettype_error(const char *name)
+{
+    dico_log(L_ERR, 0, _("%s: invalid return type"), name);
+}
+
+static void
+rettype_error(SCM proc)
+{
+    char *name = proc_name(proc);
+    str_rettype_error(name);
+    free(name);
+}
 
 int
-guile_call_proc(SCM *result, struct guile_proc *proc, SCM arglist)
+guile_call_proc(SCM *result, SCM proc, SCM arglist)
 {
     jmp_buf jmp_env;
     SCM cell;
-
+    
     if (setjmp(jmp_env)) {
+	char *name = proc_name(proc);
 	dico_log(L_NOTICE, 0,
 		 _("procedure `%s' failed: see error output for details"),
-		 proc->name);
+		 name);
+	free(name);
 	return 1;
     }
-    cell = scm_cons(proc->symbol, arglist);
+    cell = scm_cons(proc, arglist);
     *result = scm_internal_lazy_catch(SCM_BOOL_T,
 				      eval_catch_body, cell,
 				      eval_catch_handler, &jmp_env);
     return 0;
-}
-
-static void
-rettype_error(const char *name)
-{
-    dico_log(L_ERR, 0, _("%s: invalid return type"), name);
 }
 
 
@@ -417,6 +429,7 @@ static int guile_debug;
 
 static char *guile_init_script;
 static char *guile_exit_script;
+static char *guile_init_fun;
 static char *guile_outfile;
 
 enum guile_proc_ind {
@@ -442,19 +455,91 @@ static char *guile_proc_name[] = {
     "match",
     "define",
     "output",
-    "result_count",
-    "compare_count",
-    "free_result"
+    "result-count",
+    "compare-count",
+    "free-result"
 };
 
-struct guile_proc guile_proc[MAX_PROC];
+typedef SCM guile_vtab[MAX_PROC];
+
+static guile_vtab global_vtab;
 
 struct _guile_database {
     const char *dbname;
+    guile_vtab vtab;
     int argc;
     char **argv;
     SCM handle;
 };
+
+static int
+proc_name_to_index(const char *name)
+{
+    int i;
+    for (i = 0; i < MAX_PROC; i++)
+	if (strcmp(guile_proc_name[i], name) == 0)
+	    break;
+    return i;
+}
+
+struct init_struct {
+    const char *init_fun;
+    const char *db_name;
+};
+
+static SCM
+call_init_handler(void *data)
+{
+    struct init_struct *p = (struct init_struct *)data;
+    SCM procsym = SCM_VARIABLE_REF(scm_c_lookup(p->init_fun));
+    SCM arg;
+    if (p->db_name)
+	arg = scm_makfrom0str(p->db_name);
+    else
+	arg = SCM_BOOL_F;
+    return scm_primitive_eval(scm_list_2(procsym,
+					 scm_cons(SCM_IM_QUOTE, arg)));
+}
+
+static int
+init_vtab(const char *init_fun, const char *dbname, guile_vtab vtab)
+{
+    SCM res;
+    struct init_struct istr;
+
+    istr.init_fun = init_fun;
+    istr.db_name = dbname;
+    if (guile_safe_exec(call_init_handler, &istr, &res))
+	return 1;
+    
+    if (!scm_is_pair(res)) {
+	str_rettype_error(init_fun);
+	return 1;
+    }
+    for (; res != SCM_EOL; res = SCM_CDR(res)) {
+	int idx;
+	char *ident;
+	SCM name, proc;
+	SCM car = SCM_CAR(res);
+	if (!scm_is_pair(res)
+	    || !scm_is_string(name = SCM_CAR(car))
+	    || !scm_procedure_p(proc = SCM_CDR(car)))  {
+	    str_rettype_error(init_fun);
+	    return 1;
+	}
+	ident = scm_to_locale_string(name);
+	idx = proc_name_to_index(ident);
+	if (idx == MAX_PROC) {
+	    dico_log(L_ERR, 0, _("%s: %s: unknown virtual function"),
+		     init_fun, ident);
+	    free(ident);
+	    return 1;
+	}
+	free(ident);
+	vtab[idx] = proc;
+    }
+    return 0;
+}
 
 static int
 set_load_path(struct dico_option *opt, const char *val)
@@ -475,19 +560,7 @@ struct dico_option init_option[] = {
     { DICO_OPTSTR(exit-script), dico_opt_string, &guile_exit_script },
     { DICO_OPTSTR(load-path), dico_opt_null, NULL, { 0 }, set_load_path },
     { DICO_OPTSTR(outfile), dico_opt_string, &guile_outfile },
-    { DICO_OPTSTR(open), dico_opt_string, &guile_proc[open_proc].name },
-    { DICO_OPTSTR(close), dico_opt_string, &guile_proc[close_proc].name },
-    { DICO_OPTSTR(info), dico_opt_string, &guile_proc[info_proc].name },
-    { DICO_OPTSTR(descr), dico_opt_string, &guile_proc[descr_proc].name },
-    { DICO_OPTSTR(match), dico_opt_string, &guile_proc[match_proc].name },
-    { DICO_OPTSTR(define), dico_opt_string, &guile_proc[define_proc].name },
-    { DICO_OPTSTR(output), dico_opt_string, &guile_proc[output_proc].name },
-    { DICO_OPTSTR(result-count), dico_opt_string,
-      &guile_proc[result_count_proc].name },
-    { DICO_OPTSTR(compare-count), dico_opt_string,
-      &guile_proc[compare_count_proc].name },
-    { DICO_OPTSTR(free-result), dico_opt_string,
-      &guile_proc[free_result_proc].name },
+    { DICO_OPTSTR(init-fun), dico_opt_string, &guile_init_fun },
     { NULL }
 };
 
@@ -520,8 +593,11 @@ mod_init(int argc, char **argv)
 		 guile_init_script);
     }
 
+    if (guile_init_fun && init_vtab(guile_init_fun, NULL, global_vtab))
+	return 1;
+    
     for (i = 0; i < MAX_PROC; i++) {
-	if (!guile_proc[i].name) {
+	if (!global_vtab[i]) {
 	    switch (i) {
 	    case open_proc:
 	    case match_proc:
@@ -535,15 +611,6 @@ mod_init(int argc, char **argv)
 	    default:
 		break;
 	    }
-	} else {
-	    SCM procsym = SCM_VARIABLE_REF(scm_c_lookup(guile_proc[i].name));
-	    if (scm_procedure_p(procsym) != SCM_BOOL_T) {
-		dico_log(L_ERR, 0,
-			 _("%s is not a procedure object"),
-			 guile_proc[i].name);
-		return 1;
-	    }
-	    guile_proc[i].symbol = procsym;
 	}
     }
 
@@ -561,6 +628,11 @@ mod_init_db(const char *dbname, int argc, char **argv)
 	return NULL;
     }
     db->dbname = dbname;
+    memcpy(db->vtab, global_vtab, sizeof(db->vtab));
+    if (guile_init_fun && init_vtab(guile_init_fun, dbname, global_vtab)) {
+	free(db);
+	return 1;
+    }
     db->argc = argc;
     db->argv = argv;
     return (dico_handle_t)db;
@@ -580,8 +652,8 @@ mod_close(dico_handle_t hp)
     struct _guile_database *db = (struct _guile_database *)hp;
     SCM res;
 
-    if (guile_proc[close_proc].name)
-	guile_call_proc(&res, &guile_proc[close_proc],
+    if (db->vtab[close_proc])
+	guile_call_proc(&res, db->vtab[close_proc],
 			scm_list_1(scm_cons(SCM_IM_QUOTE, db->handle)));
     scm_gc_unprotect_object(db->handle);
 
@@ -610,7 +682,7 @@ static int
 mod_open(dico_handle_t dp)
 {
     struct _guile_database *db = (struct _guile_database *)dp;
-    if (guile_call_proc(&db->handle, &guile_proc[open_proc],
+    if (guile_call_proc(&db->handle, db->vtab[open_proc],
 			scm_cons(scm_cons(SCM_IM_QUOTE,
 					  scm_makfrom0str(db->dbname)),
 				 argv_to_scm(db->argc, db->argv)))) 
@@ -624,16 +696,16 @@ mod_open(dico_handle_t dp)
 static char *
 mod_get_text(struct _guile_database *db, int n)
 {
-    if (guile_proc[n].name) {
+    if (db->vtab[n]) {
 	SCM res;
 	
-	if (guile_call_proc(&res, &guile_proc[n],
+	if (guile_call_proc(&res, db->vtab[n],
 			    scm_list_1(scm_cons(SCM_IM_QUOTE, db->handle))))
 	    return NULL;
 	if (scm_is_string(res)) 
 	    return strdup(scm_i_string_chars(res));
 	else {
-	    rettype_error(guile_proc[n].name);
+	    rettype_error(db->vtab[n]);
 	    return NULL;
 	}
     }
@@ -656,6 +728,22 @@ mod_descr(dico_handle_t hp)
 
 
 
+struct guile_result {
+    struct _guile_database *db;
+    SCM result;
+};
+
+static dico_result_t
+make_guile_result(struct _guile_database *db, SCM res)
+{
+    struct guile_result *rp = malloc(sizeof(*rp));
+    if (rp) {
+	rp->db = db;
+	rp->result = res;
+    }
+    return (dico_result_t) rp;
+}
+
 static dico_result_t
 mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 {
@@ -669,7 +757,7 @@ mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 	return NULL;
     }
     
-    if (guile_call_proc(&res, &guile_proc[match_proc],
+    if (guile_call_proc(&res, db->vtab[match_proc],
 			scm_list_3(scm_cons(SCM_IM_QUOTE, db->handle),
 				   scm_cons(SCM_IM_QUOTE, scm_strat),
 				   scm_cons(SCM_IM_QUOTE,
@@ -682,7 +770,7 @@ mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
     if (res == SCM_BOOL_F || res == SCM_EOL)
 	return NULL;
     scm_gc_protect_object(res);
-    return (dico_result_t)res;
+    return make_guile_result(db, res);
 }
 
 static dico_result_t
@@ -691,7 +779,7 @@ mod_define(dico_handle_t hp, const char *word)
     struct _guile_database *db = (struct _guile_database *)hp;
     SCM res;
 	
-    if (guile_call_proc(&res, &guile_proc[define_proc],
+    if (guile_call_proc(&res, db->vtab[define_proc],
 			scm_list_2(scm_cons(SCM_IM_QUOTE, db->handle),
 				   scm_cons(SCM_IM_QUOTE,
 					    scm_makfrom0str(word)))))
@@ -700,22 +788,22 @@ mod_define(dico_handle_t hp, const char *word)
     if (res == SCM_BOOL_F || res == SCM_EOL)
 	return NULL;
     scm_gc_protect_object(res);
-    return (dico_result_t)res;
+    return make_guile_result(db, res);
 }
 
 static int
 mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 {
     int rc;
-    SCM handle = (SCM)rp;
+    struct guile_result *gres = (struct guile_result *)rp;
     SCM res;
     SCM oport = scm_current_output_port();
     SCM port = _make_dico_port(str);
     
     scm_set_current_output_port(port);
     
-    rc = guile_call_proc(&res, &guile_proc[output_proc],
-			 scm_list_2(scm_cons(SCM_IM_QUOTE, handle),
+    rc = guile_call_proc(&res, gres->db->vtab[output_proc],
+			 scm_list_2(scm_cons(SCM_IM_QUOTE, gres->result),
 				    scm_cons(SCM_IM_QUOTE,
 					     scm_from_int(n))));
     scm_set_current_output_port(oport);
@@ -728,33 +816,34 @@ mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 static size_t
 mod_result_count (dico_result_t rp)
 {
-    SCM handle = (SCM)rp;
+    struct guile_result *gres = (struct guile_result *)rp;
     SCM res;
     
-    if (guile_call_proc(&res, &guile_proc[result_count_proc],
-			scm_list_1(scm_cons(SCM_IM_QUOTE, handle))))
+    if (guile_call_proc(&res, gres->db->vtab[result_count_proc],
+			scm_list_1(scm_cons(SCM_IM_QUOTE, gres->result))))
 	return 0;
     if (scm_is_integer(res)) 
 	return scm_to_int32(res);
     else
-	rettype_error(guile_proc[result_count_proc].name);
+	rettype_error(gres->db->vtab[result_count_proc]);
     return 0;
 }
 
 static size_t
 mod_compare_count (dico_result_t rp)
 {
-    SCM handle = (SCM)rp;
-    if (guile_proc[compare_count_proc].name) {
+    struct guile_result *gres = (struct guile_result *)rp;
+
+    if (gres->db->vtab[compare_count_proc]) {
 	SCM res;
 	
-	if (guile_call_proc(&res, &guile_proc[compare_count_proc],
-			    scm_list_1(scm_cons(SCM_IM_QUOTE, handle))))
+	if (guile_call_proc(&res, gres->db->vtab[compare_count_proc],
+			    scm_list_1(scm_cons(SCM_IM_QUOTE, gres->result))))
 	    return 0;
 	if (scm_is_integer(res)) 
 	    return scm_to_int32(res);
 	else 
-	    rettype_error(guile_proc[compare_count_proc].name);
+	    rettype_error(gres->db->vtab[compare_count_proc]);
     }
     return 0;
 }
@@ -762,14 +851,16 @@ mod_compare_count (dico_result_t rp)
 static void
 mod_free_result(dico_result_t rp)
 {
-    SCM handle = (SCM)rp;
-    if (guile_proc[free_result_proc].name) {
+    struct guile_result *gres = (struct guile_result *)rp;
+
+    if (gres->db->vtab[free_result_proc]) {
 	SCM res;
 	
-	guile_call_proc(&res, &guile_proc[free_result_proc],
-			scm_list_1(scm_cons(SCM_IM_QUOTE, handle)));
+	guile_call_proc(&res, gres->db->vtab[free_result_proc],
+			scm_list_1(scm_cons(SCM_IM_QUOTE, gres->result)));
     }
-    scm_gc_unprotect_object(handle);
+    scm_gc_unprotect_object(gres->result);
+    free(gres);
 }
 
 struct dico_handler_module DICO_EXPORT(guile, module) = {

@@ -24,14 +24,14 @@
 
 /* List of configured matching strategies */
 static dico_list_t /* of struct dico_strategy */ strategy_list;
-static const dico_strategy_t default_strategy;
+static dico_strategy_t default_strategy;
 
 #define DEFSTRATNAME(s) ((s)[0] == '.' && (s)[1] == 0)
 
 static int
 strat_name_cmp(const void *item, const void *data)
 {
-    dico_strategy_t const strat = item;
+    dico_strategy_t strat = (dico_strategy_t) item;
     const char *name = data;
     return strcmp(strat->name, name);
 }
@@ -53,7 +53,7 @@ dico_strategy_dup(const dico_strategy_t strat)
     return np;
 }
 
-const dico_strategy_t
+dico_strategy_t
 dico_strategy_find(const char *name)
 {
     if (DEFSTRATNAME(name)) 
@@ -99,13 +99,15 @@ dico_strategy_iterate(dico_list_iterator_t itr, void *data)
 int
 dico_set_default_strategy(const char *name)
 {
-    const dico_strategy_t sp;
+    dico_strategy_t sp;
 
     if (DEFSTRATNAME(name) || (sp = dico_strategy_find(name)) == NULL) {
 	errno = EINVAL;
 	return 1;
     }
-
+    if (default_strategy)
+	default_strategy->is_default = 0;
+    sp->is_default = 1;
     default_strategy = sp;
     return 0;
 }

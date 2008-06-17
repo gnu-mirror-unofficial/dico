@@ -25,10 +25,11 @@ struct dico_strategy {
     char *descr;
     dico_select_t sel;
     void *closure;
+    int is_default;
 };
 
 dico_strategy_t dico_strategy_dup(const dico_strategy_t strat);
-const dico_strategy_t dico_strategy_find(const char *name);
+dico_strategy_t dico_strategy_find(const char *name);
 int dico_strategy_add(const dico_strategy_t strat);
 dico_iterator_t  dico_strategy_iterator(void);
 void dico_strategy_iterate(dico_list_iterator_t itr, void *data);
@@ -36,5 +37,6 @@ size_t dico_strategy_count(void);
 
 int dico_set_default_strategy(const char *name);
 const dico_strategy_t dico_get_default_strategy(void);
+#define dico_strategy_is_default_p(s) ((s)->is_default)
 
 #endif

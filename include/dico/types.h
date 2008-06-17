@@ -47,8 +47,7 @@ typedef struct dico_result_struct *dico_result_t;
 #define DICO_SELECT_RUN   1
 #define DICO_SELECT_END   2
 typedef int (*dico_select_t) (int, const char *, const char *, void *);
-struct dico_strategy;
-#define dico_strategy_t struct dico_strategy *
+typedef struct dico_strategy *dico_strategy_t;
 
 #define DICO_MODULE_VERSION 1
 

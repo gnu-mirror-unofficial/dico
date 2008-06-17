@@ -194,7 +194,7 @@ long _guile_strategy_tag;
 
 struct _guile_strategy
 {
-    const dico_strategy_t strat;
+    dico_strategy_t strat;
 };
 
 static SCM
@@ -295,7 +295,7 @@ SCM_DEFINE(scm_dico_strat_name, "dico-strat-name", 1, 0, 0,
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(scm_dico_strat_description, "dico-strat-descriprion", 1, 0, 0,
+SCM_DEFINE(scm_dico_strat_description, "dico-strat-description", 1, 0, 0,
 	   (SCM STRAT),
 	   "Return a textual description of the strategy STRAT.")
 #define FUNC_NAME s_scm_dico_strat_description
@@ -305,6 +305,19 @@ SCM_DEFINE(scm_dico_strat_description, "dico-strat-descriprion", 1, 0, 0,
     SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
     sp = (struct _guile_strategy *) SCM_CDR(STRAT);
     return scm_makfrom0str(sp->strat->descr);
+}
+#undef FUNC_NAME
+
+SCM_DEFINE(scm_dico_strat_default_p, "dico-strat-default?", 1, 0, 0,
+	   (SCM STRAT),
+	   "Return true if STRAT is a default strategy.")
+#define FUNC_NAME s_scm_dico_strat_default_p
+{
+    struct _guile_strategy *sp;
+    
+    SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
+    sp = (struct _guile_strategy *) SCM_CDR(STRAT);
+    return dico_strategy_is_default(sp->strat) ? SCM_BOOL_T : SCM_BOOL_F;
 }
 #undef FUNC_NAME
 
@@ -422,6 +435,14 @@ _guile_init_funcs (void)
 		       scm_dico_strat_name);
     scm_c_define_gsubr(s_scm_dico_strat_description, 1, 0, 0,
 		       scm_dico_strat_description);
+    scm_c_define_gsubr(s_scm_dico_strat_default_p, 1, 0, 0,
+		       scm_dico_strat_default_p);
+    scm_c_export("dico-strat-selector?", 
+		 "dico-strat-select?",
+		 "dico-strat-name",
+		 "dico-strat-description",
+	         "dico-strat-default?",
+		 NULL);
 }
 
 
@@ -632,7 +653,7 @@ mod_init_db(const char *dbname, int argc, char **argv)
     memcpy(db->vtab, global_vtab, sizeof(db->vtab));
     if (guile_init_fun && init_vtab(guile_init_fun, dbname, global_vtab)) {
 	free(db);
-	return 1;
+	return NULL;
     }
     db->argc = argc;
     db->argv = argv;

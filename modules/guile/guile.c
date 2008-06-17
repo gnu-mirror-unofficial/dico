@@ -317,7 +317,7 @@ SCM_DEFINE(scm_dico_strat_default_p, "dico-strat-default?", 1, 0, 0,
     
     SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
     sp = (struct _guile_strategy *) SCM_CDR(STRAT);
-    return dico_strategy_is_default(sp->strat) ? SCM_BOOL_T : SCM_BOOL_F;
+    return dico_strategy_is_default_p(sp->strat) ? SCM_BOOL_T : SCM_BOOL_F;
 }
 #undef FUNC_NAME
 
@@ -533,7 +533,7 @@ init_vtab(const char *init_fun, const char *dbname, guile_vtab vtab)
     if (guile_safe_exec(call_init_handler, &istr, &res))
 	return 1;
     
-    if (!scm_is_pair(res)) {
+    if (!scm_is_pair(res) && res != SCM_EOL) {
 	str_rettype_error(init_fun);
 	return 1;
     }
@@ -588,8 +588,6 @@ struct dico_option init_option[] = {
 int
 mod_init(int argc, char **argv)
 {
-    int i;
-    
     if (dico_parseopt(init_option, argc, argv))
 	return 1;
 
@@ -618,24 +616,6 @@ mod_init(int argc, char **argv)
     if (guile_init_fun && init_vtab(guile_init_fun, NULL, global_vtab))
 	return 1;
     
-    for (i = 0; i < MAX_PROC; i++) {
-	if (!global_vtab[i]) {
-	    switch (i) {
-	    case open_proc:
-	    case match_proc:
-	    case define_proc:
-	    case output_proc:
-	    case result_count_proc:
-		dico_log(L_ERR, 0,
-			 _("%s: faulty guile module - missing `%s'"),
-			 argv[0], guile_proc_name[i]);
-		return 1;
-	    default:
-		break;
-	    }
-	}
-    }
-
     return 0;
 }
 
@@ -643,7 +623,9 @@ static dico_handle_t
 mod_init_db(const char *dbname, int argc, char **argv)
 {
     struct _guile_database *db;
-
+    int i;
+    int err = 0;
+    
     db = malloc(sizeof(*db));
     if (!db) {
 	memerr("mod_init_db");
@@ -651,10 +633,34 @@ mod_init_db(const char *dbname, int argc, char **argv)
     }
     db->dbname = dbname;
     memcpy(db->vtab, global_vtab, sizeof(db->vtab));
-    if (guile_init_fun && init_vtab(guile_init_fun, dbname, global_vtab)) {
+    if (guile_init_fun && init_vtab(guile_init_fun, dbname, db->vtab)) {
 	free(db);
 	return NULL;
     }
+
+    for (i = 0; i < MAX_PROC; i++) {
+	if (!db->vtab[i]) {
+	    switch (i) {
+	    case open_proc:
+	    case match_proc:
+	    case define_proc:
+	    case output_proc:
+	    case result_count_proc:
+		dico_log(L_ERR, 0,
+			 _("%s: %s: void virtual function"),
+			 argv[0], guile_proc_name[i]);
+		err++;
+	    default:
+		break;
+	    }
+	}
+    }
+    
+    if (err) {
+	free(db);
+	return NULL;
+    }
+    
     db->argc = argc;
     db->argv = argv;
     return (dico_handle_t)db;

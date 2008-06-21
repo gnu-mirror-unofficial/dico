@@ -322,6 +322,56 @@ SCM_DEFINE(scm_dico_strat_default_p, "dico-strat-default?", 1, 0, 0,
 #undef FUNC_NAME
 
 
+static SCM
+_scm_guile_sel(void *data)
+{
+    return scm_primitive_eval((SCM)data);
+}
+
+static int
+_guile_selector(int cmd, const char *word, const char *dict_word,
+		void *closure)
+{
+    SCM result;
+    SCM list = scm_list_4((SCM)closure,
+			  scm_cons(SCM_IM_QUOTE, scm_from_int (cmd)),
+			  scm_cons(SCM_IM_QUOTE, scm_makfrom0str(word)),
+			  scm_cons(SCM_IM_QUOTE, scm_makfrom0str(dict_word)));
+    if (guile_safe_exec(_scm_guile_sel, list, &result))
+	return 0;
+    return result != SCM_BOOL_F;
+}
+
+SCM_DEFINE(scm_dico_register_strat, "dico-register-strat", 2, 1, 0,
+	   (SCM STRAT, SCM DESCR, SCM FUN),
+	   "Register a new strategy.")
+#define FUNC_NAME s_scm_dico_register_strat
+{
+    struct dico_strategy strat;
+	
+    SCM_ASSERT(scm_is_string(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
+    SCM_ASSERT(scm_is_string(DESCR), DESCR, SCM_ARG2, FUNC_NAME);
+
+    if (!SCM_UNBNDP(FUN))
+	SCM_ASSERT(scm_procedure_p(FUN), FUN, SCM_ARG3, FUNC_NAME);
+
+    strat.name = scm_to_locale_string(STRAT);
+    strat.descr = scm_to_locale_string(DESCR);
+    if (SCM_UNBNDP(FUN)) {
+	strat.sel = NULL;
+	strat.closure = NULL;
+    } else {
+	strat.sel = _guile_selector;
+	strat.closure = FUN;
+    }
+    dico_strategy_add(&strat);
+    free(strat.name);
+    free(strat.descr);
+    return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
+
 static long scm_tc16_dico_port;
 struct _guile_dico_port {
     dico_stream_t str;
@@ -437,11 +487,14 @@ _guile_init_funcs (void)
 		       scm_dico_strat_description);
     scm_c_define_gsubr(s_scm_dico_strat_default_p, 1, 0, 0,
 		       scm_dico_strat_default_p);
+    scm_c_define_gsubr(s_scm_dico_register_strat, 2, 1, 0,
+		       scm_dico_register_strat);
     scm_c_export("dico-strat-selector?", 
 		 "dico-strat-select?",
 		 "dico-strat-name",
 		 "dico-strat-description",
 	         "dico-strat-default?",
+		 "dico-register-strat",
 		 NULL);
 }
 

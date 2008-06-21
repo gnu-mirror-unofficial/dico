@@ -30,9 +30,10 @@ struct input_file_ident {
 };
 
 struct buffer_ctx {
-    struct buffer_ctx *prev;
-    dictd_locus_t locus;
-    size_t namelen;
+    struct buffer_ctx *prev;  /* Pointer to previous context */
+    dictd_locus_t locus;      /* Current input location */
+    size_t namelen;           /* Length of the file name */
+    size_t xlines;            /* Number of #line directives output so far */
     struct input_file_ident id;
     FILE *infile;
 };
@@ -79,11 +80,13 @@ pp_line_stmt_size()
     char nbuf[128];
     size_t n = snprintf(nbuf, sizeof nbuf, "%lu",
 			(unsigned long) LOCUS.line);
+    size_t n1 = snprintf(nbuf, sizeof nbuf, "%lu",
+			 (unsigned long) context_stack->xlines + 1);
     if (context_stack->namelen == 0)
 	context_stack->namelen = strlen(LOCUS.file);
-    /* "#line " is 6 chars, another space, two quotes and a linefeed
-       make another 4, summa facit 10 */
-    return 10 + n + context_stack->namelen;
+    /* "#line " is 6 chars, two more spaces, two quotes and a linefeed
+       make another 5, summa facit 11 */
+    return 11 + n + n1 + context_stack->namelen;
 }
 
 static void
@@ -99,10 +102,12 @@ pp_line_stmt()
     }
     
     p = putback_buffer + putback_size;
+    context_stack->xlines++;
     snprintf(p, putback_max - putback_size,
-	     "#line %lu \"%s\"\n",
+	     "#line %lu \"%s\" %lu\n",
 	     (unsigned long) LOCUS.line,
-	      LOCUS.file);
+	     LOCUS.file,
+	     (unsigned long) context_stack->xlines);
     putback_size += ls_size;
 }
 
@@ -311,7 +316,7 @@ text_compare(void const *data1, void const *data2)
 
 /* Lookup a text. If it does not exist, create it. */
 char *
-instal_text(const char *str)
+install_text(const char *str)
 {
     char *text, *s;
     
@@ -378,8 +383,9 @@ push_source(const char *name, int once)
     
     /* Push current context */
     ctx = xmalloc (sizeof (*ctx));
-    ctx->locus.file = instal_text(name);
+    ctx->locus.file = install_text(name);
     ctx->locus.line = 1;
+    ctx->xlines = 0;
     ctx->namelen = strlen(ctx->locus.file);
     ctx->id.i_node = st.st_ino;
     ctx->id.device = st.st_dev;
@@ -498,62 +504,6 @@ parse_include(const char *text, int once)
     return rc;
 }
 
-static int
-assign_locus(dictd_locus_t *ploc, char *name, char *line)
-{
-    char *p;
-
-    if (name)
-	ploc->file = instal_text(name);
-    ploc->line = strtoul(line, &p, 10);
-    return *p != 0;
-}
-
-int
-parse_line(char *text, dictd_locus_t *ploc)
-{
-    int rc = 1;
-    int argc;
-    char **argv;
-
-    while (*text && isspace (*text))
-	text++;
-    text++;
-
-    if (dico_argcv_get(text, "", NULL, &argc, &argv)) 
-	config_error(&LOCUS, 0, _("cannot parse #line line"));
-    else {
-	if (argc == 2)
-	    rc = assign_locus(ploc, NULL, argv[1]);
-	else if (argc == 3)
-	    rc = assign_locus(ploc, argv[2], argv[1]);
-	else 
-	    config_error(&LOCUS, 0, _("invalid #line statement"));
-	
-	if (rc) 
-	    config_error(&LOCUS, 0, _("malformed #line statement"));
-    }
-    dico_argcv_free(argc, argv);
-    return rc;
-}
-
-void
-parse_line_cpp(char *text, dictd_locus_t *ploc)
-{
-    int argc;
-    char **argv;
-
-    if (dico_argcv_get(text, "", NULL, &argc, &argv)) 
-	config_error(&LOCUS, 0, _("cannot parse #line line"));
-    else if (argc < 3)
-	config_error(&LOCUS, 0, _("invalid #line statement"));
-    else {
-	if (assign_locus(ploc, argv[2], argv[1]))
-	    config_error(&LOCUS, 0, _("malformed #line statement"));
-    }
-    dico_argcv_free(argc, argv);
-}
-
 int
 pp_init(const char *name)
 {
@@ -571,37 +521,6 @@ pp_done()
     free(putback_buffer);
 }
 
-static void
-copy(FILE *infile, FILE *outfile)
-{
-    char *buf = NULL;
-    size_t bufsize;
-
-    fseek(infile, 0, SEEK_END);
-    bufsize = ftell(infile);
-    fseek(infile, 0, SEEK_SET);
-    if (bufsize == 0)
-	bufsize = BUFSIZ;
-    do {
-	buf = malloc(bufsize);
-    } while (buf == NULL && (bufsize /= 2) != 0);
-    if (!buf) 
-	xalloc_die();
-    
-    while (1) {
-	size_t rsize = fread(buf, 1, bufsize, infile);
-	if (rsize == 0)
-	    break;
-	while (rsize) {
-	    size_t wsize = fwrite(buf, 1, rsize, outfile);
-	    if (wsize == 0)
-		break;
-	    rsize -= wsize;
-	}
-    }
-    free(buf);
-}
-
 int
 preprocess_config(const char *extpp)
 {
@@ -612,34 +531,33 @@ preprocess_config(const char *extpp)
 	return 1;
     if (extpp) {
 	FILE *outfile;
-	char *setup_file;
+	char *setup_file = NULL;
+	char *cmd;
 	
-	debug1(1, "Running preprocessor: `%s'", extpp);
-	outfile = popen(extpp, "w");
+	if (try_file("pp-setup", 1, 0, &setup_file)) 
+	    asprintf(&cmd, "%s %s -", extpp, setup_file);
+	else
+	    cmd = extpp;
+	debug1(1, "Running preprocessor: `%s'", cmd);
+	outfile = popen(cmd, "w");
 	if (!outfile) {
 	    dico_log(L_ERR, errno,
 		     _("Unable to start external preprocessor `%s'"),
-		     extpp);
-	    return 1;
-	}
-	
-	if (try_file("pp-setup", 1, 0, &setup_file)) {
-	    FILE *infile = fopen(setup_file, "r");
-	    if (!infile) 
-		dico_log(L_ERR, errno,
-			 _("Cannot open preprocessor setup file `%s'"),
-			 setup_file);
-	    else {
-		debug1(1, "Using preprocessor setup file `%s'", setup_file);
-		copy(infile, outfile);
-		fclose(infile);
+		     cmd);
+	    if (setup_file) {
+		free(setup_file);
+		free(cmd);
 	    }
-	    free(setup_file);
+	    return 1;
 	}
 	
 	while ((i = pp_fill_buffer(buffer, sizeof buffer)))
 	    fwrite(buffer, 1, i, outfile);
 	pclose(outfile);
+	if (setup_file) {
+	    free(setup_file);
+	    free(cmd);
+	}
     } else {
 	while ((i = pp_fill_buffer(buffer, sizeof buffer)))
 	    fwrite(buffer, 1, i, stdout);

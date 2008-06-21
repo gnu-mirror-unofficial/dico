@@ -419,8 +419,6 @@ extern void print_usage(void);
 /* pp.c */
 void include_path_setup(void);
 void add_include_dir(char *dir);
-void parse_line_cpp(char *text, dictd_locus_t *ploc);
-int parse_line(char *text, dictd_locus_t *ploc);
 int pp_init(const char *name);
 void pp_done(void);
 int preprocess_config(const char *extpp);
@@ -429,6 +427,7 @@ FILE *pp_extrn_start(int argc, const char **argv, pid_t *ppid);
 void pp_extrn_shutdown(pid_t pid);
 size_t pp_fill_buffer(char *buf, size_t size);
 void run_lint();
+char *install_text(const char *str);
 
 /* accesslog.c */
 void access_log_status(const char *first, const char *last);

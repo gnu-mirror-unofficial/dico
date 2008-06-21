@@ -29,7 +29,15 @@ static int multiline_unescape;         /* Unescape here-document contents */
 static int (*char_to_strip)(char);     /* Strip matching characters of each
 					  here-document line */
 
-dictd_locus_t locus;
+dictd_locus_t locus;   /* Input file location */
+/* Line correction.  Equals to the number of #line directives inserted into
+   the input by Dico preprocessor instance.  The external preprocessor, if
+   any, counts these as input lines and therefore the line numbers in *its*
+   #line directives are offset by the value of XLINES.
+   
+   Uff, running two preprocessors is confusing...
+*/
+size_t xlines; 
 static struct obstack stk;
     
 static void multiline_begin(char *);
@@ -38,6 +46,10 @@ static void multiline_finish(void);
 static char *multiline_strip_tabs(char *text);
 static int ident();
 static int isemptystr(int off);
+
+static void parse_line(char *text, dictd_locus_t *ploc, size_t *pxlines);
+static void parse_line_cpp(char *text, dictd_locus_t *ploc, size_t *pxlines);
+
 
 #undef YY_INPUT
 #define YY_INPUT(buf,result,max_size) do {                  \
@@ -64,8 +76,8 @@ P [1-9][0-9]*
 <COMMENT>\n             ++locus.line;
 <COMMENT>"*"+"/"        BEGIN(INITIAL);
          /* Line directive */
-^[ \t]*#[ \t]*{P}[ \t]+\".*\".*\n parse_line_cpp(yytext, &locus);
-^[ \t]*#[ \t]*line[ \t].*\n parse_line(yytext,  &locus);
+^[ \t]*#[ \t]*{P}[ \t]+\".*\".*\n parse_line_cpp(yytext, &locus, &xlines);
+^[ \t]*#[ \t]*line[ \t].*\n parse_line(yytext, &locus, &xlines);
          /* End-of-line comments */
 #.*\n     { locus.line++; }
 #.*     /* end-of-file comment */;
@@ -364,3 +376,72 @@ config_value_dup(config_value_t *input)
     *ptr = *input;
     return ptr;
 }
+
+
+static int
+assign_locus(dictd_locus_t *ploc, char *name, char *line, size_t *pxlines)
+{
+    char *p;
+
+    if (name) {
+	if (pxlines && (!ploc->file || strcmp(name, ploc->file)))
+	    *pxlines = 0;
+	ploc->file = install_text(name);
+    }
+    ploc->line = strtoul(line, &p, 10) - (pxlines ? *pxlines : 0);
+    return *p != 0;
+}
+
+static void
+parse_line(char *text, dictd_locus_t *ploc, size_t *pxlines)
+{
+    int rc = 1;
+    int argc;
+    char **argv;
+
+    while (*text && isspace (*text))
+	text++;
+    text++;
+
+    if (dico_argcv_get(text, "", NULL, &argc, &argv)) 
+	config_error(ploc, 0, _("cannot parse #line line"));
+    else {
+	if (argc == 2)
+	    rc = assign_locus(ploc, NULL, argv[1], pxlines);
+	else if (argc == 3) 
+	    rc = assign_locus(ploc, argv[2], argv[1], pxlines);
+	else if (argc == 4) {
+	    rc = assign_locus(ploc, argv[2], argv[1], 0);
+	    if (rc == 0) {
+		char *p;
+		unsigned long x = strtoul(argv[3], &p, 10);
+		rc = *p != 0;
+		if (rc == 0)
+		    *pxlines = x;
+	    }
+	} else 
+	    config_error(ploc, 0, _("invalid #line statement"));
+	
+	if (rc) 
+	    config_error(ploc, 0, _("malformed #line statement"));
+    }
+    dico_argcv_free(argc, argv);
+}
+
+static void
+parse_line_cpp(char *text, dictd_locus_t *ploc, size_t *pxlines)
+{
+    int argc;
+    char **argv;
+
+    if (dico_argcv_get(text, "", NULL, &argc, &argv)) 
+	config_error(ploc, 0, _("cannot parse #line line"));
+    else if (argc < 3)
+	config_error(ploc, 0, _("invalid #line statement"));
+    else {
+	if (assign_locus(ploc, argv[2], argv[1], pxlines))
+	    config_error(ploc, 0, _("malformed #line statement"));
+    }
+    dico_argcv_free(argc, argv);
+}
+

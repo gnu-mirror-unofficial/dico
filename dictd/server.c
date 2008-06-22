@@ -590,11 +590,11 @@ dictd_server(int argc, char **argv)
     if (rc) 
 	dico_log(L_NOTICE, errno, _("Exit code = %d, last error status"), rc);
 
+    remove_pidfile(pidfile_name);
     if (restart) {
 	int i;
 		
 	dico_log(L_INFO, 0, _("%s restarting"), program_version);
-	remove_pidfile(pidfile_name);
 	for (i = getmaxfd(); i > 2; i--)
 	    close(i);
 	execv(argv[0], argv);

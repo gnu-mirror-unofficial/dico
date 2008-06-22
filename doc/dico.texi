@@ -2109,8 +2109,8 @@ load-module @var{mod-name} @{
 source file that must be loaded in order to initialize the module.
 The @code{init-fun} parameter specifies the name of a function that
 will be invoked to perform the initialization of the module and of
-particular databases.  @xref{Guile Interface}, for a description of
-initialization sequence.  Optional arguments, @var{options}, are:
+particular databases.  @xref{Guile Initialization}, for a description
+of initialization sequence.  Optional arguments, @var{options}, are:
 
 @table @code
 @kwindex debug
@@ -2164,13 +2164,137 @@ is the command line that will be passed to the Guile
 @end table
 
 @menu
-* Guile Interface::
+* Virtual Functions::
+* Guile Initialization::
+* Guile API::
 @end menu
 
-@node Guile Interface
-@subsection Guile Interface
-@UNREVISED
+@node Virtual Functions
+@subsection Virtual Functions
+@cindex virtual functions, guile module
+  A database handled by @command{guile} module is associated with a 
+@var{virtual function table}.  This table is an association list, that
+supplies to the module the Scheme functions used to perform particular
+tasks on that database.  In this association list, the @code{car} of
+each element contains the name of a function, and its @code{cdr} gives the
+corresponding function.  The defined function names and their
+semantics are described in the following table:
 
+@table @asis
+@item open
+Open the database.
+
+@item close
+Close the database.
+
+@item descr
+Return a short description of the database.
+
+@item info
+Return a full information about the database.
+
+@item define
+Define a word.
+
+@item match
+Look up a word in the database.
+
+@item output
+Output a search result.
+
+@item result-count
+Return number of entries in the result.
+@end table
+
+For example, the following is a valid virtual function table:
+
+@smalllisp
+@group
+(list (cons "open" open-module)
+      (cons "close" close-module)
+      (cons "descr" descr)
+      (cons "info" info)
+      (cons "define" define-word)
+      (cons "match" match-word)
+      (cons "output" output)
+      (cons "result-count" result-count))
+@end group
+@end smalllisp
+
+Apart from a per-database virtual table, there is also a global
+virtual function table, which is used to supply the entries missing in
+the former.  Both tables are created during the module initialization,
+as described in the next subsection.
+
+Particular virtual functions are described in @ref{Guile API}.
+
+@node Guile Initialization
+@subsection Guile Initialization
+  The following configuration statement causes loading and
+initialization of the @command{guile} module: 
+
+@smallexample
+@group
+load-module @var{mod-name} @{
+   command "guile init-script=@file{@var{script}}"
+           " init-fun=@var{function}";
+@}
+@end group
+@end smallexample
+@kwindex init-script
+@kwindex init-fun
+  Upon module initialization stage, the module attempts to load the
+file named @file{@var{script}}.  The file is loaded using
+@code{primitive-load} call (@pxref{Load, primitive-load, Loading,
+guile, The Guile Reference Manual}, i.e. the load paths are not
+searched, so @var{script} must be an absolute path name.  The
+@code{init-fun} parameter supplies the name of an @dfn{initialization
+function}.  This Scheme function is used to construct virtual 
+function tables for the module itself and for each database that uses
+this module.  It must be declared as follows:
+
+@smalllisp
+(define (@var{function} arg)
+  ...)
+@end smalllisp
+
+This function is called several times.  First of all, it is called after
+@var{script} is loaded.  This time it is given @code{#f} as its
+argument, and its return value is saved as a global function table.
+Then, it is called for each @code{database} statement that has
+@var{mod-name} (used in @code{load-module} above) in its
+@code{handler} keyword, e.g.:
+
+@smallexample
+database @{
+   name @var{db-name};
+   handler "@var{mod-name}...";
+@}
+@end smallexample
+
+This time, it is given @var{db-name} as its argument and its return is
+stored as the virtual function table for this particular database.
+
+The following example function returns a complete virtial function table:
+
+@smalllisp
+@group
+(define-public (my-dico-init arg)
+  (list (cons "open" open-module)
+        (cons "close" close-module)
+        (cons "descr" descr)
+        (cons "info" info)
+        (cons "define" define-word)
+        (cons "match" match-word)
+        (cons "output" output)
+        (cons "result-count" result-count)))
+@end group
+@end smalllisp
+
+@node Guile API
+@subsection Guile API
+@UNREVISED
+  
 @defun dico-strat-selector? @var{strat}
 Return true if @var{strat} has a selector.
 @end defun

@@ -20,77 +20,91 @@
 #include <dico.h>
 
 
-int
+static int
 mod_init(int argc, char **argv)
 {
     /* FIXME */
     return 1;
 }
     
-int
+static dico_handle_t
+mod_init_db(const char *dbname, int argc, char **argv)
+{
+    /* FIXME */
+    return NULL;
+}
+
+static int
+mod_free_db(dico_handle_t hp)
+{
+    /* FIXME */
+    return 1;
+}
+
+static int
+mod_open(dico_handle_t dp)
+{
+    /* FIXME */
+    return 1;
+}
+
+static int
 mod_close(dico_handle_t hp)
 {
     /* FIXME */
     return 1;
 }
 
-dico_handle_t
-mod_open(const char *dbname, int argc, char **argv)
-{
-    /* FIXME */
-    return NULL;
-}
-
-char *
+static char *
 mod_info(dico_handle_t hp)
 {
     /* FIXME */
     return NULL;
 }
 
-char *
+static char *
 mod_descr(dico_handle_t hp)
 {
     /* FIXME */
     return NULL;
 }
 
-dico_result_t
+static dico_result_t
 mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 {
     /* FIXME */
     return NULL;
 }
 
-dico_result_t
+static dico_result_t
 mod_define(dico_handle_t hp, const char *word)
 {
     /* FIXME */
     return NULL;
 }
 
-int
+static int
 mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 {
     /* FIXME */
     return 1;
 }
 
-size_t
+static size_t
 mod_result_count (dico_result_t rp)
 {
     /* FIXME */
     return 0;
 }
 
-size_t
+static size_t
 mod_compare_count (dico_result_t rp)
 {
     /* FIXME */
     return 0;
 }
 
-void
+static void
 mod_free_result(dico_result_t rp)
 {
     /* FIXME */
@@ -98,7 +112,10 @@ mod_free_result(dico_result_t rp)
 
 struct dico_handler_module DICO_EXPORT(sample, module) = {
     DICO_MODULE_VERSION,
+    DICO_CAPA_NONE,
     mod_init,
+    mod_init_db,
+    mod_free_db
     mod_open,
     mod_close,
     mod_info,

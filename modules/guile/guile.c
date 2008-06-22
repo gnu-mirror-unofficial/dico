@@ -284,7 +284,7 @@ SCM_DEFINE(scm_dico_strat_select_p, "dico-strat-select?", 3, 0, 0,
 
 SCM_DEFINE(scm_dico_strat_name, "dico-strat-name", 1, 0, 0,
 	   (SCM STRAT),
-	   "Return name of the strategy STRAT.")
+	   "Return the name of the strategy STRAT.")
 #define FUNC_NAME s_scm_dico_strat_name
 {
     struct _guile_strategy *sp;

@@ -898,8 +898,8 @@ statements (@xref{Security Settings}, and @pxref{Database Visibility})
 to refer to that @acronym{ACL}. 
 
 A part between the curly braces (denoted by @var{definitions} above),
-id a list of @dfn{access statements}.  Each such statement begins with
-one of the following keywords:  
+is a list of @dfn{access statements}.  There are two types of
+such statements:  
 
 @deffn {ACL} allow @var{user-group} @var{sub-acl} @var{host-list}
 Allow access to resource.
@@ -909,7 +909,7 @@ Allow access to resource.
 Deny access to resource.
 @end deffn
 
-All three parts of each such statement are optional, but at least one
+All parts of an access statement are optional, but at least one
 of them must be present.
 
 The @var{user-group} part specifies which users match this entry.
@@ -981,15 +981,15 @@ where square brackets denote optional parts and vertical bar means
 @samp{one of}.
 
 When an @acronym{ACL} is applied to a particular object, its entries
-are tried in turn until one of them matches, or the end of list is
+are tried in turn until one of them matches, or the end of the list is
 reached.  If a matched entry is found, its command verb, @code{allow}
 or @code{deny}, defines the result of @acronym{ACL} match.  If the end
 of list is reached, the result is @samp{allow}, unless explicitly
 specified otherwise.
 
 For example, the following statement defines an @acronym{ACL} named
-@samp{common}, that allows access to anybody who is using local
-@acronym{UNIX} socket @file{/tmp/dictd.sock} or who comes from a local
+@samp{common}, that allows access for any user connected via local
+@acronym{UNIX} socket @file{/tmp/dictd.sock} or coming from a local
 network @samp{192.168.10.0/24}.  Any authenticated users are allowed,
 provided that they are allowed by another @acronym{ACL} @samp{my-nets}
 (which should have been defined before this definition).  Users 
@@ -1021,10 +1021,10 @@ to various resources served by @command{dictd}.
 
 @deffn {Configuration} connection-acl @var{acl-name}
   Use @acronym{ACL} @var{acl-name} to control incoming connections.
-The @acronym{ACL} itself must be defined before this statement.  It is
-senseless, although syntactically correct, to use @var{user-group} 
-(see previous subsection) in it, because authentication is performed
-after connection is established.
+The @acronym{ACL} itself must be defined before this statement.  Using
+@var{user-group} (see previous subsection) in this @acronym{ACL} makes
+no sense, because authentication is performed after connection is
+established.
 
 @smallexample
 @group
@@ -2079,7 +2079,128 @@ initializing the module instance.
  
 @node Guile
 @section The @command{guile} module.
+@cindex Guile
+@cindex Scheme
+  @dfn{Guile} is an acronym for @dfn{GNU's Ubiquitous Intelligent
+Language for Extensions}. It provides a Scheme interpreter conforming
+to the R5RS language specification and a number of convenience
+functions.  For information about the language, refer to
+@ref{Top,,,r5rs,Revised(5) Report on the Algorithmic Language Scheme}.
+For a detailed description of Guile and its features, see
+@ref{Top,,Overview,guile,The Guile Reference Manual}.
+
+  The @command{guile} module provides an interface to Guile that allows writing
+Dico modules in Scheme language.  The module is loaded
+using the following configuration file statement:
+
+@smallexample
+@group
+load-module @var{mod-name} @{
+   command "guile [@var{options}]"
+           " init-script=@file{@var{script}}"
+           " init-fun=@var{function}";
+@}
+@end group
+@end smallexample
+
+@kwindex init-script
+@kwindex init-fun
+  The @code{init-script} parameter specifies the name of a Scheme
+source file that must be loaded in order to initialize the module.
+The @code{init-fun} parameter specifies the name of a function that
+will be invoked to perform the initialization of the module and of
+particular databases.  @xref{Guile Interface}, for a description of
+initialization sequence.  Optional arguments, @var{options}, are:
+
+@table @code
+@kwindex debug
+@item debug
+  Enable Guile debugging and stack traces.
+
+@kwindex nodebug
+@item nodebug
+  Disable Guile debugging and stack traces (default).
+
+@kwindex load-path
+@item load-path=@var{path}
+  Append directories from @var{path} to the list of directories which
+should be searched for Scheme modules and libraries.  The @var{path}
+must be a list of directory names, separated by colons.
+
+  This option modifies the value of Guile's @code{%load-path}
+variable.  @xref{Build Config, %load-path, {Configuration\, Build and
+Installation}, guile, The Guile Reference Manual}.
+
+@kwindex outfile
+@item outfile=@var{file}
+  Bind current error and output ports to the named @var{file}.
+@end table
+
+  Guile databases are declared using the following syntax:
+
+@smallexample
+@group
+database @{
+        name "@var{dbname}";
+        handler "@var{mod-name} @var{cmdline}";
+@}
+@end group
+@end smallexample
+
+@noindent
+where:
+
+@table @var
+@item dbname
+gives the name for this database,
+
+@item mod-name
+is the name given to Guile module in @code{load-module} statement (see
+above),
+
+@item cmdline
+is the command line that will be passed to the Guile
+@code{open-module} function (@FIXME-pxref{open-module}).
+@end table
+
+@menu
+* Guile Interface::
+@end menu
+
+@node Guile Interface
+@subsection Guile Interface
 @UNREVISED
+
+@defun dico-strat-selector? @var{strat}
+Return true if @var{strat} has a selector.
+@end defun
+
+@defun dico-strat-select? @var{strat} @var{word} @var{key}
+Return true if @var{key} matches @var{word} as per strategy selector
+@var{strat}.
+@end defun
+
+@defun dico-strat-name @var{strat}
+Return the name of strategy @var{strat}.
+@end defun
+
+@defun dico-strat-description @var{strat}
+Return a textual description of the strategy @var{strat}.
+@end defun
+
+@defun dico-strat-default? @var{strat}
+Return @code{true} if @var{strat} is a default
+strategy. @FIXME-xref{default strategy}.
+@end defun
+
+@defun dico-register-strat @var{strat} @var{descr} [@var{fun}]
+Register a new strategy.
+
+@smalllisp
+(define (@var{fun} key word)
+  ...)
+@end smalllisp
+@end defun
 
 @node Interface
 @chapter Dico Module Interface

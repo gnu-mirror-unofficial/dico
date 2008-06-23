@@ -439,3 +439,8 @@ void access_log_free_cache(void);
 char *query_ident_name(struct sockaddr_in *srv_addr,
 		       struct sockaddr_in *clt_addr);
 
+/* alias.c */
+int alias_install(const char *kw, int argc, char **argv, dictd_locus_t *ploc);
+int alias_expand(int argc, char **argv, int *pargc, char ***pargv);
+
+

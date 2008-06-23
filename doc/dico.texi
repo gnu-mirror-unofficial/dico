@@ -417,6 +417,7 @@ directives any time by running @command{dictd --config-help}.
 * Handlers::
 * Databases::
 * Tuning::
+* Command Aliases::
 * Preprocessor::         Using preprocessor to improve the configuration.
 @end menu
 
@@ -1708,6 +1709,45 @@ An example of a server reply with timing information follows:
 
 You can also add timing information to your access log files, see
 @ref{Access Log, %T}.
+
+@node Command Aliases
+@subsection Command Aliases
+
+  @dfn{Aliases} allow a string to be substituted for a word when it is used 
+as the first word of a command.  The daemon maintains a list of
+aliases that are created using the @code{alias} configuration file
+statement:
+
+@deffn {Configuration} alias @var{word} @var{command}
+Create a new alias. 
+@end deffn
+
+  Aliases are useful to facilitate manual interaction with the server,
+as they allow to create abbreviations for some frequently typed
+commands.  For example, the following alias creates new command
+@code{d} which is equivalent to @code{DEFINE *}:
+
+@smallexample
+alias d DEFINE "*";
+@end smallexample
+
+  Aliases may be recursive, i.e. the first word of @var{command} may
+refer to another alias.  For example:
+
+@smallexample
+alias d DEFINE;
+alias da d "*";
+@end smallexample
+
+  This configuration will produce the following expansion:
+
+@smallexample
+da word @result{} DEFINE * word
+@end smallexample
+
+  To prevent endless loops, recursive expansion is stopped if the
+first word of the replacement text is identical to an alias expanded
+earlier. 
 
 @node Preprocessor
 @subsection Using Preprocessor to Improve the Configuration.

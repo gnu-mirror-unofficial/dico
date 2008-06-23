@@ -116,6 +116,11 @@ allow_cb(enum cfg_callback_command cmd,
 	 void *cb_data)
 {
     dictd_acl_t acl = varptr;
+
+    if (cmd != callback_set_value) {
+	config_error(locus, 0, _("Unexpected block statement"));
+	return 1;
+    }
     parse_acl_line(locus, 1, acl, value);
     return 0;
 }
@@ -128,6 +133,10 @@ deny_cb(enum cfg_callback_command cmd,
 	void *cb_data)
 {
     dictd_acl_t acl = varptr;
+    if (cmd != callback_set_value) {
+	config_error(locus, 0, _("Unexpected block statement"));
+	return 1;
+    }
     parse_acl_line(locus, 0, acl, value);
     return 0;
 }
@@ -191,6 +200,10 @@ apply_acl_cb(enum cfg_callback_command cmd,
 {
     dictd_acl_t *pacl = varptr;
 
+    if (cmd != callback_set_value) {
+	config_error(locus, 0, _("Unexpected block statement"));
+	return 1;
+    }
     if (value->type != TYPE_STRING) {
 	config_error(locus, 0, _("expected scalar value"));
 	return 1;
@@ -213,6 +226,11 @@ set_user(enum cfg_callback_command cmd,
 {
     struct passwd *pw;
     
+    if (cmd != callback_set_value) {
+	config_error(locus, 0, _("Unexpected block statement"));
+	return 1;
+    }
+
     if (value->type != TYPE_STRING) {
 	config_error(locus, 0, _("expected scalar value but found list"));
 	return 1;
@@ -251,6 +269,11 @@ set_supp_group(enum cfg_callback_command cmd,
 	       config_value_t *value,
 	       void *cb_data)
 {
+    if (cmd != callback_set_value) {
+	config_error(locus, 0, _("Unexpected block statement"));
+	return 1;
+    }
+
     if (!group_list)
 	group_list = xdico_list_create();
     
@@ -281,6 +304,11 @@ set_mode(enum cfg_callback_command cmd,
 	{ NULL }
     };
 	
+    if (cmd != callback_set_value) {
+	config_error(locus, 0, _("Unexpected block statement"));
+	return 1;
+    }
+
     if (value->type != TYPE_STRING) {
 	config_error(locus, 0, _("expected scalar value but found list"));
 	return 1;
@@ -318,6 +346,11 @@ set_log_facility(enum cfg_callback_command cmd,
 		 void *cb_data)
 {
     const char *str;
+
+    if (cmd != callback_set_value) {
+	config_error(locus, 0, _("Unexpected block statement"));
+	return 1;
+    }
     if (value->type != TYPE_STRING) {
 	config_error(locus, 0, _("expected scalar value but found list"));
 	return 1;
@@ -422,6 +455,11 @@ set_dict_handler(enum cfg_callback_command cmd,
     dictd_database_t *db = varptr;
     int rc;
     
+    if (cmd != callback_set_value) {
+	config_error(locus, 0, _("Unexpected block statement"));
+	return 1;
+    }
+
     if (value->type != TYPE_STRING) {
 	config_error(locus, 0, _("expected scalar value but found list"));
 	return 1;
@@ -454,6 +492,10 @@ set_dict_encoding(enum cfg_callback_command cmd,
 		  config_value_t *value,
 		  void *cb_data)
 {
+    if (cmd != callback_set_value) {
+	config_error(locus, 0, _("Unexpected block statement"));
+	return 1;
+    }
     if (value->type != TYPE_STRING) {
 	config_error(locus, 0, _("expected scalar value but found list"));
 	return 1;
@@ -490,6 +532,10 @@ enable_capability(enum cfg_callback_command cmd,
 		  config_value_t *value,
 		  void *cb_data)
 {
+    if (cmd != callback_set_value) {
+	config_error(locus, 0, _("Unexpected block statement"));
+	return 1;
+    }
     if (value->type == TYPE_LIST)
 	dico_list_iterate(value->v.list, set_capability, locus);
     else if (dictd_capa_add(value->v.string)) 
@@ -504,6 +550,10 @@ set_defstrat(enum cfg_callback_command cmd,
 	     config_value_t *value,
 	     void *cb_data)
 {
+    if (cmd != callback_set_value) {
+	config_error(locus, 0, _("Unexpected block statement"));
+	return 1;
+    }
     if (value->type != TYPE_STRING) {
 	config_error(locus, 0, _("expected scalar value but found list"));
 	return 1;
@@ -599,6 +649,41 @@ user_db_config(enum cfg_callback_command cmd,
     return 0;
 }
 
+
+int
+alias_cb(enum cfg_callback_command cmd,
+	 dictd_locus_t *locus,
+	 void *varptr,
+	 config_value_t *value,
+	 void *cb_data)
+{
+    char **argv;
+    int argc;
+    int i;
+
+    if (cmd != callback_set_value) {
+	config_error(locus, 0, _("Unexpected block statement"));
+	return 1;
+    }
+    if (value->type != TYPE_ARRAY) {
+	config_error(locus, 0, _("Not enough arguments for alias"));
+	return 1;
+    }
+    argc = value->v.arg.c - 1;
+    argv = xcalloc(argc + 1, sizeof(argv[0]));
+    for (i = 0; i < argc; i++) {
+	if (value->v.arg.v[i+1].type != TYPE_STRING) {
+	    config_error(locus, 0, _("argument %d has wrong type"), i+1);
+	    return 1;
+	}
+	argv[i] = value->v.arg.v[i+1].v.string;
+    }
+    argv[i] = NULL;
+    return alias_install(value->v.arg.v[0].v.string, argc, argv, locus);
+}
+
+
+    
 struct config_keyword keywords[] = {
     { "user", N_("name"), N_("Run with these user privileges."),
       cfg_string, NULL, 0, set_user  },
@@ -690,6 +775,8 @@ struct config_keyword keywords[] = {
       N_("Define user database for authentication."),
       cfg_section, &user_db_cfg, 0, user_db_config, NULL,
       kwd_user_db },
+    { "alias", N_("name: string"), N_("Define a command alias."),
+      cfg_string, NULL, 0, alias_cb, },
     { NULL }
 };
 

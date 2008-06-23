@@ -16,10 +16,35 @@ database {
 	handler "outline <SRCDIR>/tests/devils.out";
 }
 
-help-text <<-EOT
+alias d DEFINE;
+alias da d "*";
+alias df d "!";
+alias m MATCH;
+alias mas m "*";
+alias mfs m "!";
+alias ma mas ".";
+alias mf mfs ".";
+alias s STATUS;
+alias h HELP;
+alias q QUIT;
+
+help-text <<- EOT
 	+
-	This is a test configuration. Please, edit dictd.conf to suit your
-	needs.
+  The following commands are unofficial server extensions provided for
+  debugging purposes.  They may disappear or change any time without
+  notice.
+
+  d database word                 -- DEFINE database word
+  da word                         -- DEFINE * word
+  df word                         -- DEFINE ! word
+  ma word                         -- MATCH * . word
+  mf word                         -- MATCH ! . word
+  mas strategy word               -- MATCH * strategy word
+  mfs strategy word               -- MATCH ! strategy word
+  m database strategy word        -- MATCH database strategy word
+  s                               -- STATUS
+  h                               -- HELP
+  q                               -- QUIT
 EOT;
 
 user nobody;
@@ -33,6 +58,7 @@ pidfile <BUILDDIR>/tests/dictd.pid;
 server-info <<EOT
 This is a test Dico server.
 EOT;
+
 
 
 

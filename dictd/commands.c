@@ -374,7 +374,16 @@ locate_command(int argc, char **argv)
 void
 dictd_handle_command(dico_stream_t str, int argc, char **argv)
 {
-    struct dictd_command *cmd = locate_command(argc, argv);
+    struct dictd_command *cmd;
+    int nargc = 0;
+    char **nargv = NULL;
+
+    if (alias_expand(argc, argv, &nargc, &nargv) == 0) {
+	argc = nargc;
+	argv = nargv;
+    }
+
+    cmd = locate_command(argc, argv);
     if (!cmd) 
 	stream_writez(str, "500 unknown command\r\n");
     else if (argc != cmd->nparam) 
@@ -383,5 +392,7 @@ dictd_handle_command(dico_stream_t str, int argc, char **argv)
 	stream_writez(str, "502 command is not yet implemented, sorry\r\n");
     else
 	cmd->handler(str, argc, argv);
+
+    free(nargv);
 }
 

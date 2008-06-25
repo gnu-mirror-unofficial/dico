@@ -29,7 +29,8 @@ gen_start_date = 2008-05-05
 make-ChangeLog: 
 	if test -d .git; then                                           \
 	  $(top_srcdir)/build-aux/gitlog-to-changelog                   \
-	    --since=$(gen_start_date) | fmt -s > $(distdir)/cl-t;       \
+	    --since=$(gen_start_date) |                                 \
+            sed '/<unknown>$$/d' | fmt -s > $(distdir)/cl-t;            \
 	  echo "" >> $(distdir)/cl-t;                                 \
 	  echo "Local Variables:" >> $(distdir)/cl-t;                   \
 	  echo "mode: change-log" >> $(distdir)/cl-t;                   \
@@ -46,7 +47,8 @@ dist-hook: make-ChangeLog
 ChangeLog: 
 	if test -d .git; then                                           \
 	  $(top_srcdir)/build-aux/gitlog-to-changelog                   \
-	    --since=$(gen_start_date) | fmt -s > ChangeLog;             \
+	    --since=$(gen_start_date) |                                 \
+            sed '/<unknown>$$/d' | fmt -s > ChangeLog;                  \
 	  echo "" >> ChangeLog;                                       \
 	  echo "Local Variables:" >> ChangeLog;                         \
 	  echo "mode: change-log" >> ChangeLog;                         \

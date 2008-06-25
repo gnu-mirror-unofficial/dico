@@ -480,9 +480,9 @@ init_suffix_index(struct dictdb *db)
 	    db->suf_index[i].word = p;
 	    db->suf_index[i].ptr = &db->index[i];
 	}
+        qsort(db->suf_index, db->numwords, sizeof(db->suf_index[0]),
+	      compare_rev_entry);
     }
-    qsort(db->suf_index, db->numwords, sizeof(db->suf_index[0]),
-	  compare_rev_entry);
     return 0;
 }    
 

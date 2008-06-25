@@ -561,6 +561,14 @@ compare_entry(const void *a, const void *b)
 }
 
 static int
+compare_entry_ptr(const void *a, const void *b)
+{
+    const struct index_entry *epa = *(const struct index_entry **)a;
+    const struct index_entry *epb = *(const struct index_entry **)b;
+    return compare_entry(epa, epb);
+}
+
+static int
 exact_match(struct dictdb *db, const char *word, struct result *res)
 {
     return common_match(db, word, compare_entry, res);
@@ -624,23 +632,45 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
 		 compare_rev_prefix);
     if (ep) {
 	struct rev_entry *p;
-	dico_list_t list = dico_list_create();
+	struct index_entry **tmp;
+	size_t i;
+	size_t count = 1;
+	dico_list_t list;
 
-	if (!list) {
+	for (p = ep - 1;
+	     p > db->suf_index && compare_rev_prefix(&x, p) == 0;
+	     p--) 
+	    count++;
+
+	for (ep++;
+	     ep < db->suf_index + db->numwords
+		 && compare_rev_prefix(&x, ep) == 0; ep++)
+	    count++;
+
+	tmp = calloc(count, sizeof(*tmp));
+	if (!tmp) {
 	    memerr("suffix_match");
 	    free(x.word);
 	    return 1;
-	}
-	for (p = ep;
-	     p > db->suf_index && compare_rev_prefix(&x, p) == 0;
-	     p--) 
-	    dico_list_insert_sorted(list, p->ptr, compare_entry);
-	
-	for (ep++;
-	     ep < db->suf_index + db->numwords
-		 && compare_rev_prefix(&x, ep) == 0; ep++) 
-	    dico_list_insert_sorted(list, ep->ptr, compare_entry);
+	} 
 
+	for (i = 0,p++; i < count; i++, p++)
+	    tmp[i] = p->ptr;
+	
+	qsort(tmp, count, sizeof(tmp[0]), compare_entry_ptr);
+
+	list = dico_list_create();
+	if (!list) {
+	    memerr("suffix_match");
+	    free(x.word);
+	    free(tmp);
+	    return 1;
+	}
+
+	for (i = 0; i < count; i++) 
+	    if (i == 0 || compare_entry(tmp[i-1], tmp[i]))
+		dico_list_append(list, tmp[i]);
+	free(tmp);
 	res->type = result_match;
 	res->list = list;
 	res->compare_count = compare_count;

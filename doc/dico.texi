@@ -2315,7 +2315,7 @@ database @{
 This time, it is given @var{db-name} as its argument and its return is
 stored as the virtual function table for this particular database.
 
-The following example function returns a complete virtial function table:
+The following example function returns a complete virtual function table:
 
 @smalllisp
 @group

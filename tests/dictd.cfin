@@ -30,9 +30,10 @@ alias q QUIT;
 
 help-text <<- EOT
 	+
-  The following commands are unofficial server extensions provided for
-  debugging purposes.  They may disappear or change any time without
-  notice.
+  The following commands are abbreviations that Gray likes to use when
+  debugging the daemon.  You may or may not find them useful.  However
+  it is, do not write your client software to relay on them.  They may
+  disappear or change any time Gray pleases, without notice.
 
   d database word                 -- DEFINE database word
   da word                         -- DEFINE * word

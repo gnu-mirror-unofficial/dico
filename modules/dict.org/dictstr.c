@@ -226,7 +226,7 @@ _dict_read_dzip(struct _dict_stream *str, char *buf, size_t size, size_t *pret)
 	rc = cache_get(str, chunk_num, &cp);
 	if (rc)
 	    break;
-	n = cp->size; /* FIXME = str->chunk[chunk_num].length;? */
+	n = cp->size - chunk_off; /* FIXME = str->chunk[chunk_num].length;? */
 	if (n > size)
 	    n = size;
 	memcpy(buf, cp->buffer + chunk_off, n);

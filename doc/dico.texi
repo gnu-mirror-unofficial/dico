@@ -2207,6 +2207,7 @@ is the command line that will be passed to the Guile
 * Virtual Functions::
 * Guile Initialization::
 * Guile API::
+* Dico Scheme Primitives::
 @end menu
 
 @node Virtual Functions
@@ -2214,11 +2215,11 @@ is the command line that will be passed to the Guile
 @cindex virtual functions, guile module
   A database handled by @command{guile} module is associated with a 
 @var{virtual function table}.  This table is an association list, that
-supplies to the module the Scheme functions used to perform particular
-tasks on that database.  In this association list, the @code{car} of
-each element contains the name of a function, and its @code{cdr} gives the
-corresponding function.  The defined function names and their
-semantics are described in the following table:
+supplies to the module the Scheme @dfn{call-back functions} implemented to
+perform particular tasks on that database.  In this association list,
+the @code{car} of each element contains the name of a function, and
+its @code{cdr} gives the corresponding function.  The defined function
+names and their semantics are described in the following table:
 
 @table @asis
 @item open
@@ -2333,10 +2334,144 @@ The following example function returns a complete virtual function table:
 
 @node Guile API
 @subsection Guile API
-@UNREVISED
+@cindex Guile API  
+
+  This subsection describes callback functions that a Guile
+database module must provide.  The description of each function begins
+with the function prototype and its entry in the virtual function
+table.
+
+  Callback functions can be subdivided into two groups: database
+functions and search functions. 
+
+  Database callback functions are responsible for opening and closing
+databases and for returning information about them.
+
+@deffn {Guile Callback} open-db name . args
+@deffnx {Virtual Table} (cons "open" open-db)
+Open the database.  The argument @var{name} contains database name as
+given in @code{name} statement of @code{database} block
+(@pxref{Databases}).  Optional argument @var{args} is a list of
+command line parameters specified in @code{handler} statement.  For
+example, if the configuration file contained:
+
+@smallexample
+@group
+database @{
+    name "foo";
+    handler "guile db=file 1 no";
+@}
+@end group
+@end smallexample
+
+@noindent
+then the @code{open-db} callback will be called as:
+
+@smalllisp
+(open-db "foo" '("db=file" "1" "no"))
+@end smalllisp
+
+The @code{open-db} callback returns a @dfn{database handle}, i.e. an
+opaque structure that is used to identify this database, and that
+keeps its internal state.  This value, hereinafter named @var{dbh},
+will be passed to another callback functions that need to access the
+database.
+
+The return value @code{#f} or @code{'()} indicates an error.
+@end deffn
+
+@deffn {Guile Callback} close-db dbh
+@deffnx {Virtual Table} (cons "close" close-db)
+Close the database.  This function is called during the cleanup
+procedure, before termination of @code{dictd}.  The argument
+@code{dbh} is a database handle returned by @code{open-db}.
+
+@FIXME{As of version @value{VERSION}, this callback is never used.}
+@end deffn
+
+@deffn {Guile Callback} descr dbh
+@deffnx {Virtual Table} (cons "descr" descr)
+Return a short textual description of the database, for use in
+@code{SHOW DB} output.  If there is no description, return @code{#f}
+or @code{'()}. 
+
+The argument @var{dbh} is a database handle returned by
+@code{open-db}.
+
+This callback is optional.  If it is not defined, or if it returns
+@code{#f} (@code{'()}), the text from @code{description} statement
+is used (@pxref{Databases, description}).  Otherwise, if no
+@code{description} statement is present, empty string is used.
+@end deffn
+
+@deffn {Guile Callback} info dbh
+@deffnx {Virtual Table} (cons "info" info)
+Return a verbose, eventually multi-line, textual description of the
+database, for use in @code{SHOW INFO} output.  If there is no
+description, return @code{#f} or @code{'()}. 
+
+The argument @var{dbh} is a database handle returned by @code{open-db}.
+
+This callback is optional.  If it is not defined, or if it returns
+@code{#f} (@code{'()}), the text from @code{info} statement
+is used (@pxref{Databases, info}).  If there is no @code{info} statement,
+the string @samp{No information available} is used.
+@end deffn
+
+Database searches are a two-phase process.  First, an appropriate
+callback is called to do the search: @code{define-word} is called for
+@code{DEFINE} searches and @code{match-word} is called for matches.
+This callback returns an opaque entity, called @dfn{result handle},
+which is then passed to @code{output} callback, which is responsible
+for outputting it.
+
+@deffn {Guile Callback} define-word dbh word
+@deffnx {Virtual Table} (cons "define" define-word)
+Find definitions of word @var{word} in the database @var{dbh}.  Return
+a result handle.  If nothing is found, return @code{#f} or @code{'()}.
+
+The argument @var{dbh} is a database handle returned by @code{open-db}.
+@end deffn
+
+@deffn {Guile Callback} match-word dbh strat word
+@deffnx {Virtual Table} (cons "match" match-word)
+Find all matches of word @var{word} from the database @var{dbh}, using
+matching strategy @var{strat}.  Return a result handle.  If nothing is
+found, return @code{#f} or @code{'()}. 
+
+The argument @var{dbh} is a database handle returned by
+@code{open-db}.  Matching strategy @var{strat} is a special Scheme
+object that can be accessed using a set of functions described below
+(@pxref{Dico Scheme Primitives}). 
+@end deffn
+
+@deffn {Guile Callback} output resh n
+@deffnx {Virtual Table} (cons "output" output)
+Output @var{n}th result from the result set @var{resh}.  The argument
+@var{resh} is a result handle returned by @code{define-word} or
+@code{match-word} callback.
+
+The data must be output to the current output port, e.g. using
+@code{display} or @code{format} primitives.  If @var{resh} represents
+a match result, the output must not be quoted or terminated by newlines.
+@end deffn
+
+@deffn {Guile Callback} result-count resh
+@deffnx {Virtual Table} (cons "result-count" result-count)
+Return the number of elements in the result set @var{resh}.
+@end deffn
+
+@node Dico Scheme Primitives
+@subsection Dico Scheme Primitives
+@cindex strategy functions, Scheme
+@cindex strategy functions, Guile
+@cindex Scheme strategy functions
+@cindex Guile strategy functions
+  Dico provides the following Scheme primitives, that access various
+fields of the @code{strat} argument to @code{match} callback:
   
 @defun dico-strat-selector? @var{strat}
-Return true if @var{strat} has a selector.
+Return true if @var{strat} has a selector. @FIXME-pxref{selector}.
 @end defun
 
 @defun dico-strat-select? @var{strat} @var{word} @var{key}
@@ -2358,12 +2493,19 @@ strategy. @FIXME-xref{default strategy}.
 @end defun
 
 @defun dico-register-strat @var{strat} @var{descr} [@var{fun}]
-Register a new strategy.
+Register a new strategy.  If @var{fun} is given it will be used as a
+callback for that strategy.  Notice, that you can use strategies
+implemented in Guile in your C code as well (@FIXME-pxref{}).
+
+  The selector function must be declared as follows:
 
 @smalllisp
 (define (@var{fun} key word)
   ...)
 @end smalllisp
+
+It must return @code{#t} if @var{key} matches @var{word}, and
+@code{#f} otherwise.
 @end defun
 
 @node Interface

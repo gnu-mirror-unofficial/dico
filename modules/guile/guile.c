@@ -73,17 +73,38 @@ guile_safe_exec(SCM (*handler) (void *data), void *data, SCM *result)
     return 0;
 }
 
+struct load_closure {
+    char *filename;
+    int argc;
+    char **argv;
+};
+
 static SCM
 load_path_handler(void *data)
 {
-    scm_primitive_load_path((SCM)data);
+    struct load_closure *lp = data;
+    
+    scm_set_program_arguments(lp->argc, lp->argv, lp->filename);
+    scm_primitive_load_path(scm_makfrom0str(lp->filename));
     return SCM_UNDEFINED;
 }
 
 static int
-guile_load(char *filename)
+guile_load(char *filename, char *args)
 {
-    return guile_safe_exec(load_path_handler, scm_makfrom0str(filename), NULL);
+    struct load_closure lc;
+    if (args) {
+	int rc = dico_argcv_get (args, NULL, NULL, &lc.argc, &lc.argv);
+	if (rc) {
+	    dico_log(L_ERR, rc, "dico_argcv_get");
+	    return 1;
+	}
+    } else {
+	lc.argc = 0;
+	lc.argv = NULL;
+    }
+    lc.filename = filename;
+    return guile_safe_exec(load_path_handler, &lc, NULL);
 }
 
 static void
@@ -276,8 +297,8 @@ SCM_DEFINE(scm_dico_strat_select_p, "dico-strat-select?", 3, 0, 0,
     SCM_ASSERT(scm_is_string(KEY), KEY, SCM_ARG3, FUNC_NAME);
     sp = (struct _guile_strategy *) SCM_CDR(STRAT);
     return sp->strat->sel(DICO_SELECT_RUN,
-			  scm_i_string_chars(WORD),
 			  scm_i_string_chars(KEY),
+			  scm_i_string_chars(WORD),
 			  sp->strat->closure) ? SCM_BOOL_T : SCM_BOOL_F;
 }
 #undef FUNC_NAME
@@ -502,6 +523,7 @@ _guile_init_funcs (void)
 static int guile_debug;
 
 static char *guile_init_script;
+static char *guile_init_args;
 static char *guile_exit_script;
 static char *guile_init_fun;
 static char *guile_outfile;
@@ -631,6 +653,7 @@ set_load_path(struct dico_option *opt, const char *val)
 struct dico_option init_option[] = {
     { DICO_OPTSTR(debug), dico_opt_bool, &guile_debug },
     { DICO_OPTSTR(init-script), dico_opt_string, &guile_init_script },
+    { DICO_OPTSTR(init-args), dico_opt_string, &guile_init_args },
     { DICO_OPTSTR(exit-script), dico_opt_string, &guile_exit_script },
     { DICO_OPTSTR(load-path), dico_opt_null, NULL, { 0 }, set_load_path },
     { DICO_OPTSTR(outfile), dico_opt_string, &guile_outfile },
@@ -660,7 +683,8 @@ mod_init(int argc, char **argv)
     if (guile_outfile)
 	guile_redirect_output(guile_outfile);
     
-    if (guile_init_script && guile_load(guile_init_script)) {
+    if (guile_init_script
+	&& guile_load(guile_init_script, guile_init_args)) {
 	dico_log(L_ERR, 0, _("mod_init: cannot load init script %s"), 
 		 guile_init_script);
 	return 1;

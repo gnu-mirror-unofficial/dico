@@ -2138,16 +2138,22 @@ using the following configuration file statement:
 load-module @var{mod-name} @{
    command "guile [@var{options}]"
            " init-script=@file{@var{script}}"
+           " init-args=@var{args}"
            " init-fun=@var{function}";
 @}
 @end group
 @end smallexample
 
 @kwindex init-script
+@kwindex init-args
 @kwindex init-fun
   The @code{init-script} parameter specifies the name of a Scheme
 source file that must be loaded in order to initialize the module.
-The @code{init-fun} parameter specifies the name of a function that
+The @code{init-args} parameter supplies additional arguments to the
+module.  They will be accessible to the @file{@var{script}} via
+@code{command-line} function.  This parameter is optional.
+
+  The @code{init-fun} parameter specifies the name of a function that
 will be invoked to perform the initialization of the module and of
 particular databases.  @xref{Guile Initialization}, for a description
 of initialization sequence.  Optional arguments, @var{options}, are:

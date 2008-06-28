@@ -164,8 +164,8 @@ Match using POSIX 1003.2 (a.k.a @samp{extended}) regular expressions.
 Match using basic regular expressions.
 @end table
 
-The @code{dictorg} module additionally provides the following
-strategy:
+The @code{dictorg} module (@pxref{Dictorg}) additionally provides the
+following strategy:
 
 @table @asis
 @item suffix
@@ -327,11 +327,11 @@ Requests that all text responses be prefaced by a @acronym{MIME} header
 followed by a single blank line.
 
 After this command is issued, the server begins each textual response
-with a @acronym{MIME} header.  This header is consists of
+with a @acronym{MIME} header.  This header consists of
 @samp{Content-type} and @samp{Content-transfer-encoding} headers, as
 supplied by the corresponding configuration file statements for this
 database (@xref{Databases, content-type}, @pxref{Databases,
-content-transfer-encoding}).  Any of these headers or they both may be
+content-transfer-encoding}).  Any or both of these headers may be
 missing.
 @end deffn
 

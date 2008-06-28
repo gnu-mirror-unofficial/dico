@@ -133,6 +133,7 @@ Configuration
 * Handlers::
 * Databases::
 * Tuning::
+* Command Aliases::
 * Preprocessor::         Using preprocessor to improve the configuration.
 
 Configuration File Syntax
@@ -150,6 +151,31 @@ Modules
 * Outline::
 * Dictorg::
 * Guile::
+
+The @command{guile} module.
+
+* Virtual Functions::
+* Guile Initialization::
+* Guile API::
+* Dico Scheme Primitives::
+
+Dictionary Server Protocol
+
+* Initial Reply::
+* Standard Commands::
+* Extended Commands::
+
+Standard Commands
+
+* DEFINE::
+* MATCH::
+* SHOW::
+* OPTION::
+* AUTH::
+* CLIENT::
+* STATUS::
+* HELP::
+* QUIT::
 
 @end detailmenu
 @end menu

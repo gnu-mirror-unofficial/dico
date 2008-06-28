@@ -82,7 +82,9 @@ _mapfile_open(void *data, int flags)
 	mflags |= PROT_READ;
     if (flags & DICO_STREAM_WRITE) 
 	mflags |= PROT_WRITE;
-    if (flags & (DICO_STREAM_READ|DICO_STREAM_WRITE))
+
+    if ((flags & (DICO_STREAM_READ|DICO_STREAM_WRITE))
+	== (DICO_STREAM_READ|DICO_STREAM_WRITE))
 	oflags = O_RDWR;
     else if (flags & DICO_STREAM_READ)
 	oflags = O_RDONLY;

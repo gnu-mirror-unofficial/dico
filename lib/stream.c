@@ -648,6 +648,8 @@ int
 dico_stream_close(dico_stream_t stream)
 {
     int rc = 0;
+    if (!stream)
+        return EINVAL;
     dico_stream_flush(stream);
     if (stream->close)
 	rc = stream->close(stream->data);
@@ -667,6 +669,8 @@ dico_stream_size(dico_stream_t stream, off_t *psize)
 void
 dico_stream_destroy(dico_stream_t *stream)
 {
+    if (!stream || !*stream)
+        return;
     if ((*stream)->destroy)
 	(*stream)->destroy((*stream)->data);
     free(*stream);

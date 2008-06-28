@@ -318,7 +318,7 @@ statement (@pxref{General Settings, server-info}).
 
 @node OPTION
 @unnumberedsubsec The OPTION Command
-  The @code{OPTION} command allows to request some optional features
+  The @code{OPTION} command allows to request optional features
 on the remote server.  Currently the only implemented subcommand is:
 
 @deffn Command {OPTION MIME}

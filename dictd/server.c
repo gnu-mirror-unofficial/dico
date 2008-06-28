@@ -345,6 +345,10 @@ sig_child(int sig)
 struct sockaddr client_addr;
 int client_addrlen;
 
+#define ACCESS_DENIED_MSG "530 Access denied\r\n"
+#define TEMP_FAIL_MSG "420 Server temporarily unavailable\r\n"
+#define SWRITE(fd, s) write(fd, s, sizeof(s)-1)
+
 int
 handle_connection(int n)
 {
@@ -376,6 +380,7 @@ handle_connection(int n)
 		 _("connection from %s denied"),
 		 p);
 	free(p);
+	SWRITE(connfd, ACCESS_DENIED_MSG);
 	close(connfd);
 	return 0;
     }
@@ -394,9 +399,10 @@ handle_connection(int n)
 	dico_stream_destroy(&str);
     } else {
 	pid_t pid = fork();
-	if (pid == -1)
+	if (pid == -1) {
 	    dico_log(L_ERR, errno, "fork");
-	else if (pid == 0) {
+	    SWRITE(connfd, TEMP_FAIL_MSG);
+	} else if (pid == 0) {
 	    /* Child.  */
 	    dico_stream_t str;
 	    

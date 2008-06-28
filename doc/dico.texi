@@ -98,6 +98,7 @@ documents Dico Version @value{VERSION}.
 
 Appendices
 
+* Dictionary Server Protocol::
 * Time and Date Formats::
 * Copying This Manual::  The GNU Free Documentation License.
 * Concept Index::        Index of Concepts.
@@ -1385,13 +1386,12 @@ you should always specify this capability.
 @item xversion
 The @code{XVERSION} command is supported.  It is a Dico extension that
 displays the @command{dictd} implementation and version number. 
-@FIXME-xref{extended and experimental commands}.
+@xref{Extended Commands, XVERSION}.
 
 @item xlev
 The @code{XLEV} command is supported.  This command allows to set and
 query maximal Levenshtein distance for @code{lev} matching strategy.
-@FIXME-xref{matching strategies}. @FIXME-xref{extended and
-experimental commands}. 
+@FIXME-xref{matching strategies}.  @xref{Extended Commands, XLEV}.
 @end table
 
   Capabilities set using the @command{capability} directive are
@@ -2521,7 +2521,11 @@ It must return @code{#t} if @var{key} matches @var{word}, and
 @node Reporting Bugs
 @chapter How to Report a Bug
 @UNREVISED
-  
+
+@node Dictionary Server Protocol
+@appendix Dictionary Server Protocol
+@include proto.texi
+
 @node Time and Date Formats
 @appendix Time and Date Formats
 @include strftime.texi

@@ -1,0 +1,145 @@
+@c This file is part of the Dico manual.
+@c Copyright (C) 2008 Sergey Poznyakoff
+@c This file is distributed under GFDL 1.1 or any later version
+@c published by the Free Software Foundation.
+@UNREVISED{}
+
+@menu
+* Standard Commands::
+* Extended Commands::
+@end menu
+
+@node Standard Commands
+@unnumberedsec Standard Commands
+@UNREVISED
+
+@menu
+* DEFINE::
+* MATCH::
+* SHOW::
+* OPTION::
+* AUTH::
+* CLIENT::
+* STATUS::
+* HELP::
+* QUIT::
+@end menu
+
+@node DEFINE
+@unnumberedsubsec The DEFINE Command
+@UNREVISED
+
+@deffn Command DEFINE database word
+Look up word in database
+@end deffn
+
+@node MATCH
+@unnumberedsubsec The MATCH Command
+@UNREVISED
+
+@deffn Command MATCH database strategy word
+match word in database using strategy
+@end deffn
+
+@node SHOW
+@unnumberedsubsec The SHOW Command
+@UNREVISED
+
+@deffn Command {SHOW DB}
+@deffnx Command {SHOW DATABASES}
+List all accessible databases
+@end deffn
+
+@deffn Command {SHOW STRAT}
+@deffnx Command {SHOW STRATEGIES}
+list available matching strategies
+@end deffn
+
+@deffn Command {SHOW INFO} database
+provide information about the database
+@end deffn
+
+@deffn Command {SHOW SERVER}
+provide site-specific information
+@end deffn
+
+@node OPTION
+@unnumberedsubsec The OPTION Command
+@UNREVISED
+
+@deffn Command {OPTION MIME}
+use MIME headers
+@end deffn
+
+@node AUTH
+@unnumberedsubsec The AUTH Command
+@UNREVISED
+
+@deffn Command AUTH username auth-string
+@end deffn
+
+@node CLIENT
+@unnumberedsubsec The CLIENT Command
+@UNREVISED
+
+@deffn Command CLIENT info
+identify client to server
+@end deffn
+
+@node STATUS
+@unnumberedsubsec The STATUS Command
+@UNREVISED
+
+@deffn Command STATUS
+display timing information
+@end deffn
+
+@node HELP
+@unnumberedsubsec The HELP Command
+@UNREVISED
+
+@deffn Command HELP
+display this help information
+@end deffn
+
+@node QUIT
+@unnumberedsubsec The QUIT Command
+@UNREVISED
+
+@deffn Command QUIT
+terminate connection
+@end deffn
+
+@node Extended Commands
+@unnumberedsec Extended Commands
+@UNREVISED
+
+@deffn Command XVERSION
+This command displays the daemon implementation and version number.
+It becomes available only if @samp{xversion} capability was requested
+in the configuration file (@pxref{Capabilities}).
+
+@smallexample
+C: XVERSION
+S: 110 dictd (dico @value{VERSION})
+@end smallexample
+@end deffn
+
+@deffn Command XLEV param
+If @var{param} is the word @samp{tell}, displays the current value of
+Levenshtein threshold.  If @var{param} is a positive integer value,
+sets the Levenshtein threshold to this value.
+
+This command becomes available only if @samp{xlev} capability was
+requested in the configuration file (@pxref{Capabilities}).
+
+@smallexample
+C: xlev tell
+S: 280 1
+C: xlev 3
+S: 250 ok - Levenshtein threshold set to 3
+C: xlev tell
+S: 280 3
+@end smallexample
+@end deffn
+

@@ -18,6 +18,7 @@ info_TEXINFOS=dico.texi
 dico_TEXINFOS=\
  fdl.texi\
  macros.texi\
+ proto.texi\
  rendition.texi\
  strftime.texi
 
@@ -75,7 +76,7 @@ check-fixmes:
 	fi
 
 check-unrevised:
-	@grep -Hn @UNREVISED $(info_TEXINFOS) > $@-t; \
+	@grep -Hn @UNREVISED $(info_TEXINFOS) $(dico_TEXINFOS) > $@-t; \
 	if [ -s $@-t ]; then \
 	  echo "Unrevised nodes:"; \
 	  cat $@-t; \

@@ -62,7 +62,7 @@ dictd_show_info(dico_stream_t str, int argc, char **argv)
     char *dbname = argv[2];
     dictd_database_t *dict = find_database(dbname);
     if (!dict) 
-	stream_writez(str, "550 invalid database, use SHOW DB for list\r\n");
+	stream_writez(str, "550 invalid database, use SHOW DB for a list\r\n");
     else {
 	dico_stream_t ostr;
 	char *info = dictd_get_database_info(dict);
@@ -216,8 +216,7 @@ dictd_match(dico_stream_t str, int argc, char **argv)
     total_bytes_out = 0;
     if (!strat) 
 	stream_writez(str,
-		      "551 Invalid strategy, use \"SHOW STRAT\" "
-		      "for a list of strategies\r\n");
+		      "551 Invalid strategy, use SHOW STRAT for a list\r\n");
     else if (strcmp(dbname, "!") == 0) 
 	dictd_match_word_first(str, strat, word);
     else if (strcmp(dbname, "*") == 0) 
@@ -227,7 +226,7 @@ dictd_match(dico_stream_t str, int argc, char **argv)
     
 	if (!db) 
 	    stream_writez(str,
-			  "550 invalid database, use SHOW DB for list\r\n");
+			  "550 invalid database, use SHOW DB for a list\r\n");
 	else
 	    dictd_match_word_db(db, str, strat, word);
     }
@@ -250,7 +249,7 @@ dictd_define(dico_stream_t str, int argc, char **argv)
     
 	if (!db) 
 	    stream_writez(str,
-			  "550 invalid database, use SHOW DB for list\r\n");
+			  "550 invalid database, use SHOW DB for a list\r\n");
 	else
 	    dictd_define_word_db(db, str, word);
     }

@@ -126,7 +126,7 @@ Configuration
 * Authorization::
 * ACL::                  Access Control Lists
 * Security Settings::
-* Logging and Debuging::
+* Logging and Debugging::
 * Access Log::
 * General Settings::
 * Capabilities::
@@ -411,7 +411,7 @@ directives any time by running @command{dictd --config-help}.
 * Authorization::
 * ACL::                  Access Control Lists
 * Security Settings::
-* Logging and Debuging::
+* Logging and Debugging::
 * Access Log::
 * General Settings::
 * Capabilities::
@@ -428,9 +428,9 @@ directives any time by running @command{dictd --config-help}.
 
   There are three classes of lexical tokens: keywords, values, and
 separators. Blanks, tabs, newlines and comments, collectively called
-@dfn{white space} are ignored excepty as they serve to separate
+@dfn{white space} are ignored except as they serve to separate
 tokens.  Some white space is required to separate otherwise adjacent 
-keywors and values.
+keywords and values.
 
 @menu
 * Comments::
@@ -548,7 +548,7 @@ Examples of keywords are: @samp{group}, @samp{identity-check}.
 @cindex boolean value
   A boolean value is one of the following: @samp{yes}, @samp{true},
 @samp{t} or @samp{1}, meaning @dfn{true}, and @samp{no},
-@samp{false}, @samp{nil}, @samp{0} meaninig @dfn{false}.
+@samp{false}, @samp{nil}, @samp{0} meaning @dfn{false}.
   
 @item unquoted string
 @cindex string, unquoted
@@ -1042,8 +1042,8 @@ connection-acl incoming-conn;
 
 @deffn {Configuration} show-sys-info @var{acl-name}
   This statement controls whether to show system information in reply
-to @code{SHOW SERVER} command.  The information will be shown only
-if @acronym{ACL} @var{acl-name} allows it.
+to @code{SHOW SERVER} command (@pxref{SHOW, SHOW SERVER}).  The
+information will be shown only if @acronym{ACL} @var{acl-name} allows it.
 
 @cindex system information
 The system information shown includes the following data: name
@@ -1058,8 +1058,8 @@ dict.example.net up 110+04:42:58, 19647044 forks (6867.9/hour)
 @end smallexample
 @end deffn
 
-@node Logging and Debuging
-@subsection Logging and Debuging
+@node Logging and Debugging
+@subsection Logging and Debugging
 @cindex logging, configuration
   The directive described in this subsection provide basic logging
 capabilities.  
@@ -1083,7 +1083,7 @@ Prefix diagnostics messages with a string identifying their severity.
 @deffn {Configuration} transcript @var{boolean}
 Log session transcript.  The lines received from client are prefixed
 with @samp{C:}, those sent in reply are marked with @samp{S:}.  Here is
-an exerpt from the transcript output:
+an excerpt from the transcript output:
 
 @smallexample
 S: 220 Trurl.gnu.org.ua dictd (dico 1.99.90) <mime.xversion>
@@ -1153,7 +1153,7 @@ Size of response in bytes in @acronym{CLF} format, i.e. a @samp{-} rather
 than a @samp{0} when no bytes are sent.
 
 @item %C
-Remote client (from @code{CLIENT} command). 
+Remote client (from @code{CLIENT} command (@pxref{CLIENT})). 
 
 @item %D
 The time taken to serve the request, in microseconds.
@@ -1233,7 +1233,7 @@ have different meaning than in Apache: @samp{%C}, @samp{%H}, @samp{%m},
 @samp{%q}.  The following format specifiers are unique to Dico:
 @samp{%@{@var{n}@}R}, @samp{%V}, @samp{%W}.
 
-  Absense of the @code{access-log-format} directive is equivalent to
+  Absence of the @code{access-log-format} directive is equivalent to
 the following statement:
 
 @smallexample
@@ -1263,12 +1263,14 @@ Display the @var{string} in the textual part of the initial server
 reply.
 
 @anchor{initial reply}
-When connection is established, the server sends an initial reply to
+When connection is established, the server sends an @dfn{initial reply} to
 the client, that looks like in the example below:
 
 @smallexample
 220 Trurl.gnu.org.ua <auth.mime> <520.1212912026@@Trurl.gnu.org.ua>
 @end smallexample
+
+@xref{Initial Reply}, for a detailed description of its parts.
 
 The part of this reply after the host name and the first angle
 bracket is modifiable and can contain arbitrary text.  You can use
@@ -1300,13 +1302,13 @@ log file using @samp{%v} escape (@pxref{Access Log}).
 @end deffn
 
 @deffn {Configuration} server-info @var{string}
-Set server description to be shown in reply to @code{SHOW SERVER} command.
+Set server description to be shown in reply to @code{SHOW SERVER}
+(@pxref{SHOW, SHOW SERVER}) command.
 
 The first line of the reply, after the usual @samp{114} response line,
 shows the name of host where the server is running.  If the settings
-of @code{show-sys-info} and @code{sys-info-groups} (@pxref{Security
-Settings}) allow, some additional information about the system is
-printed.
+of @code{show-sys-info} (@pxref{Security Settings, show-sys-info}) allow, some
+additional information about the system is printed.
 
 The lines that follow are taken from the @code{server-info}
 directive.  It is common to specify @var{string} using
@@ -1353,7 +1355,7 @@ EOT;
 
 @deffn {Configuration} default-strategy @var{string}
 Set the name of the default matching strategy
-(@FIXME-pxref{strategies}).  By default, Levenshtein matching is used,
+(@pxref{MATCH}).  By default, Levenshtein matching is used,
 which is equivalent to
 
 @smallexample
@@ -1391,7 +1393,7 @@ displays the @command{dictd} implementation and version number.
 @item xlev
 The @code{XLEV} command is supported.  This command allows to set and
 query maximal Levenshtein distance for @code{lev} matching strategy.
-@FIXME-xref{matching strategies}.  @xref{Extended Commands, XLEV}.
+@xref{MATCH, strategy}.  @xref{Extended Commands, XLEV}.
 @end table
 
   Capabilities set using the @command{capability} directive are
@@ -1490,7 +1492,7 @@ e.g., @samp{.so}, @samp{.sl}, etc.
 @end enumerate
 
 @deffn {Configuration} module-load-path @var{list}
-This directive adds the directories listend in its argument to the
+This directive adds the directories listed in its argument to the
 module load path.  Example:
 
 @smallexample
@@ -1542,14 +1544,16 @@ description, or if its description is malformed.
 
 In any case, if @code{description} directive is specified, its value
 takes precedence over description string retrieved from the database
-itself. 
+itself.
+
+@xref{SHOW, SHOW DB}, for a description of @code{SHOW DB} command.
 @end deffn
 
 @deffn {Database} info @var{string}
 Supply a full description of the database.  This description is shown
-in reply to @code{SHOW INFO} command.  The @var{string} is usually a
-multi-line text, so it is common to use here-document syntax
-(@pxref{here-document}), e.g.:
+in reply to @code{SHOW INFO} (@pxref{SHOW, SHOW INFO}) command.  The
+@var{string} is usually a multi-line text, so it is common to use
+here-document syntax (@pxref{here-document}), e.g.:
 
 @smallexample
 @group
@@ -1571,7 +1575,7 @@ over info strings retrieved from the database.
 
 The following two directives control the content type and transfer
 encoding used when formatting replies from this database if
-@code{OPTION MIME} is in effect:
+@code{OPTION MIME} (@pxref{OPTION, OPTION MIME}) is in effect:
 
 @deffn {Database} content-type @var{string}
 Set the content type of the reply.  E.g.:
@@ -1767,7 +1771,7 @@ the scope of this document.  You will find a complete user manual in
 @ifhtml
 @uref{http://www.gnu.org/software/m4/manual}.
 @end ifhtml
-For the rest of this subection we assume the reader is sufficiently
+For the rest of this subsection we assume the reader is sufficiently
 acquainted with @command{m4} macro processor.
 
 @flindex pp-setup
@@ -1835,7 +1839,7 @@ defdb(eng-afr, English-Afrikaans Dictionary)
 @table @option
 @opsummary{config}
 @item --config=@var{file}
-Read this configuration file istead of the default
+Read this configuration file instead of the default
 @file{@var{$sysconfdir}/dictd.conf}.  @xref{Configuration}.
 
 @opsummary{foreground}
@@ -1896,12 +1900,12 @@ information_.
 
 @opsummary{trace-grammar}
 @item --trace-grammar
-Trace parsing of the config file.  The option is provided for debuging
+Trace parsing of the config file.  The option is provided for debugging
 purposes. 
 
 @opsummary{trace-lex}
 @item --trace-lex
-Trace config file lexer.  The option is provided for debuging
+Trace config file lexer.  The option is provided for debugging
 purposes. 
 
 @opsummary{config-help}
@@ -1997,7 +2001,7 @@ optional.
 @cindex Devil's Dictionary
 @flindex devils.out
   The Dico package is shipped with Ambrose Bierce's @cite{Devil's
-Dictionary} in ouline format, see @file{tests/devils.out}.
+Dictionary} in outline format, see @file{tests/devils.out}.
 
   Outline module initialization does not require any command line
 parameters, specifying @code{command "outline";} is enough.  To
@@ -2113,7 +2117,7 @@ an error is signalled.
 initialization procedure: @code{show-dictorg-entries}, @code{sort},
 and @code{trim-ws}.  If used, they override initialization settings for
 that particular database.  Forms prefixed with @samp{no} may be used
-to disable the corresponidng option for this database.  For example, 
+to disable the corresponding option for this database.  For example, 
 @code{notrim-ws} cancels the effect of @code{trim-ws} used when
 initializing the module instance.
  
@@ -2206,7 +2210,7 @@ above),
 
 @item cmdline
 is the command line that will be passed to the Guile
-@code{open-module} function (@FIXME-pxref{open-module}).
+@code{open-db} callback function (@pxref{open-db}).
 @end table
 
 @menu
@@ -2353,6 +2357,7 @@ functions and search functions.
   Database callback functions are responsible for opening and closing
 databases and for returning information about them.
 
+@anchor{open-db}
 @deffn {Guile Callback} open-db name . args
 @deffnx {Virtual Table} (cons "open" open-db)
 Open the database.  The argument @var{name} contains database name as
@@ -2495,13 +2500,13 @@ Return a textual description of the strategy @var{strat}.
 
 @defun dico-strat-default? @var{strat}
 Return @code{true} if @var{strat} is a default
-strategy. @FIXME-xref{default strategy}.
+strategy.  @xref{MATCH, default strategy}.
 @end defun
 
 @defun dico-register-strat @var{strat} @var{descr} [@var{fun}]
 Register a new strategy.  If @var{fun} is given it will be used as a
 callback for that strategy.  Notice, that you can use strategies
-implemented in Guile in your C code as well (@FIXME-pxref{}).
+implemented in Guile in your C code as well (@pxref{MATCH, strategy}).
 
   The selector function must be declared as follows:
 

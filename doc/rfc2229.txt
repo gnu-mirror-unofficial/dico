@@ -613,6 +613,7 @@ RFC 2229              A Dictionary Server Protocol          October 1997
    server-specific timing and statistical information, as discussed in
    the section on the DEFINE command.
 
+   
 
 
 Faith & Martin               Informational                     [Page 11]

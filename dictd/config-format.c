@@ -116,15 +116,23 @@ format_docstring(FILE *stream, const char *docstring, int level)
 static void
 format_simple_statement(FILE *stream, struct config_keyword *kwp, int level)
 {
+    char *argstr;
+    
     if (kwp->docstring)
 	format_docstring(stream, kwp->docstring, level);
     format_level(stream, level);
-    if (kwp->argname && strchr(kwp->argname, ':'))
-	fprintf(stream, "%s <%s>;\n", kwp->ident, gettext(kwp->argname));
+
+    if (kwp->argname) 
+	argstr = kwp->argname;
+    else
+	argstr = N_("arg");
+
+    if (strchr("<[", argstr[0]))
+	fprintf(stream, "%s %s;\n", kwp->ident, gettext(argstr));
+    else if (strchr(argstr, ':'))
+	fprintf(stream, "%s <%s>;\n", kwp->ident, gettext(argstr));
     else {
-	fprintf(stream, "%s <%s: ", kwp->ident,
-		gettext(kwp->argname ?
-			kwp->argname : N_("arg")));
+	fprintf(stream, "%s <%s: ", kwp->ident, gettext(argstr));
 	if (kwp->type & CFG_LIST)
 	    fprintf(stream, "list of %s",
 		    gettext(config_data_type_string(CFG_TYPE(kwp->type))));
@@ -142,7 +150,7 @@ format_block_statement(FILE *stream, struct config_keyword *kwp, int level)
 	format_docstring(stream, kwp->docstring, level);
     format_level (stream, level);
     fprintf(stream, "%s", kwp->ident);
-    if (kwp->argname)
+    if (kwp->argname) 
 	fprintf(stream, " <%s>", gettext(kwp->argname));
     fprintf(stream, " {\n");
     format_statement_array(stream, kwp->kwd, 0, level + 1);

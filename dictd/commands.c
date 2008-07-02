@@ -353,9 +353,9 @@ _cmd_arg_cmp(const void *item, const void *data)
 	    if (p->keyword[off] == ' ') {
 		off++;
 		continue;
-	    } else
-		break;
+	    }
 	}
+	break;
     }
     return 1;
 }

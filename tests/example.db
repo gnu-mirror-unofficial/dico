@@ -1,0 +1,13 @@
+;; -*- scheme -*-
+("Short English-Polish numerals dictionary"
+ "Short English-Polish dictionary of numerals (1 - 10)"
+ ("one" . "jeden")
+ ("two" . "dwa")
+ ("three" . "trzy")
+ ("four" . "cztery")
+ ("five" . "pięc")
+ ("six" . "sześć")
+ ("seven" . "siedem")
+ ("eight" . "osiem")
+ ("nine" . "dziewięć")
+ ("ten" . "dziesięć"))

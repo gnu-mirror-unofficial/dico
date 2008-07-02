@@ -2244,6 +2244,7 @@ is the command line that will be passed to the Guile
 * Guile Initialization::
 * Guile API::
 * Dico Scheme Primitives::
+* Example Module::
 @end menu
 
 @node Virtual Functions
@@ -2470,6 +2471,7 @@ a result handle.  If nothing is found, return @code{#f} or @code{'()}.
 The argument @var{dbh} is a database handle returned by @code{open-db}.
 @end deffn
 
+@anchor{match-word}
 @deffn {Guile Callback} match-word dbh strat word
 @deffnx {Virtual Table} (cons "match" match-word)
 Find all matches of word @var{word} from the database @var{dbh}, using
@@ -2544,6 +2546,258 @@ implemented in Guile in your C code as well (@pxref{MATCH, strategy}).
 It must return @code{#t} if @var{key} matches @var{word}, and
 @code{#f} otherwise.
 @end defun
+
+@node Example Module
+@subsection Example Module
+  In this subsection we will show how to build a simple Dico module
+written in Scheme.  The source code of this module, called
+@file{example.scm} and a short database for it, @file{example.db}, are
+shipped with the distribution in the directory @file{tests}.
+
+  The database is stored in a disk file in form of a list.  The first
+two elements of this list contain database description and full
+information strings.  Rest of elements are conses, whose @code{car}
+contains the headword, and @code{cdr} contains the corresponding
+dictionary article.  Following is an example of such a database:
+
+@smallexample
+("Short English-Norwegian numerals dictionary"
+ "Short English-Norwegian dictionary of numerals (1 - 7)"
+ ("one" . "en")
+ ("two" . "to")
+ ("three" . "tre")
+ ("four" . "fire")
+ ("five" . "fem")
+ ("six" . "seks")
+ ("seven" . "sju"))
+@end smallexample
+
+  We wish to declare such databases in @file{dictd.conf} the following
+way:
+  
+@smallexample
+database @{
+	name "numerals";
+	handler "guile example.db";
+@}
+@end smallexample
+
+@noindent
+Thus, the @code{rest} argument to @samp{open-db} callback will be
+@samp{("guile" "example.db")} (@pxref{open-db}).  Given this, we may
+write the callback as follows:
+
+@smalllisp
+(define (open-db name . rest)
+  (let ((db (with-input-from-file
+		(cadr rest)
+	      (lambda () (read)))))
+    (cond
+     ((list? db) (cons name db))
+     (else
+      (format (current-error-port) "open-module: ~A: invalid format\n"
+	      (car args))
+      #f))))
+@end smalllisp
+
+  The list retuned by this callback will then be passed as a database
+handle to another callback functions.  To facilitate access to
+particular elements of this list, it is convenient to define the
+following syntax:
+
+@smalllisp
+(define-syntax db:get
+  (syntax-rules (info descr name corpus)
+    ((db:get dbh name)   ;; @r{Return the name of the database.}
+     (list-ref dbh 0))
+    ((db:get dbh descr)  ;; @r{Return the desctiption.}
+     (list-ref dbh 1))
+    ((db:get dbh info)   ;; @r{Return the info string.} 
+     (list-ref dbh 2))
+    ((db:get dbh corpus) ;; @r{Return the word list.}
+     (list-tail dbh 3))))
+@end smalllisp
+
+  Now, we can write @samp{descr} and @samp{info} callbacks:
+
+@smalllisp
+(define (descr dbh)
+  (db:get dbh descr))
+
+(define (info dbh)
+  (db:get dbh info))
+@end smalllisp
+
+  The two callbacks @samp{define-word} and @samp{match-word} provide
+the core module functionality.  Their results will be passed to
+@samp{output} and @samp{result-count} callbacks as a ``result handler''
+argument.  In the spirit of Scheme, we make the result a list.  Its
+@code{car} is a boolean value: @code{#t}, if the result
+comes from @samp{define-word} callback, and @code{#f} if it comes from
+@samp{match-word}.  The @code{cdr} of this list contains the list of
+matches.  For @samp{define-word}, it is a list of conses copied from
+the database word list, whereas for @samp{match-word}, it is a list of
+headwords. 
+
+  The @samp{define-word} callback returns all list entries whose
+@code{car}s contain the look up word.  It uses @code{mapcan}
+function, which is supposed to be defined elsewhere:
+  
+@smalllisp
+(define (define-word dbh word)
+  (let ((res (mapcan (lambda (elt)
+		       (and (string-ci=? word (car elt))
+			    elt))
+		     (db:get dbh corpus))))
+    (and res (cons #t res))))
+@end smalllisp
+
+  The @samp{match-word} callback (@pxref{match-word}) takes three
+arguments: a database handler @var{dbh}, a strategy descriptor
+@var{strat}, and a word @var{word} to look for.  The result handle it
+returns contains a list of headwords from the database that match
+@var{word} in sense of @var{strat}.  Thus, the behavior of
+@samp{match-word} depends on the @var{strat}.  To implement
+this, let's define a list of directly supported strategies (see below
+for definitions of particular @samp{match-} functions):
+
+@smalllisp
+(define strategy-list
+  (list (cons "exact"  match-exact)
+	(cons "prefix"  match-prefix)
+	(cons "suffix"  match-suffix)))
+@end smalllisp
+
+  The @samp{match-word} callback will then select an entry from
+that list and call its @code{cdr}, e.g.:
+
+@smalllisp
+(define (match-word dbh strat word)
+  (let ((sp (assoc (dico-strat-name strat) strategy-list)))
+    (let ((res (cond
+		(sp
+		 ((cdr sp) dbh strat word))
+@end smalllisp
+
+  If the requested strategy is not in that list, the function will use
+the selector function if it is available, and the default matching
+function otherwise:
+
+@smalllisp
+		((dico-strat-selector? strat)
+		 (match-selector dbh strat word))
+		(else
+		 (match-default dbh strat word)))))
+@end smalllisp
+
+  To summarize, the @samp{match-word} callback is:
+
+@smalllisp  
+(define (match-word dbh strat word)
+  (let ((sp (assoc (dico-strat-name strat) strategy-list)))
+    (let ((res (cond
+		(sp
+		 ((cdr sp) dbh strat word))
+		((dico-strat-selector? strat)
+		 (match-selector dbh strat word))
+		(else
+		 (match-default dbh strat word)))))
+      (if res
+	  (cons #f res)
+	  #f))))
+@end smalllisp
+
+  Now, let's create the @samp{match-} functions used in it.  The
+@samp{exact} strategy is easiest to implement:
+
+@smalllisp
+(define (match-exact dbh strat word)
+  (mapcan (lambda (elt)
+	    (and (string-ci=? word (car elt))
+		 (car elt)))
+	  (db:get dbh corpus)))
+@end smalllisp
+
+  The @samp{prefix} and @samp{suffix} strategies are implemented using
+SRFI-13 (@pxref{SRFI-13,,SRFI-13,guile,The Guile Reference Manual})
+functions @code{string-prefix-ci?} and @code{string-suffix-ci?}, e.g.:
+
+@smalllisp
+(define (match-prefix dbh strat word)
+  (mapcan (lambda (elt)
+	    (and (string-prefix-ci? word (car elt))
+		 (car elt)))
+	  (db:get dbh corpus)))
+@end smalllisp
+
+  Notice that whereas the @samp{prefix} strategy is defined by the
+server itself, the @samp{suffix} strategy is an extension, and should
+therefore be registered:
+
+@smalllisp
+(dico-register-strat "suffix" "Match word suffixes")
+@end smalllisp
+
+  The @code{match-selector} function is pretty similar to its
+siblings, except that it uses @code{dico-strat-select?}
+(@pxref{Dico Scheme Primitives, dico-strat-select?} to select the
+matching elements:
+
+@smalllisp
+(define (match-selector dbh strat word)
+  (mapcan (lambda (elt)
+	    (and (dico-strat-select? strat (car elt) word)
+		 (car elt)))
+	  (db:get dbh corpus)))
+@end smalllisp
+  
+  Finally, the @code{match-default} may be a variable that refers to
+the default matching strategy for this module, e.g.:
+
+@smalllisp
+(define match-default match-prefix)
+@end smalllisp
+
+  The two callbacks left to define are @samp{result-count} and
+@samp{output}.  The first of them simply returns the number of
+elements in @code{cdr} of the result:
+
+@smalllisp
+(define (result-count rh)
+  (length (cdr rh)))
+@end smalllisp
+
+  The behavior of @samp{output} depends on whether the result is
+produced by @samp{define-word} or by @samp{match-word}.  
+
+@smalllisp
+(define (output rh n)
+  (if (car rh)
+      ;; @r{Result comes from DEFINE command.}
+      (let ((res (list-ref (cdr rh) n)))
+	(display (car res))
+	(newline)
+	(display (cdr res)))
+      ;; @r{Result comes from MATCH command.}
+      (display (list-ref (cdr rh) n))))
+@end smalllisp
+
+  Finally, the callbacks are made known to @command{dictd} by the
+module initialization function:
+
+@smalllisp
+(define-public (example-init arg)
+  (list (cons "open" open-module)
+        (cons "descr" descr)
+        (cons "info" info)
+        (cons "define" define-word)
+        (cons "match" match-word)
+        (cons "output" output)
+        (cons "result-count" result-count)))
+@end smalllisp
+
+  Notice, that in this implementation @samp{close-db} callback was not
+needed. 
 
 @node Interface
 @chapter Dico Module Interface

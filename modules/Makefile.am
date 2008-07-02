@@ -16,4 +16,4 @@
 
 DICO_GUILE_DIR=guile
 SUBDIRS = outline dict.org @BUILD_DICO_GUILE_DIR@
-EXTRA_DIST = sample.c sample.scm
+EXTRA_DIST = template.c template.scm

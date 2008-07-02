@@ -89,7 +89,7 @@
 
 ;;
 
-(define-public (mapcan fun list)
+(define (mapcan fun list)
   (apply (lambda ( . slist)
            (let loop ((elt '())
                       (slist slist))

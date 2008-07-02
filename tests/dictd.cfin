@@ -5,7 +5,8 @@ timing yes;
 access-log-file "<BUILDDIR>/tests/access_log";
 access-log-format "%h %l %u %t \"%r\" %>s %b \"\" \"%C\"";
 
-module-load-path "<BUILDDIR>/modules/outline";
+module-load-path ("<BUILDDIR>/modules/outline",
+                  "<BUILDDIR>/modules/guile");
 
 load-module outline {
 	command "outline";
@@ -14,6 +15,17 @@ load-module outline {
 database {
 	name "devdict";
 	handler "outline <SRCDIR>/tests/devils.out";
+}
+
+load-module guile {
+	command "guile debug "
+	        " init-script=<SRCDIR>/tests/example.scm "
+		" init-fun=example-init";
+}
+
+database {
+	name "numerals";
+	handler "guile example.db";
 }
 
 alias d DEFINE;

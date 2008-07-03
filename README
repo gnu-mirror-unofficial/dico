@@ -13,7 +13,7 @@ be supplied as soon as the project reaches beta status.
 ==========
 
 Dico is an implementation of DICT server (RFC 2229).  It is fully
-modular: the daemon itself (dictd) provides only the server
+modular: the daemon itself (dicod) provides only the server
 functionality, but it knows nothing about database formats.  Actual
 searches are performed by functions supplied in loadable modules.  A
 single module can serve one or more databases. 
@@ -34,7 +34,7 @@ with the stress on the last syllable.
 * Current state
 ===============
 
-The dictd daemon is completely implemented. It provides all the
+The dicod daemon is completely implemented. It provides all the
 functionality required by RFC 2229, except for SASL commands.
 
 The package comes with the following database modules:
@@ -79,7 +79,7 @@ invocation instructs it to use `/usr/local/bin/gm4':
      $ ./configure DEFAULT_PREPROCESSOR="/usr/local/bin/gm4 -s"
 
 Note the use of `-s' preprocessor option.  It instructs `m4' to
-produce line directives which help `dictd' produce correct diagnostics
+produce line directives which help `dicod' produce correct diagnostics
 about eventual configuration errors.  Unless your `m4' implementation
 does not have this feature, we recommend to always use it in
 `DEFAULT_PREPROCESSOR' value.
@@ -101,7 +101,7 @@ If you do not wish to use Guile, use `--without-guile' to disable it.
 ** Other Configure Settings
 ----------------------------
 
-The `dictd' daemon uses syslog for diagnostics.  The default syslog
+The `dicod' daemon uses syslog for diagnostics.  The default syslog
 facility can be set using `LOG_FACILITY' configuration variable.  Its
 allowed arguments are `user', `daemon', `auth', `authpriv', `mail',
 `cron', and `local0' through `local7'.  Case is not significant.  In

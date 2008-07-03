@@ -917,7 +917,7 @@ mod_free_result(dico_result_t rp)
     free(rp);
 }
 
-struct dico_handler_module DICO_EXPORT(dictorg, module) = {
+struct dico_database_module DICO_EXPORT(dictorg, module) = {
     DICO_MODULE_VERSION,
     DICO_CAPA_NONE,
     mod_init,

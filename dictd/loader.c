@@ -45,7 +45,7 @@ static int
 dictd_load_module0(dictd_module_instance_t *inst, int argc, char **argv)
 {
     lt_dlhandle handle;
-    struct dico_handler_module *pmod;    
+    struct dico_database_module *pmod;    
 
     if (inst->handle) {
 	dico_log(L_ERR, 0, _("module %s already loaded"), argv[0]);
@@ -59,21 +59,21 @@ dictd_load_module0(dictd_module_instance_t *inst, int argc, char **argv)
 	return 1;
     }
     
-    pmod = (struct dico_handler_module *) lt_dlsym(handle, "module");
+    pmod = (struct dico_database_module *) lt_dlsym(handle, "module");
     MODULE_ASSERT(pmod);
-    MODULE_ASSERT(pmod->version <= DICO_MODULE_VERSION);
-    MODULE_ASSERT(pmod->module_init_db);
-    MODULE_ASSERT(pmod->module_free_db);
-    MODULE_ASSERT(pmod->module_match);
-    MODULE_ASSERT(pmod->module_define);
-    MODULE_ASSERT(pmod->module_output_result);
-    MODULE_ASSERT(pmod->module_result_count);
-    MODULE_ASSERT(pmod->module_free_result);
+    MODULE_ASSERT(pmod->dico_version <= DICO_MODULE_VERSION);
+    MODULE_ASSERT(pmod->dico_init_db);
+    MODULE_ASSERT(pmod->dico_free_db);
+    MODULE_ASSERT(pmod->dico_match);
+    MODULE_ASSERT(pmod->dico_define);
+    MODULE_ASSERT(pmod->dico_output_result);
+    MODULE_ASSERT(pmod->dico_result_count);
+    MODULE_ASSERT(pmod->dico_free_result);
 
-    if (pmod->module_open || pmod->module_close)
-	MODULE_ASSERT(pmod->module_open && pmod->module_close);
+    if (pmod->dico_open || pmod->dico_close)
+	MODULE_ASSERT(pmod->dico_open && pmod->dico_close);
     
-    if (pmod->module_init && pmod->module_init(argc, argv)) {
+    if (pmod->dico_init && pmod->dico_init(argc, argv)) {
 	lt_dlclose(handle);
 	dico_log(L_ERR, 0, _("%s: initialization failed"), argv[0]);
 	return 1;
@@ -108,9 +108,9 @@ dictd_init_database(dictd_database_t *dp)
 {
     dictd_module_instance_t *inst = dp->instance;
 
-    if (inst->module->module_init_db) {
-	dp->mod_handle = inst->module->module_init_db(dp->name,
-						      dp->argc, dp->argv);
+    if (inst->module->dico_init_db) {
+	dp->mod_handle = inst->module->dico_init_db(dp->name,
+						    dp->argc, dp->argv);
 	if (!dp->mod_handle) {
 	    dico_log(L_ERR, 0, _("cannot initialize database `%s'"),
 		     dp->command);
@@ -125,8 +125,8 @@ dictd_open_database(dictd_database_t *dp)
 {
     dictd_module_instance_t *inst = dp->instance;
 
-    if (inst->module->module_open) {
-	if (inst->module->module_open(dp->mod_handle)) {
+    if (inst->module->dico_open) {
+	if (inst->module->dico_open(dp->mod_handle)) {
 	    dico_log(L_ERR, 0, _("cannot open database `%s'"),
 		     dp->command);
 	    return 1;
@@ -138,14 +138,13 @@ dictd_open_database(dictd_database_t *dp)
 int
 dictd_close_database(dictd_database_t *dp)
 {
-    int rc;
+    int rc = 0;
     
     if (dp->mod_handle) {
 	dictd_module_instance_t *inst = dp->instance;
-	if (inst->module->module_close) 
-	    rc = inst->module->module_close(dp->mod_handle);
-    } else
-	rc = 0;
+	if (inst->module->dico_close) 
+	    rc = inst->module->dico_close(dp->mod_handle);
+    }
     return rc;
 }
 
@@ -157,8 +156,8 @@ dictd_free_database(dictd_database_t *dp)
     
     if (dp->mod_handle) {
 	dictd_module_instance_t *inst = dp->instance;
-	if (inst->module->module_free_db) {
-	    rc = inst->module->module_free_db(dp->mod_handle);
+	if (inst->module->dico_free_db) {
+	    rc = inst->module->dico_free_db(dp->mod_handle);
 	    dp->mod_handle = NULL;
 	}
     } else
@@ -173,8 +172,8 @@ dictd_get_database_descr(dictd_database_t *db)
 	return db->descr;
     else {
 	dictd_module_instance_t *inst = db->instance;
-	if (inst->module->module_db_descr)
-	    return inst->module->module_db_descr(db->mod_handle);
+	if (inst->module->dico_db_descr)
+	    return inst->module->dico_db_descr(db->mod_handle);
     }
     return NULL;
 }
@@ -193,8 +192,8 @@ dictd_get_database_info(dictd_database_t *db)
 	return db->info;
     else {
 	dictd_module_instance_t *inst = db->instance;
-	if (inst->module->module_db_info)
-	    return inst->module->module_db_info(db->mod_handle);
+	if (inst->module->dico_db_info)
+	    return inst->module->dico_db_info(db->mod_handle);
     }
     return NULL;
 }
@@ -228,23 +227,23 @@ dictd_word_first(dico_stream_t stream, const char *word,
     itr = xdico_iterator_create(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
 	if (database_visible_p(db)) {
-	    struct dico_handler_module *mp = db->instance->module;
+	    struct dico_database_module *mp = db->instance->module;
 	    dico_result_t res = strat ?
-		            mp->module_match(db->mod_handle, strat, word) :
-		            mp->module_define(db->mod_handle, word);
+		            mp->dico_match(db->mod_handle, strat, word) :
+		            mp->dico_define(db->mod_handle, word);
 	    size_t count;
 	    
 	    if (!res)
 		continue;
-	    count = mp->module_result_count(res);
+	    count = mp->dico_result_count(res);
 	    
 	    if (count) {
 		if (strat)
 		    current_stat.matches = count;
 		else
 		    current_stat.defines = count;
-		if (mp->module_compare_count)
-		    current_stat.compares = mp->module_compare_count(res);
+		if (mp->dico_compare_count)
+		    current_stat.compares = mp->dico_compare_count(res);
 		stream_printf(stream, begfmt, (unsigned long) count);
 		proc(db, res, word, stream, count);
 		stream_writez(stream, (char*) endmsg);
@@ -253,7 +252,7 @@ dictd_word_first(dico_stream_t stream, const char *word,
 		access_log_status(begfmt, endmsg);
 	    }
 	    
-	    mp->module_free_result(res);
+	    mp->dico_free_result(res);
 	    break;
 	}
     }
@@ -287,23 +286,23 @@ dictd_word_all(dico_stream_t stream, const char *word,
     itr = xdico_iterator_create(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
 	if (database_visible_p(db)) {
-	    struct dico_handler_module *mp = db->instance->module;
+	    struct dico_database_module *mp = db->instance->module;
 	    dico_result_t res = strat ?
-		              mp->module_match(db->mod_handle, strat, word) :
-		              mp->module_define(db->mod_handle, word);
+		              mp->dico_match(db->mod_handle, strat, word) :
+		              mp->dico_define(db->mod_handle, word);
 	    size_t count;
 	
 	    if (!res)
 		continue;
-	    count = mp->module_result_count(res);
+	    count = mp->dico_result_count(res);
 	    if (!count) {
-		mp->module_free_result(res);
+		mp->dico_free_result(res);
 		continue;
 	    }
 
 	    total += count;
-	    if (mp->module_compare_count)
-		current_stat.compares += mp->module_compare_count(res);
+	    if (mp->dico_compare_count)
+		current_stat.compares += mp->dico_compare_count(res);
 	    rp = xmalloc(sizeof(*rp));
 	    rp->db = db;
 	    rp->res = res;
@@ -327,7 +326,7 @@ dictd_word_all(dico_stream_t stream, const char *word,
 	stream_printf(stream, begfmt, (unsigned long) total);
 	for (rp = dico_iterator_first(itr); rp; rp = dico_iterator_next(itr)) {
 	    proc(rp->db, rp->res, word, stream, rp->count);
-	    rp->db->instance->module->module_free_result(rp->res);
+	    rp->db->instance->module->dico_free_result(rp->res);
 	    free(rp);
 	}
 	stream_writez(stream, (char*) endmsg);
@@ -345,14 +344,14 @@ print_matches(dictd_database_t *db, dico_result_t res,
 	      dico_stream_t stream, size_t count)
 {
     size_t i;
-    struct dico_handler_module *mp = db->instance->module;
+    struct dico_database_module *mp = db->instance->module;
     dico_stream_t ostr = dictd_ostream_create(stream, db->content_type,
 	                                      db->content_transfer_encoding);
 
     for (i = 0; i < count; i++) {
 	stream_writez(ostr, db->name);
 	dico_stream_write(ostr, " \"", 2);
-	mp->module_output_result(res, i, ostr);
+	mp->dico_output_result(res, i, ostr);
 	dico_stream_write(ostr, "\"\r\n", 3);
     }
     dico_stream_close(ostr);
@@ -363,12 +362,12 @@ void
 dictd_match_word_db(dictd_database_t *db, dico_stream_t stream,
 		    const dico_strategy_t strat, const char *word)
 {
-    struct dico_handler_module *mp = db->instance->module;
+    struct dico_database_module *mp = db->instance->module;
     dico_result_t res;
     size_t count;
     
     begin_timing("match");
-    res = mp->module_match(db->mod_handle, strat, word);
+    res = mp->dico_match(db->mod_handle, strat, word);
     
     if (!res) {
 	access_log_status(nomatch, nomatch);
@@ -376,14 +375,14 @@ dictd_match_word_db(dictd_database_t *db, dico_stream_t stream,
 	return;
     }
 
-    count = mp->module_result_count(res);
+    count = mp->dico_result_count(res);
     if (count == 0) {
 	access_log_status(nomatch, nomatch);
 	dico_stream_writeln(stream, nomatch, nomatch_len);
     } else {
 	current_stat.matches = count;
-	if (mp->module_compare_count)
-	    current_stat.compares = mp->module_compare_count(res);
+	if (mp->dico_compare_count)
+	    current_stat.compares = mp->dico_compare_count(res);
 	stream_printf(stream, "152 %lu matches found: list follows\r\n",
 		      (unsigned long) count);
 	print_matches(db, res, word, stream, count);
@@ -394,7 +393,7 @@ dictd_match_word_db(dictd_database_t *db, dico_stream_t stream,
 	access_log_status("152", "250");
     }
     
-    mp->module_free_result(res);
+    mp->dico_free_result(res);
 }
 
 void
@@ -426,14 +425,14 @@ print_definitions(dictd_database_t *db, dico_result_t res,
 {
     size_t i;
     char *descr = dictd_get_database_descr(db);
-    struct dico_handler_module *mp = db->instance->module;
+    struct dico_database_module *mp = db->instance->module;
     for (i = 0; i < count; i++) {
 	dico_stream_t ostr;
 	stream_printf(stream, "151 \"%s\" %s \"%s\"\r\n",
 		      word, db->name, descr ? descr : "");
 	ostr = dictd_ostream_create(stream, db->content_type,
 				    db->content_transfer_encoding);
-	mp->module_output_result(res, i, ostr);
+	mp->dico_output_result(res, i, ostr);
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);
 	dico_stream_write(stream, "\r\n.\r\n", 5);
@@ -445,27 +444,27 @@ void
 dictd_define_word_db(dictd_database_t *db, dico_stream_t stream,
 		     const char *word)
 {
-    struct dico_handler_module *mp = db->instance->module;
+    struct dico_database_module *mp = db->instance->module;
     dico_result_t res;
     size_t count;
     
     begin_timing("define");
 
-    res = mp->module_define(db->mod_handle, word);
+    res = mp->dico_define(db->mod_handle, word);
     if (!res) {
 	access_log_status(nomatch, nomatch);
 	dico_stream_writeln(stream, nomatch, nomatch_len);
 	return;
     }
 
-    count = mp->module_result_count(res);
+    count = mp->dico_result_count(res);
     if (count == 0) {
 	access_log_status(nomatch, nomatch);
 	dico_stream_writeln(stream, nomatch, nomatch_len);
     } else {
 	current_stat.defines = count;
-	if (mp->module_compare_count)
-	    current_stat.compares = mp->module_compare_count(res);
+	if (mp->dico_compare_count)
+	    current_stat.compares = mp->dico_compare_count(res);
 	stream_printf(stream, "150 %lu definitions found: list follows\r\n",
 		      (unsigned long) count);
 	print_definitions(db, res, word, stream, count);
@@ -475,7 +474,7 @@ dictd_define_word_db(dictd_database_t *db, dico_stream_t stream,
 	access_log_status("150", "250");
     }
     
-    mp->module_free_result(res);
+    mp->dico_free_result(res);
 }
 
 void

@@ -969,7 +969,7 @@ mod_free_result(dico_result_t rp)
     free(gres);
 }
 
-struct dico_handler_module DICO_EXPORT(guile, module) = {
+struct dico_database_module DICO_EXPORT(guile, module) = {
     DICO_MODULE_VERSION,
     DICO_CAPA_NONE,
     mod_init,

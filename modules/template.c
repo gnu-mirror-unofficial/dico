@@ -110,7 +110,7 @@ mod_free_result(dico_result_t rp)
     /* FIXME */
 }
 
-struct dico_handler_module DICO_EXPORT(sample, module) = {
+struct dico_database_module DICO_EXPORT(sample, module) = {
     DICO_MODULE_VERSION,
     DICO_CAPA_NONE,
     mod_init,

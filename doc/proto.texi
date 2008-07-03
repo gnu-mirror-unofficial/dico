@@ -350,7 +350,7 @@ Briefly, it is the MD5 checksum of the concatenation of the @var{msg-id}
 (@pxref{Initial Reply}) and the @dfn{shared secret} that is
 stored both on the server and client machines.  
 
-@xref{Authorization}, for information on how to configure server for
+@xref{Authentication}, for information on how to configure server for
 authenticating clients.
 
 This command is supported only if @samp{auth} capability is requested

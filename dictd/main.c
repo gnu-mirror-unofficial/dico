@@ -606,9 +606,9 @@ struct user_db_conf {
 struct user_db_conf user_db_cfg;
 
 struct config_keyword kwd_user_db[] = {
-    { "get-password", N_("arg"), N_("Password file or query."),
+    { "password-resource", N_("arg"), N_("Password file or query."),
       cfg_string, NULL, offsetof(struct user_db_conf, get_pw) },
-    { "get-groups", N_("arg"),
+    { "group-resource", N_("arg"),
       N_("File containing user group information or a query to retrieve it."),
       cfg_string, NULL, offsetof(struct user_db_conf, get_groups) },
     { NULL }

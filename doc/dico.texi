@@ -123,7 +123,7 @@ Configuration
 
 * Syntax::               Configuration file syntax.
 * Server Settings::
-* Authorization::
+* Authentication::
 * ACL::                  Access Control Lists
 * Security Settings::
 * Logging and Debugging::
@@ -435,7 +435,7 @@ directives any time by running @command{dictd --config-help}.
 @menu
 * Syntax::               Configuration file syntax.
 * Server Settings::
-* Authorization::
+* Authentication::
 * ACL::                  Access Control Lists
 * Security Settings::
 * Logging and Debugging::
@@ -870,38 +870,168 @@ Use encryption keys from the named file to decrypt @acronym{AUTH}
 replies encrypted using @acronym{DES}.
 @end deffn
 
-@node Authorization
-@subsection Authorization
-@UNREVISED
+@node Authentication
+@subsection Authentication
+@cindex authentication
+  The server may be configured to request authentication in order to
+make some databases or some additional information available to the
+user.  Another possible use of authentication is to minimize resource
+utilization on the server machine.
 
-@FIXME{
+  Authentication setup is simple: first, you define a user
+authentication database, then you enable it by declaring @code{auth}
+server capability (@pxref{Capabilities}):
+
+@smallexample
 capability auth;
-}
+@end smallexample
+
+@cindex authentication database
+@cindex database, authentication
+  @dfn{User authentication database} keeps, for each user name,
+the corresponding plain text password, and, optionally, names of the
+groups this user belongs to.  Notice, that due to the specifics of
+@acronym{DICT} authentication scheme (@pxref{AUTH}), user passwords
+are stored in plain text, therefore special care must be taken to
+protect the contents of your authentication database from compromise.
+
+The database is defined using @code{user-db} block statement:
+
+@deffn {Configuration} user-db url
+Declare user authentication database.
+@end deffn
+
+@cindex @acronym{URL}, authentication database
+@cindex authentication database @acronym{URL}
+Dico's authentication is designed so that various authentication
+database formats may easily be added.  A database is identified
+by its @acronym{URL}, or @dfn{Universal Resource Locator}.  It
+consists of the following parts (square brackets denoting optional
+ones):
+
+@smallexample
+@var{type}://[[@var{user}[:@var{password}]@@]@var{host}]/@var{path}[@var{params}]
+@end smallexample
+
+@table @var
+@item type
+A @dfn{database type}, or format.  See below for the list of
+available database formats.
+
+@item user
+User name necessary to access the database. 
+
+@item password
+User password necessary to access the database. 
+
+@item host
+Domain name or @acronym{IP} address of a machine running the database.
+
+@item path
+A @dfn{path} to the database. The exact meaning of this element
+depends on the database protocol. It is described in detail when
+discussing particular database protocols.
+
+@item params
+A list of protocol-dependent parameters. Each parameter is of the
+form @code{@var{keyword}=@var{name}}, multiple parameters are separated
+with semicolons.
+@end table
+
+  An @acronym{URL} defines how the database is accessed.  Another
+important point is where to get user data from.  This is specified by
+the following two sub-statements:
+
+@cindex resource, authentication
+@cindex authentication resource
+@deffn {user-db conf} password-resource arg
+Database resource returning user password.
+@end deffn
+
+@deffn {user-db conf} group-resource arg
+Database resource returning user groups.
+@end deffn
+
+The exact semantics of @dfn{database resource} depends on the
+type of database being used.  For flat text databases, resource means
+the name of a text file that contains these data, for @acronym{SQL}
+databases, resource is an @acronym{SQL} query, etc.  Below we will
+discuss @acronym{URLS}s and resources used by each database type.
+
+@cindex authenitcation database configuration
+@cindex authenitcation database definition
+To summarize, the definition of an authentication database is:
 
 @smallexample
 @group
-# Define user database for authentication.
-user-db <url: string> @{
-  # Password file or query.
-  get-password <arg: string>;
+# @r{Define user database for authentication.}
+user-db @var{url} @{
+  # @r{Name of a password resource.}
+  password-resource @var{resource};
 
-  # File containing user group information or a query to retrieve it.
-  get-groups <arg: string>;
+  # @r{Name of a resource returning user group information.}
+  group-resource @var{resource};
 @}
 @end group
 @end smallexample
 
-@deffn {Block} user-db @var{string}
-# Define user database for authentication.
+@menu
+* text::        Flat Text Databases.
+@end menu
 
-@deffn {user-db statement} get-password @var{string}
-  # Password file or query.
-@end deffn
+@node text
+@subsubsection Text Authentication Database
+@cindex text authentication database
+@cindex authentication database, text
+  A text authentication database consists of one or two flat text
+files --- a @dfn{password file}, which contains user passwords, and
+a @dfn{group file}, which contains user groups.  The latter is
+optional.  Both files have the same format:
 
-@deffn {user-db statement} get-groups @var{string}
-  # File containing user group information or a query to retrieve it.
-@end deffn
-@end deffn
+@itemize @bullet
+@item Empty lines are ignored.
+@item Any text from @samp{#} to the end of the line is ignored.
+@item Non-empty lines consist of two fields, separated by any amount
+of white space.  First field is the user name.  It serves as a search
+key in the database.  Second field is the requested resource.
+@end itemize
+
+  Record keys in a password file must be unique, i.e. no two records
+may contain the same first field.  Group file may contain multiple
+records with the same key.  For example:
+
+@smallexample
+$ grep smith pass
+smith guessme
+$ grep smith group
+smith user
+smith timing
+smith tester
+@end smallexample
+
+  This means that user @samp{smith} has password @samp{guessme} and is
+a member of three groups: @samp{user}, @samp{timing} and
+@samp{tester}.
+
+  An @acronym{URL} of a text database begins with @samp{text} and
+contains only @var{path} element, which gives the name of the
+directory where the database files reside.  The name of a password
+file is given by @code{password-resource} statement.  The name of a
+group file is given by @code{group-resource} statement.
+
+  For example, if user passwords are kept in file @file{passwd} and user
+groups are kept in file @file{user}, and both files reside in
+@file{/var/db/dico} directory, then the appropriate database
+configuration will be:
+
+@smallexample
+@group
+user-db text:///var/db/dico @{
+  password-resource passwd;
+  group-resource group;
+@}
+@end group
+@end smallexample
 
 @node ACL
 @subsection Access Control Lists
@@ -1405,7 +1535,7 @@ table:
 
 @table @asis
 @item auth
-The @code{AUTH} command is supported. @xref{Authorization}.
+The @code{AUTH} command is supported. @xref{Authentication}.
 
 @item mime
 The @code{OPTION MIME} command is supported.  Notice that

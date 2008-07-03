@@ -41,7 +41,7 @@ check-format:
 check-options:
 	@check-docs.sh options \
 	   '/OPTIONS_BEGIN/,/OPTIONS_END/s/OPTION( *\([^,][^,]*\),.*/\1/pg' \
-	   's/@c option --\(.*\)/\1/p' \
+	   '/@c option --/{s///;s/^\(help\|version\|usage\)//;p}' \
 	   $(top_srcdir)/dictd/cmdline.opt -- \
 	   $(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I $(srcdir) -E - \
 		$(info_TEXINFOS) 

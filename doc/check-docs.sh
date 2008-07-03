@@ -48,10 +48,10 @@ TEMPDIR=/tmp/mfck.$$
 mkdir $TEMPDIR || exit 1
 trap 'rm -rf $TEMPDIR' 1 2 13 15
 
-sed -n "$codesexp" $source | sort | uniq > $TEMPDIR/src
+sed -n "$codesexp" $source | tr -s '\n' | sort | uniq > $TEMPDIR/src
 $* | \
- sed -n '/^@macro/,/^@end macro/d;'"$docsexp" \
-  | sort | uniq > $TEMPDIR/doc
+ sed -n '/^@macro/,/^@end macro/d;'"$docsexp" | tr -s '\n' |
+ sort | uniq > $TEMPDIR/doc
 
 join -v1 $TEMPDIR/src $TEMPDIR/doc > $TEMPDIR/src-doc
 join -v2 $TEMPDIR/src $TEMPDIR/doc > $TEMPDIR/doc-src

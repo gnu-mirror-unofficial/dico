@@ -1583,8 +1583,8 @@ Set the command line for this handler.  It is similar to shell's
 command line: it consists of a name of database module, optionally
 followed by a whitespace-separated list of its arguments. Just as in
 shell, the name of the module specifies the disk file which should be
-loaded.  Arguments are passed to modules @dfn{initialization function}
-(@FIXME-pxref{module_init}).
+loaded.  Arguments are passed to the module @dfn{initialization function}
+(@pxref{dico_init}).
 @end deffn
 @end deffn
 
@@ -2943,6 +2943,171 @@ needed.
 @node Interface
 @chapter Dico Module Interface
 @UNREVISED
+
+@deftypevr {dico_database_module} unsigned dico_version
+@vrindex DICO_MODULE_VERSION
+Interface version being used.  It is recommended to use the macro
+@code{DICO_MODULE_VERSION}, which keeps the version number of the
+current interface.
+@end deftypevr
+
+@deftypevr {dico_database_module} unsigned dico_capabilities
+@vrindex DICO_CAPA_DEFAULT
+Additional capabilities.  This member is reserved for future use (as
+of Dico version @value{VERSION}.  Use @code{DICO_CAPA_DEFAULT} to
+initialize it.
+@end deftypevr
+
+@anchor{dico_init}
+@deftypefn {Dico Callback} int dico_init (int @var{argc}, char **@var{argv})
+This callback is called right after loading the module.  It is
+responsible for module initialization.  The arguments are:
+
+@table @var
+@item argc
+Number of elements in @var{argv}.
+
+@item argv
+The command line given by @code{command} configuration statement
+(@pxref{Handlers, command}), split into words.  The element
+@code{@var{argv}[0]} is the name of the module.  The element
+@code{@var{argv}[@var{argc}]} is @samp{NULL}.  Word splitting
+follows the rules similar to those used in shell, in particular,
+quoted strings (using both single and double quotes) are parsed as a
+single word.
+@end table
+
+This method is optional.
+@end deftypefn
+
+@deftypefn {Dico Callback} dico_handle_t dico_init_db (const char *@var{db}, @
+ int @var{argc}, char **@var{argv})
+Initialize the database.  This method is called as part of database
+initialization routine at startup of @command{dictd}, after processing
+@code{dictionary} configuration statement (@pxref{Dictionaries}).  Its
+arguments are:
+
+@table @var
+@item db
+The name of the database, as given by the @code{name} statement.
+
+@item argc
+Number of elements in @var{argv}.
+
+@item argv
+The command line given by @code{handler} configuration statement
+(@pxref{Dictionaries, handler}).  The array is @samp{NULL}-terminated.
+@end table
+
+This method returns a @dfn{database handle}, an opaque structure
+identifying the database.  This handle is passed as the first argument
+to other methods.  On error, @code{dico_init_db} returns @code{NULL}.
+
+Notice that this function is not required to actually open the
+database, if the @samp{open} notion is supported by the underlying
+mechanism.  Another method, @code{dico_open} is responsible for that.
+@end deftypefn
+
+@deftypefn {Dico Callback} int dico_free_db (dico_handle_t @var{dh})
+Reclaim any resources associated with database handle @var{dh}.  This
+method is called as part of exit cleanup routine, before the main
+@command{dictd} process terminates.
+
+Return @samp{0} on success, or any non-@samp{0} value on failure.
+
+@FIXME{Actually, as of version @value{VERSION}, it is not used.}
+@end deftypefn
+
+@deftypefn {Dico Callback} int dico_open (dico_handle_t @var{dh})
+Open the database identified by the handle @var{dh}.  This method is
+called as a part of child process initialization routine.
+
+Return @samp{0} on success, or any non-@samp{0} value on failure.
+
+The @code{dico_open} method is optional.
+@end deftypefn
+
+@deftypefn {Dico Callback} int dico_close (dico_handle_t @var{dh})
+Close the database identified by the handle @var{dh}.  This method is
+called as a part of child process termination routine.
+
+Return @samp{0} on success, or any non-@samp{0} value on failure.
+
+The @code{dico_close} method is optional, but it must be defined, if
+@code{dico_open} is defined.
+@end deftypefn
+
+@anchor{dico_db_info}
+@deftypefn {Dico Callback} char *dico_db_info (dico_handle_t @var{dh})
+Return a database information string for the database identified by
+@var{dh}.  This function is called on each @code{SHOW INFO} command,
+unless an informational text for this database is supplied in the
+configuration file (@pxref{Databases, info}).  After use, the value
+returned by @code{dico_db_info} is freed using system @code{free}
+function.
+
+This method is optional.
+@end deftypefn
+
+@deftypefn {Dico Callback} char *dico_db_descr (dico_handle_t @var{dh})
+Return a short database description string for the database identified
+by @var{dh}.  This function is called on each @code{SHOW DB} command,
+unless a description for this database is supplied in the
+configuration file (@pxref{Databases, descr}).  After use, the value
+returned by @code{dico_db_descr} is freed using system @code{free}
+function.
+
+This method is optional.
+@end deftypefn
+
+@deftypefn {Dico Callback} dico_result_t dico_match (dico_handle_t @var{dh}, @
+  const dico_strategy_t @var{strat}, const char *@var{word})
+Find in the database identified by @var{dh} matches for headword
+@var{word}, using matching strategy @var{strat}.
+
+This method returns a @dfn{result handle}, an opaque pointer that can
+then be used to display the obtained results.  It returns @code{NULL}
+if no matches were found.
+@end deftypefn
+
+@deftypefn {Dico Callback} dico_result_t dico_define (dico_handle_t @var{dh}, @
+  const char *@var{word})
+Find definitions of headword @var{word} in the database identified by
+@var{dh}.
+
+This method returns a @dfn{result handle}, an opaque pointer that can
+then be used to display the obtained results.  It returns @code{NULL}
+if no matches were found.
+@end deftypefn
+
+@deftypefn {Dico Callback} int dico_output_result (dico_result_t @var{rp}, @
+  size_t @var{n}, dico_stream_t @var{str})
+The @code{dico_output_result} method outputs to stream @var{str} the
+@var{n}th result from result set @var{rp}.  The latter is a result
+handle, obtained from a previous call to @code{dico_match} or
+@code{dico_define}.
+
+Return @samp{0} on success, or any non-@samp{0} value on failure.
+@end deftypefn
+
+@deftypefn {Dico Callback} size_t dico_result_count (dico_result_t @var{rp})
+Return number of distinct elements in a result set, identified by
+@var{rp}, which is a result handle, obtained from a previous call to
+@code{dico_match} or @code{dico_define}.
+@end deftypefn
+
+@deftypefn {Dico Callback} size_t dico_compare_count (dico_result_t @var{rp})
+Return number of comparisons performed when constructing the result
+set identified by @var{rp}.
+
+This method is optional.
+@end deftypefn
+
+@deftypefn {Dico Callback} void dico_free_result (dico_result_t @var{rp})
+Free any resources used by the result set @var{rp}, which is a result
+handle, obtained from a previous call to @code{dico_match} or
+@code{dico_define}. 
+@end deftypefn
 
 @node Reporting Bugs
 @chapter How to Report a Bug

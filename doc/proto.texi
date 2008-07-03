@@ -291,8 +291,8 @@ Possible responses:
 
 The textual body is retrieved from the @code{info} statement in the
 configuration file (@pxref{Databases, info}), or, if it is not
-specified, from the database itself, using @code{module_info}
-callback function (@FIXME-pxref{module_info}).  If neither source
+specified, from the database itself, using @code{dico_db_info}
+callback function (@pxref{dico_db_info}).  If neither source
 returns anything, the string @samp{No information available.} is returned.
 @end deffn
 

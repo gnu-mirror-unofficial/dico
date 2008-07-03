@@ -1961,15 +1961,24 @@ Print program version and exit.
 
 @node Modules
 @chapter Modules
-@UNREVISED
+@cindex Modules
   Dico comes with a set of loadable modules for handling several
-database formats and for extending its functionality.  The modules
+database formats and for extending its functionality.  Modules
 are binary loadable files, installed in
-@file{@var{$prefix}/lib/dico}.  They are configured via @dfn{command
-line arguments}, passed to the @code{command} configuration directive
-(@pxref{Handlers, command}) for per-module configuration, and to
-@code{handler} directive (@pxref{Databases, handler}, for per-database
-configuration). 
+@file{@var{$prefix}/lib/dico}.  Modules are configurable on per-module
+(@pxref{Handlers, command}) and per-database (@pxref{Databases,
+handler} basis.
+
+  Dico version @value{VERSION} is shipped with the following modules:
+@samp{Outline}, @samp{Dictorg} and @samp{Guile}.  The @samp{Outpline}
+module handles databases written in Emacs Outline format.  It is
+useful for small databases.  The @samp{Dictorg} module handles
+databases in format designed by @cite{@acronym{DICT} development
+group}.  The most existing free databases are written in this format.
+Finally, the @samp{Guile} module allows you to use arbitrary database
+modules written in Scheme programming language.
+
+  In this chapter we will describe these modules in detail.
 
 @menu
 * Outline::
@@ -2425,7 +2434,8 @@ Close the database.  This function is called during the cleanup
 procedure, before termination of @code{dictd}.  The argument
 @code{dbh} is a database handle returned by @code{open-db}.
 
-@FIXME{As of version @value{VERSION}, this callback is never used.}
+The return value from @code{close-db} is ignored.  To communicate
+errors to the daemon, throw an exception.
 @end deffn
 
 @deffn {Guile Callback} descr dbh
@@ -2806,7 +2816,22 @@ needed.
 
 @node Reporting Bugs
 @chapter How to Report a Bug
-@UNREVISED
+
+  Email bug reports to @email{bug-dico@@gnu.org.ua}.  Please include a
+detailed description of the bug and information about the conditions
+under which it occurs, so we can reproduce it.  To facilitate the
+task, the following list shows the basic set of information that is
+needed in order to find the bug:
+
+@itemize
+@item Package version you use.  The output of @command{dictd
+--version} will do.
+@item A detailed description of the bug.
+@item Conditions under which the bug appears.
+@item It is often helpful to send the contents of @file{config.log}
+file along with your bug report. This file is created after running
+@command{./configure} in Dico source root directory.
+@end itemize
 
 @node Dictionary Server Protocol
 @appendix Dictionary Server Protocol

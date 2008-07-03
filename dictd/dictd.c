@@ -248,19 +248,6 @@ init_databases()
     dico_iterator_destroy(&itr);
 }
 
-void
-dictd_close_databases()
-{
-    dico_iterator_t itr = xdico_iterator_create(database_list);
-    dictd_database_t *dp;
-
-    for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
-	if (dictd_close_database(dp)) 
-	    dico_log(L_NOTICE, 0, _("error closing database %s"), dp->name);
-    }
-    dico_iterator_destroy(&itr);
-}
-
 static void
 open_databases()
 {
@@ -283,8 +270,10 @@ close_databases()
     dico_iterator_t itr = xdico_iterator_create(database_list);
     dictd_database_t *dp;
 
-    for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) 
-	dictd_close_database(dp);
+    for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
+	if (dictd_close_database(dp))
+	    dico_log(L_NOTICE, 0, _("error closing database %s"), dp->name);
+    }
     dico_iterator_destroy(&itr);
 }
 

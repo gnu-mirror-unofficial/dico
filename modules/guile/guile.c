@@ -758,8 +758,9 @@ mod_close(dico_handle_t hp)
     SCM res;
 
     if (db->vtab[close_proc])
-	guile_call_proc(&res, db->vtab[close_proc],
-			scm_list_1(scm_cons(SCM_IM_QUOTE, db->handle)));
+	if (guile_call_proc(&res, db->vtab[close_proc],
+			    scm_list_1(scm_cons(SCM_IM_QUOTE, db->handle))))
+	    return 1;
     scm_gc_unprotect_object(db->handle);
 
     return 0;

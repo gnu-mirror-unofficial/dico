@@ -21,7 +21,7 @@
    most RFCs - "S: " for data written ("Server"), and "C: " for data read
    ("Client"). */
 
-#include <dictd.h>
+#include <dicod.h>
 
 #define TRANS_READ 0x1
 #define TRANS_WRITE 0x2

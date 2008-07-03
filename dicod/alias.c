@@ -14,14 +14,14 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dictd.h>
+#include <dicod.h>
 #include <hash.h>
 
 struct alias {
     char *kw;     /* Keyword */
     int argc;
     char **argv;
-    dictd_locus_t locus;
+    dicod_locus_t locus;
 };
 
 static Hash_table *alias_table;
@@ -44,7 +44,7 @@ alias_compare(void const *data1, void const *data2)
 }
 
 int
-alias_install(const char *kw, int argc, char **argv, dictd_locus_t *ploc)
+alias_install(const char *kw, int argc, char **argv, dicod_locus_t *ploc)
 {
     struct alias *sample = xmalloc(sizeof(*sample)),
 	         *ap;

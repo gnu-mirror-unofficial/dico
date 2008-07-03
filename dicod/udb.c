@@ -14,9 +14,9 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dictd.h>
+#include <dicod.h>
 
-struct dictd_user_db {
+struct dicod_user_db {
     void *handle;
     dico_url_t url;
     const char *qpw;
@@ -28,7 +28,7 @@ struct dictd_user_db {
 };
 
 int
-udb_open(dictd_user_db_t db)
+udb_open(dicod_user_db_t db)
 {
     if (!db->_db_open)
 	return 0;
@@ -36,7 +36,7 @@ udb_open(dictd_user_db_t db)
 }
 
 int
-udb_close(dictd_user_db_t db)
+udb_close(dicod_user_db_t db)
 {
     int rc;
 
@@ -49,13 +49,13 @@ udb_close(dictd_user_db_t db)
 }
 
 int
-udb_get_password(dictd_user_db_t db, const char *key, char **pass)
+udb_get_password(dicod_user_db_t db, const char *key, char **pass)
 {
     return db->_db_get_password(db->handle, db->qpw, key, pass);
 }
 
 int
-udb_get_groups(dictd_user_db_t db, const char *key, dico_list_t *groups)
+udb_get_groups(dicod_user_db_t db, const char *key, dico_list_t *groups)
 {
     return db->_db_get_groups(db->handle, db->qgrp, key, groups);
 }
@@ -79,14 +79,14 @@ udb_def_cmp(const void *item, const void *data)
 }
 
 int
-udb_create(dictd_user_db_t *pdb,
+udb_create(dicod_user_db_t *pdb,
 	   const char *urlstr, const char *qpw, const char *qgrp,
-	   dictd_locus_t *locus)
+	   dicod_locus_t *locus)
 {
     dico_url_t url;
     int rc;
     struct udb_def *def;
-    struct dictd_user_db *uptr;
+    struct dicod_user_db *uptr;
     
     rc = dico_url_parse(&url, urlstr);
     if (rc) {

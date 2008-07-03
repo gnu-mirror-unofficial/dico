@@ -14,17 +14,17 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dictd.h>
+#include <dicod.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
-struct dictd_server {
+struct dicod_server {
     int fd;               /* Socket descriptor */
     struct sockaddr *addr;
     int addrlen;
 };
 
-struct dictd_server *srvtab;
+struct dicod_server *srvtab;
 size_t srvcount;
 int fdmax;
 
@@ -374,7 +374,7 @@ handle_connection(int n)
 	/*exit (EXIT_FAILURE);*/
     }
 
-    if (dictd_acl_check(connect_acl, 1) == 0) {
+    if (dicod_acl_check(connect_acl, 1) == 0) {
 	char *p = sockaddr_to_astr(&client_addr, client_addrlen);
 	dico_log(L_NOTICE, 0,
 		 _("connection from %s denied"),
@@ -394,7 +394,7 @@ handle_connection(int n)
 	str = fd_stream_create(connfd, connfd);
 	dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
 	dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
-	status = dictd_loop(str);
+	status = dicod_loop(str);
 	dico_stream_close(str);
 	dico_stream_destroy(&str);
     } else {
@@ -417,7 +417,7 @@ handle_connection(int n)
 	    str = fd_stream_create(connfd, connfd);
 	    dico_stream_set_buffer(str, lb_in, 512);
 	    dico_stream_set_buffer(str, lb_out, 512);
-	    status = dictd_loop(str);
+	    status = dicod_loop(str);
 	    dico_stream_close(str);
 	    dico_stream_destroy(&str);
 	    exit(status);
@@ -548,7 +548,7 @@ server_loop()
 }
 
 void
-dictd_server(int argc, char **argv)
+dicod_server(int argc, char **argv)
 {
     int rc;
     
@@ -565,7 +565,7 @@ dictd_server(int argc, char **argv)
     signal(SIGINT, sig_stop);
     signal(SIGCHLD, sig_child);
     if (argv[0][0] != '/') {
-	dico_log(L_WARN, 0, _("dictd started without full file name"));
+	dico_log(L_WARN, 0, _("dicod started without full file name"));
 	dico_log(L_WARN, 0, _("restart (SIGHUP) will not work"));
 	signal(SIGHUP, sig_stop);
     } else if (config_file[0] != '/') {

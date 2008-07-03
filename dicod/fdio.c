@@ -14,22 +14,28 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dictd.h>
+#include <dicod.h>
+#include <unistd.h>
 
-int option_mime;
-
-void
-dictd_mime(dico_stream_t str, int argc, char **argv)
+dico_stream_t
+fd_stream_create(int ifd, int ofd)
 {
-    option_mime = 1;
-    stream_writez(str, "250 ok - using MIME headers\r\n");
-}
+    dico_stream_t in, out;
+    dico_stream_t str;
 
-void
-register_mime()
-{
-    static struct dictd_command cmd =
-	{ "OPTION MIME", 2, NULL, "use MIME headers",
-	  dictd_mime };
-    dictd_capa_register("mime", &cmd, NULL, NULL);
+    in = dico_fd_stream_create(ifd, DICO_STREAM_READ);
+    if (!in)
+	return 0;
+    out = dico_fd_stream_create(ofd, DICO_STREAM_WRITE);
+    if (!out) {
+	dico_stream_destroy(&in);
+	return NULL;
+    }
+
+    str = dico_io_stream(in, out);
+    if (!str) {
+	dico_stream_destroy(&in);
+	dico_stream_destroy(&out);
+    }
+    return str;
 }

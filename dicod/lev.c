@@ -14,7 +14,7 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dictd.h>
+#include <dicod.h>
 
 static int levenshtein_distance = 1;
 
@@ -45,7 +45,7 @@ static struct dico_strategy dlevstrat = {
 };
 
 static void
-dictd_xlevdist(dico_stream_t str, int argc, char **argv)
+dicod_xlevdist(dico_stream_t str, int argc, char **argv)
 {
     if (c_strcasecmp(argv[1], "tell") == 0) 
 	stream_printf(str, "280 %d\r\n", levenshtein_distance);
@@ -60,13 +60,13 @@ dictd_xlevdist(dico_stream_t str, int argc, char **argv)
 void
 register_lev()
 {
-    static struct dictd_command cmd =
+    static struct dicod_command cmd =
 	{ "XLEV", 2, "distance", "Set Levenshtein distance",
-	  dictd_xlevdist };
+	  dicod_xlevdist };
     dico_strategy_add(&levstrat);
     dico_strategy_add(&dlevstrat);
     dico_set_default_strategy("lev");
-    dictd_capa_register("xlev", &cmd, NULL, NULL);
+    dicod_capa_register("xlev", &cmd, NULL, NULL);
 }
 
 	  

@@ -14,7 +14,7 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dictd.h>
+#include <dicod.h>
 #include <sys/types.h>	
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -31,7 +31,7 @@ struct input_file_ident {
 
 struct buffer_ctx {
     struct buffer_ctx *prev;  /* Pointer to previous context */
-    dictd_locus_t locus;      /* Current input location */
+    dicod_locus_t locus;      /* Current input location */
     size_t namelen;           /* Length of the file name */
     size_t xlines;            /* Number of #line directives output so far */
     struct input_file_ident id;
@@ -650,7 +650,7 @@ pp_extrn_start(int argc, const char **argv, pid_t *ppid)
 		
 	    case -1:
 		/*  Fork failed */
-		dictd_log_setup();
+		dicod_log_setup();
 		dico_log(L_ERR, errno, _("Cannot run `%s'"), ppcmd);
 		exit(127);
 
@@ -658,14 +658,14 @@ pp_extrn_start(int argc, const char **argv, pid_t *ppid)
 		/* Sub-master */
 		close(p[1]);
 		fp = fdopen(p[0], "r");
-		dictd_log_setup();
+		dicod_log_setup();
 		while (getline(&buf, &size, fp) > 0)
 		    dico_log(L_ERR, 0, "%s", buf);
 		exit(0);
 	    }
 	} else {
 	    execvp(argv[0], (char**)argv);
-	    dictd_log_setup();
+	    dicod_log_setup();
 	    dico_log(L_ERR, 0, _("Cannot run `%s'"), ppcmd);
 	    exit(127);
 	}
@@ -712,7 +712,7 @@ run_lint()
     if (log_to_stderr)
 	argv[argc++] = "--stderr";
     else 
-	dictd_log_encode_envar();
+	dicod_log_encode_envar();
     itr = xdico_iterator_create(include_path);
     for (cp = dico_iterator_first(itr); cp; cp = dico_iterator_next(itr)) {
 	argv[argc++] = "-I";

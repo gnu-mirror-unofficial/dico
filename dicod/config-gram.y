@@ -15,7 +15,7 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dictd.h>
+#include <dicod.h>
 #include <config-gram.h>
 
 static struct config_keyword config_keywords;
@@ -200,7 +200,7 @@ yyerror(char *s)
 }
 
 void
-config_diag(dictd_locus_t *locus, int category, int errcode,
+config_diag(dicod_locus_t *locus, int category, int errcode,
 	    const char *fmt, va_list ap)
 {
     char *pfx;
@@ -223,7 +223,7 @@ config_diag(dictd_locus_t *locus, int category, int errcode,
 }
 
 void
-config_warning(dictd_locus_t *locus, int errcode, const char *fmt, ...)
+config_warning(dicod_locus_t *locus, int errcode, const char *fmt, ...)
 {
     va_list ap;
 
@@ -233,7 +233,7 @@ config_warning(dictd_locus_t *locus, int errcode, const char *fmt, ...)
 }    
 
 void
-config_error(dictd_locus_t *locus, int errcode, const char *fmt, ...)
+config_error(dicod_locus_t *locus, int errcode, const char *fmt, ...)
 {
     va_list ap;
 
@@ -322,7 +322,7 @@ stmt_end(struct config_keyword *kwp)
 
 int
 fake_callback(enum cfg_callback_command cmd,
-	      dictd_locus_t *locus,
+	      dicod_locus_t *locus,
 	      void *varptr,
 	      config_value_t *value,
 	      void *cb_data)

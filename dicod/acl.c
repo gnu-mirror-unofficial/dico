@@ -14,7 +14,7 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dictd.h>
+#include <dicod.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -24,44 +24,44 @@
 #include <netdb.h>
 #include <hash.h>
 
-struct dictd_sockaddr {
+struct dicod_sockaddr {
     unsigned netmask;
     int salen;
     struct sockaddr sa;
 };    
 
 struct acl_entry {
-    dictd_locus_t locus;
+    dicod_locus_t locus;
     int allow;
     int authenticated;
-    dictd_acl_t acl;
+    dicod_acl_t acl;
     dico_list_t groups;
     dico_list_t sockaddrs;
 };
 
-struct dictd_acl {
+struct dicod_acl {
     char *name;
-    dictd_locus_t locus;
+    dicod_locus_t locus;
     dico_list_t list;
 };
 
 
 /* ACL creation */
 
-dictd_acl_t
-dictd_acl_create(const char *name, dictd_locus_t *locus)
+dicod_acl_t
+dicod_acl_create(const char *name, dicod_locus_t *locus)
 {
-    dictd_acl_t acl = xmalloc(sizeof(acl[0]));
+    dicod_acl_t acl = xmalloc(sizeof(acl[0]));
     acl->name = xstrdup(name);
     acl->locus = *locus;
     acl->list = dico_list_create();
     return acl;
 }
 
-static struct dictd_sockaddr *
+static struct dicod_sockaddr *
 create_acl_sockaddr(int family, int len)
 {
-    struct dictd_sockaddr *p = xzalloc(sizeof(*p));
+    struct dicod_sockaddr *p = xzalloc(sizeof(*p));
     p->salen = len;
     p->sa.sa_family = family;
     return p;
@@ -87,7 +87,7 @@ _parse_token (struct acl_entry *entry, config_value_t *value)
 static int
 _parse_sockaddr(struct acl_entry *entry, config_value_t *value)
 {
-    struct dictd_sockaddr *sptr;
+    struct dicod_sockaddr *sptr;
     const char *string;
 
     if (value->type != TYPE_STRING) {
@@ -239,7 +239,7 @@ _parse_sub_acl(struct acl_entry *entry, size_t argc, config_value_t *argv)
 	    return 1;
 	}
 
-	entry->acl = dictd_acl_lookup(argv->v.string);
+	entry->acl = dicod_acl_lookup(argv->v.string);
 
 	if (!entry->acl) {
 	    config_error(&entry->locus, 0, _("ACL not defined: `%s'"),
@@ -287,7 +287,7 @@ _parse_acl(struct acl_entry *entry, size_t argc, config_value_t *argv)
 }
 
 int
-parse_acl_line(dictd_locus_t *locus, int allow, dictd_acl_t acl,
+parse_acl_line(dicod_locus_t *locus, int allow, dicod_acl_t acl,
 	       config_value_t *value)
 {
     struct acl_entry *entry = xzalloc(sizeof(*entry));
@@ -332,7 +332,7 @@ cmp_group_name(const void *item, const void *data)
 static int
 _check_sockaddr(void *item, void *data)
 {
-    struct dictd_sockaddr *sptr = item;
+    struct dicod_sockaddr *sptr = item;
     int *pres = data;
     
     if (sptr->sa.sa_family != client_addr.sa_family)
@@ -386,7 +386,7 @@ _acl_check(struct acl_entry *ent)
 	    return result;
     }	
 
-    result = dictd_acl_check(ent->acl, 1);
+    result = dicod_acl_check(ent->acl, 1);
     if (!result)
 	return result;
     
@@ -417,7 +417,7 @@ _acl_check_cb(void *item, void *data)
 }
     
 int
-dictd_acl_check(dictd_acl_t acl, int result)
+dicod_acl_check(dicod_acl_t acl, int result)
 {
     if (acl) 
 	dico_list_iterate(acl->list, _acl_check_cb, &result);
@@ -433,7 +433,7 @@ static Hash_table *acl_table;
 static size_t
 acl_hasher(void const *data, unsigned n_buckets)
 {
-    const struct dictd_acl *p = data;
+    const struct dicod_acl *p = data;
     return hash_string(p->name, n_buckets);
 }
 
@@ -441,15 +441,15 @@ acl_hasher(void const *data, unsigned n_buckets)
 static bool
 acl_compare(void const *data1, void const *data2)
 {
-    const struct dictd_acl *p1 = data1;
-    const struct dictd_acl *p2 = data2;
+    const struct dicod_acl *p1 = data1;
+    const struct dicod_acl *p2 = data2;
     return strcasecmp(p1->name, p2->name) == 0;
 }
 
 int
-dictd_acl_install(dictd_acl_t acl, dictd_locus_t *locus)
+dicod_acl_install(dicod_acl_t acl, dicod_locus_t *locus)
 {
-    dictd_acl_t ret;
+    dicod_acl_t ret;
     if (! ((acl_table
 	    || (acl_table = hash_initialize(0, 0, 
 					    acl_hasher,
@@ -465,10 +465,10 @@ dictd_acl_install(dictd_acl_t acl, dictd_locus_t *locus)
     return 0;
 }
 
-dictd_acl_t
-dictd_acl_lookup(const char *name)
+dicod_acl_t
+dicod_acl_lookup(const char *name)
 {
-    struct dictd_acl samp;
+    struct dicod_acl samp;
     if (!acl_table)
 	return NULL;
     samp.name = (char*) name;

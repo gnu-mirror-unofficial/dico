@@ -16,7 +16,7 @@ dnl Process this file with -*- autoconf -*- to produce a configure script.
 # along with Dico.  If not, see <http://www.gnu.org/licenses/>.
 
 AC_INIT([dico], 1.99.90, [bug-dico@gnu.org.ua])
-AC_CONFIG_SRCDIR([dictd/main.c])
+AC_CONFIG_SRCDIR([dicod/main.c])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR(m4)	
@@ -289,15 +289,15 @@ GZIP=gzip
 AC_SUBST(inputdictpath)
 inputdictpath=/usr/local/lib
 AC_ARG_WITH(input-dict-path,
- [AC_HELP_STRING([--with-input-dict-path],
-                 [Specify alternate path for input dictionaries])],
+ [AC_HELP_STRING([--with-input-dict-dir],
+                 [Specify alternate location of the input dictionaries])],
  [inputdictpath=$withval])
 
 AC_SUBST(dictdir)
-dictdir='$(pkgdatadir)'
+dicodir='$(pkgdatadir)'
 AC_ARG_WITH(dict-path,
  [AC_HELP_STRING([--with-dict-path],
-                 [Specify alternate path for dictionaries])],
+                 [Specify alternate location for the dictionaries])],
  [dictdir=$withval])
 
 AC_ARG_VAR([SCROLL_WHEN_NEEDED],
@@ -345,7 +345,7 @@ AC_CONFIG_FILES([Makefile
                  utils/Makefile
 		 gnu/Makefile
                  lib/Makefile
-                 dictd/Makefile
+                 dicod/Makefile
 		 modules/Makefile
 		 modules/outline/Makefile
 		 modules/dict.org/Makefile

@@ -14,12 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-dictdir=@dictdir@
+dicodir=@dicodir@
 inputdictpath=@inputdictpath@
 
 ACLOCAL_AMFLAGS = -I m4 -I am
 
-SUBDIRS=include utils gnu lib libltdl dictd modules makedict tests doc
+SUBDIRS=include utils gnu lib libltdl dicod modules makedict tests doc
 #FIXME: add these when ready: client fonts
 
 EXTRA_DIST = ChangeLog.2008
@@ -57,7 +57,3 @@ ChangeLog:
 	  echo "End:" >> ChangeLog;                                     \
         fi
 
-#dict:
-#	$(top_builddir)/makedict/makedict -cv -o$(dictdir) -d$(inputdictpath)
-
-#distcleancheck_listfiles = find . -type f -not -name 'bushu.pcf.gz' -print

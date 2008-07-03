@@ -14,24 +14,24 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dictd.h>
+#include <dicod.h>
 
-struct dictd_capa {
+struct dicod_capa {
     const char *name;
-    struct dictd_command *cmd;
+    struct dicod_command *cmd;
     int (*init)(void *);
     void *closure;
     int enabled;
 };
 
 /* List of supported capabilities: */
-static dico_list_t /* of struct dictd_capa */ capa_list;
+static dico_list_t /* of struct dicod_capa */ capa_list;
 
 void
-dictd_capa_register(const char *name, struct dictd_command *cmd,
+dicod_capa_register(const char *name, struct dicod_command *cmd,
 		    int (*init)(void*), void *closure)
 {
-    struct dictd_capa *cp = xmalloc(sizeof(*cp));
+    struct dicod_capa *cp = xmalloc(sizeof(*cp));
     cp->name = name;
     cp->cmd = cmd;
     cp->init = init;
@@ -45,14 +45,14 @@ dictd_capa_register(const char *name, struct dictd_command *cmd,
 static int
 _cmp_capa_name(const void *item, const void *data)
 {
-    const struct dictd_capa *cp = item;
+    const struct dicod_capa *cp = item;
     return strcmp(cp->name, (char*)data);
 }
 
 int
-dictd_capa_add(const char *name)
+dicod_capa_add(const char *name)
 {
-    struct dictd_capa *cp = dico_list_locate(capa_list, (void*)name, 
+    struct dicod_capa *cp = dico_list_locate(capa_list, (void*)name, 
 					     _cmp_capa_name);
     if (cp == NULL)
 	return 1;
@@ -61,10 +61,10 @@ dictd_capa_add(const char *name)
 }
 
 int
-dictd_capa_flush()
+dicod_capa_flush()
 {
     dico_iterator_t itr;
-    struct dictd_capa *cp;
+    struct dicod_capa *cp;
     
     itr = xdico_iterator_create(capa_list);
     for (cp = dico_iterator_first(itr); cp; cp = dico_iterator_next(itr)) {
@@ -72,7 +72,7 @@ dictd_capa_flush()
 	    if (cp->init && cp->init(cp->closure))
 		return 1;
 	    if (cp->cmd)
-		dictd_add_command(cp->cmd);
+		dicod_add_command(cp->cmd);
 	}
     }
     return 0;
@@ -86,13 +86,13 @@ struct iter_data {
 static int
 _iter_helper(void *item, void *data)
 {
-    struct dictd_capa *cp = item;
+    struct dicod_capa *cp = item;
     struct iter_data *dp = data;
     return dp->fun(cp->name, cp->enabled, dp->closure);
 }
 	
 void
-dictd_capa_iterate(int (*fun)(const char*, int, void *), void *closure)
+dicod_capa_iterate(int (*fun)(const char*, int, void *), void *closure)
 {
     struct iter_data dat;
     dat.fun = fun;

@@ -14,7 +14,7 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dictd.h>
+#include <dicod.h>
 #define obstack_chunk_alloc malloc
 #define obstack_chunk_free free
 #include <obstack.h>
@@ -167,7 +167,7 @@ output_capabilities(dico_stream_t str)
     cp.num = 0;
     cp.stream = str;
     dico_stream_write(str, "<", 1);
-    dictd_capa_iterate(print_capa, &cp);
+    dicod_capa_iterate(print_capa, &cp);
     dico_stream_write(str, ">", 1);
 }
 
@@ -220,11 +220,11 @@ static void
 load_modules()
 {
     dico_iterator_t itr = xdico_iterator_create(modinst_list);
-    dictd_module_instance_t *inst;
+    dicod_module_instance_t *inst;
 
     for (inst = dico_iterator_first(itr); inst;
 	 inst = dico_iterator_next(itr)) {
-	if (dictd_load_module(inst)) {
+	if (dicod_load_module(inst)) {
 	    database_remove_dependent(inst);
 	    dico_iterator_remove_current(itr);
 	}
@@ -236,13 +236,13 @@ static void
 init_databases()
 {
     dico_iterator_t itr = xdico_iterator_create(database_list);
-    dictd_database_t *dp;
+    dicod_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
-	if (dictd_init_database(dp)) {
+	if (dicod_init_database(dp)) {
 	    dico_log(L_NOTICE, 0, _("removing database %s"), dp->name);
 	    dico_iterator_remove_current(itr);
-	    dictd_database_free(dp);
+	    dicod_database_free(dp);
 	}
     }
     dico_iterator_destroy(&itr);
@@ -252,13 +252,13 @@ static void
 open_databases()
 {
     dico_iterator_t itr = xdico_iterator_create(database_list);
-    dictd_database_t *dp;
+    dicod_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
-	if (dictd_open_database(dp)) {
+	if (dicod_open_database(dp)) {
 	    dico_log(L_NOTICE, 0, _("removing database %s"), dp->name);
 	    dico_iterator_remove_current(itr);
-	    dictd_database_free(dp);
+	    dicod_database_free(dp);
 	}
     }
     dico_iterator_destroy(&itr);
@@ -268,10 +268,10 @@ static void
 close_databases()
 {
     dico_iterator_t itr = xdico_iterator_create(database_list);
-    dictd_database_t *dp;
+    dicod_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
-	if (dictd_close_database(dp))
+	if (dicod_close_database(dp))
 	    dico_log(L_NOTICE, 0, _("error closing database %s"), dp->name);
     }
     dico_iterator_destroy(&itr);
@@ -300,7 +300,7 @@ soundex_sel(int cmd, const char *word, const char *dict_word, void *closure)
 	    
 
 void
-dictd_init_strategies()
+dicod_init_strategies()
 {
     static char code[5];
     static struct dico_strategy defstrat[] = {
@@ -314,7 +314,7 @@ dictd_init_strategies()
 }
 
 void
-dictd_server_init()
+dicod_server_init()
 {
     load_modules();
     init_databases();
@@ -323,14 +323,14 @@ dictd_server_init()
 }
 
 int
-dictd_loop(dico_stream_t str)
+dicod_loop(dico_stream_t str)
 {
     char *buf = NULL;
     size_t size = 0;
     size_t rdbytes;
     struct input input;
 
-    begin_timing("dictd");
+    begin_timing("dicod");
     signal(SIGALRM, sig_alarm);
     memset(&input, 0, sizeof input);
     got_quit = 0;
@@ -349,7 +349,7 @@ dictd_loop(dico_stream_t str)
 	tokenize_input(&input, buf);
 	if (input.argc == 0)
 	    continue;
-	dictd_handle_command(str, input.argc, input.argv);
+	dicod_handle_command(str, input.argc, input.argv);
     }
 
     close_databases();    
@@ -359,7 +359,7 @@ dictd_loop(dico_stream_t str)
 }
 
 int
-dictd_inetd()
+dicod_inetd()
 {
     dico_stream_t str = fd_stream_create(0, 1);
     dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
@@ -373,5 +373,5 @@ dictd_inetd()
     if (getsockname (1, &server_addr, &server_addrlen) == -1)
 	server_addrlen = 0;
     
-    return dictd_loop(str);
+    return dicod_loop(str);
 }

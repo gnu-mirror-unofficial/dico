@@ -91,7 +91,7 @@ documents Dico Version @value{VERSION}.
 * Preface::             
 * Intro::                Introduction to Dico.
 * Building::             Building the Package.
-* Dictd::                The dictd daemon.
+* Dictd::                The dicod daemon.
 * Modules::              Dictd modules shipped with Dico.
 * Interface::            How to write your own Dico module.
 * Reporting Bugs::       How to Report a Bug.
@@ -112,7 +112,7 @@ Building the Package
 * Guile Support::
 * Other Settings::
 
-The @command{dictd} daemon.
+The @command{dicod} daemon.
 
 * Daemon Mode::
 * Inetd Mode::
@@ -195,9 +195,9 @@ Standard Commands
 @cindex DICT protocol
 @dfn{Dico} is an implementation of @acronym{DICT} dictionary server
 (described in @acronym{RFC} 2229) and a set of accompanying utilities.
-Dico's @command{dictd} server uses two-layer model.  The @dfn{protocol
+Dico's @command{dicod} server uses two-layer model.  The @dfn{protocol
 layer} is responsible for correct @acronym{DICT} protocol dialog and
-is served by the @command{dictd} daemon itself.  The @dfn{database
+is served by the @command{dicod} daemon itself.  The @dfn{database
 layer} is responsible for look ups in dictionary databases.  This
 layer is handled by external @dfn{loadable modules}.  Thus, Dico
 does not impose any specific dictionary database format.  A single
@@ -271,7 +271,7 @@ $ ./configure DEFAULT_PREPROCESSOR="/usr/local/bin/gm4 -s"
 @end smallexample
 
 Note the use of @option{-s} preprocessor option.  It instructs
-@command{m4} to produce line directives which help @command{dictd}
+@command{m4} to produce line directives which help @command{dicod}
 produce correct diagnostics about eventual configuration errors.
 Unless your @command{m4} implementation does not have this feature, we
 recommend to always use it in @env{DEFAULT_PREPROCESSOR} value.
@@ -299,7 +299,7 @@ disable it.
 @section Other Configure Settings
 
 @vrindex LOG_FACILITY
-  The @command{dictd} daemon uses @command{syslogd} for diagnostics.
+  The @command{dicod} daemon uses @command{syslogd} for diagnostics.
 The default syslog facility can be set using @env{LOG_FACILITY}
 configuration variable.  Its allowed arguments are @samp{user},
 @samp{daemon}, @samp{auth}, @samp{authpriv}, @samp{mail}, @samp{cron},
@@ -309,13 +309,13 @@ addition, these words can be prefixed with @samp{log_}.
   By default, the @samp{daemon} facility is used.
   
 @node Dictd
-@chapter The @command{dictd} daemon.
-@cindex @command{dictd}, description
-  The main component of Dico is @command{dictd} daemon.  It is
+@chapter The @command{dicod} daemon.
+@cindex @command{dicod}, description
+  The main component of Dico is @command{dicod} daemon.  It is
 responsible for serving client requests and for coordinating the work
 of dictionary modules.
 
-@cindex @command{dictd}, operation modes
+@cindex @command{dicod}, operation modes
 There are two @dfn{operation modes}: @samp{daemon} and @samp{inetd}.
 
 @menu
@@ -327,23 +327,23 @@ There are two @dfn{operation modes}: @samp{daemon} and @samp{inetd}.
 
 @node Daemon Mode
 @section Daemon Operation Mode
-@cindex operation modes of @command{dictd}
+@cindex operation modes of @command{dicod}
 @cindex daemon operation mode
   The @samp{daemon} mode is enabled by @code{mode daemon} statement in
 the configuration file (@pxref{mode statement})).  It is also the
-default mode.  In daemon mode @command{dictd} listens for incoming 
+default mode.  In daemon mode @command{dicod} listens for incoming 
 requests on one or several interfaces.  Unless the
 @command{--foreground} option is specified, it disconnects from the 
 controlling terminal and switches to background (becomes a
 @dfn{daemon}).  When an incoming connection arrives, it forks a
 subprocess for handling it.
 
-@cindex signals handled by @command{dictd}
+@cindex signals handled by @command{dicod}
 @cindex SIGTERM
 @cindex SIGQUIT
 @cindex SIGINT
 @cindex SIGHUP
-  In this mode the following signals cause @command{dictd} to
+  In this mode the following signals cause @command{dicod} to
 terminate: @samp{SIGTERM}, @samp{SIGQUIT}, and @samp{SIGINT}.  The
 @samp{SIGHUP} signal causes the program to restart.  This works only
 if both the program name and its configuration file name (if given
@@ -351,26 +351,26 @@ using @option{--config} option) are absolute file names.
 
 @cindex SIGHUP handling
 @cindex restart procedure
-@cindex restarting @command{dictd}
-  Upon receiving @samp{SIGHUP}, @command{dictd} first verifies if the
+@cindex restarting @command{dicod}
+  Upon receiving @samp{SIGHUP}, @command{dicod} first verifies if the
 configuration file does not contain fatal errors.  To do that, the
 program executes a copy of itself with @option{--lint} option
 (@pxref{--lint}) and analyzes its return value.  Only if this check
-passes, @command{dictd} restarts itself.  This ensures that the daemon
+passes, @command{dicod} restarts itself.  This ensures that the daemon
 will not terminate due to unnoticed errors in its configuration file.
 
 @cindex termination procedure
-@cindex terminating @command{dictd}
+@cindex terminating @command{dicod}
   Upon receiving @samp{SIGTERM}, @samp{SIGQUIT}, or @samp{SIGINT}, the
 program stops accepting incoming requests and sends the @samp{SIGTERM}
 signal to all active subprocesses.  Then it waits a predefined amount
 of time for all processes to terminate (@pxref{shutdown-timeout}).
 Any subprocesses that do not terminate after this time are sent
 @samp{SIGKILL} signal.  Then, the database modules are unloaded and
-@command{dictd} terminates.
+@command{dicod} terminates.
 
   Several command line options are provided that modify the behavior
-of @command{dictd} in this mode.  These options are mainly designed
+of @command{dicod} in this mode.  These options are mainly designed
 for debugging and error-hunting purposes.
 
 @xopindex{foreground, introduced}
@@ -378,7 +378,7 @@ for debugging and error-hunting purposes.
   The @option{--foreground} option instructs the server to not
 disconnect from the controlling terminal and to remain in the
 foreground.  It is often used with @option{--stderr} option, 
-which instructs @command{dictd} to output all diagnostic to the
+which instructs @command{dicod} to output all diagnostic to the
 standard error output, instead of syslog which is used by default.
 
 @node Inetd Mode
@@ -391,20 +391,20 @@ from standard input and sends its replies to the standard output.
 This mode is enabled by @code{mode inetd} statement (@pxref{mode
 statement}) in configuration file, or by the @option{--inetd} command
 line option (@pxref{--inetd}).  This mode is usually used when
-invoking @command{dictd} from @file{inetd.conf} file, as in example
+invoking @command{dicod} from @file{inetd.conf} file, as in example
 below:
 
 @smallexample
-dict  stream  tcp  nowait  nobody /usr/local/bin/dictd --inetd
+dict  stream  tcp  nowait  nobody /usr/local/bin/dicod --inetd
 @end smallexample
   
 @node Configuration
 @section Configuration
 @cindex configuration file
-@flindex dictd.conf
+@flindex dicod.conf
 @xopindex{config, introduced}
-  Upon startup, @command{dictd} reads its settings and database
-definitions from a @dfn{configuration file} @file{dictd.conf}.  By
+  Upon startup, @command{dicod} reads its settings and database
+definitions from a @dfn{configuration file} @file{dicod.conf}.  By
 default it is located in @var{$sysconfidr} (i.e., in most cases
 @file{/usr/local/etc}, or @file{/etc}), but an alternative location
 may be specified using @option{--config} command line option
@@ -416,7 +416,7 @@ reports them on the standard error and exits with a non-zero status.
 @xopindex{lint, introduced}
   To test the configuration file without starting the server use
 @option{--lint} (@option{-t}) command line option.  It causes
-@command{dictd} to check configuration file and to exit with status 0
+@command{dicod} to check configuration file and to exit with status 0
 if no errors were detected, and withs status 1 otherwise.
 
 @opindex -E, introduced
@@ -430,7 +430,7 @@ line option.  To avoid preprocessing it, use
 @xopindex{config-help, introduced}
   The rest of this section describes the configuration file syntax in
 detail.  You can receive a concise summary of all configuration
-directives any time by running @command{dictd --config-help}.
+directives any time by running @command{dicod --config-help}.
 
 @menu
 * Syntax::               Configuration file syntax.
@@ -529,7 +529,7 @@ been included, it will not be included again.
 @kwindex #line
 @item #line @var{num}
 @itemx #line @var{num} "@var{file}"
-  This line causes @command{dictd} to believe, for purposes of error
+  This line causes @command{dicod} to believe, for purposes of error
 diagnostics, that the line number of the next source line is given by
 @var{num} and the current input file is named by @var{file}.
 If the latter is absent, the remembered file name does not change.
@@ -722,14 +722,14 @@ this is not required.
 
 @node Server Settings
 @subsection Server Settings
-  Server settings control how @command{dictd} is executed on the
+  Server settings control how @command{dicod} is executed on the
 server machine.
 
 @anchor{user statement}
 @deffn {Configuration} user @var{string}
 Run with the privileges of this user.  @command{Dictd} does not
 require root privileges, so it is recommended to always use this
-statement when running @command{dictd} in daemon mode.
+statement when running @command{dicod} in daemon mode.
 @xref{Daemon Mode}. 
 
 Example:
@@ -740,7 +740,7 @@ user nobody;
 
 @anchor{group statement}
 @deffn {Configuration} group @var{list}
-If @code{user} is given, @command{dictd} will drop all supplementary
+If @code{user} is given, @command{dicod} will drop all supplementary
 groups and switch to the principal group of that user.  Sometimes,
 however, it may be necessary to retain one or more supplementary
 groups.  For example, this might be necessary to access dictionary
@@ -753,7 +753,7 @@ group (man, dict);
 @end smallexample
 
 This statement is ignored if @code{user} statement is not present or
-if @command{dictd} is running in inetd mode.  @xref{Inetd Mode}. 
+if @command{dicod} is running in inetd mode.  @xref{Inetd Mode}. 
 @end deffn
 
 @anchor{mode statement}
@@ -774,7 +774,7 @@ option. @xref{--inetd}.
 
 @deffn {Configuration} listen @var{list};
 Specify @acronym{IP} addresses and ports to listen on in daemon mode.
-By default, @command{dictd} will listen on port 2628 on all existing
+By default, @command{dicod} will listen on port 2628 on all existing
 interfaces.  Use @code{listen} statement to abridge the list of
 interfaces to listen on, or to change the port number. 
 
@@ -804,7 +804,7 @@ listen :2628;
   Specifies the name of a @acronym{UNIX} socket to listen on.
 @end table
 
-  The following statement instructs @command{dictd} to listen on
+  The following statement instructs @command{dicod} to listen on
 the address @samp{10.10.10.1}, port 2628 and on the @acronym{UNIX}
 socket @file{/var/run/dict}:
 
@@ -816,15 +816,15 @@ listen (10.10.10.1, /var/run/dict);
 
 @deffn {Configuration} pidfile @var{string}
 Store @acronym{PID} of the master process in this file.
-Default is @file{@var{localstatedir}/run/dictd.pid}. 
+Default is @file{@var{localstatedir}/run/dicod.pid}. 
 Notice that the privileges of this default directory are
-may be insufficient for @command{dictd} to write there after switching
+may be insufficient for @command{dicod} to write there after switching
 to users privileges (@pxref{user statement}).  One solution to this is
 to create a subdirectory with the same owner as given by @code{user}
 statement and to point the @acronym{PID} file there:
 
 @smallexample
-pidfile /var/run/dict/dictd.pid;
+pidfile /var/run/dict/dicod.pid;
 @end smallexample
 
 Another solution is to make @acronym{PID} directory group-writable and
@@ -1038,7 +1038,7 @@ user-db text:///var/db/dico @{
 @cindex @acronym{ACL}
 @cindex access control lists
 @dfn{Access control lists}, or @acronym{ACL}s for short, are lists of
-permissions that can be applied to certain @command{dictd} objects.
+permissions that can be applied to certain @command{dicod} objects.
 They can be used to control who can connect to the dictionary server
 and what resources are offered to whom.
 
@@ -1148,20 +1148,20 @@ specified otherwise.
 
 For example, the following statement defines an @acronym{ACL} named
 @samp{common}, that allows access for any user connected via local
-@acronym{UNIX} socket @file{/tmp/dictd.sock} or coming from a local
+@acronym{UNIX} socket @file{/tmp/dicod.sock} or coming from a local
 network @samp{192.168.10.0/24}.  Any authenticated users are allowed,
 provided that they are allowed by another @acronym{ACL} @samp{my-nets}
 (which should have been defined before this definition).  Users 
 coming from the network @samp{10.10.0.0/24} are allowed if they
-authenticate themselves and are members of groups @samp{dictd} or
+authenticate themselves and are members of groups @samp{dicod} or
 @samp{users}.  Access is denied for anybody else:
 
 @smallexample
 @group
 acl common @{
-    allow all from ("/tmp/dictd.sock", "192.168.10.0/24");
+    allow all from ("/tmp/dicod.sock", "192.168.10.0/24");
     allow authenticated acl "my-nets";
-    allow group ("dictd", "users") from "10.10.0.0/24";
+    allow group ("dicod", "users") from "10.10.0.0/24";
     deny all;
 @}
 @end group
@@ -1176,7 +1176,7 @@ security settings.
 @node Security Settings
 @subsection Security Settings
   This subsection describes configuration settings that control access
-to various resources served by @command{dictd}.
+to various resources served by @command{dicod}.
 
 @deffn {Configuration} connection-acl @var{acl-name}
   Use @acronym{ACL} @var{acl-name} to control incoming connections.
@@ -1210,7 +1210,7 @@ time of the daemon, number of subprocesses executed so far and average
 usage frequency.  For example:
 
 @smallexample
-dictd (dico @value{VERSION}) on Linux 2.6.24.4,
+dicod (dico @value{VERSION}) on Linux 2.6.24.4,
 dict.example.net up 110+04:42:58, 19647044 forks (6867.9/hour)
 @end smallexample
 @end deffn
@@ -1243,7 +1243,7 @@ with @samp{C:}, those sent in reply are marked with @samp{S:}.  Here is
 an excerpt from the transcript output:
 
 @smallexample
-S: 220 Trurl.gnu.org.ua dictd (dico 1.99.90) <mime.xversion>
+S: 220 Trurl.gnu.org.ua dicod (dico 1.99.90) <mime.xversion>
 <1645.1212874507@@Trurl.gnu.org.ua>
 C: client ``Kdict''
 S: 250 ok
@@ -1257,7 +1257,7 @@ S: 250 ok
 @end smallexample
 
 This option produces lots of output and can significantly slow down
-the server.  Use it only if you are debugging @command{dictd} or
+the server.  Use it only if you are debugging @command{dicod} or
 some remote client.  Never use it in a production environment.
 @end deffn
 
@@ -1544,7 +1544,7 @@ you should always specify this capability.
 
 @item xversion
 The @code{XVERSION} command is supported.  It is a Dico extension that
-displays the @command{dictd} implementation and version number. 
+displays the @command{dicod} implementation and version number. 
 @xref{Extended Commands, XVERSION}.
 
 @item xlev
@@ -1562,12 +1562,12 @@ appropriate entries are added to the @code{HELP} command output.
 @cindex database module, defined
   A @dfn{database module} is an external piece of software designed to
 handle a particular format of dictionary databases.  This piece of
-software is built as a shared library so that @command{dictd} can load
+software is built as a shared library so that @command{dicod} can load
 at run time.
 
 @cindex database handler, defined
   A @dfn{handler} is an instance of a database module loaded by
-@command{dictd} and configured for a specific database or a set of
+@command{dicod} and configured for a specific database or a set of
 databases. 
 
   Database handlers are defined using the following block statement:
@@ -1593,21 +1593,21 @@ For example:
 @smallexample
 @group
 load-module dict @{
-  command "dictorg dbdir=/var/dictdb";
+  command "dictorg dbdir=/var/dicodb";
 @}
 @end group
 @end smallexample
 
 This statement defines a handler named @samp{dict}, which loads
 the module @file{dictorg} and passes its initialization function a
-single argument, @samp{dbdir=/var/dictdb}.  If the module name is not
+single argument, @samp{dbdir=/var/dicodb}.  If the module name is not
 an absolute file name, as in this example, the loadable module will be
 searched in the module load path.
 
 @cindex module load path
 @cindex load path
   A @dfn{module load path} is an internal list of directories which
-@command{dictd} scans in order to find a loadable file name specified
+@command{dicod} scans in order to find a loadable file name specified
 in @code{command} statement of a @code{load-module} block.  By default the
 order of search is as follows:
 
@@ -1635,7 +1635,7 @@ The value of @env{LTDL_LIBRARY_PATH} and @env{LD_LIBRARY_PATH} must be a
 colon-separated list of absolute directories, for example,
 @samp{/usr/lib/mypkg:/lib/foo}.
 
-In any of these directories, @command{dictd} first attempts to find and
+In any of these directories, @command{dicod} first attempts to find and
 load the given filename.  If this fails, it tries to append the
 following suffixes to it:
 
@@ -1800,7 +1800,7 @@ acl glob-vis @{
 @}  
 
 acl local-nets @{
-  allow from (192.168.10.0/24, /tmp/dictd.sock);
+  allow from (192.168.10.0/24, /tmp/dicod.sock);
 @}
 
 visibility-acl glob-vis;
@@ -1813,7 +1813,7 @@ database @{
 
 In this configuration, the @samp{terms} database is visible to
 everybody coming from the @samp{192.168.10.0/24} network and from
-the @acronym{UNIX} socket @file{/tmp/dictd.sock}, without
+the @acronym{UNIX} socket @file{/tmp/dicod.sock}, without
 authorization.  It is not visible to users coming from elsewhere,
 unless they authenticate themselves.
 
@@ -1947,7 +1947,7 @@ advantage that it works with non-GNU @command{m4} implementations as
 well.  
 
 As an example of how the use of preprocessor may improve
-@command{dictd} configuration, consider the following fragment taken
+@command{dicod} configuration, consider the following fragment taken
 from one of the installations of Dico.  This installation offers quite
 a few Freedict dictionaries.  The database definition for each of them
 is almost the same, except for the dictionary name and eventual
@@ -1990,14 +1990,14 @@ defdb(eng-afr, English-Afrikaans Dictionary)
 @section Dictd Invocation
 @cindex invocation
 @cindex command line options
-@cindex options, @command{dictd}.
-   This section summarizes @command{dictd} command line options.
+@cindex options, @command{dicod}.
+   This section summarizes @command{dicod} command line options.
    
 @table @option
 @opsummary{config}
 @item --config=@var{file}
 Read this configuration file instead of the default
-@file{@var{$sysconfdir}/dictd.conf}.  @xref{Configuration}.
+@file{@var{$sysconfdir}/dicod.conf}.  @xref{Configuration}.
 
 @opsummary{foreground}
 @item -f
@@ -2561,7 +2561,7 @@ The return value @code{#f} or @code{'()} indicates an error.
 @deffn {Guile Callback} close-db dbh
 @deffnx {Virtual Table} (cons "close" close-db)
 Close the database.  This function is called during the cleanup
-procedure, before termination of @code{dictd}.  The argument
+procedure, before termination of @code{dicod}.  The argument
 @code{dbh} is a database handle returned by @code{open-db}.
 
 The return value from @code{close-db} is ignored.  To communicate
@@ -2713,7 +2713,7 @@ dictionary article.  Following is an example of such a database:
  ("seven" . "sju"))
 @end smallexample
 
-  We wish to declare such databases in @file{dictd.conf} the following
+  We wish to declare such databases in @file{dicod.conf} the following
 way:
   
 @smallexample
@@ -2923,7 +2923,7 @@ produced by @samp{define-word} or by @samp{match-word}.
       (display (list-ref (cdr rh) n))))
 @end smalllisp
 
-  Finally, the callbacks are made known to @command{dictd} by the
+  Finally, the callbacks are made known to @command{dicod} by the
 module initialization function:
 
 @smalllisp
@@ -2983,8 +2983,8 @@ This method is optional.
 @deftypefn {Dico Callback} dico_handle_t dico_init_db (const char *@var{db}, @
  int @var{argc}, char **@var{argv})
 Initialize the database.  This method is called as part of database
-initialization routine at startup of @command{dictd}, after processing
-@code{dictionary} configuration statement (@pxref{Dictionaries}).  Its
+initialization routine at startup of @command{dicod}, after processing
+@code{dictionary} configuration statement (@pxref{Databases}).  Its
 arguments are:
 
 @table @var
@@ -2996,7 +2996,7 @@ Number of elements in @var{argv}.
 
 @item argv
 The command line given by @code{handler} configuration statement
-(@pxref{Dictionaries, handler}).  The array is @samp{NULL}-terminated.
+(@pxref{Databases, handler}).  The array is @samp{NULL}-terminated.
 @end table
 
 This method returns a @dfn{database handle}, an opaque structure
@@ -3011,7 +3011,7 @@ mechanism.  Another method, @code{dico_open} is responsible for that.
 @deftypefn {Dico Callback} int dico_free_db (dico_handle_t @var{dh})
 Reclaim any resources associated with database handle @var{dh}.  This
 method is called as part of exit cleanup routine, before the main
-@command{dictd} process terminates.
+@command{dicod} process terminates.
 
 Return @samp{0} on success, or any non-@samp{0} value on failure.
 
@@ -3119,7 +3119,7 @@ task, the following list shows the basic set of information that is
 needed in order to find the bug:
 
 @itemize
-@item Package version you use.  The output of @command{dictd
+@item Package version you use.  The output of @command{dicod
 --version} will do.
 @item A detailed description of the bug.
 @item Conditions under which the bug appears.

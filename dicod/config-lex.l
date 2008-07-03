@@ -15,7 +15,7 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dictd.h>
+#include <dicod.h>
 #include <config-gram.h>
 #define obstack_chunk_alloc malloc
 #define obstack_chunk_free free
@@ -29,7 +29,7 @@ static int multiline_unescape;         /* Unescape here-document contents */
 static int (*char_to_strip)(char);     /* Strip matching characters of each
 					  here-document line */
 
-dictd_locus_t locus;   /* Input file location */
+dicod_locus_t locus;   /* Input file location */
 /* Line correction.  Equals to the number of #line directives inserted into
    the input by Dico preprocessor instance.  The external preprocessor, if
    any, counts these as input lines and therefore the line numbers in *its*
@@ -47,8 +47,8 @@ static char *multiline_strip_tabs(char *text);
 static int ident();
 static int isemptystr(int off);
 
-static void parse_line(char *text, dictd_locus_t *ploc, size_t *pxlines);
-static void parse_line_cpp(char *text, dictd_locus_t *ploc, size_t *pxlines);
+static void parse_line(char *text, dicod_locus_t *ploc, size_t *pxlines);
+static void parse_line_cpp(char *text, dicod_locus_t *ploc, size_t *pxlines);
 
 
 #undef YY_INPUT
@@ -379,7 +379,7 @@ config_value_dup(config_value_t *input)
 
 
 static int
-assign_locus(dictd_locus_t *ploc, char *name, char *line, size_t *pxlines)
+assign_locus(dicod_locus_t *ploc, char *name, char *line, size_t *pxlines)
 {
     char *p;
 
@@ -393,7 +393,7 @@ assign_locus(dictd_locus_t *ploc, char *name, char *line, size_t *pxlines)
 }
 
 static void
-parse_line(char *text, dictd_locus_t *ploc, size_t *pxlines)
+parse_line(char *text, dicod_locus_t *ploc, size_t *pxlines)
 {
     int rc = 1;
     int argc;
@@ -429,7 +429,7 @@ parse_line(char *text, dictd_locus_t *ploc, size_t *pxlines)
 }
 
 static void
-parse_line_cpp(char *text, dictd_locus_t *ploc, size_t *pxlines)
+parse_line_cpp(char *text, dicod_locus_t *ploc, size_t *pxlines)
 {
     int argc;
     char **argv;

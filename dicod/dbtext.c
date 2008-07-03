@@ -14,7 +14,7 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dictd.h>
+#include <dicod.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>

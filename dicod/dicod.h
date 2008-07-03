@@ -123,9 +123,9 @@ void get_options(int argc, char *argv[]);
 typedef struct {
     char *file;
     int line;
-} dictd_locus_t;
+} dicod_locus_t;
 
-extern dictd_locus_t locus;
+extern dicod_locus_t locus;
 
 
 /* Configuration file stuff */
@@ -181,7 +181,7 @@ typedef struct config_value {
 
 typedef int (*config_callback_fn) (
     enum cfg_callback_command cmd,
-    dictd_locus_t *       /* locus */,
+    dicod_locus_t *       /* locus */,
     void *             /* varptr */,
     config_value_t *   /* value */,
     void *             /* cb_data */
@@ -210,9 +210,9 @@ typedef union {
 int yylex(void);
 int yyerror(char *); 
 
-void config_error(dictd_locus_t *locus, int errcode, const char *fmt, ...)
+void config_error(dicod_locus_t *locus, int errcode, const char *fmt, ...)
     DICO_PRINTFLIKE(3,4);
-void config_warning(dictd_locus_t *locus, int errcode, const char *fmt, ...)
+void config_warning(dicod_locus_t *locus, int errcode, const char *fmt, ...)
     DICO_PRINTFLIKE(3,4);
 int config_lex_begin(const char *name);
 void config_lex_end(void);
@@ -235,18 +235,18 @@ void config_help(void);
 
 
 /* acl.c */
-typedef struct dictd_acl *dictd_acl_t;
+typedef struct dicod_acl *dicod_acl_t;
 
-dictd_acl_t dictd_acl_create(const char *name, dictd_locus_t *locus);
-int dictd_acl_check(dictd_acl_t acl, int res);
+dicod_acl_t dicod_acl_create(const char *name, dicod_locus_t *locus);
+int dicod_acl_check(dicod_acl_t acl, int res);
 
-int parse_acl_line(dictd_locus_t *locus, int allow, dictd_acl_t acl,
+int parse_acl_line(dicod_locus_t *locus, int allow, dicod_acl_t acl,
 		   config_value_t *value);
 
-int dictd_acl_install(dictd_acl_t acl, dictd_locus_t *locus);
-dictd_acl_t dictd_acl_lookup(const char *name);
+int dicod_acl_install(dicod_acl_t acl, dicod_locus_t *locus);
+dicod_acl_t dicod_acl_lookup(const char *name);
 
-extern dictd_acl_t connect_acl;
+extern dicod_acl_t connect_acl;
 
 
 /* Dictd-specific streams */
@@ -259,74 +259,74 @@ void stream_write_multiline(dico_stream_t str, const char *text);
 
 /* */
 
-typedef struct dictd_module_instance {
+typedef struct dicod_module_instance {
     char *ident;
     char *command;
     struct dico_database_module *module; 
     lt_dlhandle handle;
-} dictd_module_instance_t;
+} dicod_module_instance_t;
 
-typedef struct dictd_database {
+typedef struct dicod_database {
     char *name;   /* Dictionary name */
     char *descr;  /* Description (SHOW DB) */
     char *info;   /* Info (SHOW INFO) */
 
-    dictd_acl_t  acl;  /* ACL for this database */
-    int visible;       /* Result of the last dictd_acl_check */
+    dicod_acl_t  acl;  /* ACL for this database */
+    int visible;       /* Result of the last dicod_acl_check */
     
     dico_handle_t mod_handle;        /* Dico module handle */
 
     char *content_type;
     char *content_transfer_encoding;
     
-    dictd_module_instance_t *instance; /* Pointer to the module instance
+    dicod_module_instance_t *instance; /* Pointer to the module instance
 					  structure */
     int argc;                 /* Handler arguments: count */
     char **argv;              /*  ... and pointers */
     char *command;            /* Handler command line (for diagnostics) */
-} dictd_database_t;
+} dicod_database_t;
 
-void dictd_server(int argc, char **argv);
-int dictd_loop(dico_stream_t stream);
-int dictd_inetd(void);
-void dictd_init_strategies(void);
-void dictd_server_init(void);
+void dicod_server(int argc, char **argv);
+int dicod_loop(dico_stream_t stream);
+int dicod_inetd(void);
+void dicod_init_strategies(void);
+void dicod_server_init(void);
 
-dictd_database_t *find_database(const char *name);
-void database_remove_dependent(dictd_module_instance_t *inst);
-void dictd_database_free(dictd_database_t *dp);
+dicod_database_t *find_database(const char *name);
+void database_remove_dependent(dicod_module_instance_t *inst);
+void dicod_database_free(dicod_database_t *dp);
 size_t database_count(void);
 int database_iterate(dico_list_iterator_t fun, void *data);
 int show_sys_info_p(void);
-void dictd_log_setup(void);
-void dictd_log_pre_setup(void);
-void dictd_log_encode_envar(void);
+void dicod_log_setup(void);
+void dicod_log_pre_setup(void);
+void dicod_log_encode_envar(void);
 char *get_full_hostname(void);
 void check_db_visibility(void);
 void reset_db_visibility(void);
 #define database_visible_p(db) ((db)->visible)
 
 
-typedef void (*dictd_cmd_fn) (dico_stream_t str, int argc, char **argv);
+typedef void (*dicod_cmd_fn) (dico_stream_t str, int argc, char **argv);
 
-struct dictd_command {
+struct dicod_command {
     char *keyword;
     int nparam;
     char *param;
     char *help;
-    dictd_cmd_fn handler;
+    dicod_cmd_fn handler;
 };
 
-void dictd_handle_command(dico_stream_t str, int argc, char **argv);
-void dictd_init_command_tab(void);
-void dictd_add_command(struct dictd_command *cmd);
+void dicod_handle_command(dico_stream_t str, int argc, char **argv);
+void dicod_init_command_tab(void);
+void dicod_add_command(struct dicod_command *cmd);
 
 /* capa.c */
-void dictd_capa_register(const char *name, struct dictd_command *cmd,
+void dicod_capa_register(const char *name, struct dicod_command *cmd,
 			 int (*init)(void*), void *closure);
-int dictd_capa_add(const char *name);
-void dictd_capa_iterate(int (*fun)(const char*, int, void *), void *closure);
-int dictd_capa_flush(void);
+int dicod_capa_add(const char *name);
+void dicod_capa_iterate(int (*fun)(const char*, int, void *), void *closure);
+int dicod_capa_flush(void);
 
 /* mime.c */
 void register_mime(void);
@@ -348,19 +348,19 @@ struct udb_def {
 
 struct udb_def text_udb_def;
 
-typedef struct dictd_user_db *dictd_user_db_t;
+typedef struct dicod_user_db *dicod_user_db_t;
 
-extern dictd_user_db_t user_db;
+extern dicod_user_db_t user_db;
 
 void udb_init(void);
-int udb_create(dictd_user_db_t *pdb,
+int udb_create(dicod_user_db_t *pdb,
 	       const char *urlstr, const char *qpw, const char *qgrp,
-	       dictd_locus_t *locus);
+	       dicod_locus_t *locus);
 
-int udb_open(dictd_user_db_t db);
-int udb_close(dictd_user_db_t db);
-int udb_get_password(dictd_user_db_t db, const char *key, char **pass);
-int udb_get_groups(dictd_user_db_t db, const char *key, dico_list_t *groups);
+int udb_open(dicod_user_db_t db);
+int udb_close(dicod_user_db_t db);
+int udb_get_password(dicod_user_db_t db, const char *key, char **pass);
+int udb_get_groups(dicod_user_db_t db, const char *key, dico_list_t *groups);
 void udp_define(struct udb_def *dptr);
 
 /* auth.c */
@@ -368,34 +368,34 @@ void register_auth(void);
 void init_auth_data(void);
 
 /* loader.c */
-void dictd_loader_init(void);
-int dictd_load_module(dictd_module_instance_t *hptr);
-int dictd_init_database(dictd_database_t *dp);
-int dictd_open_database(dictd_database_t *dp);
-int dictd_close_database(dictd_database_t *dp);
-int dictd_free_database(dictd_database_t *dp);
+void dicod_loader_init(void);
+int dicod_load_module(dicod_module_instance_t *hptr);
+int dicod_init_database(dicod_database_t *dp);
+int dicod_open_database(dicod_database_t *dp);
+int dicod_close_database(dicod_database_t *dp);
+int dicod_free_database(dicod_database_t *dp);
 
-int dictd_database_get_strats(dictd_database_t *dp);
+int dicod_database_get_strats(dicod_database_t *dp);
 
-char *dictd_get_database_descr(dictd_database_t *db);
-void dictd_free_database_descr(dictd_database_t *db, char *descr);
-char *dictd_get_database_info(dictd_database_t *db);
-void dictd_free_database_info(dictd_database_t *db, char *info);
+char *dicod_get_database_descr(dicod_database_t *db);
+void dicod_free_database_descr(dicod_database_t *db, char *descr);
+char *dicod_get_database_info(dicod_database_t *db);
+void dicod_free_database_info(dicod_database_t *db, char *info);
 
-void dictd_match_word_db(dictd_database_t *db, dico_stream_t stream,
+void dicod_match_word_db(dicod_database_t *db, dico_stream_t stream,
 			 const dico_strategy_t strat, const char *word);
-void dictd_match_word_first(dico_stream_t stream,
+void dicod_match_word_first(dico_stream_t stream,
 			    const dico_strategy_t strat, const char *word);
-void dictd_match_word_all(dico_stream_t stream,
+void dicod_match_word_all(dico_stream_t stream,
 			  const dico_strategy_t strat, const char *word);
-void dictd_define_word_db(dictd_database_t *db, dico_stream_t stream,
+void dicod_define_word_db(dicod_database_t *db, dico_stream_t stream,
 			  const char *word);
-void dictd_define_word_first(dico_stream_t stream, const char *word);
-void dictd_define_word_all(dico_stream_t stream, const char *word);
+void dicod_define_word_first(dico_stream_t stream, const char *word);
+void dicod_define_word_all(dico_stream_t stream, const char *word);
 
 /* ostream.c */
 extern off_t total_bytes_out;
-dico_stream_t dictd_ostream_create(dico_stream_t str, const char *type,
+dico_stream_t dicod_ostream_create(dico_stream_t str, const char *type,
                                    const char *enc);
 
 /* stat.c */
@@ -440,7 +440,7 @@ char *query_ident_name(struct sockaddr_in *srv_addr,
 		       struct sockaddr_in *clt_addr);
 
 /* alias.c */
-int alias_install(const char *kw, int argc, char **argv, dictd_locus_t *ploc);
+int alias_install(const char *kw, int argc, char **argv, dicod_locus_t *ploc);
 int alias_expand(int argc, char **argv, int *pargc, char ***pargv);
 
 

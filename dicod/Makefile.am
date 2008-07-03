@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-bin_PROGRAMS=dictd
-dictd_SOURCES=\
+bin_PROGRAMS=dicod
+dicod_SOURCES=\
  accesslog.c\
  acl.c\
  alias.c\
@@ -27,7 +27,7 @@ dictd_SOURCES=\
  config-gram.y\
  config-lex.l\
  dbtext.c\
- dictd.c\
+ dicod.c\
  fdio.c\
  ident.c\
  lev.c\
@@ -43,7 +43,7 @@ dictd_SOURCES=\
  udb.c\
  xscript.c
 
-noinst_HEADERS=dictd.h config-gram.h
+noinst_HEADERS=dicod.h config-gram.h
 
 incdir=$(pkgdatadir)/$(VERSION)/include
 inc_DATA = $(PP_SETUP_FILE)
@@ -67,7 +67,7 @@ LDADD=\
  @LIBLTDL@  
 
 INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu @LTDLINCL@
-# dictd_DEPENDENCIES=@LTDLDEPS@
+# dicod_DEPENDENCIES=@LTDLDEPS@
 
 config-lex.c: config-gram.h
 config-gram.h: config-gram.c

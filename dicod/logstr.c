@@ -17,7 +17,7 @@
 /* Implementation of a "log stream", a write-only stream that sends
    all data to the dico log channel with the given level. */
 
-#include <dictd.h>
+#include <dicod.h>
 
 struct log_stream {
     int level;

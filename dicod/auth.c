@@ -14,7 +14,7 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dictd.h>
+#include <dicod.h>
 #include <md5.h>
 
 static int
@@ -71,7 +71,7 @@ auth(const char *username, const char *authstr)
 }
 
 void
-dictd_auth(dico_stream_t str, int argc, char **argv)
+dicod_auth(dico_stream_t str, int argc, char **argv)
 {
     if (auth(argv[1], argv[2]) == 0) {
 	stream_writez(str, "230 Authentication successful");
@@ -97,10 +97,10 @@ auth_init(void *ptr)
 void
 register_auth()
 {
-    static struct dictd_command cmd =
+    static struct dicod_command cmd =
 	{ "AUTH", 3, "user string", "provide authentication information",
-	  dictd_auth };
-    dictd_capa_register("auth", &cmd, auth_init, NULL);
+	  dicod_auth };
+    dicod_capa_register("auth", &cmd, auth_init, NULL);
 }
 
 

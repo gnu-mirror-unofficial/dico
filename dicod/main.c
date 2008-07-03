@@ -14,7 +14,7 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dictd.h>
+#include <dicod.h>
 #include <pwd.h>
 #include <grp.h>
 #include <xgethostname.h>
@@ -23,10 +23,10 @@
 int foreground;     /* Run in foreground mode */
 int single_process; /* Single process mode */
 /* Location of the default configuration file */
-char *config_file = SYSCONFIG "/dictd.conf" ;
+char *config_file = SYSCONFIG "/dicod.conf" ;
 int config_lint_option; /* Check configuration file syntax and exit. */
 /* Location of the pidfile */
-char *pidfile_name = LOCALSTATEDIR "/run/dictd.pid";
+char *pidfile_name = LOCALSTATEDIR "/run/dicod.pid";
 
 /* Operation mode */
 int mode = MODE_DAEMON;
@@ -52,7 +52,7 @@ int transcript;
 /* Server information (for SHOW INFO command) */
 const char *server_info;
 
-dictd_acl_t show_sys_info;
+dicod_acl_t show_sys_info;
 
 /* This host name */
 char *hostname;
@@ -60,14 +60,14 @@ char *hostname;
 /* Text of initial banner. By default == program_version */
 char *initial_banner_text;
 
-/* Alternative help text. Default - see dictd_help (commands.c) */
+/* Alternative help text. Default - see dicod_help (commands.c) */
 char *help_text;
 
 /* List of sockets to listen on for the requests */
 dico_list_t /* of struct sockaddr */ listen_addr;
 
 /* User database for AUTH */
-dictd_user_db_t user_db;
+dicod_user_db_t user_db;
 
 /* Run as this user */
 uid_t user_id;
@@ -79,16 +79,16 @@ dico_list_t /* of gid_t */ group_list;
 dico_list_t /* of char * */ module_load_path;
 
 /* List of configured database module instances */
-dico_list_t /* of dictd_module_instance_t */ modinst_list;
+dico_list_t /* of dicod_module_instance_t */ modinst_list;
 
 /* List of configured dictionaries */
-dico_list_t /* of dictd_database_t */ database_list;
+dico_list_t /* of dicod_database_t */ database_list;
 
 /* Global Dictionary ACL */
-dictd_acl_t global_acl;
+dicod_acl_t global_acl;
 
 /* ACL for incoming connections */
-dictd_acl_t connect_acl;
+dicod_acl_t connect_acl;
 
 /* From CLIENT command: */
 char *client_id;
@@ -110,12 +110,12 @@ int timing_option;
 
 int
 allow_cb(enum cfg_callback_command cmd,
-	 dictd_locus_t *locus,
+	 dicod_locus_t *locus,
 	 void *varptr,
 	 config_value_t *value,
 	 void *cb_data)
 {
-    dictd_acl_t acl = varptr;
+    dicod_acl_t acl = varptr;
 
     if (cmd != callback_set_value) {
 	config_error(locus, 0, _("Unexpected block statement"));
@@ -127,12 +127,12 @@ allow_cb(enum cfg_callback_command cmd,
 
 int
 deny_cb(enum cfg_callback_command cmd,
-	dictd_locus_t *locus,
+	dicod_locus_t *locus,
 	void *varptr,
 	config_value_t *value,
 	void *cb_data)
 {
-    dictd_acl_t acl = varptr;
+    dicod_acl_t acl = varptr;
     if (cmd != callback_set_value) {
 	config_error(locus, 0, _("Unexpected block statement"));
 	return 1;
@@ -143,13 +143,13 @@ deny_cb(enum cfg_callback_command cmd,
 
 int
 acl_cb(enum cfg_callback_command cmd,
-       dictd_locus_t *locus,
+       dicod_locus_t *locus,
        void *varptr,
        config_value_t *value,
        void *cb_data)
 {
     void **pdata = cb_data;
-    dictd_acl_t acl;
+    dicod_acl_t acl;
     
     switch (cmd) {
     case callback_section_begin:
@@ -158,9 +158,9 @@ acl_cb(enum cfg_callback_command cmd,
 	else if (!value->v.string)
 	    config_error(locus, 0, _("missing ACL name"));
 	else {
-	    dictd_locus_t defn_loc;
-	    acl = dictd_acl_create(value->v.string, locus);
-	    if (dictd_acl_install(acl, &defn_loc)) {
+	    dicod_locus_t defn_loc;
+	    acl = dicod_acl_create(value->v.string, locus);
+	    if (dicod_acl_install(acl, &defn_loc)) {
 		config_error(locus, 0,
 			     _("redefinition of ACL %s"),
 			     value->v.string);
@@ -193,12 +193,12 @@ struct config_keyword kwd_acl[] = {
 
 int
 apply_acl_cb(enum cfg_callback_command cmd,
-	     dictd_locus_t *locus,
+	     dicod_locus_t *locus,
 	     void *varptr,
 	     config_value_t *value,
 	     void *cb_data)
 {
-    dictd_acl_t *pacl = varptr;
+    dicod_acl_t *pacl = varptr;
 
     if (cmd != callback_set_value) {
 	config_error(locus, 0, _("Unexpected block statement"));
@@ -208,7 +208,7 @@ apply_acl_cb(enum cfg_callback_command cmd,
 	config_error(locus, 0, _("expected scalar value"));
 	return 1;
     }
-    if ((*pacl =  dictd_acl_lookup(value->v.string)) == NULL) {
+    if ((*pacl =  dicod_acl_lookup(value->v.string)) == NULL) {
 	config_error(locus, 0, _("no such ACL: `%s'"),
 		     value->v.string);
 	return 1;
@@ -219,7 +219,7 @@ apply_acl_cb(enum cfg_callback_command cmd,
 
 int
 set_user(enum cfg_callback_command cmd,
-	 dictd_locus_t *locus,
+	 dicod_locus_t *locus,
 	 void *varptr,
 	 config_value_t *value,
 	 void *cb_data)
@@ -247,7 +247,7 @@ set_user(enum cfg_callback_command cmd,
 }
 
 static int set_supp_group(enum cfg_callback_command cmd,
-			  dictd_locus_t *locus,
+			  dicod_locus_t *locus,
 			  void *varptr,
 			  config_value_t *value,
 			  void *cb_data);
@@ -256,7 +256,7 @@ static int
 set_supp_group_iter(void *item, void *data)
 {
     return set_supp_group(callback_set_value,
-			  (dictd_locus_t *)data,
+			  (dicod_locus_t *)data,
 			  NULL,
 			  (config_value_t *)item,
 			  NULL);
@@ -264,7 +264,7 @@ set_supp_group_iter(void *item, void *data)
 	
 static int
 set_supp_group(enum cfg_callback_command cmd,
-	       dictd_locus_t *locus,
+	       dicod_locus_t *locus,
 	       void *varptr,
 	       config_value_t *value,
 	       void *cb_data)
@@ -293,7 +293,7 @@ set_supp_group(enum cfg_callback_command cmd,
 
 int
 set_mode(enum cfg_callback_command cmd,
-	 dictd_locus_t *locus,
+	 dicod_locus_t *locus,
 	 void *varptr,
 	 config_value_t *value,
 	 void *cb_data)
@@ -340,7 +340,7 @@ static struct xlat_tab syslog_facility_tab[] = {
 
 int
 set_log_facility(enum cfg_callback_command cmd,
-		 dictd_locus_t *locus,
+		 dicod_locus_t *locus,
 		 void *varptr,
 		 config_value_t *value,
 		 void *cb_data)
@@ -367,12 +367,12 @@ set_log_facility(enum cfg_callback_command cmd,
 
 int
 load_module_cb(enum cfg_callback_command cmd,
-	       dictd_locus_t *locus,
+	       dicod_locus_t *locus,
 	       void *varptr,
 	       config_value_t *value,
 	       void *cb_data)
 {
-    dictd_module_instance_t *inst;
+    dicod_module_instance_t *inst;
     void **pdata = cb_data;
     
     switch (cmd) {
@@ -403,12 +403,12 @@ load_module_cb(enum cfg_callback_command cmd,
 
 int
 set_database(enum cfg_callback_command cmd,
-	     dictd_locus_t *locus,
+	     dicod_locus_t *locus,
 	     void *varptr,
 	     config_value_t *value,
 	     void *cb_data)
 {
-    dictd_database_t *dict;
+    dicod_database_t *dict;
     void **pdata = cb_data;
     
     switch (cmd) {
@@ -438,7 +438,7 @@ set_database(enum cfg_callback_command cmd,
 static int
 cmp_modinst_ident(const void *item, const void *data)
 {
-    const dictd_module_instance_t *inst = item;
+    const dicod_module_instance_t *inst = item;
     if (!inst->ident)
 	return 1;
     return strcmp(inst->ident, (const char*)data);
@@ -446,13 +446,13 @@ cmp_modinst_ident(const void *item, const void *data)
 
 int
 set_dict_handler(enum cfg_callback_command cmd,
-		 dictd_locus_t *locus,
+		 dicod_locus_t *locus,
 		 void *varptr,
 		 config_value_t *value,
 		 void *cb_data)
 {
-    dictd_module_instance_t *inst;
-    dictd_database_t *db = varptr;
+    dicod_module_instance_t *inst;
+    dicod_database_t *db = varptr;
     int rc;
     
     if (cmd != callback_set_value) {
@@ -470,7 +470,7 @@ set_dict_handler(enum cfg_callback_command cmd,
 			     &db->argc, &db->argv))) {
 	config_error(locus, rc, _("cannot parse command line `%s'"),
 		     value->v.string);
-	dictd_database_free(db); 
+	dicod_database_free(db); 
 	return 1;
     } 
 
@@ -487,7 +487,7 @@ set_dict_handler(enum cfg_callback_command cmd,
 
 int
 set_dict_encoding(enum cfg_callback_command cmd,
-		  dictd_locus_t *locus,
+		  dicod_locus_t *locus,
 		  void *varptr,
 		  config_value_t *value,
 		  void *cb_data)
@@ -510,7 +510,7 @@ set_dict_encoding(enum cfg_callback_command cmd,
 }
 
 int enable_capability(enum cfg_callback_command cmd,
-		      dictd_locus_t *locus,
+		      dicod_locus_t *locus,
 		      void *varptr,
 		      config_value_t *value,
 		      void *cb_data);
@@ -519,7 +519,7 @@ int
 set_capability(void *item, void *data)
 {
     return enable_capability(callback_set_value,
-			     (dictd_locus_t *) data,
+			     (dicod_locus_t *) data,
 			     NULL,
 			     (config_value_t *) item,
 			     NULL);
@@ -527,7 +527,7 @@ set_capability(void *item, void *data)
 
 int
 enable_capability(enum cfg_callback_command cmd,
-		  dictd_locus_t *locus,
+		  dicod_locus_t *locus,
 		  void *varptr,
 		  config_value_t *value,
 		  void *cb_data)
@@ -538,14 +538,14 @@ enable_capability(enum cfg_callback_command cmd,
     }
     if (value->type == TYPE_LIST)
 	dico_list_iterate(value->v.list, set_capability, locus);
-    else if (dictd_capa_add(value->v.string)) 
+    else if (dicod_capa_add(value->v.string)) 
 	config_error(locus, 0, _("unknown capability: %s"), value->v.string);
     return 0;
 }
 
 int
 set_defstrat(enum cfg_callback_command cmd,
-	     dictd_locus_t *locus,
+	     dicod_locus_t *locus,
 	     void *varptr,
 	     config_value_t *value,
 	     void *cb_data)
@@ -567,31 +567,31 @@ set_defstrat(enum cfg_callback_command cmd,
 
 struct config_keyword kwd_load_module[] = {
     { "command", N_("arg"), N_("Command line."),
-      cfg_string, NULL, offsetof(dictd_module_instance_t, command) },
+      cfg_string, NULL, offsetof(dicod_module_instance_t, command) },
     { NULL }
 };
 
 struct config_keyword kwd_database[] = {
     { "name", N_("word"), N_("Dictionary name (a single word)."),
-      cfg_string, NULL, offsetof(dictd_database_t, name) },
+      cfg_string, NULL, offsetof(dicod_database_t, name) },
     { "description", N_("arg"),
       N_("Short description, to be shown in reply to SHOW DB command."),
-      cfg_string, NULL, offsetof(dictd_database_t, descr) },
+      cfg_string, NULL, offsetof(dicod_database_t, descr) },
     { "info", N_("arg"),
       N_("Full description of the database, to be shown in reply to "
 	 "SHOW INFO command."),
-      cfg_string, NULL, offsetof(dictd_database_t, info) },
+      cfg_string, NULL, offsetof(dicod_database_t, info) },
     { "handler", N_("name"), N_("Name of the handler for this database."),
       cfg_string, NULL, 0, set_dict_handler },
     { "visibility-acl", N_("arg: acl"),
       N_("ACL controlling visibility of this database"),
-      cfg_string, NULL, offsetof(dictd_database_t, acl), apply_acl_cb },
+      cfg_string, NULL, offsetof(dicod_database_t, acl), apply_acl_cb },
     { "content-type", N_("arg"), N_("Content type for MIME replies."),
-      cfg_string, NULL, offsetof(dictd_database_t, content_type) },
+      cfg_string, NULL, offsetof(dicod_database_t, content_type) },
     /* FIXME: Install a callback to verify if arg is acceptable. */
     { "content-transfer-encoding", N_("arg"),
       N_("Content transfer encoding for MIME replies."),
-      cfg_string, NULL, offsetof(dictd_database_t, content_transfer_encoding),
+      cfg_string, NULL, offsetof(dicod_database_t, content_transfer_encoding),
       set_dict_encoding },
     { NULL }
 };
@@ -616,7 +616,7 @@ struct config_keyword kwd_user_db[] = {
 
 int
 user_db_config(enum cfg_callback_command cmd,
-	       dictd_locus_t *locus,
+	       dicod_locus_t *locus,
 	       void *varptr,
 	       config_value_t *value,
 	       void *cb_data)
@@ -652,7 +652,7 @@ user_db_config(enum cfg_callback_command cmd,
 
 int
 alias_cb(enum cfg_callback_command cmd,
-	 dictd_locus_t *locus,
+	 dicod_locus_t *locus,
 	 void *varptr,
 	 config_value_t *value,
 	 void *cb_data)
@@ -784,7 +784,7 @@ void
 config_help()
 {
     static char docstring[] =
-	N_("Configuration file structure for dictd.\n"
+	N_("Configuration file structure for dicod.\n"
 	   "For more information, use `info dico configuration'.");
     format_docstring(stdout, docstring, 0);
     format_statement_array(stdout, keywords, 1, 0);
@@ -796,13 +796,13 @@ show_sys_info_p()
 {
     if (!show_sys_info)
 	return 1;
-    return dictd_acl_check(show_sys_info, 1);
+    return dicod_acl_check(show_sys_info, 1);
 }
 
 void
 reset_db_visibility()
 {
-    dictd_database_t *db;
+    dicod_database_t *db;
     dico_iterator_t itr;
 
     itr = xdico_iterator_create(database_list);
@@ -814,13 +814,13 @@ reset_db_visibility()
 void
 check_db_visibility()
 {
-    dictd_database_t *db;
+    dicod_database_t *db;
     dico_iterator_t itr;
-    int global = dictd_acl_check(global_acl, 1);
+    int global = dicod_acl_check(global_acl, 1);
     
     itr = xdico_iterator_create(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
-	db->visible = dictd_acl_check(db->acl, global);
+	db->visible = dicod_acl_check(db->acl, global);
     }
     dico_iterator_destroy(&itr);
 }
@@ -829,7 +829,7 @@ check_db_visibility()
 static int
 cmp_database_name(const void *item, const void *data)
 {
-    const dictd_database_t *db = item;
+    const dicod_database_t *db = item;
     int rc;
     
     if (!db->name)
@@ -840,7 +840,7 @@ cmp_database_name(const void *item, const void *data)
     return rc;
 }    
 
-dictd_database_t *
+dicod_database_t *
 find_database(const char *name)
 {
     return dico_list_locate(database_list, (void*) name,
@@ -850,7 +850,7 @@ find_database(const char *name)
 static int
 _count_databases(void *item, void *data)
 {
-    const dictd_database_t *db = item;
+    const dicod_database_t *db = item;
     size_t *pcount = data;
     if (database_visible_p(db))
 	++*pcount;
@@ -869,7 +869,7 @@ int
 database_iterate(dico_list_iterator_t fun, void *data)
 {
     dico_iterator_t itr = xdico_iterator_create(database_list);
-    dictd_database_t *db;
+    dicod_database_t *db;
     int rc = 0;
     
     for (db = dico_iterator_first(itr); rc == 0 && db;
@@ -883,23 +883,23 @@ database_iterate(dico_list_iterator_t fun, void *data)
 
 /* Remove all dictionaries that depend on the given handler */
 void
-database_remove_dependent(dictd_module_instance_t *inst)
+database_remove_dependent(dicod_module_instance_t *inst)
 {
     dico_iterator_t itr = xdico_iterator_create(database_list);
-    dictd_database_t *dp;
+    dicod_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
 	if (dp->instance == inst) {
 	    dico_log(L_NOTICE, 0, _("removing database %s"), dp->name);
 	    dico_iterator_remove_current(itr);
-	    dictd_database_free(dp); 
+	    dicod_database_free(dp); 
 	}
     }
     dico_iterator_destroy(&itr);
 }
 
 void
-dictd_database_free(dictd_database_t *dp)
+dicod_database_free(dicod_database_t *dp)
 {
     dico_argcv_free(dp->argc, dp->argv);
     free(dp);
@@ -945,7 +945,7 @@ syslog_log_printer(int lvl, int exitcode, int errcode,
 
 
 static void
-dictd_xversion(dico_stream_t str, int argc, char **argv)
+dicod_xversion(dico_stream_t str, int argc, char **argv)
 {
     stream_writez(str, "110 ");
     stream_writez(str, (char*)program_version);
@@ -955,10 +955,10 @@ dictd_xversion(dico_stream_t str, int argc, char **argv)
 static void
 register_xversion()
 {
-    static struct dictd_command cmd = 
+    static struct dicod_command cmd = 
 	{ "XVERSION", 1, NULL, "show implementation and version info",
-	  dictd_xversion };
-    dictd_capa_register("xversion", &cmd, NULL, NULL);
+	  dicod_xversion };
+    dicod_capa_register("xversion", &cmd, NULL, NULL);
 }
 
 
@@ -990,7 +990,7 @@ get_full_hostname()
 }
 
 void
-dictd_log_setup()
+dicod_log_setup()
 {
     if (!log_to_stderr) {
 	openlog(log_tag, LOG_PID, log_facility);
@@ -1006,7 +1006,7 @@ dictd_log_setup()
    __DICTD_LOGGING__ environment variable. */
 
 void
-dictd_log_encode_envar()
+dicod_log_encode_envar()
 {
     char *p;
     asprintf(&p, "%d:%d:%s", log_facility, log_print_severity, log_tag);
@@ -1014,7 +1014,7 @@ dictd_log_encode_envar()
 }
 
 void
-dictd_log_pre_setup()
+dicod_log_pre_setup()
 {
     char *str = getenv(DICTD_LOGGING_ENVAR);
     if (str) {
@@ -1026,7 +1026,7 @@ dictd_log_pre_setup()
 		log_tag = p + 1;
 	}
 	log_to_stderr = 0;
-	dictd_log_setup();
+	dicod_log_setup();
     }
 }
 
@@ -1036,10 +1036,10 @@ main(int argc, char **argv)
 {
     dico_set_program_name(argv[0]);
     log_tag = dico_program_name;
-    dictd_log_pre_setup();
+    dicod_log_pre_setup();
     hostname = get_full_hostname();
-    dictd_init_command_tab();
-    dictd_init_strategies();
+    dicod_init_command_tab();
+    dicod_init_strategies();
     udb_init();
     register_auth();
     register_mime();
@@ -1057,24 +1057,24 @@ main(int argc, char **argv)
     config_set_keywords(keywords);
     if (config_parse(config_file))
 	exit(1);
-    if (dictd_capa_flush())
+    if (dicod_capa_flush())
 	exit(1);
     compile_access_log();
     if (config_lint_option)
 	exit(0);
     
-    dictd_log_setup();
+    dicod_log_setup();
     
-    dictd_loader_init();
+    dicod_loader_init();
 
     begin_timing("server");
-    dictd_server_init();
+    dicod_server_init();
     switch (mode) {
     case MODE_DAEMON:
-	dictd_server(argc, argv);
+	dicod_server(argc, argv);
 
     case MODE_INETD:
-	return dictd_inetd();
+	return dicod_inetd();
 
     }
 	

@@ -16,11 +16,11 @@
 
 SUFFIXES = .cfin .conf
 
-noinst_DATA=dictd.conf
-CLEANFILES=dictd.conf
+noinst_DATA=dicod.conf
+CLEANFILES=dicod.conf
 
 .cfin.conf:
 	sed 's|<BUILDDIR>|'`cd $(top_builddir); pwd`'|g;s|<SRCDIR>|'`cd $(top_srcdir); pwd`'|g' \
 		$< > $@
 
-EXTRA_DIST=dictd.cfin devils.out
+EXTRA_DIST=dicod.cfin devils.out example.scm example.db

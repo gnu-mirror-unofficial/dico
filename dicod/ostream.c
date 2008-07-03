@@ -14,7 +14,7 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dictd.h>
+#include <dicod.h>
 
 extern int option_mime;
 
@@ -108,7 +108,7 @@ ostream_destroy(void *data)
 }
 
 dico_stream_t
-dictd_ostream_create(dico_stream_t str, const char *type, const char *enc)
+dicod_ostream_create(dico_stream_t str, const char *type, const char *enc)
 {
     struct ostream *ostr = xmalloc(sizeof(*ostr));
     dico_stream_t stream;

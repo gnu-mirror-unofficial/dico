@@ -432,7 +432,7 @@ in the configuration file (@pxref{Capabilities, xversion}).
 
 @smallexample
 C: XVERSION
-S: 110 dictd (dico @value{VERSION})
+S: 110 dicod (dico @value{VERSION})
 @end smallexample
 @end deffn
 

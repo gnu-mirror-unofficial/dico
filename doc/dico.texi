@@ -91,8 +91,8 @@ documents Dico Version @value{VERSION}.
 * Preface::             
 * Intro::                Introduction to Dico.
 * Building::             Building the Package.
-* Dictd::                The dicod daemon.
-* Modules::              Dictd modules shipped with Dico.
+* Dicod::                The dicod daemon.
+* Modules::              Dicod modules shipped with Dico.
 * Interface::            How to write your own Dico module.
 * Reporting Bugs::       How to Report a Bug.
 
@@ -117,7 +117,7 @@ The @command{dicod} daemon.
 * Daemon Mode::
 * Inetd Mode::
 * Configuration::
-* Dictd Invocation::
+* Dicod Invocation::
 
 Configuration
 
@@ -195,7 +195,7 @@ Standard Commands
 @cindex DICT protocol
 @dfn{Dico} is an implementation of @acronym{DICT} dictionary server
 (described in @acronym{RFC} 2229) and a set of accompanying utilities.
-Dico's @command{dicod} server uses two-layer model.  The @dfn{protocol
+Dico's server uses two-layer model.  The @dfn{protocol
 layer} is responsible for correct @acronym{DICT} protocol dialog and
 is served by the @command{dicod} daemon itself.  The @dfn{database
 layer} is responsible for look ups in dictionary databases.  This
@@ -308,7 +308,7 @@ addition, these words can be prefixed with @samp{log_}.
 
   By default, the @samp{daemon} facility is used.
   
-@node Dictd
+@node Dicod
 @chapter The @command{dicod} daemon.
 @cindex @command{dicod}, description
   The main component of Dico is @command{dicod} daemon.  It is
@@ -322,7 +322,7 @@ There are two @dfn{operation modes}: @samp{daemon} and @samp{inetd}.
 * Daemon Mode::
 * Inetd Mode::
 * Configuration::
-* Dictd Invocation::
+* Dicod Invocation::
 @end menu
 
 @node Daemon Mode
@@ -727,7 +727,7 @@ server machine.
 
 @anchor{user statement}
 @deffn {Configuration} user @var{string}
-Run with the privileges of this user.  @command{Dictd} does not
+Run with the privileges of this user.  @command{Dicod} does not
 require root privileges, so it is recommended to always use this
 statement when running @command{dicod} in daemon mode.
 @xref{Daemon Mode}. 
@@ -1986,8 +1986,8 @@ defdb(eng-afr, English-Afrikaans Dictionary)
 @end group
 @end smallexample
 
-@node Dictd Invocation
-@section Dictd Invocation
+@node Dicod Invocation
+@section Dicod Invocation
 @cindex invocation
 @cindex command line options
 @cindex options, @command{dicod}.

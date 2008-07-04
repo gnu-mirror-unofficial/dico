@@ -291,6 +291,7 @@ int dicod_loop(dico_stream_t stream);
 int dicod_inetd(void);
 void dicod_init_strategies(void);
 void dicod_server_init(void);
+void dicod_server_cleanup(void);
 
 dicod_database_t *find_database(const char *name);
 void database_remove_dependent(dicod_module_instance_t *inst);

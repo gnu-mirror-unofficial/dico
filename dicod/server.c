@@ -589,14 +589,15 @@ dicod_server(int argc, char **argv)
     rc = server_loop();
 
     stop_children();
-    
     free(childtab);
+    dicod_server_cleanup();
     close_sockets();
 
     if (rc) 
 	dico_log(L_NOTICE, errno, _("Exit code = %d, last error status"), rc);
 
     remove_pidfile(pidfile_name);
+
     if (restart) {
 	int i;
 		

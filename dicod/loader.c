@@ -148,11 +148,10 @@ dicod_close_database(dicod_database_t *dp)
     return rc;
 }
 
-/* FIXME: Unused so far */
 int
 dicod_free_database(dicod_database_t *dp)
 {
-    int rc;
+    int rc = 0;
     
     if (dp->mod_handle) {
 	dicod_module_instance_t *inst = dp->instance;
@@ -160,8 +159,7 @@ dicod_free_database(dicod_database_t *dp)
 	    rc = inst->module->dico_free_db(dp->mod_handle);
 	    dp->mod_handle = NULL;
 	}
-    } else
-	rc = 0;
+    }
     return rc;
 }
 

@@ -322,6 +322,19 @@ dicod_server_init()
 	dico_set_default_strategy(DICTD_DEFAULT_STRATEGY);
 }
 
+void
+dicod_server_cleanup()
+{
+    dico_iterator_t itr = xdico_iterator_create(database_list);
+    dicod_database_t *dp;
+
+    for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
+	if (dicod_free_database(dp)) 
+	    dico_log(L_NOTICE, 0, _("error freeing database %s"), dp->name);
+    }
+    dico_iterator_destroy(&itr);
+}    
+
 int
 dicod_loop(dico_stream_t str)
 {

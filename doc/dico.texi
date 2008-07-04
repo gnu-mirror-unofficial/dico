@@ -3014,8 +3014,6 @@ method is called as part of exit cleanup routine, before the main
 @command{dicod} process terminates.
 
 Return @samp{0} on success, or any non-@samp{0} value on failure.
-
-@FIXME{Actually, as of version @value{VERSION}, it is not used.}
 @end deftypefn
 
 @deftypefn {Dico Callback} int dico_open (dico_handle_t @var{dh})

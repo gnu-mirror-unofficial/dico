@@ -1034,6 +1034,8 @@ dicod_log_pre_setup()
 int
 main(int argc, char **argv)
 {
+    int rc = 0;
+    
     dico_set_program_name(argv[0]);
     log_tag = dico_program_name;
     dicod_log_pre_setup();
@@ -1072,11 +1074,12 @@ main(int argc, char **argv)
     switch (mode) {
     case MODE_DAEMON:
 	dicod_server(argc, argv);
-
-    case MODE_INETD:
-	return dicod_inetd();
-
-    }
+	break;
 	
-    return 0;
+    case MODE_INETD:
+	rc = dicod_inetd();
+	dicod_server_cleanup();
+	break;
+    }
+    return rc;
 }

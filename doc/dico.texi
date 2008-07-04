@@ -100,6 +100,7 @@ Appendices
 
 * Dictionary Server Protocol::
 * Time and Date Formats::
+* Libdico::
 * Copying This Manual::  The GNU Free Documentation License.
 * Concept Index::        Index of Concepts.
 
@@ -2526,7 +2527,8 @@ databases and for returning information about them.
 
 @anchor{open-db}
 @deffn {Guile Callback} open-db name . args
-@deffnx {Virtual Table} (cons "open" open-db)
+Virtual table: @code{(cons "open" open-db)}@*
+
 Open the database.  The argument @var{name} contains database name as
 given in @code{name} statement of @code{database} block
 (@pxref{Databases}).  Optional argument @var{args} is a list of
@@ -2559,7 +2561,8 @@ The return value @code{#f} or @code{'()} indicates an error.
 @end deffn
 
 @deffn {Guile Callback} close-db dbh
-@deffnx {Virtual Table} (cons "close" close-db)
+Virtual Table: @code{(cons "close" close-db)}@*
+
 Close the database.  This function is called during the cleanup
 procedure, before termination of @code{dicod}.  The argument
 @code{dbh} is a database handle returned by @code{open-db}.
@@ -2569,7 +2572,7 @@ errors to the daemon, throw an exception.
 @end deffn
 
 @deffn {Guile Callback} descr dbh
-@deffnx {Virtual Table} (cons "descr" descr)
+Virtual Table: @code{(cons "descr" descr)}@*
 Return a short textual description of the database, for use in
 @code{SHOW DB} output.  If there is no description, return @code{#f}
 or @code{'()}. 
@@ -2584,7 +2587,8 @@ is used (@pxref{Databases, description}).  Otherwise, if no
 @end deffn
 
 @deffn {Guile Callback} info dbh
-@deffnx {Virtual Table} (cons "info" info)
+Virtual Table: @code{(cons "info" info)}@*
+
 Return a verbose, eventually multi-line, textual description of the
 database, for use in @code{SHOW INFO} output.  If there is no
 description, return @code{#f} or @code{'()}. 
@@ -2605,7 +2609,8 @@ which is then passed to @code{output} callback, which is responsible
 for outputting it.
 
 @deffn {Guile Callback} define-word dbh word
-@deffnx {Virtual Table} (cons "define" define-word)
+Virtual Table: @code{(cons "define" define-word)}@*
+
 Find definitions of word @var{word} in the database @var{dbh}.  Return
 a result handle.  If nothing is found, return @code{#f} or @code{'()}.
 
@@ -2614,7 +2619,8 @@ The argument @var{dbh} is a database handle returned by @code{open-db}.
 
 @anchor{match-word}
 @deffn {Guile Callback} match-word dbh strat word
-@deffnx {Virtual Table} (cons "match" match-word)
+Virtual Table: @code{(cons "match" match-word)}@*
+
 Find all matches of word @var{word} from the database @var{dbh}, using
 matching strategy @var{strat}.  Return a result handle.  If nothing is
 found, return @code{#f} or @code{'()}. 
@@ -2626,7 +2632,8 @@ object that can be accessed using a set of functions described below
 @end deffn
 
 @deffn {Guile Callback} output resh n
-@deffnx {Virtual Table} (cons "output" output)
+Virtual Table: @code{(cons "output" output)}@*
+
 Output @var{n}th result from the result set @var{resh}.  The argument
 @var{resh} is a result handle returned by @code{define-word} or
 @code{match-word} callback.
@@ -2637,7 +2644,8 @@ a match result, the output must not be quoted or terminated by newlines.
 @end deffn
 
 @deffn {Guile Callback} result-count resh
-@deffnx {Virtual Table} (cons "result-count" result-count)
+Virtual Table: @code{(cons "result-count" result-count)}@*
+
 Return the number of elements in the result set @var{resh}.
 @end deffn
 
@@ -2944,6 +2952,17 @@ needed.
 @chapter Dico Module Interface
 @UNREVISED
 
+@menu
+* dico_database_module::
+* Strategies::
+* Output::
+* Error Reporting::
+@end menu
+
+@node dico_database_module
+@section dico_database_module
+@UNREVISED
+
 @deftypevr {dico_database_module} unsigned dico_version
 @vrindex DICO_MODULE_VERSION
 Interface version being used.  It is recommended to use the macro
@@ -3036,7 +3055,7 @@ The @code{dico_close} method is optional, but it must be defined, if
 @end deftypefn
 
 @anchor{dico_db_info}
-@deftypefn {Dico Callback} char *dico_db_info (dico_handle_t @var{dh})
+@deftypefn {Dico Callback} {char *} dico_db_info (dico_handle_t @var{dh})
 Return a database information string for the database identified by
 @var{dh}.  This function is called on each @code{SHOW INFO} command,
 unless an informational text for this database is supplied in the
@@ -3047,7 +3066,7 @@ function.
 This method is optional.
 @end deftypefn
 
-@deftypefn {Dico Callback} char *dico_db_descr (dico_handle_t @var{dh})
+@deftypefn {Dico Callback} {char *} dico_db_descr (dico_handle_t @var{dh})
 Return a short database description string for the database identified
 by @var{dh}.  This function is called on each @code{SHOW DB} command,
 unless a description for this database is supplied in the
@@ -3107,6 +3126,18 @@ handle, obtained from a previous call to @code{dico_match} or
 @code{dico_define}. 
 @end deftypefn
 
+@node Strategies
+@section Strategies
+@UNREVISED
+
+@node Output
+@section Output
+@UNREVISED
+
+@node Error Reporting
+@section Error Reporting
+@UNREVISED
+
 @node Reporting Bugs
 @chapter How to Report a Bug
 
@@ -3133,6 +3164,10 @@ file along with your bug report. This file is created after running
 @node Time and Date Formats
 @appendix Time and Date Formats
 @include strftime.texi
+
+@node Libdico
+@appendix The Libdico Library
+@include libdico.texi
 
 @node Copying This Manual
 @appendix GNU Free Documentation License

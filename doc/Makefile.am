@@ -17,6 +17,7 @@
 info_TEXINFOS=dico.texi
 dico_TEXINFOS=\
  fdl.texi\
+ libdico.texi\
  macros.texi\
  proto.texi\
  rendition.texi\

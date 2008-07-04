@@ -14,7 +14,7 @@ a text sent by the client is prefixed with @samp{C}.
 @end menu
 
 @node Initial Reply
-@unnumberedsec Initial Reply
+@section Initial Reply
   When connection is established, the server sends an @dfn{initial reply}
 to the client.  This reply has the following format:
 
@@ -55,7 +55,7 @@ An example of initial reply follows:
 @end smallexample
 
 @node Standard Commands
-@unnumberedsec Standard Commands
+@section Standard Commands
   The following are standard commands, defined in RFC2229.
 
 @menu
@@ -71,7 +71,7 @@ An example of initial reply follows:
 @end menu
 
 @node DEFINE
-@unnumberedsubsec The DEFINE Command
+@subsection The DEFINE Command
 
 The @code{DEFINE} command searches for definitions of a word.
 
@@ -129,7 +129,7 @@ S: 250 Command complete [d/m/c = 1/0/12 0.000r 0.000u 0.000s]
 @end deffn
 
 @node MATCH
-@unnumberedsubsec The MATCH Command
+@subsection The MATCH Command
 
 @cindex matching strategy
 @cindex strategy
@@ -235,7 +235,7 @@ S: 250 Command complete [d/m/c = 0/12/100677 0.489r 0.479u 0.007s]
 @end deffn
 
 @node SHOW
-@unnumberedsubsec The SHOW Command
+@subsection The SHOW Command
   The @code{SHOW} command outputs various information about the server
 and databases.
 
@@ -317,7 +317,7 @@ statement (@pxref{General Settings, server-info}).
 @end deffn
 
 @node OPTION
-@unnumberedsubsec The OPTION Command
+@subsection The OPTION Command
   The @code{OPTION} command allows to request optional features
 on the remote server.  Currently the only implemented subcommand is:
 
@@ -336,7 +336,7 @@ missing.
 @end deffn
 
 @node AUTH
-@unnumberedsubsec The AUTH Command
+@subsection The AUTH Command
   The @code{AUTH} command allows client to authenticate itself to the
 server.  Depending on the server configuration, authenticated users
 may get access to more databases (@pxref{Database Visibility}) or more
@@ -358,7 +358,7 @@ in the configuration (@pxref{Capabilities, auth}).
 @end deffn
 
 @node CLIENT
-@unnumberedsubsec The CLIENT Command
+@subsection The CLIENT Command
 
 @deffn Command CLIENT info
 Identify client to server.  The @var{info} argument contains a string
@@ -367,7 +367,7 @@ This information can then be used in logging (@pxref{Access Log, %C}).
 @end deffn
 
 @node STATUS
-@unnumberedsubsec The STATUS Command
+@subsection The STATUS Command
 
 @deffn Command STATUS
 Display cumulative timing information.  This command returns a
@@ -381,7 +381,7 @@ S: 210 [d/m/c = 28/1045/119856 21.180r 10.360u 1.040s]
 @end deffn
 
 @node HELP
-@unnumberedsubsec The HELP Command
+@subsection The HELP Command
 
 @deffn Command HELP
   The @code{HELP} command provides a short summary of commands that
@@ -411,7 +411,7 @@ QUIT                         -- terminate connection
 @end deffn
 
 @node QUIT
-@unnumberedsubsec The QUIT Command
+@subsection The QUIT Command
 
 @deffn Command QUIT
 Terminate connection.
@@ -421,7 +421,7 @@ timing information (@pxref{Tuning}).
 @end deffn
 
 @node Extended Commands
-@unnumberedsec Extended Commands
+@section Extended Commands
   In addition to the standard commands, the Dico server also offers a
 set of experimental or extended commands.
 

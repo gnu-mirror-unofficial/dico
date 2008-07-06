@@ -17,7 +17,7 @@
 /* Implementation of a "log stream", a write-only stream that sends
    all data to the dico log channel with the given level. */
 
-#include <dicod.h>
+#include <dico.h>
 
 struct log_stream {
     int level;
@@ -44,13 +44,16 @@ log_destroy(void *data)
 }
 
 dico_stream_t
-log_stream_create(int level)
+dico_log_stream_create(int level)
 {
-    struct log_stream *p = xmalloc(sizeof(*p));
+    struct log_stream *p = malloc(sizeof(*p));
     dico_stream_t stream;
+
+    if (!p)
+	return NULL;
     int rc = dico_stream_create(&stream, DICO_STREAM_WRITE, p);
     if (rc)
-	xalloc_die();
+	NULL;
     dico_stream_set_write(stream, log_write);
     dico_stream_set_destroy(stream, log_destroy);
     dico_stream_set_buffer(stream, dico_buffer_line, 1024);

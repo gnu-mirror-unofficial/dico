@@ -31,6 +31,7 @@ libdico_la_SOURCES=\
  levenshtein.c\
  linebuf.c\
  list.c\
+ logstream.c\
  mapstream.c\
  parseopt.c\
  qp.c\

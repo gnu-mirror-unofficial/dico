@@ -51,4 +51,6 @@ void dico_die(int exitcode, int lvl, int errcode, char *fmt, ...)
     DICO_PRINTFLIKE(4,5);
 int dico_str_to_diag_level(const char *str);
 
+dico_stream_t dico_log_stream_create(int level);
+
 #endif

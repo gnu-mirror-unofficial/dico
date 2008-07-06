@@ -2348,9 +2348,6 @@ must be a list of directory names, separated by colons.
 variable.  @xref{Build Config, %load-path, {Configuration\, Build and
 Installation}, guile, The Guile Reference Manual}.
 
-@kwindex outfile
-@item outfile=@var{file}
-  Bind current error and output ports to the named @var{file}.
 @end table
 
   Guile databases are declared using the following syntax:

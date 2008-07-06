@@ -31,7 +31,6 @@ dicod_SOURCES=\
  fdio.c\
  ident.c\
  lev.c\
- logstr.c\
  loader.c\
  main.c\
  mime.c\

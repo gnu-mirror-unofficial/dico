@@ -287,6 +287,9 @@ struct dico_assoc @{
 @deftypefn Function int dico_str_to_diag_level (const char *@var{str})
 @end deftypefn
 
+@deftypefn Function dico_stream_t dico_log_stream_create(int @var{level})
+@end deftypefn
+
 @node filter
 @section Filter
 

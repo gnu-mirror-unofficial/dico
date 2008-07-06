@@ -146,28 +146,6 @@ memerr(const char *fname)
     dico_log(L_ERR, 0, _("%s: not enough memory"), fname);
 }
 
-static void
-guile_redirect_output(char *filename)
-{
-    SCM port;
-    char *mode = "a";
-    int fd = 2;
-
-    if (filename) {
-	fd = open(filename, O_RDWR|O_CREAT|O_APPEND, 0600);
-	if (fd == -1) {
-	    dico_log(L_ERR, errno, 
-		     _("cannot open file `%s'"), filename);
-	    fd = 2;
-	}
-    }
-    port = scm_fdes_to_port(fd, mode, scm_makfrom0str("<standard error>"));
-    silent_close_port(scm_current_output_port());
-    silent_close_port(scm_current_error_port());
-    scm_set_current_output_port(port);
-    scm_set_current_error_port(port);
-}
-
 static char *
 proc_name(SCM proc)
 {
@@ -494,6 +472,38 @@ _guile_init_dico_port()
     scm_set_port_seek (scm_tc16_dico_port, _dico_port_seek);
 }    
 
+
+
+static long scm_tc16_dico_log_port;
+
+static SCM
+_make_dico_log_port(int level)
+{
+    dico_stream_t str = dico_log_stream_create(level);
+    return str ? _make_dico_port(str) : SCM_BOOL_F;
+}
+
+static int
+_dico_log_port_print(SCM exp, SCM port, scm_print_state *pstate)
+{
+    scm_puts ("#<Dico log port>", port);
+    return 1;
+}
+
+static void
+_guile_init_dico_log_port()
+{
+    scm_tc16_dico_log_port = scm_make_port_type("dico-log-port",
+						_dico_port_fill_input,
+						_dico_port_write);
+    scm_set_port_mark (scm_tc16_dico_log_port, _dico_port_mark);
+    scm_set_port_free (scm_tc16_dico_log_port, _dico_port_free);
+    scm_set_port_print (scm_tc16_dico_log_port, _dico_log_port_print);
+    scm_set_port_flush (scm_tc16_dico_log_port, _dico_port_flush);
+    scm_set_port_close (scm_tc16_dico_log_port, _dico_port_close);
+    scm_set_port_seek (scm_tc16_dico_log_port, _dico_port_seek);
+}    
+
 
 static void
 _guile_init_funcs (void)
@@ -524,9 +534,7 @@ static int guile_debug;
 
 static char *guile_init_script;
 static char *guile_init_args;
-static char *guile_exit_script;
 static char *guile_init_fun;
-static char *guile_outfile;
 
 enum guile_proc_ind {
     open_proc,
@@ -654,9 +662,7 @@ struct dico_option init_option[] = {
     { DICO_OPTSTR(debug), dico_opt_bool, &guile_debug },
     { DICO_OPTSTR(init-script), dico_opt_string, &guile_init_script },
     { DICO_OPTSTR(init-args), dico_opt_string, &guile_init_args },
-    { DICO_OPTSTR(exit-script), dico_opt_string, &guile_exit_script },
     { DICO_OPTSTR(load-path), dico_opt_null, NULL, { 0 }, set_load_path },
-    { DICO_OPTSTR(outfile), dico_opt_string, &guile_outfile },
     { DICO_OPTSTR(init-fun), dico_opt_string, &guile_init_fun },
     { NULL }
 };
@@ -664,6 +670,8 @@ struct dico_option init_option[] = {
 int
 mod_init(int argc, char **argv)
 {
+    SCM port;
+    
     if (dico_parseopt(init_option, argc, argv))
 	return 1;
 
@@ -672,6 +680,7 @@ mod_init(int argc, char **argv)
 
     _guile_init_strategy();
     _guile_init_dico_port();
+    _guile_init_dico_log_port();
     _guile_init_funcs();
     if (guile_debug) {
 	SCM_DEVAL_P = 1;
@@ -680,8 +689,13 @@ mod_init(int argc, char **argv)
 	SCM_RESET_DEBUG_MODE;
     }
 
-    if (guile_outfile)
-	guile_redirect_output(guile_outfile);
+    port = _make_dico_log_port(L_ERR);
+    if (port == SCM_BOOL_F) {
+	dico_log(L_ERR, 0, _("mod_init: cannot initialize error port"));
+	return 1;
+    }
+    scm_set_current_output_port(port);
+    scm_set_current_error_port(port);
     
     if (guile_init_script
 	&& guile_load(guile_init_script, guile_init_args)) {

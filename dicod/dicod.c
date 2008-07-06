@@ -348,9 +348,10 @@ dicod_loop(dico_stream_t str)
     memset(&input, 0, sizeof input);
     got_quit = 0;
     if (transcript) {
-	str = transcript_stream_create(str,
-				       log_stream_create(L_DEBUG),
-				       NULL);
+	dico_stream_t logstr = dico_log_stream_create(L_DEBUG);
+	if (!logstr)
+	    xalloc_die();
+	str = transcript_stream_create(str, logstr, NULL);
     }
 
     open_databases();

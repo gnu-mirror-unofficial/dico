@@ -22,7 +22,7 @@
 #include <getopt.h>
 #include <gettext.h>
 
-OPTIONS_BEGIN(gnu,"dictd",
+OPTIONS_BEGIN(gnu,"dicod",
               [<A DICT daemon.>])
 
 OPTION(config,,FILE,

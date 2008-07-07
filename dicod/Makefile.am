@@ -40,7 +40,9 @@ dicod_SOURCES=\
  server.c\
  stat.c\
  udb.c\
- xscript.c
+ xidle.c\
+ xscript.c\
+ xversion.c
 
 noinst_HEADERS=dicod.h config-gram.h
 

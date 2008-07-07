@@ -332,6 +332,12 @@ int dicod_capa_flush(void);
 /* mime.c */
 void register_mime(void);
 
+/* xidle.c */
+void register_xidle(void);
+
+/* xversion.c */
+void register_xversion(void);
+
 /* lev.c */
 void register_lev(void);
 

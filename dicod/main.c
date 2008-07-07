@@ -944,24 +944,6 @@ syslog_log_printer(int lvl, int exitcode, int errcode,
 }
 
 
-static void
-dicod_xversion(dico_stream_t str, int argc, char **argv)
-{
-    stream_writez(str, "110 ");
-    stream_writez(str, (char*)program_version);
-    dico_stream_write(str, "\r\n", 2);
-}
-    
-static void
-register_xversion()
-{
-    static struct dicod_command cmd = 
-	{ "XVERSION", 1, NULL, "show implementation and version info",
-	  dicod_xversion };
-    dicod_capa_register("xversion", &cmd, NULL, NULL);
-}
-
-
 char *
 get_full_hostname()
 {
@@ -1045,6 +1027,7 @@ main(int argc, char **argv)
     udb_init();
     register_auth();
     register_mime();
+    register_xidle();
     register_xversion();
     register_lev();
     register_regex();

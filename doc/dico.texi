@@ -843,6 +843,7 @@ This is equivalent to the number of clients that can simultaneously
 use the server.  The default is 64 sub-processes.
 @end deffn
 
+@anchor{inactivity-timeout}
 @deffn {Configuration} inactivity-timeout @var{number}
 Set inactivity timeout to the @var{number} of seconds.  The server
 will disconnect automatically if remote client did not send any

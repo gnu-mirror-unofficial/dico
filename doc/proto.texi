@@ -425,6 +425,20 @@ timing information (@pxref{Tuning}).
   In addition to the standard commands, the Dico server also offers a
 set of experimental or extended commands.
 
+@deffn Command XIDLE
+This command displays the current inactivity timeout setting
+(@pxref{inactivity-timeout}), and resets idle timer to 0.  The
+timeout value is printed as the first word after a @samp{110} reply
+code, e.g.:
+
+@smallexample
+C: XIDLE
+S: 110 180 second(s)
+@end smallexample
+
+The value of @samp{0} means there are no timeout.
+@end deffn
+
 @deffn Command XVERSION
 This command displays the daemon implementation and version number.
 It becomes available only if @samp{xversion} capability was requested

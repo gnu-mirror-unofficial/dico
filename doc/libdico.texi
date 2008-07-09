@@ -52,7 +52,7 @@ struct dico_strategy @{
 @deftypefn Function int dico_set_default_strategy (const char *@var{name})
 @end deftypefn
 
-@deftypefn Function const dico_strategy_t dico_get_default_strategy (void)
+@deftypefn Function {const dico_strategy_t} dico_get_default_strategy (void)
 @end deftypefn
 
 @deftypefn Function int dico_strategy_is_default_p (dico_strategy_t @var{strat})
@@ -260,7 +260,7 @@ struct dico_assoc @{
 @deftypevr Variable {const char *} dico_invocation_name
 @end deftypevr
 
-@deftypefn Function dico_set_program_name (char *@var{name})
+@deftypefn Function void dico_set_program_name (char *@var{name})
 @end deftypefn
 
 @deftypefn {Function Type} void dico_log_printer_t (@
@@ -706,7 +706,7 @@ struct utf8_iterator @{
 @section util
 @UNREVISED
 
-@deftypefn Function {char *} dico_full_file_name (const char *@var{dir},
+@deftypefn Function {char *} dico_full_file_name (const char *@var{dir}, @
   const char *@var{file})
 @end deftypefn
   

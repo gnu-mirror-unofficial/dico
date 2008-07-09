@@ -16,10 +16,10 @@
 
 #include <makedict.h>
 
-char *dictdir = INPUTDICTPATH;
+char *dictdir = ".";
 char *kanjidict = "kanjidic.gz";
 char *edict = "edict.gz";
-char *outdir = DICTPATH;
+char *outdir = "jdict";
 char *dictname = DICT_DB;
 int verbose;
 

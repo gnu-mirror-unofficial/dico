@@ -260,66 +260,6 @@ if test "$status_guile" = yes; then
 	         [status_guile=no])
 fi
 
-# Check X configuration
-AC_PATH_XTRA
-
-XAW="Xaw"
-AC_ARG_WITH(xaw3d,
- [AC_HELP_STRING([--with-xaw3d], [Use Xaw3d])],
- [XAW="Xaw3d"
-  AC_DEFINE(USE_XAW3D,1,[Define to 1 if Xaw3d is beign used])])
-
-AC_SUBST(XLDADD)
-XLDADD="-l$XAW -lXmu -lXt"
-
-AC_SUBST(fontdir)
-fontdir='$(pkgdatadir)'
-AC_ARG_WITH(x-fontdir,
- [AC_HELP_STRING([--with-fontdir=PATH], [Use specified font path])],
- [ fontdir=$withval ])
-
-##FIXME
-AC_SUBST(MKFONTDIR)
-MKFONTDIR=mkfontdir
-AC_SUBST(BDFTOPCF)
-BDFTOPCF=bdftopcf
-AC_SUBST(GZIP)
-GZIP=gzip
-
-AC_SUBST(inputdictpath)
-inputdictpath=/usr/local/lib
-AC_ARG_WITH(input-dict-path,
- [AC_HELP_STRING([--with-input-dict-dir],
-                 [Specify alternate location of the input dictionaries])],
- [inputdictpath=$withval])
-
-AC_SUBST(dictdir)
-dicodir='$(pkgdatadir)'
-AC_ARG_WITH(dict-path,
- [AC_HELP_STRING([--with-dict-path],
-                 [Specify alternate location for the dictionaries])],
- [dictdir=$withval])
-
-AC_ARG_VAR([SCROLL_WHEN_NEEDED],
-           [Override the value of XawtextScrollWhenNeeded constant. In libXaw
-            version 1.0.3, scrollVertical is boolean and the value whenNeeded
-            is handled as False.  In libXaw3d, it seems to work as documented.
-            Default is True for libXaw, and XawtextScrollWhenNeeded for
-            libXaw3d.])
-if test -z "$SCROLL_WHEN_NEEDED"; then
-  if test "$XAW" = "Xaw3d"; then
-    SCROLL_WHEN_NEEDED=XawtextScrollWhenNeeded
-  else
-    SCROLL_WHEN_NEEDED=XawtextScrollAlways
-  fi
-fi
-case $SCROLL_WHEN_NEEDED in
-XawtextScrollWhenNeeded|XawtextScrollAlways|True)
-   AC_DEFINE_UNQUOTED([myXawtextScrollWhenNeeded],
-                      $SCROLL_WHEN_NEEDED,
-                      [Value of XawtextScrollWhenNeeded]);;
-*) AC_MSG_ERROR(Invalid value for SCROLL_WHEN_NEEDED);;
-esac
 
 # Doc hints.
 # Select a rendition level:

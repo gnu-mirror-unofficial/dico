@@ -14,9 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-dictdir=@dictdir@
-inputdictpath=@inputdictpath@
-
 JDICT_PROGS=makedict
 
 bin_PROGRAMS=@BUILD_JDICT_PROGS@
@@ -39,7 +36,6 @@ LDADD=\
  ../lib/libdico.la\
  @DB_LIBS@
 
-AM_CFLAGS=-DDICTPATH=\"$(dictdir)\" -DINPUTDICTPATH=\"$(inputdictpath)\"
 INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu @DB_INCLUDES@
 
 SUFFIXES=.opt .c

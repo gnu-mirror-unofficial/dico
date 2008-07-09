@@ -127,19 +127,6 @@ _add_load_path(char *path)
 				  SCM_EOL));
 }
 
-static SCM
-close_port_handler(void *port)
-{
-	scm_close_port((SCM)port);
-	return SCM_UNDEFINED;
-}
-
-static void
-silent_close_port(SCM port)
-{
-	guile_safe_exec(close_port_handler, port, NULL);
-}
-
 static void
 memerr(const char *fname)
 {

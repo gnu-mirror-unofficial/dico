@@ -19,7 +19,7 @@ inputdictpath=@inputdictpath@
 
 ACLOCAL_AMFLAGS = -I m4 -I am
 
-SUBDIRS=include utils gnu lib libltdl dicod modules makedict tests doc
+SUBDIRS=include utils gnu lib libltdl dicod modules dico makedict tests doc
 #FIXME: add these when ready: client fonts
 
 EXTRA_DIST = ChangeLog.2008

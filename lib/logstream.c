@@ -46,14 +46,12 @@ log_destroy(void *data)
 dico_stream_t
 dico_log_stream_create(int level)
 {
+    int rc;
     struct log_stream *p = malloc(sizeof(*p));
     dico_stream_t stream;
 
-    if (!p)
+    if (!p || dico_stream_create(&stream, DICO_STREAM_WRITE, p))
 	return NULL;
-    int rc = dico_stream_create(&stream, DICO_STREAM_WRITE, p);
-    if (rc)
-	NULL;
     dico_stream_set_write(stream, log_write);
     dico_stream_set_destroy(stream, log_destroy);
     dico_stream_set_buffer(stream, dico_buffer_line, 1024);

@@ -1,21 +1,18 @@
-dnl This file is part of GNU Anubis.
-dnl Copyright (C) 2007 Sergey Poznyakoff.
+dnl This file is part of GNU Dico.
+dnl Copyright (C) 2007, 2008 Sergey Poznyakoff.
 dnl 
-dnl GNU Anubis is free software; you can redistribute it and/or modify it
-dnl under the terms of the GNU General Public License as published by the
-dnl Free Software Foundation; either version 3 of the License, or (at your
-dnl option) any later version.
-dnl 
-dnl GNU Anubis is distributed in the hope that it will be useful,
+dnl Dico is free software; you can redistribute it and/or modify
+dnl it under the terms of the GNU General Public License as published by
+dnl the Free Software Foundation; either version 3, or (at your option)
+dnl any later version.
+dnl
+dnl Dico is distributed in the hope that it will be useful,
 dnl but WITHOUT ANY WARRANTY; without even the implied warranty of
 dnl MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 dnl GNU General Public License for more details.
-dnl 
-dnl You should have received a copy of the GNU General Public License along
-dnl with GNU Anubis.  If not, see <http://www.gnu.org/licenses/>.
-dnl 
-dnl GNU Anubis is released under the GPL with the additional exemption that
-dnl compiling, linking, and/or using OpenSSL is allowed.
+dnl
+dnl You should have received a copy of the GNU General Public License
+dnl along with Dico.  If not, see <http://www.gnu.org/licenses/>.
 divert(-1)
 changequote([<,>])
 changecom(/*,*/)
@@ -71,6 +68,28 @@ divert(3)
 	{ NULL, NULL, 0, N_("prep([<$1>])") },
 divert(-1)>]) 
 
+define([<__GATHER_OPTIONS>],[<
+define([<KEY>],ifelse([<$2>],,[<OPTION_>]upcase(patsubst($1,-,_)),'$2'))
+ifelse([<$2>],,[<
+divert(1)
+	KEY,
+divert(-1)
+>])
+define([<SELECTOR>],ifdef([<SELECTOR>],SELECTOR) case KEY:)
+ifelse([<$1>],,,[<
+divert(2)
+	{ "$1", ARGTYPE, 0, KEY },
+divert(-1)>])
+dnl
+define([<SHORT_OPTS>],SHORT_OPTS[<>]dnl
+ifelse([<$2>],,,$2[<>]ifelse(ARGTYPE,[<no_argument>],,ARGTYPE,[<required_argument>],:,ARGTYPE,[<optional_argument>],::)))
+dnl
+ifelse([<$1>],,,dnl
+[<define([<LONG_TAG>],ifelse(LONG_TAG,,[<--$1>],[<LONG_TAG; --$1>]))>])
+ifelse([<$2>],,,dnl
+[<define([<SHORT_TAG>],ifelse(SHORT_TAG,,[<-$2>],[<SHORT_TAG; -$2>]))>])
+>])
+
 dnl OPTION(long-opt, short-opt, [arg], [descr])
 dnl Introduce a command line option. Arguments:
 dnl   long-opt     Long option.  
@@ -89,39 +108,49 @@ dnl If descr is not given the option will not appear in the --help and
 dnl --usage outputs.
 dnl
 define([<OPTION>],[<
-define([<KEY>],ifelse([<$2>],,[<OPTION_>]upcase(patsubst($1,-,_)),'$2'))
-ifelse([<$2>],,[<
-divert(1)
-	KEY,
-divert(-1)
->])
-define([<SELECTOR>],ifdef([<SELECTOR>],SELECTOR) case KEY:)
+pushdef([<LONG_TAG>])
+pushdef([<SHORT_TAG>])
+pushdef([<ARGNAME>],[<$3>])
+pushdef([<DOCSTRING>],$4)
 pushdef([<ARGTYPE>],[<ifelse([<$3>],,[<no_argument>],dnl
 patsubst([<$3>],[<\[.*\]>]),,[<optional_argument>],dnl
 [<required_argument>])>])
-ifelse([<$1>],,,[<
-divert(2)
-	{ "$1", ARGTYPE, 0, KEY },
-divert(-1)>])
-define([<SHORT_OPTS>],SHORT_OPTS[<>]dnl
-ifelse([<$2>],,,$2[<>]ifelse(ARGTYPE,[<no_argument>],,ARGTYPE,[<required_argument>],:,ARGTYPE,[<optional_argument>],::)))
-pushdef([<TAG>],[<ifelse([<$2>],,,-[<$2[<>]ifelse([<$1>],,,[<, >])>])dnl
-ifelse([<$1>],,,[<--$1>])>])
-ifelse([<$4>],,,[<
-divert(3)
-	{ "TAG", ifelse([<$3>],,[<NULL, 0>],
-[<ifelse(ARGTYPE,[<optional_argument>],
-[<patsubst([<$3>],[<\[\(.*\)\]>],[<N_("\1"), 1>])>],[<N_("$3"), 0>])>]), N_("prep([<$4>])") },
-divert(-1)>])
-popdef([<ARGTYPE>])
-popdef([<TAG>])>])
+__GATHER_OPTIONS($@)
+>])
+
+dnl ALIAS(long-opt, short-opt)
+dnl Declare aliases for the previous OPTION statement.
+dnl   long-opt     Long option.
+dnl   short-opt    Short option (a single char)
+dnl   (At least one of long-opt or short-opt must be present)
+dnl An OPTION statement may be followed by any number of ALIAS statements.
+dnl 
+define([<ALIAS>],[<
+__GATHER_OPTIONS($1,$2)
+>])
 
 dnl BEGIN
 dnl Start an action associated with the declared option. Must follow OPTION
-dnl statement.
+dnl statement, with optional ALIAS statements in between.
 dnl
 define([<BEGIN>],[<
+ifelse([<DOCSTRING>],,,[<
+divert(3)
+	{ "translit(dnl
+ifelse(SHORT_TAG,,LONG_TAG,[<SHORT_TAG[<>]ifelse(LONG_TAG,,,; LONG_TAG)>]),
+                    [<;>],[<,>])", ifelse(ARGNAME,,[<NULL, 0>],
+[<ifelse(ARGTYPE,[<optional_argument>],
+[<patsubst([<ARGNAME>],[<\[\(.*\)\]>],[<N_("\1"), 1>])>],[<N_("ARGNAME"), 0>])>]), N_("prep([<DOCSTRING>])") },
+divert(-1)>])
+popdef([<ARGTYPE>])
+popdef([<ARGNAME>])
+popdef([<DOCSTRING>])
 divert(4)dnl
+// SELECTOR
+// SHORT_TAG
+// LONG_TAG
+popdef([<LONG_TAG>])dnl
+popdef([<SHORT_TAG>])dnl
 	SELECTOR
           {
 >])
@@ -140,13 +169,13 @@ dnl Emit option parsing code. Arguments:
 dnl
 dnl  argc        Name of the 1st argument to getopt_long.
 dnl  argv        Name of the 2nd argument to getopt_long.
-dnl  long_index  Name of the 5th argument to getopt_long.  If not given,
+dnl  long_index  5th argument to getopt_long.  If not given,
 dnl              NULL will be passed
 dnl
 define([<GETOPT>],[<
  {
   int c;
-  pushdef([<INDEX>],[<ifelse([<$#>],3,[<&$3>],[<NULL>])>])dnl
+  pushdef([<INDEX>],[<ifelse([<$#>],3,[<$3>],[<NULL>])>])dnl
 
   while ((c = getopt_long($1, $2, "SHORT_OPTS",
                           long_options, INDEX)) != EOF)
@@ -266,7 +295,8 @@ print_help(void)
 	}
       else
 	{
-	  putchar ('\n');
+	  if (i)
+	    putchar ('\n');
 	  indent (0, GROUPCOLUMN);
 	  print_option_descr (gettext (opthelp[i].descr),
 			      GROUPCOLUMN, RMARGIN);

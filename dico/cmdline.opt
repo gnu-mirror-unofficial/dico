@@ -66,6 +66,16 @@ BEGIN
   dico_url.req.strategy = optarg;  
 END
 
+OPTION(levdist,,N,
+       [<With `-s lev' and `-s dlev', sets maximum Levenshtein distance to N.>])
+ALIAS(levenshtein-distance)
+BEGIN
+  char *p;
+  levenshtein_threshold = strtoul(optarg, &p, 10);
+  if (*p)
+      dico_die(1, L_ERR, 0, _("%s: invalid number"), optarg);
+END
+
 OPTION(dbs,D,,
        [<Show available databases.>])
 BEGIN

@@ -99,6 +99,14 @@ dict_lookup_url(dico_url_t url)
 	break;
 	
     case DICO_REQUEST_MATCH:
+	if (levenshtein_threshold && dict_capa(conn, "xlev")) {
+	    stream_printf(conn->str, "XLEV %u\n", levenshtein_threshold);
+	    dict_read_reply(conn);
+	    if (!dict_status_p(conn, "250")) {
+		dico_log(L_WARN, 0, _("Server rejected XLEV command"));
+		print_reply(conn);
+	    }
+	}
 	stream_printf(conn->str, "MATCH \"%s\" \"%s\" \"%s\"\r\n",
 		      quotearg_n (0, url->req.database),
 		      quotearg_n (1, url->req.strategy),

@@ -24,6 +24,7 @@ enum dico_client_mode mode = mode_define;
 int transcript;
 IPADDR source_addr = INADDR_ANY;
 int noauth_option;
+unsigned levenshtein_threshold;
 
 void
 fixup_url()

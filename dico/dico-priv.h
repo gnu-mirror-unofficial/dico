@@ -81,6 +81,7 @@ extern enum dico_client_mode mode;
 extern int transcript;
 extern IPADDR source_addr;
 extern int noauth_option;
+extern unsigned levenshtein_threshold;
 
 void get_options (int argc, char *argv[], int *index);
 

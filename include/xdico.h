@@ -17,6 +17,9 @@
 #ifndef __xdico_h
 #define __xdico_h
 
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
 #include <dico.h>
 
 typedef unsigned long UINT4;
@@ -63,6 +66,16 @@ double timer_get_real(xdico_timer_t t);
 double timer_get_user(xdico_timer_t t);
 double timer_get_system(xdico_timer_t t);
 void timer_format_time(dico_stream_t stream, double t);
+
+/* xstript */
+dico_stream_t xdico_transcript_stream_create(dico_stream_t transport,
+					     dico_stream_t logstr,
+					     const char *prefix[]);
+
+/* xstream.h */
+int stream_writez(dico_stream_t str, char *buf);
+int stream_printf(dico_stream_t str, const char *fmt, ...);
+void stream_write_multiline(dico_stream_t str, const char *text);
 
 #endif
     

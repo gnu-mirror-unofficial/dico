@@ -1,4 +1,4 @@
-/* This file is part of Gjdcit
+/* This file is part of Dico
    Copyright (C) 2003,2004,2007,2008 Sergey Poznyakoff
   
    Dico is free software; you can redistribute it and/or modify

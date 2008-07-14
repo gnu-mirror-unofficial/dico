@@ -248,10 +248,10 @@ dicod_word_first(dico_stream_t stream, const char *word,
 		report_current_timing(stream, tid);
 		dico_stream_write(stream, "\r\n", 2);
 		access_log_status(begfmt, endmsg);
-	    }
-	    
-	    mp->dico_free_result(res);
-	    break;
+		mp->dico_free_result(res);
+		break;
+	    } else
+		mp->dico_free_result(res);
 	}
     }
     dico_iterator_destroy(&itr);

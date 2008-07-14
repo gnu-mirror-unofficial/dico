@@ -172,10 +172,9 @@ dnl
 define([<GETOPT>],[<
  {
   int c;
-  pushdef([<INDEX>],[<ifelse([<$#>],3,[<$3>],[<NULL>])>])dnl
 
   while ((c = getopt_long($1, $2, "SHORT_OPTS",
-                          long_options, INDEX)) != EOF)
+                          long_options, NULL)) != EOF)
     {
       switch (c)
         {
@@ -184,7 +183,7 @@ define([<GETOPT>],[<
 	undivert(4)
         }
     }
-  popdef([<INDEX>])
+  ifelse([<$#>],3,[<$3 = optind;>])
  }   
 >])
 

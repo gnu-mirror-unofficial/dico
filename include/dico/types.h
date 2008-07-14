@@ -32,6 +32,7 @@
 # define DICO_PRINTFLIKE(fmt,narg) __attribute__ ((__format__ (__printf__, fmt, narg)))
 #endif
 
+#define DICO_DICT_PORT 2628
 /* Maximum size of I/O buffer as per RFC2229 */
 #define DICO_MAX_BUFFER 6144
 

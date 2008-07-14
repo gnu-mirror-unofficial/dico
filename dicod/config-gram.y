@@ -498,7 +498,7 @@ string_to_sockaddr(sockaddr_union_t *s, const char *string)
 		sa.sin_port = htons(l);
 	    }
 	} else
-	    sa.sin_port = htons(DICT_PORT);
+	    sa.sin_port = htons(DICO_DICT_PORT);
 	s->s_in = sa;
     }
     return 0;

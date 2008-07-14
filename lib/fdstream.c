@@ -88,7 +88,7 @@ fd_destroy(void *data)
 }
 
 dico_stream_t
-dico_fd_stream_create(int fd, int flags)
+dico_fd_stream_create(int fd, int flags, int noclose)
 {
     int rc;
     dico_stream_t str;
@@ -106,7 +106,8 @@ dico_fd_stream_create(int fd, int flags)
     dico_stream_set_size(str, fd_size);
     dico_stream_set_write(str, fd_write);
     dico_stream_set_read(str, fd_read);
-    dico_stream_set_close(str, fd_close);
+    if (!noclose)
+	dico_stream_set_close(str, fd_close);
     dico_stream_set_destroy(str, fd_destroy);
     return str;
 }

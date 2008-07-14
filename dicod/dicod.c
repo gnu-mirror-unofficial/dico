@@ -98,51 +98,6 @@ tokenize_input(struct input *in, char *str)
     return argc;
 }
 
-int
-stream_writez(dico_stream_t str, char *buf)
-{
-    return dico_stream_write(str, buf, utf8_strbytelen(buf));
-}
-
-int
-stream_printf(dico_stream_t str, const char *fmt, ...)
-{
-    int len;
-    char *buf;
-    
-    va_list ap;
-    va_start(ap, fmt);
-    len = vasprintf(&buf, fmt, ap);
-    va_end(ap);
-    if (len < 0) {
-	dico_log(L_CRIT, 0,
-	       _("not enough memory while formatting reply message"));
-	exit(1);
-    }
-    len = dico_stream_write(str, buf, len);
-    free(buf);
-    return len;
-}
-
-void
-stream_write_multiline(dico_stream_t str, const char *text)
-{
-    struct utf8_iterator itr;
-    size_t len = 0;
-    
-    for (utf8_iter_first(&itr, (unsigned char *)text);
-	 !utf8_iter_end_p(&itr);
-	 utf8_iter_next(&itr)) {
-	if (utf8_iter_isascii(itr) && *itr.curptr == '\n') {
-	    dico_stream_writeln(str, itr.curptr - len, len);
-	    len = 0;
-	} else
-	    len += itr.curwidth;
-    }
-    if (len)
-	dico_stream_writeln(str, itr.curptr - len, len);
-}
-
 struct capa_print {
     size_t num;
     dico_stream_t stream;
@@ -351,7 +306,7 @@ dicod_loop(dico_stream_t str)
 	dico_stream_t logstr = dico_log_stream_create(L_DEBUG);
 	if (!logstr)
 	    xalloc_die();
-	str = transcript_stream_create(str, logstr, NULL);
+	str = xdico_transcript_stream_create(str, logstr, NULL);
     }
 
     open_databases();
@@ -363,7 +318,7 @@ dicod_loop(dico_stream_t str)
 	tokenize_input(&input, buf);
 	if (input.argc == 0)
 	    continue;
-	dicod_handle_command(str, input.argc, input.argv);
+!	dicod_handle_command(str, input.argc, input.argv);
     }
 
     close_databases();    
@@ -375,7 +330,10 @@ dicod_loop(dico_stream_t str)
 int
 dicod_inetd()
 {
-    dico_stream_t str = fd_stream_create(0, 1);
+    dico_stream_t str = dico_fd_io_stream_create(0, 1);
+
+    if (!str)
+        return 1;
     dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
     dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
 

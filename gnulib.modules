@@ -15,6 +15,8 @@ gitlog-to-changelog
 hash
 malloc
 obstack
+quote
+quotearg
 realloc
 regex
 size_max

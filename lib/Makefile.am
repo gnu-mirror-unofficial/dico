@@ -25,6 +25,7 @@ libdico_la_SOURCES=\
  assoc.c\
  base64.c\
  diag.c\
+ fdiostr.c\
  fdstream.c\
  fltstream.c\
  iostr.c\
@@ -50,6 +51,8 @@ libxdico_a_SOURCES=\
  jiscvt.c\
  timer.c\
  userprivs.c\
+ xscript.c\
+ xstream.c\
  xutil.c
 
 libextra_a_SOURCES=xalloc-die.c

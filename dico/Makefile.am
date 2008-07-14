@@ -17,8 +17,11 @@
 bin_PROGRAMS = dico
 dico_SOURCES = \
  cmdline.c\
+ connect.c\
  dico-priv.h\
- dico.c
+ dico.c\
+ lookup.c\
+ pager.c
 
 LDADD=\
  ../lib/libxdico.a\

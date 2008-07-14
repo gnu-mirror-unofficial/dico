@@ -111,7 +111,6 @@ extern struct dico_stat current_stat, total_stat;
 
 #define DICTD_DEFAULT_STRATEGY "lev"
 
-#define DICT_PORT 2628
 #define DICTD_LOGGING_ENVAR "__DICTD_LOGGING__"
 
 #define MODE_DAEMON  0 
@@ -247,14 +246,6 @@ int dicod_acl_install(dicod_acl_t acl, dicod_locus_t *locus);
 dicod_acl_t dicod_acl_lookup(const char *name);
 
 extern dicod_acl_t connect_acl;
-
-
-/* Dictd-specific streams */
-dico_stream_t fd_stream_create(int ifd, int oufd);
-
-int stream_writez(dico_stream_t str, char *buf);
-int stream_printf(dico_stream_t str, const char *fmt, ...);
-void stream_write_multiline(dico_stream_t str, const char *text);
 
 
 /* */

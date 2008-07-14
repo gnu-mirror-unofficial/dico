@@ -16,64 +16,72 @@
 
 #include "dico-priv.h"
 
-char *host;
-int port;
-char *database = "!";
-char *strategy = ".";
+struct dico_url dico_url;
 char *user;
 char *key;
 char *client = DICO_CLIENT_ID;
-struct dico_request req;
 enum dico_client_mode mode = mode_define;
+int transcript;
+IPADDR source_addr = INADDR_ANY;
 
-int
-dico_lookup(const char *word)
+void
+fixup_url()
 {
-    dico_url_t url;
-    if (dico_url_parse(&url, word))
-	return 1;
-    printf("URL: %s\n", url->string);
-    printf("PROTO: %s\n", url->proto);
-    printf("HOST: %s\n", url->host);
-    printf("PORT: %d\n", url->port);
-    printf("PATH: %s\n", url->path);
-    printf("USER: %s\n", url->user);
-    printf("PASS: %s\n", url->passwd);
-    
-    if (memcmp(url->proto, "dict", 4) == 0) {
-	printf("Request:\n");
-	printf("TYPE: %d\n", url->req.type);
-	printf("WORD: %s\n", url->req.word);
-	printf("DB: %s\n", url->req.database);
-	printf("STRAT: %s\n", url->req.strategy);
-	printf("N: %d\n", url->req.n);
-    }
-    
-    if (url->args) {
-	dico_iterator_t itr = xdico_iterator_create(url->args);
-	struct dico_assoc *pa;
-	for (pa = dico_iterator_first(itr); pa;
-	     pa = dico_iterator_next(itr))
-	    printf(" %s=%s\n", pa->key, pa->value);
-	dico_iterator_destroy(&itr);
-    }
-    
-    return 0;
+    dico_url.proto = "dict";
+    if (!dico_url.req.database)
+	dico_url.req.database = "!";
+    if (!dico_url.req.strategy)
+	dico_url.req.strategy = ".";
+    if (mode == mode_match)
+	dico_url.req.type = DICO_REQUEST_MATCH;
 }
 
 int
 main(int argc, char **argv)
 {
-    int index, rc;
+    int index, rc = 0;
 
     dico_set_program_name(argv[0]);
     get_options(argc, argv, &index);
+    fixup_url();
+    set_quoting_style(NULL, escape_quoting_style);
+    signal(SIGPIPE, SIG_IGN);
+
     argc -= index;
     argv += index;
-    if (!argc) 
-	dico_die(1, L_ERR, 0,
-		 _("you should give a word to look for or an URL"));
-    while (argc--) 
-	rc |= dico_lookup((*argv)++) != 0;
+
+    switch (mode) {
+    case mode_define:
+    case mode_match:
+	if (!argc) 
+	    dico_die(1, L_ERR, 0,
+		     _("you should give a word to look for or an URL"));
+	while (argc--) 
+	    rc |= dict_lookup((*argv)++) != 0;
+	break;
+	
+    case mode_dbs:
+	rc = dict_single_command("SHOW DATABASES", NULL, "110");
+	break;
+	
+    case mode_strats:
+	rc = dict_single_command("SHOW STRATEGIES", NULL, "111");
+	break;
+	
+    case mode_help:
+	rc = dict_single_command("HELP", NULL, "113");
+	break;
+	
+    case mode_info:
+	if (!dico_url.req.database)
+	    dico_die(1, L_ERR, 0, _("Database name not specified"));
+	rc = dict_single_command("SHOW INFO", dico_url.req.database, "112");
+	break;
+	
+    case mode_server:
+	rc = dict_single_command("SHOW SERVER", NULL, "114");
+	break;
+    }	
+    
     return rc;
 }

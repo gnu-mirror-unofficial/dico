@@ -93,7 +93,8 @@ off_t dico_stream_bytes_out(dico_stream_t stream);
 
 
 /* FD streams */
-dico_stream_t dico_fd_stream_create(int fd, int flags);
+dico_stream_t dico_fd_stream_create(int fd, int flags, int noclose);
+dico_stream_t dico_fd_io_stream_create(int ifd, int ofd);
 
 dico_stream_t dico_io_stream(dico_stream_t in, dico_stream_t out);
 dico_stream_t dico_mapfile_stream_create(const char *filename, int flags);

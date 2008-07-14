@@ -14,19 +14,22 @@
    You should have received a copy of the GNU General Public License
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dicod.h>
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+#include <dico.h>
 #include <unistd.h>
 
 dico_stream_t
-fd_stream_create(int ifd, int ofd)
+dico_fd_io_stream_create(int ifd, int ofd)
 {
     dico_stream_t in, out;
     dico_stream_t str;
 
-    in = dico_fd_stream_create(ifd, DICO_STREAM_READ);
+    in = dico_fd_stream_create(ifd, DICO_STREAM_READ, 0);
     if (!in)
-	return 0;
-    out = dico_fd_stream_create(ofd, DICO_STREAM_WRITE);
+	return NULL;
+    out = dico_fd_stream_create(ofd, DICO_STREAM_WRITE, 0);
     if (!out) {
 	dico_stream_destroy(&in);
 	return NULL;

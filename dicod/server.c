@@ -70,7 +70,7 @@ open_sockets()
 	    listen_addr = xdico_list_create();
 	sp->sin_family = AF_INET;
 	sp->sin_addr.s_addr = INADDR_ANY;
-	sp->sin_port = htons(DICT_PORT);
+	sp->sin_port = htons(DICO_DICT_PORT);
 	xdico_list_append(listen_addr, sp);
 	srvcount = 1;
     }
@@ -391,7 +391,7 @@ handle_connection(int n)
 	int status;
 	dico_stream_t str;
 
-	str = fd_stream_create(connfd, connfd);
+	str = dico_fd_io_stream_create(connfd, connfd);
 	dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
 	dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
 	status = dicod_loop(str);
@@ -414,7 +414,7 @@ handle_connection(int n)
 	    signal(SIGCHLD, SIG_DFL);
 	    signal(SIGHUP, SIG_DFL);
         
-	    str = fd_stream_create(connfd, connfd);
+	    str = dico_fd_io_stream_create(connfd, connfd);
 	    dico_stream_set_buffer(str, lb_in, 512);
 	    dico_stream_set_buffer(str, lb_out, 512);
 	    status = dicod_loop(str);

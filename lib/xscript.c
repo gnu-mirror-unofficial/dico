@@ -21,7 +21,12 @@
    most RFCs - "S: " for data written ("Server"), and "C: " for data read
    ("Client"). */
 
-#include <dicod.h>
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+#include <dico.h>
+#include <string.h>
+#include <xalloc.h>
 
 #define TRANS_READ 0x1
 #define TRANS_WRITE 0x2
@@ -103,11 +108,22 @@ transcript_flush(void *data)
 }
 
 static int
+transcript_close(void *data)
+{
+    struct transcript_stream *p = data;
+    return dico_stream_close(p->logstr);
+    return dico_stream_close(p->transport);
+}
+    
+
+static int
 transcript_destroy(void *data)
 {
     struct transcript_stream *p = data;
     free(p->prefix[0]);
     free(p->prefix[1]);
+    dico_stream_destroy(&p->transport);
+    dico_stream_destroy(&p->logstr);
     free(p);
     return 0;
 }
@@ -124,8 +140,8 @@ const char *default_prefix[2] = {
 };
 
 dico_stream_t
-transcript_stream_create(dico_stream_t transport, dico_stream_t logstr,
-			 const char *prefix[])
+xdico_transcript_stream_create(dico_stream_t transport, dico_stream_t logstr,
+			       const char *prefix[])
 {
     struct transcript_stream *p = xmalloc(sizeof(*p));
     dico_stream_t stream;
@@ -146,6 +162,7 @@ transcript_stream_create(dico_stream_t transport, dico_stream_t logstr,
     dico_stream_set_read(stream, transcript_read);
     dico_stream_set_write(stream, transcript_write);
     dico_stream_set_flush(stream, transcript_flush);
+    dico_stream_set_close(stream, transcript_close);
     dico_stream_set_destroy(stream, transcript_destroy);
     dico_stream_set_error_string(stream, transcript_strerror);
     dico_stream_set_buffer(stream, dico_buffer_line, 1024);

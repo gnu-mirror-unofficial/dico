@@ -28,7 +28,6 @@ dicod_SOURCES=\
  config-lex.l\
  dbtext.c\
  dicod.c\
- fdio.c\
  ident.c\
  lev.c\
  loader.c\
@@ -41,7 +40,6 @@ dicod_SOURCES=\
  stat.c\
  udb.c\
  xidle.c\
- xscript.c\
  xversion.c
 
 noinst_HEADERS=dicod.h config-gram.h

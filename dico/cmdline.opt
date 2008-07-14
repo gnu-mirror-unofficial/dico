@@ -26,21 +26,30 @@ GROUP([<Server selection>])
 OPTION(host,,SERVER,
        [<Connect to this server.>])
 BEGIN
-  host = optarg;
+  dico_url.host = optarg;
 END
 
 OPTION(port,p,SERVICE,
        [<Specify port to connect to.>])
 BEGIN
-  port = str2port(optarg);
-  if (port == -1)
+  dico_url.port = str2port(optarg);
+  if (dico_url.port == -1)
       dico_die(1, L_ERR, 0, _("Invalid port"));  
 END
 
 OPTION(database,d,NAME,
        [<Select a database to search.>])
 BEGIN
-  database = optarg;  
+  dico_url.req.database = optarg;  
+END
+
+OPTION(source,,ADDR,
+       [<Set a source address for TCP connections.>])
+BEGIN
+  source_addr = get_ipaddr(optarg);
+  if (source_addr == 0)
+    dico_die(1, 0, L_ERR, _("%s: Invalid IP or unknown host name"),
+             optarg);
 END
 
 GROUP([<Operation modes>])
@@ -54,7 +63,7 @@ END
 OPTION(strategy,s,NAME,
        [<Select a strategy for matching.>])
 BEGIN
-  strategy = optarg;  
+  dico_url.req.strategy = optarg;  
 END
 
 OPTION(dbs,D,,
@@ -80,6 +89,7 @@ OPTION(info,i,DBNAME,
        [<Show information about database DBNAME.>])
 BEGIN
   mode = mode_info;
+  dico_url.req.database = optarg;
 END
 
 OPTION(serverinfo,I,,
@@ -113,12 +123,18 @@ BEGIN
   client = optarg;
 END
 
+GROUP([<Debugging>])
+OPTION(transcript,t,,
+       [<Enable session transcript.>])
+BEGIN
+  transcript = 1;
+END
+
 OPTIONS_END
 
 void
 get_options (int argc, char *argv[], int *index)
 {
-    *index = 1;
-    GETOPT(argc, argv, index)
+    GETOPT(argc, argv, *index)
 }
 

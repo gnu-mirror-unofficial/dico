@@ -146,9 +146,6 @@ popdef([<ARGTYPE>])
 popdef([<ARGNAME>])
 popdef([<DOCSTRING>])
 divert(4)dnl
-// SELECTOR
-// SHORT_TAG
-// LONG_TAG
 popdef([<LONG_TAG>])dnl
 popdef([<SHORT_TAG>])dnl
 	SELECTOR

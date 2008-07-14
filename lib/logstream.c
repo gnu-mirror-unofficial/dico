@@ -46,7 +46,6 @@ log_destroy(void *data)
 dico_stream_t
 dico_log_stream_create(int level)
 {
-    int rc;
     struct log_stream *p = malloc(sizeof(*p));
     dico_stream_t stream;
 

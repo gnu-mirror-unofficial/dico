@@ -18,14 +18,28 @@
 #define __dico_url_h
 
 /* URLs */
+
+#define DICO_REQUEST_DEFINE 0
+#define DICO_REQUEST_MATCH 1
+
+struct dico_request {
+    int type;
+    char *word;
+    char *database;
+    char *strategy;
+    unsigned long n;
+};
+
 struct dico_url {
     char *string;
     char *proto;
     char *host;
+    int port;
     char *path;
     char *user;
     char *passwd;
     dico_assoc_list_t args;
+    struct dico_request req;
 };
 
 typedef struct dico_url *dico_url_t;

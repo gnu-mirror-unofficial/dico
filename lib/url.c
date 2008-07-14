@@ -20,19 +20,38 @@
 #include <dico.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 
-/* proto://[user[:password]@][host/]path[;arg=str[;arg=str...] */
+/* proto://[user[:password]@][host[:port]/]path[;arg=str[;arg=str...] 
+   dict://[user[:password]@]host[:port]/{d|m}:[word]:[database]:[strat]:[n]
+*/
 
 static int
-alloc_string(char **sptr, const char *start, const char *end)
+alloc_string_len(char **sptr, const char *start, size_t len)
 {
-    size_t len = end - start;
     *sptr = malloc(len + 1);
     if (!*sptr)
 	return 1;
     memcpy(*sptr, start, len);
     (*sptr)[len] = 0;
     return 0;
+}
+
+static int
+alloc_string(char **sptr, const char *start, const char *end)
+{
+    size_t len = end ? end - start : strlen(start);
+    return alloc_string_len(sptr, start, len);
+}
+
+static int
+alloc_string_def(char **sptr, const char *start, const char *end,
+		 const char *def)
+{
+    if (end == start)
+	return alloc_string(sptr, def, NULL);
+    else
+	return alloc_string(sptr, start, end);
 }
 
 static int
@@ -102,56 +121,52 @@ url_get_path(dico_url_t url, char **str)
 static int
 url_get_host(dico_url_t url, char **str)
 {
-    char *p;
+    char *s = *str;
+    size_t len = strcspn(s, "/:");
 
-    p = strchr(*str, '/');
-
-    if (p) {
-	if (alloc_string(&url->host, *str, p))
+    if (s[len] == ':') {
+	char *q;
+	unsigned long n = strtoul(s + len + 1, &q, 10);
+	if ((*q && !strchr("/;:", *q)) || n > USHRT_MAX)
 	    return 1;
-	*str = p + 1;
+	url->port = n;
+	*str = q + strcspn(q, "/");
+    } else
+	*str = s + len;
+    if (alloc_string_len(&url->host, s, len))
+	return 1;
+    if (**str) {
+	++*str;
+	return url_get_path(url, str);
     }
-    return url_get_path(url, str);
-}
-
-/* On input str points past the ':' */
-static int
-url_get_passwd(dico_url_t url, char **str)
-{
-    char *p;
-
-    p = strchr(*str, '@');
-
-    if (p) {
-	if (alloc_string(&url->passwd, *str, p))
-	    return 1;
-	*str = p + 1;
-    }
-    return url_get_host(url, str);
+    return 0;
 }
 
 /* On input str points past the mech:// part */
 static int
 url_get_user (dico_url_t url, char **str)
 {
-    char *p;
-
-    for (p = *str; *p && !strchr (":@", *p); p++)
-	;
-
-    switch (*p)
-	{
-	case ':':
+    size_t len = strcspn(*str, ":@/");
+    char *p = *str + len;
+    
+    switch (*p) {
+    case ':':
+	len = strcspn(p + 1, "@/:");
+	if (p[len+1] == '@') {
+	    if (alloc_string_len(&url->passwd, p + 1, len))
+		return 1;
 	    if (alloc_string (&url->user, *str, p))
 		return 1;
-	    *str = p + 1;
-	    return url_get_passwd(url, str);
-	case '@':
-	    if (alloc_string(&url->user, *str, p))
-		return 1;
-	    url->passwd = NULL;
-	    *str = p + 1;
+	    *str = p + len + 2;
 	}
+	break;
+	
+    case '@':
+	if (alloc_string(&url->user, *str, p))
+	    return 1;
+	url->passwd = NULL;
+	*str = p + 1;
+    }
     return url_get_host(url, str);
 }
 
@@ -179,6 +194,59 @@ url_get_proto(dico_url_t url, const char *str)
     return url_get_user(url, &p);
 }
 
+static int
+url_parse_dico_request(dico_url_t url)
+{
+    char *p, *q;
+    
+    if (!url->path)
+	return 0;
+    p = url->path;
+    if (p[1] != ':')
+	return 1;
+    switch (*p) {
+    case 'm':
+	url->req.type = DICO_REQUEST_MATCH;
+	break;
+
+    case 'd':
+	url->req.type = DICO_REQUEST_DEFINE;
+	break;
+
+    default:
+	return 1;
+    }
+
+    p += 2;
+    q = strchr(p, ':');
+    if (alloc_string(&url->req.word, p, q))
+	return 1;
+    if (!q) 
+	return alloc_string_len(&url->req.database, "!", 1)
+	        || alloc_string_len(&url->req.strategy, ".", 1);
+
+    p = q + 1;
+    q = strchr(p, ':');
+    if (alloc_string_def(&url->req.database, p, q, "*"))
+	return 1;
+    if (!q)
+	return alloc_string_len(&url->req.strategy, ".", 1);
+    
+    p = q + 1;
+    q = strchr(p, ':');
+    if (alloc_string_def(&url->req.strategy, p, q, "."))
+	return 1;
+
+    if (q) {
+	p = q + 1;
+	url->req.n = strtoul(p, &q, 10);
+	if (*q)
+	    return 1;
+    }
+    
+    return 0;
+}
+
 void
 dico_url_destroy(dico_url_t *purl)
 {
@@ -191,6 +259,9 @@ dico_url_destroy(dico_url_t *purl)
     free(url->user);
     free(url->passwd);
     dico_assoc_destroy(&url->args);
+    free(url->req.word);
+    free(url->req.database);
+    free(url->req.strategy);
     free(url);
     *purl = NULL;
 }
@@ -210,6 +281,13 @@ dico_url_parse(dico_url_t *purl, const char *str)
 	dico_url_destroy(&url);
     else {
 	url->string = strdup(str);
+
+	if (memcmp(url->proto, "dict", 4) == 0
+	    && url_parse_dico_request(url)) {
+	    dico_url_destroy(&url);
+	    return 1;
+	}
+	
 	*purl = url;
     }
     return rc;

@@ -23,6 +23,7 @@ char *client = DICO_CLIENT_ID;
 enum dico_client_mode mode = mode_define;
 int transcript;
 IPADDR source_addr = INADDR_ANY;
+int noauth_option;
 
 void
 fixup_url()

@@ -103,6 +103,7 @@ GROUP([<Authentication>])
 OPTION(noauth,a,,
        [<Disable authentication.>])
 BEGIN
+  noauth_option = 1;
 END
 
 OPTION(user,u,NAME,

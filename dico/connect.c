@@ -15,6 +15,7 @@
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "dico-priv.h"
+#include <md5.h>
 
 const char *xscript_prefix[] = { "S:", "C:" };
 
@@ -55,11 +56,37 @@ parse_initial_reply(struct dict_connection *conn)
     len = strcspn(p, ">");
     if (p[len] != '>')
 	return 1;
+    len++;
     conn->msgid = xmalloc(len + 1);
     memcpy(conn->msgid, p, len);
     conn->msgid[len] = 0;
     
     return 0;
+}
+
+static int
+dict_auth(struct dict_connection *conn)
+{
+    int i;
+    struct md5_ctx md5context;
+    unsigned char md5digest[16];
+    char buf[sizeof(md5digest) * 2 + 1];
+    char *p;
+
+    md5_init_ctx(&md5context);
+    md5_process_bytes(conn->msgid, strlen(conn->msgid), &md5context);
+    md5_process_bytes(key, strlen(key), &md5context);
+    md5_finish_ctx(&md5context, md5digest);
+
+    for (i = 0, p = buf; i < 16; i++, p += 2)
+	sprintf(p, "%02x", md5digest[i]);
+    *p = 0;
+    stream_printf(conn->str, "AUTH %s %s\r\n", user, buf);
+    if (dict_read_reply(conn)) {
+	dico_log(L_ERR, 0, _("No reply from server"));
+	return 1;
+    }
+    return dict_status_p(conn, "230") == 0;
 }
 
 int
@@ -135,7 +162,18 @@ dict_connect(struct dict_connection **pconn, dico_url_t url)
 	dico_log(L_WARN, 0,
 		 _("Unexpected reply to CLIENT command: `%s'"),
 		 conn->buf);
-	
+
+    if (!noauth_option && dict_capa(conn, "auth")) {
+	if (!user || !key) {
+	    dico_log(L_WARN, 0,
+		     _("Not enough credentials for authentication"));
+	} else if (dict_auth(conn)) {
+	    dico_log(L_ERR, 0, _("Authentication failed"));
+	    dict_conn_close(conn);
+	    return 1;
+	}
+    }
+    
     *pconn = conn;
     
     return 0;

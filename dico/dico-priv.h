@@ -45,4 +45,26 @@
 #include <c-strcase.h>
 #include <gettext.h>
 
+enum dico_client_mode {
+    mode_define,
+    mode_match,
+    mode_dbs,
+    mode_strats,
+    mode_help,
+    mode_info,
+    mode_server
+};
+
+#define DICO_CLIENT_ID PACKAGE_STRING 
+
+extern char *host;
+extern int port;
+extern char *database;
+extern char *strategy;
+extern char *user;
+extern char *key;
+extern char *client;
+extern struct dico_request req;
+extern enum dico_client_mode mode;
+
 extern void get_options (int argc, char *argv[], int *index);

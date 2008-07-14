@@ -18,23 +18,29 @@
 #include <getopt.h>
 
 OPTIONS_BEGIN(gnu,"dico",
-              [<A DICT client.>])
+              [<A DICT client.>],
+	      [<[URL-or-WORD]>])
 
 GROUP([<Server selection>])
 	      
 OPTION(host,,SERVER,
        [<Connect to this server.>])
 BEGIN
+  host = optarg;
 END
 
 OPTION(port,p,SERVICE,
        [<Specify port to connect to.>])
 BEGIN
+  port = str2port(optarg);
+  if (port == -1)
+      dico_die(1, L_ERR, 0, _("Invalid port"));  
 END
 
 OPTION(database,d,NAME,
        [<Select a database to search.>])
-BEGIN       
+BEGIN
+  database = optarg;  
 END
 
 GROUP([<Operation modes>])
@@ -42,37 +48,44 @@ GROUP([<Operation modes>])
 OPTION(match,m,,
        [<Match instead of define.>])
 BEGIN
+  mode = mode_match;   
 END
 
 OPTION(strategy,s,NAME,
        [<Select a strategy for matching.>])
 BEGIN
+  strategy = optarg;  
 END
 
 OPTION(dbs,D,,
        [<Show available databases.>])
 BEGIN
+  mode = mode_dbs;  
 END
 
 OPTION(strats,S,,
        [<Show available search strategies.>])
 ALIAS(strategies)
 BEGIN
+  mode = mode_strats;
 END
 
 OPTION(serverhelp,H,,
        [<show server help.>])
 BEGIN
+  mode = mode_help;
 END
 
 OPTION(info,i,DBNAME,
        [<Show information about database DBNAME.>])
 BEGIN
+  mode = mode_info;
 END
 
 OPTION(serverinfo,I,,
        [<Show information about the server.>])
 BEGIN
+  mode = mode_server;
 END
 
 GROUP([<Authentication>])
@@ -85,16 +98,19 @@ END
 OPTION(user,u,NAME,
        [<Set user name for authentication.>])
 BEGIN
+  user = optarg;
 END
 
 OPTION(key, k, STRING,
        [<Set shared secret for authentication.>])
 BEGIN
+  key = optarg;
 END
 
 OPTION(client,c, STRING,
        [<Additional text for client command.>])
 BEGIN
+  client = optarg;
 END
 
 OPTIONS_END
@@ -102,6 +118,7 @@ OPTIONS_END
 void
 get_options (int argc, char *argv[], int *index)
 {
+    *index = 1;
     GETOPT(argc, argv, index)
 }
 

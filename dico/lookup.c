@@ -102,7 +102,12 @@ dict_lookup_url(dico_url_t url)
 	stream_printf(conn->str, "MATCH \"%s\" \"%s\" \"%s\"\r\n",
 		      quotearg_n (0, url->req.database),
 		      quotearg_n (1, url->req.strategy),
-		      quotearg_n (1, url->req.word));
+		      quotearg_n (2, url->req.word));
+	dict_read_reply(conn);
+	if (dict_status_p(conn, "152")) 
+	    print_multiline(conn);
+	else
+	    print_reply(conn);
 	break;
 	
     default:

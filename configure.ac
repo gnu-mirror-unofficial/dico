@@ -241,6 +241,12 @@ else
   DEFAULT_PREPROCESSOR=NULL
 fi
 
+AC_ARG_VAR([DEFAULT_DICT_SERVER],
+           [Set name of the default DICT server for dico utility])
+if test -z "$DEFAULT_DICT_SERVER" ; then
+   DEFAULT_DICT_SERVER="gnu.org.ua"
+fi
+
 # Check for Guile
 AC_ARG_WITH([guile],
             AC_HELP_STRING([--without-guile],

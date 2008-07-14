@@ -30,6 +30,8 @@ LDADD=\
  ../lib/libdico.la\
  @LIBLTDL@  
 
+AM_CPPFLAGS=-DDEFAULT_DICT_SERVER="\"$(DEFAULT_DICT_SERVER)\""
+
 INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu @LTDLINCL@
 
 SUFFIXES=.opt .c

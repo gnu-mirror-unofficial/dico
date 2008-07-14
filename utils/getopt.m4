@@ -111,7 +111,7 @@ define([<OPTION>],[<
 pushdef([<LONG_TAG>])
 pushdef([<SHORT_TAG>])
 pushdef([<ARGNAME>],[<$3>])
-pushdef([<DOCSTRING>],prep($4))
+pushdef([<DOCSTRING>],[<prep([<$4>])>])
 pushdef([<ARGTYPE>],[<ifelse([<$3>],,[<no_argument>],dnl
 patsubst([<$3>],[<\[.*\]>]),,[<optional_argument>],dnl
 [<required_argument>])>])

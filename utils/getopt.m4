@@ -111,7 +111,7 @@ define([<OPTION>],[<
 pushdef([<LONG_TAG>])
 pushdef([<SHORT_TAG>])
 pushdef([<ARGNAME>],[<$3>])
-pushdef([<DOCSTRING>],$4)
+pushdef([<DOCSTRING>],prep($4))
 pushdef([<ARGTYPE>],[<ifelse([<$3>],,[<no_argument>],dnl
 patsubst([<$3>],[<\[.*\]>]),,[<optional_argument>],dnl
 [<required_argument>])>])
@@ -140,7 +140,7 @@ divert(3)
 ifelse(SHORT_TAG,,LONG_TAG,[<SHORT_TAG[<>]ifelse(LONG_TAG,,,; LONG_TAG)>]),
                     [<;>],[<,>])", ifelse(ARGNAME,,[<NULL, 0>],
 [<ifelse(ARGTYPE,[<optional_argument>],
-[<patsubst([<ARGNAME>],[<\[\(.*\)\]>],[<N_("\1"), 1>])>],[<N_("ARGNAME"), 0>])>]), N_("prep([<DOCSTRING>])") },
+[<patsubst([<ARGNAME>],[<\[\(.*\)\]>],[<N_("\1"), 1>])>],[<N_("ARGNAME"), 0>])>]), N_("DOCSTRING") },
 divert(-1)>])
 popdef([<ARGTYPE>])
 popdef([<ARGNAME>])

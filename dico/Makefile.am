@@ -18,7 +18,7 @@ bin_PROGRAMS = dico
 dico_SOURCES = \
  cmdline.c\
  dico-priv.h\
- main.c
+ dico.c
 
 LDADD=\
  ../lib/libxdico.a\

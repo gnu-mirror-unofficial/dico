@@ -318,7 +318,7 @@ dicod_loop(dico_stream_t str)
 	tokenize_input(&input, buf);
 	if (input.argc == 0)
 	    continue;
-!	dicod_handle_command(str, input.argc, input.argv);
+	dicod_handle_command(str, input.argc, input.argv);
     }
 
     close_databases();    

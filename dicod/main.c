@@ -1019,6 +1019,7 @@ main(int argc, char **argv)
     int rc = 0;
     
     dico_set_program_name(argv[0]);
+    set_quoting_style(NULL, escape_quoting_style);
     log_tag = dico_program_name;
     dicod_log_pre_setup();
     hostname = get_full_hostname();

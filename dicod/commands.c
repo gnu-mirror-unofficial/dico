@@ -89,7 +89,7 @@ _show_database(void *item, void *data)
     dico_stream_t str = data;
     char *descr = dicod_get_database_descr(dict);
     stream_printf(str, "%s \"%s\"\r\n",
-		  dict->name, descr ? descr : ""); /* FIXME: Quote descr. */
+		  dict->name, quotearg(descr ? descr : ""));
     dicod_free_database_descr(dict, descr);
     return 0;
 }
@@ -121,7 +121,7 @@ _show_strategy(void *item, void *data)
     dico_stream_t str = data;
 
     stream_printf(str, "%s \"%s\"\r\n",
-		  sp->name, sp->descr); /* FIXME: Quote descr. */
+		  sp->name, quotearg(sp->descr));
     return 0;
 }
 

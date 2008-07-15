@@ -15,6 +15,8 @@
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "dico-priv.h"
+#include <sys/types.h>
+#include <pwd.h>
 #include <md5.h>
 
 const char *xscript_prefix[] = { "S:", "C:" };
@@ -65,7 +67,7 @@ parse_initial_reply(struct dict_connection *conn)
 }
 
 static int
-dict_auth(struct dict_connection *conn)
+dict_auth(struct dict_connection *conn, struct auth_cred *cred)
 {
     int i;
     struct md5_ctx md5context;
@@ -75,18 +77,63 @@ dict_auth(struct dict_connection *conn)
 
     md5_init_ctx(&md5context);
     md5_process_bytes(conn->msgid, strlen(conn->msgid), &md5context);
-    md5_process_bytes(key, strlen(key), &md5context);
+    md5_process_bytes(cred->pass, strlen(cred->pass), &md5context);
     md5_finish_ctx(&md5context, md5digest);
 
     for (i = 0, p = buf; i < 16; i++, p += 2)
 	sprintf(p, "%02x", md5digest[i]);
     *p = 0;
-    stream_printf(conn->str, "AUTH %s %s\r\n", user, buf);
+    stream_printf(conn->str, "AUTH %s %s\r\n", cred->user, buf);
     if (dict_read_reply(conn)) {
 	dico_log(L_ERR, 0, _("No reply from server"));
 	return 1;
     }
     return dict_status_p(conn, "230") == 0;
+}
+
+static char *
+get_homedir()
+{
+    char *homedir = getenv("HOME");
+    if (!homedir) {
+	struct passwd *pw = getpwuid(geteuid());
+	homedir = pw->pw_dir;
+    }
+    return homedir;
+}
+
+static void
+auth_cred_dup(struct auth_cred *dst, const struct auth_cred *src)
+{
+    dst->user = src->user ? xstrdup(src->user) : NULL;
+    dst->pass = src->pass ? xstrdup(src->pass) : NULL;
+}    
+
+static void
+auth_cred_free(struct auth_cred *cred)
+{
+    free(cred->user);
+    free(cred->pass);
+}
+
+static int
+get_credentials(char *host, struct auth_cred *cred)
+{
+    auth_cred_dup(cred, &default_cred);
+    if (default_cred.user && default_cred.pass)
+	return 0;
+    else if (autologin_file) {
+	if (access(autologin_file, F_OK))
+	    dico_log(L_WARN, 0, _("File %s does not exist"), autologin_file);
+	else
+	    parse_netrc(autologin_file, host, cred);
+    } else if (DEFAULT_NETRC_NAME) {
+	char *home = get_homedir();
+	char *filename = dico_full_file_name(home, DEFAULT_NETRC_NAME);
+	parse_netrc(filename, host, cred);
+	free(filename);
+    }
+    return !(cred->user && cred->pass);
 }
 
 int
@@ -164,13 +211,18 @@ dict_connect(struct dict_connection **pconn, dico_url_t url)
 		 conn->buf);
 
     if (!noauth_option && dict_capa(conn, "auth")) {
-	if (!user || !key) {
+	struct auth_cred cred;
+	if (get_credentials(url->host, &cred)) {
 	    dico_log(L_WARN, 0,
 		     _("Not enough credentials for authentication"));
-	} else if (dict_auth(conn)) {
-	    dico_log(L_ERR, 0, _("Authentication failed"));
-	    dict_conn_close(conn);
-	    return 1;
+	} else {
+	    int rc = dict_auth(conn, &cred);
+	    auth_cred_free(&cred);
+	    if (rc) {
+		dico_log(L_ERR, 0, _("Authentication failed"));
+		dict_conn_close(conn);
+		return 1;
+	    }
 	}
     }
     

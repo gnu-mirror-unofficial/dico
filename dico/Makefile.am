@@ -21,6 +21,7 @@ dico_SOURCES = \
  dico-priv.h\
  dico.c\
  lookup.c\
+ netrc.c\
  pager.c
 
 LDADD=\

@@ -71,17 +71,22 @@ struct dict_connection {
     int stk_init;
 };
 
+struct auth_cred {
+    char *user;
+    char *pass;
+};
+
 #define DICO_CLIENT_ID PACKAGE_STRING 
 
 extern struct dico_url dico_url;
-extern char *user;
-extern char *key;
+extern struct auth_cred default_cred;
 extern char *client;
 extern enum dico_client_mode mode;
 extern int transcript;
 extern IPADDR source_addr;
 extern int noauth_option;
 extern unsigned levenshtein_threshold;
+extern char *autologin_file;
 
 void get_options (int argc, char *argv[], int *index);
 
@@ -96,3 +101,5 @@ int dict_lookup(char *word);
 int dict_single_command(char *cmd, char *arg, char *code);
 dico_stream_t create_pager_stream(size_t nlines);
 
+/* netrc.c */
+int parse_netrc (const char *filename, char *host, struct auth_cred *pcred);

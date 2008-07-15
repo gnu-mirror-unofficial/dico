@@ -242,9 +242,26 @@ else
 fi
 
 AC_ARG_VAR([DEFAULT_DICT_SERVER],
-           [Set name of the default DICT server for dico utility])
+           [Set the name of the default DICT server for dico utility])
 if test -z "$DEFAULT_DICT_SERVER" ; then
    DEFAULT_DICT_SERVER="gnu.org.ua"
+fi
+
+AC_ARG_WITH(netrc-file,
+            AC_HELP_STRING([--with-netrc-file@<:@=NAME@:>@],
+	                   [Use the autologin file (default NAME is .netrc)]),
+            [case $withval in
+	     yes) DEFAULT_NETRC_NAME=".netrc";;
+	     no)  DEFAULT_NETRC_NAME=;;
+	     *)   DEFAULT_NETRC_NAME=$withval;;
+	     esac],
+	    [DEFAULT_NETRC_NAME=])
+if test -n "$DEFAULT_NETRC_NAME" ; then
+   AC_DEFINE_UNQUOTED(DEFAULT_NETRC_NAME, "$DEFAULT_NETRC_NAME",
+                      [Define to the name of a netrc-style autologin file])
+else
+   AC_DEFINE_UNQUOTED(DEFAULT_NETRC_NAME, NULL,
+                      [Define to the name of a netrc-style autologin file])
 fi
 
 # Check for Guile

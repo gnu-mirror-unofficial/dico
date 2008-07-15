@@ -61,9 +61,10 @@ BEGIN
 END
 
 OPTION(strategy,s,NAME,
-       [<Select a strategy for matching.>])
+       [<Select a strategy for matching.  Implies --match.>])
 BEGIN
-  dico_url.req.strategy = optarg;  
+  dico_url.req.strategy = optarg;
+  mode = mode_match;
 END
 
 OPTION(levdist,,N,
@@ -119,14 +120,21 @@ END
 OPTION(user,u,NAME,
        [<Set user name for authentication.>])
 BEGIN
-  user = optarg;
+  default_cred.user = optarg;
 END
 
 OPTION(key, k, STRING,
        [<Set shared secret for authentication.>])
+ALIAS(password)       
 BEGIN
-  key = optarg;
+  default_cred.pass = optarg;
 END
+
+OPTION(autologin,, NAME,
+       [<Set the name of autologin file to use.>])
+BEGIN
+  autologin_file = optarg;
+END  
 
 OPTION(client,c, STRING,
        [<Additional text for client command.>])

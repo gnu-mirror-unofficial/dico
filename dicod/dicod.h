@@ -42,6 +42,7 @@
 #include <xdico.h>
 #include <inttostr.h>
 #include <c-strcase.h>
+#include <quotearg.h>
 
 #define UINTMAX_STRSIZE_BOUND INT_BUFSIZE_BOUND(uintmax_t)
 

@@ -17,14 +17,14 @@
 #include "dico-priv.h"
 
 struct dico_url dico_url;
-char *user;
-char *key;
+struct auth_cred default_cred;
 char *client = DICO_CLIENT_ID;
 enum dico_client_mode mode = mode_define;
 int transcript;
 IPADDR source_addr = INADDR_ANY;
 int noauth_option;
 unsigned levenshtein_threshold;
+char *autologin_file;
 
 void
 fixup_url()
@@ -54,6 +54,20 @@ main(int argc, char **argv)
     argc -= index;
     argv += index;
 
+    switch (mode) {
+    case mode_define:
+    case mode_match:
+	if (!argc) 
+	    dico_die(1, L_ERR, 0,
+		     _("you should give a word to look for or an URL"));
+	break;
+
+    default:
+	if (argc)
+	    dico_log(L_WARN, 0,
+		     _("extra command line arguments ignored"));
+    }
+    
     switch (mode) {
     case mode_define:
     case mode_match:

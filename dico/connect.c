@@ -225,6 +225,8 @@ dict_connect(struct dict_connection **pconn, dico_url_t url)
 	    }
 	}
     }
+
+    obstack_init(&conn->stk);
     
     *pconn = conn;
     
@@ -265,19 +267,10 @@ dict_capa(struct dict_connection *conn, char *capa)
 }
 
 int
-dict_multiline_reply(struct dict_connection *conn, size_t *pnlines)
+dict_multiline_reply(struct dict_connection *conn)
 {
     int rc;
     size_t nlines = 0;
-    
-    if (!conn->stk_init) {
-	obstack_init(&conn->stk);
-	conn->stk_init = 1;
-    }
-
-    obstack_grow(&conn->stk, conn->buf, conn->level);
-    obstack_1grow(&conn->stk, '\n');
-    nlines++;
     
     while ((rc = dict_read_reply(conn)) == 0) {
 	char *ptr = conn->buf;
@@ -295,21 +288,248 @@ dict_multiline_reply(struct dict_connection *conn, size_t *pnlines)
 	nlines++;
     }
     obstack_1grow(&conn->stk, 0);
-    if (pnlines)
-	*pnlines = nlines;
     return rc;
 }
 
+int
+dict_define(struct dict_connection *conn, char *database, char *word)
+{
+    int rc;
+    
+    stream_printf(conn->str, "DEFINE \"%s\" \"%s\"\r\n",
+		  quotearg_n (0, database),
+		  quotearg_n (1, word));
+    dict_read_reply(conn);
+    if (dict_status_p(conn, "150")) {
+	unsigned long i, count;
+	char *p;
+	
+	count = strtoul (conn->buf + 3, &p, 10);
+	for (i = 0; i < count; i++) {
+	    dict_read_reply(conn);
+	    if (!dict_status_p(conn, "151")) {
+		dico_log(L_WARN, 0,
+			 _("Unexpected reply in place of definition %lu"), i);
+		break;
+	    }
+	    obstack_grow(&conn->stk, conn->buf, conn->level);
+	    obstack_1grow(&conn->stk, 0);
+	    dict_multiline_reply(conn);
+	}
+	dict_read_reply(conn);
+	dict_result_create(conn, DICO_REQUEST_DEFINE, count,
+			   obstack_finish(&conn->stk));
+	rc = 0;
+    } else
+	rc = 1;
+    return rc;
+}
+
+int
+dict_match(struct dict_connection *conn, char *database, char *strategy,
+	   char *word)
+{
+    int rc;
+    if (levenshtein_threshold && conn->levdist != levenshtein_threshold
+	&& dict_capa(conn, "xlev")) {
+	stream_printf(conn->str, "XLEV %u\n", levenshtein_threshold);
+	dict_read_reply(conn);
+	if (!dict_status_p(conn, "250"))
+	    conn->levdist = levenshtein_threshold;
+	else {
+	    dico_log(L_WARN, 0, _("Server rejected XLEV command"));
+	    dico_log(L_WARN, 0, _("Server reply: %s"), conn->buf);
+	}
+    }
+    stream_printf(conn->str, "MATCH \"%s\" \"%s\" \"%s\"\r\n",
+		  quotearg_n (0, database),
+		  quotearg_n (1, strategy),
+		  quotearg_n (2, word));
+    dict_read_reply(conn);
+    if (dict_status_p(conn, "152")) {	
+	unsigned long count;
+	char *p;
+	
+	count = strtoul (conn->buf + 3, &p, 10);
+    
+	dict_multiline_reply(conn);
+	dict_result_create(conn, DICO_REQUEST_MATCH, count,
+			   obstack_finish(&conn->stk));
+	dict_read_reply(conn);
+	rc = 0;
+    } else
+	rc = 1;
+    return rc;
+}
+
+static size_t
+count_lines(char *p)
+{
+    size_t count = 0;
+    while ((p = strchr(p, '\n'))) {
+	count++;
+	p++;
+    }
+    return count;
+}
+
+static void
+_result_parse_def(struct dict_result *res)
+{
+    char *p;
+    size_t i;
+    struct define_result *def = xcalloc(res->count, sizeof(*def));
+    xdico_input_t input = xdico_tokenize_begin();
+    
+    res->set.def = def;
+    p = res->base;
+    for (i = 0; i < res->count; i++, def++) {
+	int argc;
+	char **argv;
+
+	/* FIXME: Provide a destructive version of xdico_tokenize_input */
+	xdico_tokenize_input(input, p, &argc, &argv);
+	def->word = xstrdup(argv[1]);
+	def->database = xstrdup(argv[2]);
+	def->descr = xstrdup(argv[3]);
+	p += strlen(p) + 1;
+	def->defn = p;
+	def->nlines = count_lines(p);
+	p += strlen(p) + 1;
+    }
+    xdico_tokenize_end(&input);
+}
+
+static void
+_result_free_def(struct dict_result *res)
+{
+    size_t i;
+    struct define_result *def = res->set.def;
+    
+    for (i = 0; i < res->count; i++, def++) {
+	free(def->word);
+	free(def->database);
+	free(def->descr);
+    }
+    free(res->set.def);
+}
+	
+static void
+_result_parse_mat(struct dict_result *res)
+{
+    char *p;
+    size_t i;
+    struct match_result *mat = xcalloc(res->count, sizeof(*mat));
+
+    res->set.mat = mat;
+    for (i = 0, p = strtok(res->base, "\n"); i < res->count;
+	 p = strtok(NULL, "\n"), i++, mat++) {
+	size_t len;
+
+	if (!p) {
+	    dico_log(L_NOTICE, 0, _("Not enough data in the result"));
+	    res->count = i;
+	    break;
+	}
+	
+	mat->database = p;
+	len = strcspn(p, " \t");
+	p[len] = 0;
+	p += len + 1;
+	p += strspn(p, " \t");
+	len = strlen(p);
+	if (p[0] == '"' && p[len-1] == '"') {
+	    p[len-1] = 0;
+	    p++;
+	}
+	mat->word = p;
+    }
+}
+
+static void
+_result_free_mat(struct dict_result *res)
+{
+    free(res->set.mat);
+}
+
+struct dict_result *
+dict_result_create(struct dict_connection *conn, enum dict_result_type type,
+		   size_t count, char *base)
+{
+    struct dict_result *res = xmalloc(sizeof(*res));
+    res->conn = conn;
+    res->prev = conn->last_result;
+    conn->last_result = res;
+    res->type = type;
+    res->count = count;
+    res->base = base;
+    switch (type) {
+    case dict_result_define:
+	_result_parse_def(res);
+	break;
+
+    case dict_result_match:
+	_result_parse_mat(res);
+	break;
+
+    case dict_result_text:
+	break;
+    }
+    return res;
+}
+
+void
+dict_result_free(struct dict_result *res)
+{
+    /* Detach res from the list and free obstack memory, if it was the
+       last obtained result,  */
+    if (res == res->conn->last_result) {
+	obstack_free(&res->conn->stk, res->base);
+	res->conn->last_result = res->prev;
+    } else {
+	struct dict_result *p;
+	
+	for (p = res->conn->last_result; p && p->prev != res; p = p->prev)
+	    ;
+	if (!p) {
+	    dico_log(L_CRIT, 0, _("Freeing unlinked result"));
+	    abort();
+	}
+	p->prev = res->prev;
+    }
+    /* Free allocated memory */
+    switch (res->type) {
+    case dict_result_define:
+	_result_free_def(res);
+	break;
+
+    case dict_result_match:
+	_result_free_mat(res);
+	break;
+
+    case dict_result_text:
+	break;
+    }
+    free(res);
+}
+
+/* FIXME: Split into close/destroy */
 void
 dict_conn_close(struct dict_connection *conn)
 {
+    struct dict_result *res;
+    
     dico_stream_close(conn->str);
     dico_stream_destroy(&conn->str);
     free(conn->msgid);
     free(conn->buf);
     dico_argcv_free(conn->capac, conn->capav);
-    if (conn->stk_init)
-	obstack_free(&conn->stk, NULL);
+    for (res = conn->last_result; res; ) {
+	struct dict_result *prev = res->prev;
+	dict_result_free(res);
+	res = prev;
+    }
+    obstack_free(&conn->stk, NULL);
     free(conn);
 }
 

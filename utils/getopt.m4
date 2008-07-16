@@ -435,20 +435,27 @@ const char version_etc_copyright[] =
   "Copyright %s 2005, 2006, 2007, 2008 Sergey Poznyakoff";
 
 void
-print_version(const char *program_version, FILE *stream)
+print_version_only(const char *program_version, FILE *stream)
 {
 	fprintf (stream, "%s\n", program_version);
 	/* TRANSLATORS: Translate "(C)" to the copyright symbol
 	   (C-in-a-circle), if this symbol is available in the user's
 	   locale.  Otherwise, do not translate "(C)"; leave it as-is.  */
 	fprintf (stream, version_etc_copyright, _("(C)"));
+	fputc ('\n', stream);
+}
 
+void
+print_version(const char *program_version, FILE *stream)
+{
+	print_version_only(program_version, stream);
+	
 dnl **************************************************************************
 dnl This string cannot be split over serveal lines, because this would trigger
 dnl a bug in GNU M4 (version 1.4.9 and 1.4.10), which would insert #line
 dnl directives between the lines.
 dnl **************************************************************************
-	fputs (_("\nLicense GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\nThis is free software: you are free to change and redistribute it.\nThere is NO WARRANTY, to the extent permitted by law.\n\n"),
+	fputs (_("License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\nThis is free software: you are free to change and redistribute it.\nThere is NO WARRANTY, to the extent permitted by law.\n\n"),
 	       stream);
 	
 dnl	/* TRANSLATORS: %s denotes an author name.  */

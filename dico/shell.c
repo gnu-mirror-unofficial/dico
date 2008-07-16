@@ -56,6 +56,12 @@ struct funtab funtab[] = {
     { "help", 1, 1, ds_help,
       NULL,
       N_("Display this help text.") },
+    { "version", 1, 1, ds_version,
+      NULL,
+      N_("Print program version.") },
+    { "warranty", 1, 1, ds_warranty,
+      NULL,
+      N_("Print copyright statement.") },
     { "quit", 1, 1, NULL,
       NULL,
       N_("Quit the shell.") },
@@ -108,8 +114,8 @@ ds_help(int argc, char **argv)
 	    args = gettext(ft->argdoc);
 	else
 	    args = "";
-	if (len < 30)
-	    len = 30 - len;
+	if (len < 24)
+	    len = 24 - len;
 	else
 	    len = 0;
 	stream_printf(str, "%-*s %s\n",
@@ -422,7 +428,7 @@ dico_shell()
 {
     struct init_script dat;
     shell_init(&dat);
-    if (interactive)
+    if (interactive) 
 	shell_banner();
     if (!cmdprefix)
 	cmdprefix = '.';

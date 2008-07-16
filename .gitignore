@@ -8,6 +8,7 @@
 .bootstrap
 .deps
 .emacs.desktop
+.emacsrc
 .libs
 .libs/*
 ChangeLog

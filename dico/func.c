@@ -135,3 +135,36 @@ ds_match(int argc, char **argv)
     xdico_assign_string(&dico_url.req.word, argv[1]);
     dict_lookup(conn, &dico_url);
 }
+
+void
+ds_distance(int argc, char **argv)
+{
+    if (argc == 1) {
+	if (conn) {
+	    if (!dict_capa(conn, "xlev")) {
+		printf(_("Server does not support XLEV extension"));
+		return;
+	    }
+	    stream_printf(conn->str, "XLEV TELL\r\n");
+	    dict_read_reply(conn);
+	    if (dict_status_p(conn, "280")) 
+		printf(_("Reported Levenshtein distance:%s\n"), conn->buf+3);
+	    else {
+		printf("%s\n",
+		       _("Cannot query Levenshtein distance.  Server responded:"));
+		printf("%s\n", conn->buf);
+	    }
+	}
+	if (levenshtein_threshold == 0) 
+	    printf(_("No distance configured\n"));
+	else
+	    printf(_("Configured Levenshtein distance: %u\n"),
+		   levenshtein_threshold);
+    } else {
+	char *p;
+	levenshtein_threshold = strtoul(argv[1], &p, 10);
+	if (*p)
+	    script_error(0, _("invalid number"));
+    }
+}
+

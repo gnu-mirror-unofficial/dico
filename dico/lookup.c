@@ -82,11 +82,11 @@ dict_lookup(struct dict_connection *conn, dico_url_t url)
 		      quotearg_n (0, url->req.database),
 		      quotearg_n (1, url->req.word));
 	dict_read_reply(conn);
-	if (dict_status_p(conn, "150")) 
+	if (dict_status_p(conn, "150")) {
 	    print_definitions(conn);
-	else
+	    dict_read_reply(conn);
+	} else
 	    print_reply(conn);
-	dict_read_reply(conn);
 	break;
 	
     case DICO_REQUEST_MATCH:
@@ -103,11 +103,11 @@ dict_lookup(struct dict_connection *conn, dico_url_t url)
 		      quotearg_n (1, url->req.strategy),
 		      quotearg_n (2, url->req.word));
 	dict_read_reply(conn);
-	if (dict_status_p(conn, "152")) 
+	if (dict_status_p(conn, "152")) {
 	    print_multiline(conn);
-	else
+	    dict_read_reply(conn);
+	} else
 	    print_reply(conn);
-	dict_read_reply(conn);
 	break;
 	
     default:

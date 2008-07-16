@@ -127,4 +127,5 @@ void ds_strategy(int argc, char **argv);
 void ds_transcript(int argc, char **argv);
 void ds_define(int argc, char **argv);
 void ds_match(int argc, char **argv);
+void ds_distance(int argc, char **argv);
 

@@ -17,6 +17,8 @@
 #ifndef __dico_utf8_h
 #define __dico_utf8_h
 
+#include <ctype.h>
+
 size_t utf8_char_width(const unsigned char *p);
 size_t utf8_strlen (const char *s);
 size_t utf8_strbytelen (const char *s);

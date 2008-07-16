@@ -49,7 +49,8 @@ dnl Checks for header files.
 AC_HEADER_DIRENT dnl not needed ?
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(fcntl.h limits.h strings.h sys/time.h syslog.h unistd.h)
+AC_CHECK_HEADERS(fcntl.h limits.h strings.h sys/time.h syslog.h unistd.h \
+                 readline/readline.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -247,23 +248,6 @@ if test -z "$DEFAULT_DICT_SERVER" ; then
    DEFAULT_DICT_SERVER="gnu.org.ua"
 fi
 
-AC_ARG_WITH(netrc-file,
-            AC_HELP_STRING([--with-netrc-file@<:@=NAME@:>@],
-	                   [Use the autologin file (default NAME is .netrc)]),
-            [case $withval in
-	     yes) DEFAULT_NETRC_NAME=".netrc";;
-	     no)  DEFAULT_NETRC_NAME=;;
-	     *)   DEFAULT_NETRC_NAME=$withval;;
-	     esac],
-	    [DEFAULT_NETRC_NAME=])
-if test -n "$DEFAULT_NETRC_NAME" ; then
-   AC_DEFINE_UNQUOTED(DEFAULT_NETRC_NAME, "$DEFAULT_NETRC_NAME",
-                      [Define to the name of a netrc-style autologin file])
-else
-   AC_DEFINE_UNQUOTED(DEFAULT_NETRC_NAME, NULL,
-                      [Define to the name of a netrc-style autologin file])
-fi
-
 # Check for Guile
 AC_ARG_WITH([guile],
             AC_HELP_STRING([--without-guile],
@@ -283,6 +267,76 @@ if test "$status_guile" = yes; then
 	         [status_guile=no])
 fi
 
+#
+AC_ARG_WITH(netrc-file,
+            AC_HELP_STRING([--with-netrc-file@<:@=NAME@:>@],
+	                   [Use the autologin file (default NAME is .netrc)]),
+            [case $withval in
+	     yes) DEFAULT_NETRC_NAME=".netrc";;
+	     no)  DEFAULT_NETRC_NAME=;;
+	     *)   DEFAULT_NETRC_NAME=$withval;;
+	     esac],
+	    [DEFAULT_NETRC_NAME=])
+if test -n "$DEFAULT_NETRC_NAME" ; then
+   AC_DEFINE_UNQUOTED(DEFAULT_NETRC_NAME, "$DEFAULT_NETRC_NAME",
+                      [Define to the name of a netrc-style autologin file])
+else
+   AC_DEFINE_UNQUOTED(DEFAULT_NETRC_NAME, NULL,
+                      [Define to the name of a netrc-style autologin file])
+fi
+
+AC_ARG_WITH([readline],
+            AC_HELP_STRING([--without-readline],
+                           [do not use readline]),
+            [
+case "${withval}" in
+  yes) usereadline=yes ;;
+  no)  usereadline=no ;;
+  *)   AC_MSG_ERROR(bad value ${withval} for --without-readline) ;;
+esac],[usereadline=yes])
+
+# Test for GNU Readline
+AC_SUBST(READLINE_LIBS)
+
+if test "$usereadline" != "no"; then
+  
+  dnl FIXME This should only link in the curses libraries if it's
+  dnl really needed!
+  
+  dnl Check for Curses libs.
+  CURSES_LIBS=
+  for lib in ncurses curses termcap
+  do
+    AC_CHECK_LIB($lib, tputs, [CURSES_LIBS="-l$lib"; break])
+  done
+
+  saved_LIBS=$LIBS
+  LIBS="$LIBS $CURSES_LIBS"
+  AC_CHECK_LIB(readline, readline, mf_have_readline=yes)
+  LIBS=$saved_LIBS
+  
+  if test "$mf_have_readline" = "yes"; then
+    AC_CHECK_HEADERS(readline/readline.h,
+  		     AC_DEFINE(WITH_READLINE,1,[Enable use of readline]))
+    READLINE_LIBS="-lreadline $CURSES_LIBS"
+    saved_LIBS=$LIBS
+    LIBS="$LIBS $READLINE_LIBS"
+    AC_CHECK_FUNCS(rl_completion_matches)
+    LIBS=$saved_LIBS
+    usereadline="yes"
+  else
+    if test "$usereadline" = "yes"; then
+      AC_MSG_WARN(readline requested but does not seem to be installed)
+    fi
+    usereadline = "no"
+  fi
+fi
+
+AH_BOTTOM([
+/* Some older versions of readline have completion_matches */
+#ifndef HAVE_RL_COMPLETION_MATCHES
+# define rl_completion_matches completion_matches
+#endif])
 
 # Doc hints.
 # Select a rendition level:

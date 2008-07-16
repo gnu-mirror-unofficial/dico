@@ -15,88 +15,9 @@
    along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <dicod.h>
-#define obstack_chunk_alloc malloc
-#define obstack_chunk_free free
-#include <obstack.h>
 
 char *msg_id;
 
-struct input {
-    struct obstack stk;
-    char *rootptr;
-    int argc;
-    char **argv;
-};
-
-#define ISWS(c) ((c) == ' ' || (c) == '\t')
-#define ISQUOTE(c) ((c) == '"' || (c) == '\'')
-
-int
-tokenize_input(struct input *in, char *str)
-{
-    struct utf8_iterator itr;
-    int i, argc = 0;
-    
-    if (!in->rootptr) 
-	obstack_init(&in->stk);
-    else
-	obstack_free(&in->stk, in->rootptr);
-
-    utf8_iter_first(&itr, (unsigned char *)str);
-
-    while (1) {
-	int quote;
-	
-	for (; !utf8_iter_end_p(&itr)
-		 && utf8_iter_isascii(itr) && ISWS(*itr.curptr);
-	     utf8_iter_next(&itr))
-	    ;
-
-	if (utf8_iter_end_p(&itr))
-	    break;
-
-	if (utf8_iter_isascii(itr) && ISQUOTE(*itr.curptr)) {
-	    quote = *itr.curptr;
-	    utf8_iter_next(&itr);
-	} else
-	    quote = 0;
-
-	for (; !utf8_iter_end_p(&itr)
-		 && !(utf8_iter_isascii(itr) && (quote ? 0 : ISWS(*itr.curptr)));
-	     utf8_iter_next(&itr)) {
-	    if (utf8_iter_isascii(itr)) {
-		if (*itr.curptr == quote) {
-		    utf8_iter_next(&itr);
-		    break;
-		} else if (*itr.curptr == '\\') {
-		    utf8_iter_next(&itr);
-		    if (utf8_iter_isascii(itr)) {
-			obstack_1grow(&in->stk, quote_char(*itr.curptr));
-		    } else {
-			obstack_1grow(&in->stk, '\\');
-			obstack_grow(&in->stk, itr.curptr, itr.curwidth);
-		    }
-		    continue;
-		}
-	    }
-	    obstack_grow(&in->stk, itr.curptr, itr.curwidth);
-	}
-	obstack_1grow(&in->stk, 0);
-	argc++;
-    }
-
-    in->rootptr = obstack_finish(&in->stk);
-
-    in->argc = argc;
-    in->argv = obstack_alloc(&in->stk, (argc + 1) * sizeof(in->argv[0]));
-
-    for (i = 0; i < argc; i++) {
-	in->argv[i] = in->rootptr;
-	in->rootptr += utf8_strbytelen(in->rootptr) + 1;
-    }
-    in->argv[i] = NULL;
-    return argc;
-}
 
 struct capa_print {
     size_t num;
@@ -296,8 +217,10 @@ dicod_loop(dico_stream_t str)
     char *buf = NULL;
     size_t size = 0;
     size_t rdbytes;
-    struct input input;
-
+    xdico_input_t input;
+    int argc;
+    char **argv;
+    
     begin_timing("dicod");
     signal(SIGALRM, sig_alarm);
     memset(&input, 0, sizeof input);
@@ -313,14 +236,15 @@ dicod_loop(dico_stream_t str)
     check_db_visibility();
     initial_banner(str);
 
+    input = xdico_tokenize_begin();
     while (!got_quit && get_input_line(str, &buf, &size, &rdbytes) == 0) {
 	trimnl(buf, rdbytes);
-	tokenize_input(&input, buf);
-	if (input.argc == 0)
+	xdico_tokenize_input(input, buf, &argc, &argv);
+	if (argc == 0)
 	    continue;
-	dicod_handle_command(str, input.argc, input.argv);
+	dicod_handle_command(str, argc, argv);
     }
-
+    xdico_tokenize_end(&input);
     close_databases();    
     init_auth_data();
     access_log_free_cache();

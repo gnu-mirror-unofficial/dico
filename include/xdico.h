@@ -72,10 +72,20 @@ dico_stream_t xdico_transcript_stream_create(dico_stream_t transport,
 					     dico_stream_t logstr,
 					     const char *prefix[]);
 
-/* xstream.h */
+/* xstream.c */
 int stream_writez(dico_stream_t str, char *buf);
 int stream_printf(dico_stream_t str, const char *fmt, ...);
 void stream_write_multiline(dico_stream_t str, const char *text);
+
+/* tokenize.c */
+typedef struct xdico_input *xdico_input_t;
+
+int xdico_unquote_char(int c);
+int xdico_quote_char(int c);
+xdico_input_t xdico_tokenize_begin(void);
+void xdico_tokenize_end(xdico_input_t *pin);
+int xdico_tokenize_input(xdico_input_t in, char *str,
+			 int *pargc, char ***pargv);
 
 #endif
     

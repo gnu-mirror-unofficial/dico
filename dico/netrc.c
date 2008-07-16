@@ -18,7 +18,7 @@
 
 #define VDETAIL(n,s) 
 
-static char *
+char *
 skipws(char *buf)
 {
     while (*buf && isascii(*buf) && isspace(*buf))

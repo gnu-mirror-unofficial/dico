@@ -26,7 +26,7 @@ GROUP([<Server selection>])
 OPTION(host,,SERVER,
        [<Connect to this server.>])
 BEGIN
-  dico_url.host = optarg;
+  xdico_assign_string(&dico_url.host, optarg);
 END
 
 OPTION(port,p,SERVICE,
@@ -40,7 +40,7 @@ END
 OPTION(database,d,NAME,
        [<Select a database to search.>])
 BEGIN
-  dico_url.req.database = optarg;  
+  xdico_assign_string(&dico_url.req.database, optarg);  
 END
 
 OPTION(source,,ADDR,
@@ -63,7 +63,7 @@ END
 OPTION(strategy,s,NAME,
        [<Select a strategy for matching.  Implies --match.>])
 BEGIN
-  dico_url.req.strategy = optarg;
+  xdico_assign_string(&dico_url.req.strategy, optarg);
   mode = mode_match;
 END
 

@@ -20,15 +20,18 @@ dico_SOURCES = \
  connect.c\
  dico-priv.h\
  dico.c\
+ func.c\
  lookup.c\
  netrc.c\
- pager.c
+ pager.c\
+ shell.c
 
 LDADD=\
  ../lib/libxdico.a\
  ../gnu/libgnu.a\
  ../lib/libextra.a\
  ../lib/libdico.la\
+ $(READLINE_LIBS)\
  @LIBLTDL@  
 
 AM_CPPFLAGS=-DDEFAULT_DICT_SERVER="\"$(DEFAULT_DICT_SERVER)\""

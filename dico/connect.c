@@ -91,7 +91,7 @@ dict_auth(struct dict_connection *conn, struct auth_cred *cred)
     return dict_status_p(conn, "230") == 0;
 }
 
-static char *
+char *
 get_homedir()
 {
     char *homedir = getenv("HOME");

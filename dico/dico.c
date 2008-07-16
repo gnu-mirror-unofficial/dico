@@ -29,13 +29,13 @@ char *autologin_file;
 void
 fixup_url()
 {
-    dico_url.proto = "dict";
+    xdico_assign_string(&dico_url.proto, "dict");
     if (!dico_url.host)
 	dico_url.host = DEFAULT_DICT_SERVER;
     if (!dico_url.req.database)
-	dico_url.req.database = "!";
+	xdico_assign_string(&dico_url.req.database, "!");
     if (!dico_url.req.strategy)
-	dico_url.req.strategy = ".";
+	xdico_assign_string(&dico_url.req.strategy, ".");
     if (mode == mode_match)
 	dico_url.req.type = DICO_REQUEST_MATCH;
 }
@@ -46,6 +46,7 @@ main(int argc, char **argv)
     int index, rc = 0;
 
     dico_set_program_name(argv[0]);
+    parse_init_scripts();
     get_options(argc, argv, &index);
     fixup_url();
     set_quoting_style(NULL, escape_quoting_style);
@@ -57,9 +58,10 @@ main(int argc, char **argv)
     switch (mode) {
     case mode_define:
     case mode_match:
-	if (!argc) 
-	    dico_die(1, L_ERR, 0,
-		     _("you should give a word to look for or an URL"));
+	if (!argc) {
+	    dico_shell();
+	    exit(0);
+	}
 	break;
 
     default:

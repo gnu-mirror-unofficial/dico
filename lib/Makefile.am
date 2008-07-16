@@ -50,6 +50,7 @@ libxdico_a_SOURCES=\
  iputil.c\
  jiscvt.c\
  timer.c\
+ tokenize.c\
  userprivs.c\
  xscript.c\
  xstream.c\

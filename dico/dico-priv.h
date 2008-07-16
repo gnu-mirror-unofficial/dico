@@ -48,6 +48,10 @@
 #define obstack_chunk_free free
 #include <obstack.h>
 #include <quotearg.h>
+#if defined(WITH_READLINE) && defined(HAVE_READLINE_READLINE_H)
+# include <readline/readline.h>
+# include <readline/history.h>
+#endif
 
 enum dico_client_mode {
     mode_define,
@@ -101,5 +105,23 @@ int dict_lookup(char *word);
 int dict_single_command(char *cmd, char *arg, char *code);
 dico_stream_t create_pager_stream(size_t nlines);
 
+char *get_homedir(void);
+
 /* netrc.c */
+char *skipws(char *buf);
 int parse_netrc (const char *filename, char *host, struct auth_cred *pcred);
+
+/* shell.c */
+void parse_init_scripts(void);
+void dico_shell(void);
+void script_warning(int errcode, const char *fmt, ...);
+void script_error(int errcode, const char *fmt, ...);
+
+void ds_silent_close(void);
+void ds_open(int argc, char **argv);
+void ds_close(int argc, char **argv);
+void ds_autologin(int argc, char **argv);
+void ds_database(int argc, char **argv);
+void ds_strategy(int argc, char **argv);
+void ds_transcript(int argc, char **argv);
+

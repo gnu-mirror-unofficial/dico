@@ -434,7 +434,7 @@ const char version_etc_copyright[] =
      year.  */
   "Copyright %s 2005, 2006, 2007, 2008 Sergey Poznyakoff";
 
-static void
+void
 print_version(const char *program_version, FILE *stream)
 {
 	fprintf (stream, "%s\n", program_version);
@@ -451,8 +451,8 @@ dnl **************************************************************************
 	fputs (_("\nLicense GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\nThis is free software: you are free to change and redistribute it.\nThere is NO WARRANTY, to the extent permitted by law.\n\n"),
 	       stream);
 	
-	/* TRANSLATORS: %s denotes an author name.  */
-	fprintf (stream, _("Written by %s.\n"), "Sergey Poznyakoff");
+dnl	/* TRANSLATORS: %s denotes an author name.  */
+dnl	fprintf (stream, _("Written by %s.\n"), "Sergey Poznyakoff");
 }
 
 divert(-1)

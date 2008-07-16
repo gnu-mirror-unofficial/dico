@@ -207,37 +207,11 @@ multiline_strip_tabs(char *text)
     return text;
 }
 
-static char quote_transtab[] = "\\\\\"\"a\ab\bf\fn\nr\rt\t";
-
-int
-unquote_char(int c)
-{
-    char *p;
-
-    for (p = quote_transtab; *p; p += 2) {
-	if (*p == c)
-	    return p[1];
-    }
-    return 0;
-}
-
-int
-quote_char(int c)
-{
-    char *p;
-
-    for (p = quote_transtab; *p; p += 2) {
-	if (p[1] == c)
-	    return p[0];
-    }
-    return 0;
-}
-
 static void
 unescape_to_obstack(int c)
 {
     if (c != '\n') {
-	int t = unquote_char(c);
+	int t = xdico_unquote_char(c);
 	if (t)
 	    obstack_1grow(&stk, t);
 	else {

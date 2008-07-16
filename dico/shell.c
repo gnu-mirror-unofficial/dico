@@ -21,6 +21,7 @@ struct funtab {
     int argmin;        /* Minimal number of arguments */
     int argmax;        /* Maximal number of arguments */
     void (*fun) (int argc, char **argv); /* Handler */
+    char *argdoc;      /* Argument docstring */
     char *docstring;   /* Documentation string */
 };
 
@@ -29,22 +30,31 @@ static void ds_help(int argc, char **argv);
 
 struct funtab funtab[] = {
     { "open",      1, 3, ds_open,
+      N_("[HOST [PORT]]"), 
       N_("Connect to a DICT server.") },
     { "close",     1, 1, ds_close,
+      NULL,
       N_("Close the connection.") },
     { "autologin", 1, 2, ds_autologin,
+      N_("FILE"),
       N_("Set or display autologin file name.")},
     { "database",  1, 2, ds_database,
+      N_("[NAME]"),
       N_("Set or display current database name.") },
     { "strategy",  1, 2, ds_strategy,
+      N_("[NAME]"),
       N_("Set or display current strategy.") },
     { "prefix", 1, 2, ds_prefix ,
+      N_("[CHAR]"),
       N_("Set or display command prefix.") },
     { "transcript", 1, 2, ds_transcript,
+      N_("[BOOL]"),
       N_("Set or display session transcript mode.") },
     { "help", 1, 1, ds_help,
+      NULL,
       N_("Display this help text.") },
     { "quit", 1, 1, NULL,
+      NULL,
       N_("Quit the shell.") },
     { NULL }
 };
@@ -59,7 +69,7 @@ find_funtab(const char *name)
     return NULL;
 }
 
-int cmdprefix = '.';
+int cmdprefix;
 char special_prefixes[2];
 
 static void
@@ -83,8 +93,24 @@ ds_help(int argc, char **argv)
     dico_stream_t str = create_pager_stream(sizeof(funtab)/sizeof(funtab[0]));
     struct funtab *ft;
     for (ft = funtab; ft->name; ft++) {
-	stream_printf(str, "%c%-20s%s\n", cmdprefix, ft->name,
-		      gettext(ft->docstring));
+	int len = 0;
+	char *args;
+	if (cmdprefix) {
+	    stream_printf(str, "%c", cmdprefix);
+	    len++;
+	}
+	stream_printf(str, "%s ", ft->name);
+	len += strlen(ft->name) + 1;
+	if (ft->argdoc) 
+	    args = gettext(ft->argdoc);
+	else
+	    args = "";
+	if (len < 30)
+	    len = 30 - len;
+	else
+	    len = 0;
+	stream_printf(str, "%-*s %s\n",
+		      len, args, gettext(ft->docstring));
     }
     dico_stream_close(str);
     dico_stream_destroy(&str);
@@ -138,6 +164,18 @@ script_error(int errcode, const char *fmt, ...)
     va_end(ap);
 }
 
+static int
+is_command(char **ptr)
+{
+    if (!cmdprefix)
+	return 1;
+    if ((*ptr)[0] == cmdprefix) {
+	++*ptr;
+	return 1;
+    }
+    return 0;
+}
+
 
 void
 parse_script_file(char *fname, script_getln_fn getln, void *data)
@@ -152,7 +190,6 @@ parse_script_file(char *fname, script_getln_fn getln, void *data)
     input = xdico_tokenize_begin();
     while (getln(data, &buf)) {
 	char *p;
-	struct funtab *ft;
 	char *xargv[3];
 	
 	line++;
@@ -169,7 +206,10 @@ parse_script_file(char *fname, script_getln_fn getln, void *data)
 	p = argv[0];
 	switch (p[0]) {
 	case '/':
-	    /* FIXME: match */
+	    xargv[0] = "match";
+	    xargv[1] = skipws(p+1);
+	    xargv[2] = NULL;
+	    ds_match(2, xargv);
 	    continue;
 
 	case '?':
@@ -177,33 +217,37 @@ parse_script_file(char *fname, script_getln_fn getln, void *data)
 	    continue;
 	}
 	    
-	if (cmdprefix && p[0] == cmdprefix)
-	    p++;
-	
-	ft = find_funtab(p);
-	if (!ft) {
-	    script_error(0, _("unknown command"));
-	    continue;
-	}
-	if (ft->argmin == 0) {
-	    argc = 2;
-	    xargv[0] = argv[0];
-	    xargv[1] = skipws(buf + strlen(xargv[0]));
+	if (is_command(&p)) {
+	    struct funtab *ft = find_funtab(p);
+	    if (!ft) {
+		script_error(0, _("unknown command"));
+		continue;
+	    }
+	    if (ft->argmin == 0) {
+		argc = 2;
+		xargv[0] = argv[0];
+		xargv[1] = skipws(buf + strlen(xargv[0]));
+		xargv[2] = NULL;
+		argv = xargv;
+	    } else if (argc < ft->argmin) {
+		script_error(0, _("not enough arguments"));
+		continue;
+	    } else if (argc > ft->argmax) {
+		script_error(0, _("too many arguments"));
+		continue;
+	    }
+	    
+	    if (ft->fun)
+		ft->fun(argc, argv);
+	    else {
+		ds_silent_close();
+		break;
+	    }
+	} else {
+	    xargv[0] = "define";
+	    xargv[1] = p;
 	    xargv[2] = NULL;
-	    argv = xargv;
-	} else if (argc < ft->argmin) {
-	    script_error(0, _("not enough arguments"));
-	    continue;
-	} else if (argc > ft->argmax) {
-	    script_error(0, _("too many arguments"));
-	    continue;
-	}
-
-	if (ft->fun)
-	    ft->fun(argc, argv);
-	else {
-	    ds_silent_close();
-	    break;
+	    ds_define(2, xargv);
 	}
     }
     xdico_tokenize_end(&input);
@@ -377,6 +421,8 @@ dico_shell()
     shell_init(&dat);
     if (interactive)
 	shell_banner();
+    if (!cmdprefix)
+	cmdprefix = '.';
     parse_script_file(NULL, shell_getline, &dat);
     shell_finish(&dat);
 }

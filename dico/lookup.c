@@ -72,20 +72,10 @@ print_multiline(struct dict_connection *conn)
     dico_stream_close(str);
     dico_stream_destroy(&str);
 }
-    
+
 int
-dict_lookup_url(dico_url_t url)
+dict_lookup(struct dict_connection *conn, dico_url_t url)
 {
-    struct dict_connection *conn;
-    
-    if (!url->host) {
-	dico_log(L_ERR, 0, _("Server name or IP not specified"));
-	return 1;
-    }
-
-    if (dict_connect(&conn, url))
-	return 1;
-
     switch (url->req.type) {
     case DICO_REQUEST_DEFINE:
 	stream_printf(conn->str, "DEFINE \"%s\" \"%s\"\r\n",
@@ -96,6 +86,7 @@ dict_lookup_url(dico_url_t url)
 	    print_definitions(conn);
 	else
 	    print_reply(conn);
+	dict_read_reply(conn);
 	break;
 	
     case DICO_REQUEST_MATCH:
@@ -116,6 +107,7 @@ dict_lookup_url(dico_url_t url)
 	    print_multiline(conn);
 	else
 	    print_reply(conn);
+	dict_read_reply(conn);
 	break;
 	
     default:
@@ -123,6 +115,24 @@ dict_lookup_url(dico_url_t url)
 		 _("%s:%d: INTERNAL ERROR: unexpected request type"),
 		 __FILE__, __LINE__);
     }
+
+    return 0;
+}
+
+int
+dict_lookup_url(dico_url_t url)
+{
+    struct dict_connection *conn;
+    
+    if (!url->host) {
+	dico_log(L_ERR, 0, _("Server name or IP not specified"));
+	return 1;
+    }
+
+    if (dict_connect(&conn, url))
+	return 1;
+
+    dict_lookup(conn, url);
     
     stream_printf(conn->str, "QUIT\r\n");
     dict_read_reply(conn);
@@ -131,7 +141,7 @@ dict_lookup_url(dico_url_t url)
 }
 
 int
-dict_lookup(char *word)
+dict_word(char *word)
 {
     int rc;
     dico_url_t url;

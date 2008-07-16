@@ -89,7 +89,6 @@ ds_database(int argc, char **argv)
 void
 ds_strategy(int argc, char **argv)
 {
-    static char *str;
     if (argc == 1) {
 	printf("%s\n", dico_url.req.strategy);
     } else
@@ -119,4 +118,20 @@ ds_transcript(int argc, char **argv)
 	printf(_("transcript is %s\n"), transcript ? _("on") : _("off"));
     else
 	set_bool(&transcript, argv[1]);
+}
+
+void
+ds_define(int argc, char **argv)
+{
+    dico_url.req.type = DICO_REQUEST_DEFINE;
+    xdico_assign_string(&dico_url.req.word, argv[1]);
+    dict_lookup(conn, &dico_url);
+}
+
+void
+ds_match(int argc, char **argv)
+{
+    dico_url.req.type = DICO_REQUEST_MATCH;
+    xdico_assign_string(&dico_url.req.word, argv[1]);
+    dict_lookup(conn, &dico_url);
 }

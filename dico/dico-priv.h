@@ -101,7 +101,8 @@ int dict_status_p(struct dict_connection *conn, char *status);
 int dict_capa(struct dict_connection *conn, char *capa);
 int dict_multiline_reply(struct dict_connection *conn, size_t *pnlines);
 int dict_lookup_url(dico_url_t url);
-int dict_lookup(char *word);
+int dict_word(char *word);
+int dict_lookup(struct dict_connection *conn, dico_url_t url);
 int dict_single_command(char *cmd, char *arg, char *code);
 dico_stream_t create_pager_stream(size_t nlines);
 
@@ -124,4 +125,6 @@ void ds_autologin(int argc, char **argv);
 void ds_database(int argc, char **argv);
 void ds_strategy(int argc, char **argv);
 void ds_transcript(int argc, char **argv);
+void ds_define(int argc, char **argv);
+void ds_match(int argc, char **argv);
 

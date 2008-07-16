@@ -77,7 +77,7 @@ main(int argc, char **argv)
 	    dico_die(1, L_ERR, 0,
 		     _("you should give a word to look for or an URL"));
 	while (argc--) 
-	    rc |= dict_lookup((*argv)++) != 0;
+	    rc |= dict_word((*argv)++) != 0;
 	break;
 	
     case mode_dbs:

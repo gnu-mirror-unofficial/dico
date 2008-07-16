@@ -148,6 +148,7 @@ dict_lookup_url(dico_url_t url)
     
     stream_printf(conn->str, "QUIT\r\n");
     dict_read_reply(conn);
+    dict_conn_close(conn);
     /* FIXME */
     return 0;
 }
@@ -172,18 +173,9 @@ dict_word(char *word)
 }
 
 int
-dict_single_command(char *cmd, char *arg, char *code)
+dict_run_single_command(struct dict_connection *conn,
+			char *cmd, char *arg, char *code)
 {
-    struct dict_connection *conn;
-    
-    if (!dico_url.host) {
-	dico_log(L_ERR, 0, _("Server name or IP not specified"));
-	return 1;
-    }
-
-    if (dict_connect(&conn, &dico_url))
-	return 1;
-
     if (arg)
 	stream_printf(conn->str, "%s \"%s\"\r\n", cmd, arg);
     else
@@ -196,11 +188,29 @@ dict_single_command(char *cmd, char *arg, char *code)
 	struct dict_result *res;
 	
 	dict_multiline_reply(conn);
+	dict_read_reply(conn);
 	dict_result_create(conn, dict_result_text, 1,
 			   obstack_finish(&conn->stk));
 	res = dict_conn_last_result(conn);
 	print_result(res);
 	dict_result_free(res);
     }
+}
+
+int
+dict_single_command(char *cmd, char *arg, char *code)
+{
+    struct dict_connection *conn;
+    
+    if (!dico_url.host) {
+	dico_log(L_ERR, 0, _("Server name or IP not specified"));
+	return 1;
+    }
+
+    if (dict_connect(&conn, &dico_url))
+	return 1;
+
+    dict_run_single_command(conn, cmd, arg, code);
+    dict_conn_close(conn);    
     return 0;
 }

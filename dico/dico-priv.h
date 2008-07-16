@@ -138,6 +138,9 @@ struct dict_result *dict_result_create(struct dict_connection *conn,
 				       size_t count, char *base);
 void dict_result_free(struct dict_result *res);
 #define dict_conn_last_result(c) ((c)->last_result)
+int dict_define(struct dict_connection *conn, char *database, char *word);
+int dict_match(struct dict_connection *conn, char *database, char *strategy,
+	       char *word);
 
 /* lookup.c */
 int dict_lookup_url(dico_url_t url);
@@ -145,6 +148,8 @@ int dict_word(char *word);
 int dict_lookup(struct dict_connection *conn, dico_url_t url);
 int dict_single_command(char *cmd, char *arg, char *code);
 dico_stream_t create_pager_stream(size_t nlines);
+int dict_run_single_command(struct dict_connection *conn,
+			    char *cmd, char *arg, char *code);
 
 char *get_homedir(void);
 
@@ -170,3 +175,6 @@ void ds_match(int argc, char **argv);
 void ds_distance(int argc, char **argv);
 void ds_version(int argc, char **argv);
 void ds_warranty(int argc, char **argv);
+void ds_show_db(int argc, char **argv);
+void ds_show_strat(int argc, char **argv);
+

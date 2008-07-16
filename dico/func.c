@@ -169,6 +169,18 @@ ds_distance(int argc, char **argv)
 }
 
 void
+ds_show_db(int argc, char **argv)
+{
+    dict_run_single_command(conn, "SHOW DATABASES", NULL, "110");
+}
+
+void
+ds_show_strat(int argc, char **argv)
+{
+    dict_run_single_command(conn, "SHOW STRATEGIES", NULL, "111");
+}
+
+void
 ds_version(int argc, char **argv)
 {
     printf("%s\n", PACKAGE_STRING);

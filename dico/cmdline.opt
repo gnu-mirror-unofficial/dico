@@ -109,6 +109,12 @@ BEGIN
   mode = mode_server;
 END
 
+OPTION(quiet, q,,
+       [<Do not print the normal Dico welcome.>])
+BEGIN
+  quiet_option = 1;
+END
+
 GROUP([<Authentication>])
 
 OPTION(noauth,a,,

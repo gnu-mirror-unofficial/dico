@@ -18,7 +18,15 @@
 
 static void ds_prefix(int argc, char **argv);
 static void ds_help(int argc, char **argv);
+static void ds_quiet(int argc, char **argv);
 static char **no_compl(int argc, char **argv, int ws);
+
+char *helptext[][2] = {
+    { N_("WORD"), N_("Define WORD.") },
+    { N_("/WORD"), N_("Match WORD.") },
+    { "/", N_("Redisplay previous matches.") },
+    { N_("NUMBER"), N_("Define NUMBERth match.") },
+};
 
 struct funtab funtab[] = {
     { "open",      1, 3, 
@@ -73,6 +81,10 @@ struct funtab funtab[] = {
       NULL,
       N_("Print copyright statement."),
       ds_warranty, },
+    { "quiet", 2, 2,
+      NULL,
+      NULL,
+      ds_quiet },
     { "quit", 1, 1, 
       NULL,
       N_("Quit the shell.") },
@@ -97,7 +109,7 @@ ds_prefix(int argc, char **argv)
 {
     if (argc == 1)
 	printf(_("Command prefix is %c\n"), cmdprefix);
-    else if (argv[1][1] || !ispunct(argv[1][0]))
+    else if (!(!argv[1][1] && argv[1][0] != '#' && ispunct(argv[1][0])))
 	script_error(0,
 		     _("Expected a single punctuation character"));
     else {
@@ -112,11 +124,31 @@ ds_prefix(int argc, char **argv)
 static void
 ds_help(int argc, char **argv)
 {
-    dico_stream_t str = create_pager_stream(sizeof(funtab)/sizeof(funtab[0]));
+    static size_t nlines;
+    dico_stream_t str;
     struct funtab *ft;
+    size_t i;
+
+    if (nlines == 0) {
+	nlines = DICO_ARRAY_SIZE(helptext) + 1;
+	for (ft = funtab; ft->name; ft++) {
+	    if (ft->docstring)
+		nlines++;
+	}
+    }
+    
+    str = create_pager_stream(nlines);	
+    for (i = 0; i < DICO_ARRAY_SIZE(helptext); i++) {
+	stream_printf(str, "%-24s %s\n", gettext(helptext[i][0]),
+		      gettext(helptext[i][1]));
+    }
+    dico_stream_write(str, "\n", 1);
     for (ft = funtab; ft->name; ft++) {
 	int len = 0;
 	const char *args;
+
+	if (ft->docstring == NULL)
+	    continue;
 	if (cmdprefix) {
 	    stream_printf(str, "%c", cmdprefix);
 	    len++;
@@ -136,6 +168,12 @@ ds_help(int argc, char **argv)
     }
     dico_stream_close(str);
     dico_stream_destroy(&str);
+}
+
+static void
+ds_quiet(int argc, char **argv)
+{
+    set_bool(&quiet_option, argv[1]);
 }
 
 typedef int (*script_getln_fn)(void *data, char **buf);
@@ -350,7 +388,8 @@ _command_generator(const char *text, int state)
 	text++;
     while ((name = funtab[i].name)) {
 	i++;
-	if (strncmp(name, text, len) == 0) {
+	if (funtab[i-1].docstring
+	    && strncmp(name, text, len) == 0) {
 	    if (!cmdprefix)
 		return strdup (name);
 	    else {
@@ -505,7 +544,7 @@ dico_shell()
 {
     struct init_script dat;
     shell_init(&dat);
-    if (interactive) 
+    if (interactive && !quiet_option)  
 	shell_banner();
     if (!cmdprefix)
 	cmdprefix = '.';

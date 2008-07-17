@@ -137,6 +137,7 @@ extern IPADDR source_addr;
 extern int noauth_option;
 extern unsigned levenshtein_threshold;
 extern char *autologin_file;
+extern int quiet_option;
 
 void get_options (int argc, char *argv[], int *index);
 
@@ -186,6 +187,7 @@ char **dict_completion_matches(int argc, char **argv, int ws,
 
 /* func.c */
 int ensure_connection(void);
+void set_bool(int *pval, char *str);
 void ds_silent_close(void);
 void ds_open(int argc, char **argv);
 void ds_close(int argc, char **argv);

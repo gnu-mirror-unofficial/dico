@@ -25,6 +25,7 @@ IPADDR source_addr = INADDR_ANY;
 int noauth_option;
 unsigned levenshtein_threshold;
 char *autologin_file;
+int quiet_option;
 
 void
 fixup_url()

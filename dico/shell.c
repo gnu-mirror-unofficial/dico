@@ -110,8 +110,7 @@ ds_prefix(int argc, char **argv)
     if (argc == 1)
 	printf(_("Command prefix is %c\n"), cmdprefix);
     else if (!(!argv[1][1] && argv[1][0] != '#' && ispunct(argv[1][0])))
-	script_error(0,
-		     _("Expected a single punctuation character"));
+	script_error(_("Expected a single punctuation character"));
     else {
 	cmdprefix = argv[1][0];
 	strcpy(special_prefixes, argv[1]);
@@ -205,22 +204,22 @@ script_diag(int category, int errcode, const char *fmt, va_list ap)
 }
 
 void
-script_warning(int errcode, const char *fmt, ...)
+script_warning(const char *fmt, ...)
 {
     va_list ap;
 
     va_start(ap, fmt);
-    script_diag(L_WARN, errcode, fmt, ap);
+    script_diag(L_WARN, 0, fmt, ap);
     va_end(ap);
 }    
 
 void
-script_error(int errcode, const char *fmt, ...)
+script_error(const char *fmt, ...)
 {
     va_list ap;
 
     va_start(ap, fmt);
-    script_diag(L_ERR, errcode, fmt, ap);
+    script_diag(L_ERR, 0, fmt, ap);
     va_end(ap);
 }
 
@@ -291,7 +290,7 @@ parse_script_file(char *fname, script_getln_fn getln, void *data)
 	if (is_command(&p)) {
 	    struct funtab *ft = find_funtab(p);
 	    if (!ft) {
-		script_error(0, _("unknown command"));
+		script_error(_("unknown command"));
 		continue;
 	    }
 	    if (ft->argmin == 0) {
@@ -301,10 +300,10 @@ parse_script_file(char *fname, script_getln_fn getln, void *data)
 		xargv[2] = NULL;
 		argv = xargv;
 	    } else if (argc < ft->argmin) {
-		script_error(0, _("not enough arguments"));
+		script_error(_("not enough arguments"));
 		continue;
 	    } else if (argc > ft->argmax) {
-		script_error(0, _("too many arguments"));
+		script_error(_("too many arguments"));
 		continue;
 	    }
 	    

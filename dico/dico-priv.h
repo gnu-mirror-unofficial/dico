@@ -180,8 +180,8 @@ int parse_netrc (const char *filename, char *host, struct auth_cred *pcred);
 struct funtab *find_funtab(const char *name);
 void parse_init_scripts(void);
 void dico_shell(void);
-void script_warning(int errcode, const char *fmt, ...);
-void script_error(int errcode, const char *fmt, ...);
+void script_warning(const char *fmt, ...);
+void script_error(const char *fmt, ...);
 char **dict_completion_matches(int argc, char **argv, int ws,
 			       char *(*generator)(const char *, int));
 

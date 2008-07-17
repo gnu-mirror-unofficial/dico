@@ -46,9 +46,7 @@ get_list(struct dict_result **pres, char *cmd, char *code)
 	    dict_read_reply(conn);
 	    *pres = dict_conn_last_result(conn);
 	} else {
-	    script_error(0,
-			 _("Cannot get listing: %s"),
-			 conn->buf);
+	    script_error(_("Cannot get listing: %s"), conn->buf);
 	    return 1;
 	}
     }
@@ -60,12 +58,12 @@ ensure_connection()
 {
     if (!conn) {
 	if (!dico_url.host) {
-	    script_error(0, _("Please specify server name or IP address"));
+	    script_error(_("Please specify server name or IP address"));
 	    return 1;
 	}
 	
 	if (dict_connect(&conn, &dico_url)) { 
-	    script_error(0, _("Cannot connect to the server"));
+	    script_error(_("Cannot connect to the server"));
 	    return 1;
 	}
 	get_list(&conn->db_result, "SHOW DATABASES", "110");
@@ -81,7 +79,7 @@ ds_open(int argc, char **argv)
 	if (argc == 3) {
 	    int n = str2port(argv[2]);
 	    if (n == -1) {
-		script_error(0, _("Invalid port number or service name"));
+		script_error(_("Invalid port number or service name"));
 		return;
 	    }
 	    dico_url.port = n;
@@ -90,7 +88,7 @@ ds_open(int argc, char **argv)
     }
 
     if (!dico_url.host) {
-	script_error(0, _("Please specify server name or IP address"));
+	script_error(_("Please specify server name or IP address"));
 	return;
     }
     
@@ -102,7 +100,7 @@ void
 ds_close(int argc, char **argv)
 {
     if (!conn) 
-	script_error(0, _("Nothing to close"));
+	script_error(_("Nothing to close"));
     else 
 	ds_silent_close();
 }
@@ -195,7 +193,7 @@ set_bool(int *pval, char *str)
 	     || strcmp(str, "false") == 0)
 	*pval = 0;
     else
-	script_error(0, _("Expected boolean value"));
+	script_error(_("Expected boolean value"));
 }
 
 void
@@ -243,7 +241,7 @@ ds_match(int argc, char **argv)
 	    return;
 	}
     } else if (!conn->match_result) {
-	script_error(0, _("No previous match"));
+	script_error(_("No previous match"));
 	return;
     }
 
@@ -259,12 +257,11 @@ ds_define_nth(size_t num)
     if (ensure_connection())
 	return;
     if (!conn->match_result) {
-	script_error(0, _("No previous match"));
+	script_error(_("No previous match"));
 	return;
     }
     if (num >= conn->match_result->count) {
-	script_error(0,
-		     _("Invalid match number.  Type / to see the matches."));
+	script_error(_("Invalid match number.  Type / to see the matches."));
 	return;
     }
     url.req.type = DICO_REQUEST_DEFINE;
@@ -301,7 +298,7 @@ ds_distance(int argc, char **argv)
 	char *p;
 	levenshtein_threshold = strtoul(argv[1], &p, 10);
 	if (*p)
-	    script_error(0, _("invalid number"));
+	    script_error(_("invalid number"));
     }
 }
 

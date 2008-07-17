@@ -223,11 +223,54 @@ ds_define(int argc, char **argv)
 void
 ds_match(int argc, char **argv)
 {
+    int rc;
+    
     if (ensure_connection())
 	return;
-    dico_url.req.type = DICO_REQUEST_MATCH;
-    xdico_assign_string(&dico_url.req.word, argv[1]);
-    dict_lookup(conn, &dico_url);
+    if (argc == 2 && argv[1][0]) {
+	dict_result_free(conn->match_result);
+	conn->match_result = NULL;
+	dico_url.req.type = DICO_REQUEST_MATCH;
+	xdico_assign_string(&dico_url.req.word, argv[1]);
+	rc = dict_match(conn,
+			quotearg_n (0, dico_url.req.database),
+			quotearg_n (1, dico_url.req.strategy),
+			quotearg_n (2, dico_url.req.word));
+	if (rc == 0)
+	    conn->match_result = dict_conn_last_result(conn);
+	else {
+	    print_reply(conn);
+	    return;
+	}
+    } else if (!conn->match_result) {
+	script_error(0, _("No previous match"));
+	return;
+    }
+
+    print_match_result(conn->match_result);
+}
+
+/* Display a definition for the Nth result from a previous match. */
+void
+ds_define_nth(size_t num)
+{
+    struct dico_url url = dico_url;
+
+    if (ensure_connection())
+	return;
+    if (!conn->match_result) {
+	script_error(0, _("No previous match"));
+	return;
+    }
+    if (num >= conn->match_result->count) {
+	script_error(0,
+		     _("Invalid match number.  Type / to see the matches."));
+	return;
+    }
+    url.req.type = DICO_REQUEST_DEFINE;
+    url.req.database = conn->match_result->set.mat[num].database;
+    url.req.word = conn->match_result->set.mat[num].word;
+    dict_lookup(conn, &url);
 }
 
 void

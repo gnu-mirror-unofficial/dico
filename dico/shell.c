@@ -237,6 +237,17 @@ parse_script_file(char *fname, script_getln_fn getln, void *data)
 	case '?':
 	    ds_help(0, NULL);
 	    continue;
+
+	case '0': case '1': case '2': case '3': case '4':
+	case '5': case '6': case '7': case '8': case '9':
+	    if (argc == 1) {
+		char *q;
+		size_t num = strtoul(argv[0], &q, 10);
+		if (*q == 0) {
+		    ds_define_nth(num);
+		    continue;
+		}
+	    }
 	}
 	    
 	if (is_command(&p)) {

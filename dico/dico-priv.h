@@ -108,6 +108,7 @@ struct dict_connection {
     struct dict_result *last_result; /* Last result */
     struct dict_result *db_result;
     struct dict_result *strat_result;
+    struct dict_result *match_result;
 };
 
 struct auth_cred {
@@ -162,9 +163,11 @@ int dict_word(char *word);
 int dict_lookup(struct dict_connection *conn, dico_url_t url);
 int dict_single_command(char *cmd, char *arg, char *code);
 dico_stream_t create_pager_stream(size_t nlines);
-int dict_run_single_command(struct dict_connection *conn,
-			    char *cmd, char *arg, char *code);
+void dict_run_single_command(struct dict_connection *conn,
+			     char *cmd, char *arg, char *code);
 void print_result(struct dict_result *res);
+void print_match_result(struct dict_result *res);
+void print_reply(struct dict_connection *conn);
 
 char *get_homedir(void);
 
@@ -181,11 +184,14 @@ void script_error(int errcode, const char *fmt, ...);
 char **dict_completion_matches(int argc, char **argv, int ws,
 			       char *(*generator)(const char *, int));
 
+/* func.c */
+int ensure_connection(void);
 void ds_silent_close(void);
 void ds_open(int argc, char **argv);
 void ds_close(int argc, char **argv);
 void ds_autologin(int argc, char **argv);
 void ds_database(int argc, char **argv);
+void ds_define_nth(size_t num);
 void ds_strategy(int argc, char **argv);
 void ds_transcript(int argc, char **argv);
 void ds_define(int argc, char **argv);

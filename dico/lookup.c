@@ -16,10 +16,13 @@
 
 #include "dico-priv.h"
 
-static void
+void
 print_reply(struct dict_connection *conn)
 {
-    printf("%s\n", conn->buf);
+    if (strncmp(conn->buf, "552", 3) == 0)
+	printf("%s\n", _("No match"));
+    else
+	printf("Error: %s\n", conn->buf);
 }
 
 static size_t
@@ -35,7 +38,7 @@ utf8_count_newlines(char *str)
     return count;
 }
 
-static size_t
+size_t
 result_count_lines(struct dict_result *res)
 {
     size_t i, count = 0;
@@ -96,6 +99,92 @@ print_result(struct dict_result *res)
     dico_stream_close(str);
     dico_stream_destroy(&str);
 }
+
+
+struct result_display {
+    struct result_display *next;
+    char *database;
+    int count;
+    char **matches;
+};
+
+struct result_display *
+alloc_display(struct dict_result *res, size_t from, size_t to)
+{
+    struct result_display *disp = xmalloc(sizeof(*disp));
+    size_t i;
+    
+    disp->next = NULL;
+    disp->database = res->set.mat[from].database;
+    disp->count = to - from;
+    disp->matches = xcalloc(to - from, sizeof(disp->matches[0]));
+    for (i = 0; from < to; i++, from++)
+	disp->matches[i] = res->set.mat[from].word;
+    return disp;
+}
+
+static char *
+find_descr(struct dict_connection *conn, const char *name)
+{
+    if (conn->db_result) {
+	size_t i;
+	
+	for (i = 0; i < conn->db_result->count; i++) {
+	    if (strcmp(conn->db_result->set.mat[i].database, name) == 0)
+		return conn->db_result->set.mat[i].word;
+	}
+    }
+    return _("(no description available)");
+}
+
+void
+print_match_result(struct dict_result *res)
+{
+    struct result_display *head = NULL, *tail = NULL;
+    char *dbname = NULL;
+    size_t i, j = 0;
+    struct dict_connection *conn = res->conn;
+    size_t ndb = 0;
+    dico_stream_t str;
+    struct result_display *p;
+    
+#define ALLOC_DISPLAY() do { 					\
+	struct result_display *p = alloc_display(res, j, i);    \
+	if (!tail)                                              \
+	    head = p;                                           \
+	else               					\
+	    tail->next = p;					\
+	tail = p;						\
+	ndb++;							\
+	j = i;							\
+	dbname = res->set.mat[i].database;			\
+    } while (0)
+
+    dbname = res->set.mat[0].database;
+    for (i = 1; i < res->count; i++) {
+	if (strcmp(res->set.mat[i].database, dbname))
+	    ALLOC_DISPLAY();
+    }
+    ALLOC_DISPLAY();
+
+    str = create_pager_stream(ndb + result_count_lines(res));
+    j = 0;
+    for (p = head; p; ) {
+	struct result_display *next = p->next;
+	
+	stream_printf(str, _("From %s, %s:\n"), p->database,
+		      find_descr(conn, p->database));
+	for (i = 0; i < p->count; i++, j++)
+	    stream_printf(str, "%4d) \"%s\"\n", j, p->matches[i]);
+	free(p->matches);
+	free(p);
+	p = next;
+    }
+    dico_stream_close(str);
+    dico_stream_destroy(&str);
+}
+
+
 
 int
 dict_lookup(struct dict_connection *conn, dico_url_t url)
@@ -172,7 +261,7 @@ dict_word(char *word)
     return rc;
 }
 
-int
+void
 dict_run_single_command(struct dict_connection *conn,
 			char *cmd, char *arg, char *code)
 {

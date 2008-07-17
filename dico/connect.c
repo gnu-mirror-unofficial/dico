@@ -513,6 +513,8 @@ dict_result_create(struct dict_connection *conn, enum dict_result_type type,
 void
 dict_result_free(struct dict_result *res)
 {
+    if (!res)
+	return;
     /* Detach res from the list and free obstack memory, if it was the
        last obtained result,  */
     if (res == res->conn->last_result) {

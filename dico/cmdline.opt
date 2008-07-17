@@ -68,7 +68,7 @@ BEGIN
 END
 
 OPTION(levdist,,N,
-       [<With `-s lev' and `-s dlev', sets maximum Levenshtein distance to N.>])
+       [<Set maximum Levenshtein distance to N.>])
 ALIAS(levenshtein-distance)
 BEGIN
   char *p;
@@ -110,7 +110,7 @@ BEGIN
 END
 
 OPTION(quiet, q,,
-       [<Do not print the normal Dico welcome.>])
+       [<Do not print the normal dico welcome.>])
 BEGIN
   quiet_option = 1;
 END

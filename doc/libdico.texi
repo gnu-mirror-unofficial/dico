@@ -452,7 +452,10 @@ struct dico_option @{
 @deftypefn Function void dico_stream_set_destroy (@
   dico_stream_t @var{stream}, int (*@var{destroyfn}) (void *))
 @end deftypefn
-  
+
+@deftypefn Function void dico_stream_set_ioctl (@
+  dico_stream_t @var{stream}, int (*@var{ctl}) (void *, int, void *))
+@end deftypefn  
 
 @deftypefn Function void dico_stream_set_error_string (@
   dico_stream_t @var{stream}, @
@@ -532,6 +535,10 @@ struct dico_option @{
 @deftypefn Function int dico_stream_writeln (@
   dico_stream_t @var{stream}, const char *@var{buf}, size_t @var{size})
 @end deftypefn
+
+@deftypefn Function int dico_stream_ioctl (@
+  dico_stream_t @var{stream}, int @var{code}, void *@var{ptr})
+@end deftypefn
   
 @deftypefn Function {const char *} dico_stream_strerror (@
   dico_stream_t @var{stream}, int @var{rc})
@@ -567,14 +574,27 @@ struct dico_option @{
 
 @deftp struct dico_url
 @smallexample
+#define DICO_REQUEST_DEFINE 0
+#define DICO_REQUEST_MATCH 1
+
+struct dico_request @{
+    int type;
+    char *word;
+    char *database;
+    char *strategy;
+    unsigned long n;
+@};
+
 struct dico_url @{
     char *string;
     char *proto;
     char *host;
+    int port;
     char *path;
     char *user;
     char *passwd;
     dico_assoc_list_t args;
+    struct dico_request req;
 @};
 @end smallexample
 @end deftp

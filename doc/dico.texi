@@ -28,7 +28,9 @@
 @ifinfo
 @dircategory Dictionary
 @direntry
-* dico: (dico).         A modular dictionary server.
+* Dico: (dico).         A modular dictionary server package.
+* dicod: (dico) Dicod.  Dictionary server program.
+* dico: (dico) dico.    Dictionary client program.
 @end direntry
 @end ifinfo
 
@@ -94,6 +96,7 @@ documents Dico Version @value{VERSION}.
 * Dicod::                The dicod daemon.
 * Modules::              Dicod modules shipped with Dico.
 * Interface::            How to write your own Dico module.
+* dico::                 The client program.
 * Reporting Bugs::       How to Report a Bug.
 
 Appendices
@@ -143,6 +146,10 @@ Configuration File Syntax
 * Pragmatic Comments::
 * Statements::
 
+Authentication
+
+* text::        Flat Text Databases.
+
 Databases
 
 * Database Visibility::
@@ -161,6 +168,26 @@ The @command{guile} module.
 * Dico Scheme Primitives::
 * Example Module::
 
+Dico Module Interface
+
+* dico_database_module::
+* Strategies::
+* Output::
+* Error Reporting::
+
+Dico - a client program.
+
+* Single Query Mode::
+* Interactive Mode::
+* Initialization File::
+* Autologin::
+* Dico invocation::
+
+Single Query Mode
+
+* dico options::
+* urls::
+
 Dictionary Server Protocol
 
 * Initial Reply::
@@ -178,6 +205,21 @@ Standard Commands
 * STATUS::
 * HELP::
 * QUIT::
+
+The Libdico Library
+
+* strat::
+* argcv::
+* lists::
+* assoc::
+* diag::
+* filter::
+* parseopt::
+* stream::
+* url::
+* utf8::
+* util::
+* xlat::
 
 @end detailmenu
 @end menu
@@ -3135,6 +3177,347 @@ handle, obtained from a previous call to @code{dico_match} or
 @node Error Reporting
 @section Error Reporting
 @UNREVISED
+
+@node dico
+@chapter Dico --- a client program.
+@UNREVISED
+@cindex dico, a program
+  The @command{dico} program is a console-based utility for querying
+dictionary servers.  It has two operation modes.  In @dfn{single query
+mode}, the utility performs a query, displays its result and exits
+immediately.  This mode is entered if a word or a @acronym{URL} was
+given in the command line.  In @dfn{interactive mode}, the utility
+enters a read-and-eval loop, in which it read requests from the
+keyboard, performs the necessary searches, and displays obtained
+results on the screen.
+
+@menu
+* Single Query Mode::
+* Interactive Mode::
+* Initialization File::
+* Autologin::
+* Dico invocation::
+@end menu
+
+@node Single Query Mode
+@section Single Query Mode
+@UNREVISED
+@cindex single query mode
+
+  The simplest way to use @command{dico} utility is to invoke it with
+a word as an argument, e.g.:
+
+@smallexample
+$ dico entdeckung
+@end smallexample
+
+  In the example above, the utility will search definitions of the
+word @samp{entdeckung} using its default server name and database.  The
+default server name is read from the initialization file
+(@pxref{Initialization File}).  If it is not present, a predefined
+value specified at configuration timee (@FIXME-pxref{Building}) is
+used.  The default database is @samp{!}, which means ``search in all
+available databases until a match is found, and then display all
+matches in that database''. 
+
+  There are two ways to change these defaults.  First, you can use
+command line options.  Secondly, you can use a @acronym{DICT URL}.
+Which method to use depends on your preferences.  Both methods provide
+the same functionality for querying word definitions.  However,
+command line options allow to query additional data from the server,
+which is impossible using @acronym{URL}s.   
+
+@menu
+* dico options::
+* urls::
+@end menu
+
+@node dico options
+@subsection Dico Command Line Options
+
+To connect to a particular dictionary server,
+use @option{--host} option, for example:
+
+@smallexample
+$ dico --host dico.org entdeckung
+@end smallexample
+
+  To search in a particular database, use @option{--database}
+(@option{-d}) option.  For example, to display definitions from
+all databases:
+
+@smallexample
+$ dico --database '*' entdeckung
+@end smallexample
+
+@noindent
+Note single quotes around the asterisk.
+
+  To get a list of databases offered by the server, use @option{--dbs}
+(@option{-D}) option.  In this case you may not give any non-option
+arguments.   For example:
+
+@smallexample
+$ dico --dbs
+@end smallexample
+
+  If you wish to get a list of matches, instead of definitions, use
+@option{--match} (@option{-m}) option.  For example, the following
+invocation will display all matches from all the databases:
+
+@smallexample
+$ dico --database '*' --match entdeckung
+@end smallexample
+
+  The match mode uses @samp{.} strategy by default (@pxref{MATCH,
+strategy}), which means a server-dependent default strategy, which
+suits best for interactive spell checking.  To select another
+strategy, use @option{--strategy} (@option{-s}) option.
+
+  If the remote server supports @samp{xlev} experimental capability
+(@pxref{Extended Commands, XLEV}, you may use @option{--levdist}
+(@option{--levenshtein-distance}) option to set maximum Levenshtein
+distance, for example:
+
+@smallexample
+$ dico --levdist 2 --match entdeckung
+@end smallexample
+
+  Note that setting the distance too high is impractical and may imply
+unnecessary strain on the server. 
+
+  To get a list of available matching strategies, with
+descriptions, use the @option{--strats} (@option{-S}) option.
+
+@node urls
+@subsection DICT URL
+@cindex URL, using to query DICT server
+  Another way to specify data for a query is by using @acronym{URL},
+instead of a word to search, as in the example below:
+
+@smallexample
+$ dico dict://gnu.org.ua/d:entdeckung
+@end smallexample
+
+A @acronym{DICT} @acronym{URL} consists of the following parts:
+
+@smallexample
+dict://@var{user};@var{pass}@@@var{host}:@var{port}/d:@var{word}:@var{database}:@var{n}
+dict://@var{user};@var{pass}@@@var{host}:@var{port}/m:@var{word}:@var{database}:@var{strat}:@var{n}
+@end smallexample
+
+The @samp{/d} syntax requests the definition of @var{word}, whereas
+the @samp{/m} syntax queries for matches, and is similar to
+@option{--match} option.  Some or all of
+@samp{@var{user};@var{pass}@@}, @samp{:@var{port}}, @var{database},
+@var{strat}, and and @var{n} may be omitted.   The meaning of all
+@acronym{URL} parts and their default values (if appropriate) are
+explained in the table below: 
+
+@table @var
+@item user
+User name to use in authentication.  Similar to @option{--user}
+option.  If @var{user} is omitted and cannot be retrieved by other
+means, no authentication is performed.  @xref{Autologin}, for a
+detailed description of authentication procedure and sources which
+are used to obtain authentication credentials.
+
+@item pass
+A shared key (password) for that user.  This part is similar to
+@option{--key} command line option.
+
+For compatibility with other @acronym{URL}s, @command{dico} allows to
+delimit @var{user} and @var{pass} with a colon (@samp{:}), instead of
+semicolon.
+
+If @var{user} is given, but @var{pass} is not, @command{dico} will ask
+you to supply a password interactively (@pxref{Autologin}).
+
+@item host
+Host name or @acronym{IP} address of the server to query.  Same as
+@option{--host} command line option.
+
+@item port
+Port number or service name (from @file{/etc/services}).  If it is not
+present, the default of 2628 is used.
+
+Same as @option{--port} command line option.
+
+@item word
+The word to look for.
+
+@item database
+The database to search in.  If not given, @samp{!} is assumed.
+
+Same as @option{--database} command line option.
+
+@item strat
+The matching strategy to use.  If omitted, @samp{.} is assumed.
+
+Same as @option{--strategy} command line option.
+
+@item n
+Extract and display the @var{n}th definition of the word.  If omitted,
+all definitions are displayed.
+
+There is no command line option equivalent for this parameter, because
+it is used rarely.
+@end table
+
+Trailing colons may be omitted.  For example, the following @acronym{URL}s
+might specify definitions or matches:
+
+@smallexample
+dict://dict.org/d:shortcake:
+dict://dict.org/d:shortcake:*
+dict://dict.org/d:shortcake:wordnet:
+dict://dict.org/d:shortcake:wordnet:1
+dict://dict.org/d:abcdefgh
+dict://dict.org/d:sun
+dict://dict.org/d:sun::1
+dict://dict.org/m:sun
+dict://dict.org/m:sun::soundex
+dict://dict.org/m:sun:wordnet::1
+dict://dict.org/m:sun::soundex:1
+dict://dict.org/m:sun:::
+@end smallexample
+
+@node Interactive Mode
+@section Interactive Mode
+@UNREVISED
+
+@node Initialization File
+@section Initialization File
+@UNREVISED
+
+@node Autologin
+@section Autologin
+@UNREVISED
+
+@node Dico invocation
+@section Dico invocation
+@UNREVISED
+
+@FIXME{Provide cross-references}.
+@subheading Server selection options:
+
+@table @option
+@item --host=@var{server}
+Connect to this server.
+
+@item --port=@var{port}
+@itemx -p @var{port}
+Specify port to connect to.  The argument @var{port} can be either a
+port number or its symbolic service name, as listed in
+@file{/etc/services}. 
+
+@item --database=@var{name}
+@itemx -d @var{name}
+Select a database to search.  The @var{name} can be either a name of
+one of the databases offered by the server (as returned by
+@option{--dbs} option), or one of the predefined database names:
+@samp{!} or @samp{*}.
+
+@item --source=@var{addr}
+Set source address for @acronym{TCP} connections.
+@end table
+
+@subheading Operation modes
+
+@table @option
+@item --match
+@itemx -m
+Match instead of define.
+
+@item --strategy=@var{name}
+@itemx -s @var{name}
+Select a strategy for matching.  The argument is either a name of one
+of the matching strategies supported by server (as displayed by
+@option{--strats} option) or a dot (@samp{.}) meaning a
+server-dependent default strategy.
+
+This option implies @option{--match}.
+
+@item --levdist=@var{n}
+@itemx --levenshtein-distance=@var{n}
+Sets maximum Levenshtein distance.  Allowed values of @var{n} are
+between 1 and 9 inclusively.  This option has effect only if the
+remote server supports @samp{xlev} extension (@pxref{Extended
+Commands, XLEV}). 
+
+@item --dbs
+@itemx -D
+Show available databases.
+
+@item --strats
+@itemx --strategies
+@itemx -S
+Show available search strategies.
+
+@item --serverhelp
+@itemx -H
+Show server help.
+
+@item --info=@var{dbname}
+@itemx -i @var{dbname}
+Show information about database @var{dbname}.
+
+@item --serverinfo
+@itemx -I
+Show information about the server.
+
+@item --quiet
+@itemx -q
+Do not print the normal @command{dico} welcome banner when entering
+interactive shell.
+@end table
+
+@subheading Authentication
+
+@table @option
+@item --noauth
+@itemx -a
+Disable authentication.
+
+@item --user=@var{name}
+@item -u
+Set user name for authentication.
+
+@item --key=@var{string}
+@itemx -k @var{string}
+@itemx --password=@var{string}
+Set shared secret for authentication.
+
+@item --autologin=@var{name}
+Set the name of autologin file to use.
+
+@item --client=@var{string}
+@itemx -c @var{string}
+Additional text for client command, instead of the default @samp{dico
+@value{VERSION}}. 
+@end table
+
+@subheading Debugging options
+
+@table @option
+@item --transcript
+@itemx -t
+Enable session transcript.
+@end table
+
+@subheading Other options
+
+@table @option
+@item --help                
+@itemx -h
+Display a short description of command line options.
+
+@item --usage
+Display a short usage message
+
+@item --version
+Print program version.
+@end table
 
 @node Reporting Bugs
 @chapter How to Report a Bug

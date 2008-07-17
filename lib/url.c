@@ -146,10 +146,14 @@ url_get_host(dico_url_t url, char **str)
 static int
 url_get_user (dico_url_t url, char **str)
 {
-    size_t len = strcspn(*str, ":@/");
+    size_t len = strcspn(*str, ":;@/");
     char *p = *str + len;
     
     switch (*p) {
+    case ';':
+	if (strcmp(url->proto, "dict"))
+	    break;
+	/* else fall through */
     case ':':
 	len = strcspn(p + 1, "@/:");
 	if (p[len+1] == '@') {
@@ -229,14 +233,17 @@ url_parse_dico_request(dico_url_t url)
     q = strchr(p, ':');
     if (alloc_string_def(&url->req.database, p, q, "*"))
 	return 1;
-    if (!q)
-	return alloc_string_len(&url->req.strategy, ".", 1);
-    
-    p = q + 1;
-    q = strchr(p, ':');
-    if (alloc_string_def(&url->req.strategy, p, q, "."))
-	return 1;
 
+    if (url->req.type == DICO_REQUEST_MATCH) {
+	if (!q)
+	    return alloc_string_len(&url->req.strategy, ".", 1);
+    
+	p = q + 1;
+	q = strchr(p, ':');
+	if (alloc_string_def(&url->req.strategy, p, q, "."))
+	    return 1;
+    }
+    
     if (q) {
 	p = q + 1;
 	url->req.n = strtoul(p, &q, 10);

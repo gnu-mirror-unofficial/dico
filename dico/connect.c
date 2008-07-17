@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <md5.h>
+#include "getpass.h"
 
 const char *xscript_prefix[] = { "S:", "C:" };
 
@@ -133,6 +134,8 @@ get_credentials(char *host, struct auth_cred *cred)
 	parse_netrc(filename, host, cred);
 	free(filename);
     }
+    if (cred->user && !cred->pass)
+	cred->pass = getpass(_("Password:"));
     return !(cred->user && cred->pass);
 }
 

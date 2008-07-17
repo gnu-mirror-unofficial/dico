@@ -29,6 +29,23 @@ ds_silent_close()
     }
 }    
 
+int
+ensure_connection()
+{
+    if (!conn) {
+	if (!dico_url.host) {
+	    script_error(0, _("Please specify server name or IP address"));
+	    return 1;
+	}
+	
+	if (dict_connect(&conn, &dico_url)) { 
+	    script_error(0, _("Cannot connect to the server"));
+	    return 1;
+	}
+    }
+    return 0;
+}
+
 void
 ds_open(int argc, char **argv)
 {
@@ -50,9 +67,7 @@ ds_open(int argc, char **argv)
     }
     
     ds_silent_close();
-
-    if (dict_connect(&conn, &dico_url)) 
-	script_error(0, _("Cannot connect to the server"));
+    ensure_connection();
 }
 
 void
@@ -123,6 +138,8 @@ ds_transcript(int argc, char **argv)
 void
 ds_define(int argc, char **argv)
 {
+    if (ensure_connection())
+	return;
     dico_url.req.type = DICO_REQUEST_DEFINE;
     xdico_assign_string(&dico_url.req.word, argv[1]);
     dict_lookup(conn, &dico_url);
@@ -131,6 +148,8 @@ ds_define(int argc, char **argv)
 void
 ds_match(int argc, char **argv)
 {
+    if (ensure_connection())
+	return;
     dico_url.req.type = DICO_REQUEST_MATCH;
     xdico_assign_string(&dico_url.req.word, argv[1]);
     dict_lookup(conn, &dico_url);
@@ -171,12 +190,16 @@ ds_distance(int argc, char **argv)
 void
 ds_show_db(int argc, char **argv)
 {
+    if (ensure_connection())
+	return;
     dict_run_single_command(conn, "SHOW DATABASES", NULL, "110");
 }
 
 void
 ds_show_strat(int argc, char **argv)
 {
+    if (ensure_connection())
+	return;
     dict_run_single_command(conn, "SHOW STRATEGIES", NULL, "111");
 }
 

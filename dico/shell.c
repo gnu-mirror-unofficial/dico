@@ -16,58 +16,64 @@
 
 #include "dico-priv.h"
 
-struct funtab {
-    char *name;        /* Keyword */
-    int argmin;        /* Minimal number of arguments */
-    int argmax;        /* Maximal number of arguments */
-    void (*fun) (int argc, char **argv); /* Handler */
-    char *argdoc;      /* Argument docstring */
-    char *docstring;   /* Documentation string */
-};
-
 static void ds_prefix(int argc, char **argv);
 static void ds_help(int argc, char **argv);
+static char **no_compl(int argc, char **argv, int ws);
 
 struct funtab funtab[] = {
-    { "open",      1, 3, ds_open,
+    { "open",      1, 3, 
       N_("[HOST [PORT]]"), 
-      N_("Connect to a DICT server.") },
-    { "close",     1, 1, ds_close,
+      N_("Connect to a DICT server."),
+      ds_open, no_compl },
+    { "close",     1, 1, 
       NULL,
-      N_("Close the connection.") },
-    { "autologin", 1, 2, ds_autologin,
-      N_("FILE"),
-      N_("Set or display autologin file name.")},
-    { "database",  1, 2, ds_database,
+      N_("Close the connection."),
+      ds_close, },
+    { "autologin", 1, 2, 
+      N_("[FILE]"),
+      N_("Set or display autologin file name."),
+      ds_autologin,},
+    { "database",  1, 2, 
       N_("[NAME]"),
-      N_("Set or display current database name.") },
-    { "strategy",  1, 2, ds_strategy,
+      N_("Set or display current database name."),
+      ds_database, ds_compl_database },
+    { "strategy",  1, 2, 
       N_("[NAME]"),
-      N_("Set or display current strategy.") },
-    { "distance", 1, 2, ds_distance,
+      N_("Set or display current strategy."),
+      ds_strategy, ds_compl_strategy },
+    { "distance", 1, 2, 
       N_("[NUM]"),
-      N_("Set or query Levenshtein distance (server-dependent).") },
-    { "ls", 1, 1, ds_show_strat,
+      N_("Set or query Levenshtein distance (server-dependent)."),
+      ds_distance, no_compl },
+    { "ls", 1, 1, 
       NULL,
-      N_("List available matching strategies") },
-    { "ld", 1, 1, ds_show_db,
-      N_("List all accessible databases") },
-    { "prefix", 1, 2, ds_prefix ,
+      N_("List available matching strategies"),
+      ds_show_strat, },
+    { "ld", 1, 1, 
+      NULL,
+      N_("List all accessible databases"),
+      ds_show_db, },
+    { "prefix", 1, 2, 
       N_("[CHAR]"),
-      N_("Set or display command prefix.") },
-    { "transcript", 1, 2, ds_transcript,
+      N_("Set or display command prefix."),
+      ds_prefix, },
+    { "transcript", 1, 2, 
       N_("[BOOL]"),
-      N_("Set or display session transcript mode.") },
-    { "help", 1, 1, ds_help,
+      N_("Set or display session transcript mode."),
+      ds_transcript, no_compl },
+    { "help", 1, 1, 
       NULL,
-      N_("Display this help text.") },
-    { "version", 1, 1, ds_version,
+      N_("Display this help text."),
+      ds_help, },
+    { "version", 1, 1, 
       NULL,
-      N_("Print program version.") },
-    { "warranty", 1, 1, ds_warranty,
+      N_("Print program version."),
+      ds_version, },
+    { "warranty", 1, 1, 
       NULL,
-      N_("Print copyright statement.") },
-    { "quit", 1, 1, NULL,
+      N_("Print copyright statement."),
+      ds_warranty, },
+    { "quit", 1, 1, 
       NULL,
       N_("Quit the shell.") },
     { NULL }
@@ -97,7 +103,9 @@ ds_prefix(int argc, char **argv)
     else {
 	cmdprefix = argv[1][0];
 	strcpy(special_prefixes, argv[1]);
+#ifdef WITH_READLINE
 	rl_special_prefixes = special_prefixes;
+#endif
     }
 }
 
@@ -108,7 +116,7 @@ ds_help(int argc, char **argv)
     struct funtab *ft;
     for (ft = funtab; ft->name; ft++) {
 	int len = 0;
-	char *args;
+	const char *args;
 	if (cmdprefix) {
 	    stream_printf(str, "%c", cmdprefix);
 	    len++;
@@ -203,17 +211,17 @@ parse_script_file(char *fname, script_getln_fn getln, void *data)
     line = 0;
     input = xdico_tokenize_begin();
     while (getln(data, &buf)) {
-	char *p;
+	char *p, *start;
 	char *xargv[3];
 	
 	line++;
 
-	p = skipws(buf);
-	dico_trim_nl(p);
-	if (*p == 0 || *p == '#')
+	start = skipws(buf);
+	dico_trim_nl(start);
+	if (*start == 0 || *start == '#')
 	    continue;
 
-	xdico_tokenize_input(input, p, &argc, &argv);
+	xdico_tokenize_input(input, start, &argc, &argv);
 	if (argc == 0)
 	    continue;
 
@@ -221,7 +229,7 @@ parse_script_file(char *fname, script_getln_fn getln, void *data)
 	switch (p[0]) {
 	case '/':
 	    xargv[0] = "match";
-	    xargv[1] = skipws(p+1);
+	    xargv[1] = skipws(start + 1);
 	    xargv[2] = NULL;
 	    ds_match(2, xargv);
 	    continue;
@@ -259,7 +267,7 @@ parse_script_file(char *fname, script_getln_fn getln, void *data)
 	    }
 	} else {
 	    xargv[0] = "define";
-	    xargv[1] = p;
+	    xargv[1] = start;
 	    xargv[2] = NULL;
 	    ds_define(2, xargv);
 	}
@@ -349,9 +357,39 @@ _command_generator(const char *text, int state)
 static char **
 _command_completion(char *cmd, int start, int end)
 {
-    if (start == 0)
-	return rl_completion_matches(cmd, _command_generator);
-    return NULL;
+    int argc;
+    char **argv;
+    char **ret;
+    char *p;
+
+    for (p = rl_line_buffer; p < rl_line_buffer + start && isspace (*p); p++)
+	;
+
+    /* FIXME: Use tokenizer */
+    if (dico_argcv_get_n (p, end, NULL, NULL, &argc, &argv))
+	return NULL;
+    rl_completion_append_character = ' ';
+  
+    if (argc == 0 || (argc == 1 && strlen (argv[0]) <= end - start)) {
+	ret = rl_completion_matches (cmd, _command_generator);
+	rl_attempted_completion_over = 1;
+    } else {
+	struct funtab *ft = find_funtab(argv[0] + (cmdprefix ? 1 : 0));
+	if (ft) {
+	    if (ft->compl)
+		ret = ft->compl(argc, argv, start == end);
+	    else if (ft->argmax == 1) {
+		rl_attempted_completion_over = 1;
+		ret = NULL;
+	    } else
+		ret = NULL;
+	} else {
+	    rl_attempted_completion_over = 1;
+	    ret = NULL;
+	}
+    }
+    dico_argcv_free(argc, argv);
+    return ret;
 }
 
 #define HISTFILE_SUFFIX "_history"
@@ -375,6 +413,29 @@ get_history_file_name()
   return filename;
 }
 #endif
+
+char **
+dict_completion_matches(int argc, char **argv, int ws,
+                        char *(*generator)(const char *, int))
+{
+#ifdef WITH_READLINE
+    rl_attempted_completion_over = 1;
+    if (ensure_connection())
+	return NULL;
+    return rl_completion_matches (ws ? "" : argv[argc-1], generator);
+#endif
+}
+
+
+static char **
+no_compl (int argc DICO_ARG_UNUSED,
+	  char **argv DICO_ARG_UNUSED, int ws DICO_ARG_UNUSED)
+{
+#ifdef WITH_READLINE
+    rl_attempted_completion_over = 1;
+#endif
+    return NULL;
+}
 
 void
 shell_init(struct init_script *p)

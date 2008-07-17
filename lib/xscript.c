@@ -24,9 +24,10 @@
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
-#include <dico.h>
+#include <xdico.h>
 #include <string.h>
 #include <xalloc.h>
+#include <errno.h>
 
 #define TRANS_READ 0x1
 #define TRANS_WRITE 0x2
@@ -104,6 +105,8 @@ static int
 transcript_flush(void *data)
 {
     struct transcript_stream *p = data;
+    if (!p->transport)
+	return 0;
     return dico_stream_flush(p->transport);
 }
 
@@ -135,6 +138,26 @@ transcript_strerror(void *data, int rc)
     return dico_stream_strerror(p->transport, rc);
 }
 
+static int
+transcript_ioctl(void *data, int code, void *call_data)
+{
+    struct transcript_stream *p = data;
+    switch (code) {
+    case XSCRIPT_CLT_GET_TRANSPORT:
+	*(dico_stream_t*)call_data = p->transport;
+	break;
+
+    case XSCRIPT_CLT_SET_TRANSPORT:
+	p->transport = call_data;
+	break;
+
+    default:
+	errno = ENOSYS;
+	return -1;
+    }
+    return 0;
+}
+
 const char *default_prefix[2] = {
     "C: ", "S: "
 };
@@ -145,7 +168,8 @@ xdico_transcript_stream_create(dico_stream_t transport, dico_stream_t logstr,
 {
     struct transcript_stream *p = xmalloc(sizeof(*p));
     dico_stream_t stream;
-    int rc = dico_stream_create(&stream, DICO_STREAM_READ|DICO_STREAM_WRITE, p);
+    int rc = dico_stream_create(&stream, DICO_STREAM_READ|DICO_STREAM_WRITE,
+				p);
     if (rc)
 	xalloc_die();
     p->flags = TRANS_READ | TRANS_WRITE;
@@ -164,6 +188,7 @@ xdico_transcript_stream_create(dico_stream_t transport, dico_stream_t logstr,
     dico_stream_set_flush(stream, transcript_flush);
     dico_stream_set_close(stream, transcript_close);
     dico_stream_set_destroy(stream, transcript_destroy);
+    dico_stream_set_ioctl(stream, transcript_ioctl);
     dico_stream_set_error_string(stream, transcript_strerror);
     dico_stream_set_buffer(stream, dico_buffer_line, 1024);
 

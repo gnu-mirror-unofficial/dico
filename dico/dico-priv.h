@@ -96,6 +96,7 @@ struct dict_result {
 
 struct dict_connection {
     dico_stream_t str;    /* Communication stream */
+    int transcript;       /* True if transcript is enabled */ 
     int capac;            /* Number of reported server capabilities */
     char **capav;         /* Array of capabilities */
     char *msgid;          /* msg-id */
@@ -105,11 +106,23 @@ struct dict_connection {
     size_t levdist;       /* Configured Levenshtein distance */
     struct obstack stk;   /* Obstack for input data */
     struct dict_result *last_result; /* Last result */
+    struct dict_result *db_result;
+    struct dict_result *strat_result;
 };
 
 struct auth_cred {
     char *user;
     char *pass;
+};
+
+struct funtab {
+    char *name;        /* Keyword */
+    int argmin;        /* Minimal number of arguments */
+    int argmax;        /* Maximal number of arguments */
+    char *argdoc;      /* Argument docstring */
+    char *docstring;   /* Documentation string */
+    void (*fun) (int argc, char **argv); /* Handler */
+    char **(*compl) (int argc, char **argv, int ws); 
 };
 
 #define DICO_CLIENT_ID PACKAGE_STRING 
@@ -127,6 +140,7 @@ extern char *autologin_file;
 void get_options (int argc, char *argv[], int *index);
 
 /* connect.c */
+void dict_transcript(struct dict_connection *conn, int state);
 int dict_connect(struct dict_connection **pconn, dico_url_t url);
 void dict_conn_close(struct dict_connection *conn);
 int dict_read_reply(struct dict_connection *conn);
@@ -150,6 +164,7 @@ int dict_single_command(char *cmd, char *arg, char *code);
 dico_stream_t create_pager_stream(size_t nlines);
 int dict_run_single_command(struct dict_connection *conn,
 			    char *cmd, char *arg, char *code);
+void print_result(struct dict_result *res);
 
 char *get_homedir(void);
 
@@ -158,10 +173,13 @@ char *skipws(char *buf);
 int parse_netrc (const char *filename, char *host, struct auth_cred *pcred);
 
 /* shell.c */
+struct funtab *find_funtab(const char *name);
 void parse_init_scripts(void);
 void dico_shell(void);
 void script_warning(int errcode, const char *fmt, ...);
 void script_error(int errcode, const char *fmt, ...);
+char **dict_completion_matches(int argc, char **argv, int ws,
+			       char *(*generator)(const char *, int));
 
 void ds_silent_close(void);
 void ds_open(int argc, char **argv);
@@ -178,3 +196,5 @@ void ds_warranty(int argc, char **argv);
 void ds_show_db(int argc, char **argv);
 void ds_show_strat(int argc, char **argv);
 
+char **ds_compl_database(int argc, char **argv, int ws);
+char **ds_compl_strategy(int argc, char **argv, int ws);

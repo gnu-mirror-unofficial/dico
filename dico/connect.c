@@ -136,6 +136,44 @@ get_credentials(char *host, struct auth_cred *cred)
     return !(cred->user && cred->pass);
 }
 
+void
+dict_transcript(struct dict_connection *conn, int state)
+{
+    if (state == conn->transcript)
+	return;
+    if (state == 0) {
+	dico_stream_t transport;
+	if (dico_stream_ioctl(conn->str, XSCRIPT_CLT_GET_TRANSPORT,
+			      &transport)) {
+	    dico_log(L_CRIT, errno,
+		     _("INTERNAL ERROR at %s:%d: cannot get stream transport"),
+		     __FILE__,
+		     __LINE__);
+	    return;
+	}
+	
+	if (dico_stream_ioctl(conn->str, XSCRIPT_CLT_SET_TRANSPORT, NULL)) {
+	    dico_log(L_CRIT, errno,
+		     _("INTERNAL ERROR at %s:%d: cannot set stream transport"),
+		     __FILE__,
+		     __LINE__);
+	    return;
+	}
+
+	dico_stream_close(conn->str);
+	dico_stream_destroy(&conn->str);
+	conn->str = transport;
+	conn->transcript = state;
+    } else {
+	dico_stream_t logstr = dico_log_stream_create(L_DEBUG);
+	if (!logstr)
+	    xalloc_die();
+	conn->str = xdico_transcript_stream_create(conn->str, logstr,
+						   xscript_prefix);
+	conn->transcript = state;
+    }
+}
+
 int
 dict_connect(struct dict_connection **pconn, dico_url_t url)
 {
@@ -183,16 +221,10 @@ dict_connect(struct dict_connection **pconn, dico_url_t url)
 	return 1;
     }
 
-    if (transcript) {
-	dico_stream_t logstr = dico_log_stream_create(L_DEBUG);
-	if (!logstr)
-	    xalloc_die();
-	str = xdico_transcript_stream_create(str, logstr, xscript_prefix);
-    }
-
     conn = xzalloc(sizeof(*conn));
     conn->str = str;
-    
+    dict_transcript(conn, transcript);
+
     if (dict_read_reply(conn)) {
 	dico_log(L_ERR, 0, _("No reply from server"));
 	return 1;
@@ -317,7 +349,7 @@ dict_define(struct dict_connection *conn, char *database, char *word)
 	    dict_multiline_reply(conn);
 	}
 	dict_read_reply(conn);
-	dict_result_create(conn, DICO_REQUEST_DEFINE, count,
+	dict_result_create(conn, dict_result_define, count,
 			   obstack_finish(&conn->stk));
 	rc = 0;
     } else
@@ -353,7 +385,7 @@ dict_match(struct dict_connection *conn, char *database, char *strategy,
 	count = strtoul (conn->buf + 3, &p, 10);
     
 	dict_multiline_reply(conn);
-	dict_result_create(conn, DICO_REQUEST_MATCH, count,
+	dict_result_create(conn, dict_result_match, count,
 			   obstack_finish(&conn->stk));
 	dict_read_reply(conn);
 	rc = 0;

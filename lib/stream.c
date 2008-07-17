@@ -46,6 +46,7 @@ struct dico_stream {
     int (*destroy) (void *);
     int (*seek) (void *, off_t, int, off_t *);
     int (*size) (void *, off_t *);
+    int (*ctl) (void *, int, void *);
     const char *(*error_string) (void *, int);
     void *data;
 };    
@@ -138,6 +139,12 @@ void
 dico_stream_set_size(dico_stream_t stream, int (*sizefn) (void *, off_t *))
 {
     stream->size = sizefn;
+}
+
+void
+dico_stream_set_ioctl(dico_stream_t stream, int (*ctl) (void *, int, void *))
+{
+    stream->ctl = ctl;
 }
 
 
@@ -637,6 +644,10 @@ dico_stream_writeln(dico_stream_t stream, const char *buf, size_t size)
 int
 dico_stream_flush(dico_stream_t stream)
 {
+    if (!stream) {
+	errno = EINVAL;
+	return 1;
+    }
     if (_stream_flush_buffer(stream, 1))
 	return 1;
     if (stream->flush)
@@ -687,4 +698,14 @@ off_t
 dico_stream_bytes_out(dico_stream_t stream)
 {
     return stream->bytes_out;
+}
+
+int
+dico_stream_ioctl(dico_stream_t stream, int code, void *ptr)
+{
+    if (stream->ctl == NULL) {
+	errno = ENOSYS;
+	return -1;
+    }
+    return stream->ctl(stream->data, code, ptr);
 }

@@ -29,6 +29,32 @@ ds_silent_close()
     }
 }    
 
+static int
+get_list(struct dict_result **pres, char *cmd, char *code)
+{
+    if (conn && *pres == NULL) {
+	stream_printf(conn->str, "%s\r\n", cmd);
+	dict_read_reply(conn);
+	if (dict_status_p(conn, code)) {
+	    unsigned long count;
+	    char *p;
+	
+	    count = strtoul (conn->buf + 3, &p, 10);
+	    dict_multiline_reply(conn);
+	    dict_result_create(conn, dict_result_match, count,
+			       obstack_finish(&conn->stk));
+	    dict_read_reply(conn);
+	    *pres = dict_conn_last_result(conn);
+	} else {
+	    script_error(0,
+			 _("Cannot get listing: %s"),
+			 conn->buf);
+	    return 1;
+	}
+    }
+    return 0;
+}
+    
 int
 ensure_connection()
 {
@@ -42,6 +68,8 @@ ensure_connection()
 	    script_error(0, _("Cannot connect to the server"));
 	    return 1;
 	}
+	get_list(&conn->db_result, "SHOW DATABASES", "110");
+	get_list(&conn->strat_result, "SHOW STRATEGIES", "111");
     }
     return 0;
 }
@@ -101,6 +129,37 @@ ds_database(int argc, char **argv)
 	xdico_assign_string(&dico_url.req.database, argv[1]);
 }
 
+static char *
+result_generator(struct dict_result *res, const char *text, int state)
+{
+    static int i, len;
+    
+    if (!state) { 
+	i = 0;
+	len = strlen(text);
+    } 
+    while (i < res->count) {
+	char *s = res->set.mat[i].database;
+	i++;
+	if (strncmp(s, text, len) == 0)
+	    return strdup(s);
+    }
+    return NULL;
+}
+
+static char *
+db_generator(const char *text, int state)
+{
+    return result_generator(conn->db_result, text, state);
+}
+
+char **
+ds_compl_database(int argc, char **argv, int ws)
+{
+    return dict_completion_matches(argc, argv, ws, db_generator);
+}
+
+
 void
 ds_strategy(int argc, char **argv)
 {
@@ -111,6 +170,19 @@ ds_strategy(int argc, char **argv)
 	xdico_assign_string(&dico_url.req.strategy, argv[1]);
 }
 
+static char *
+strat_generator(const char *text, int state)
+{
+    return result_generator(conn->strat_result, text, state);
+}
+
+char **
+ds_compl_strategy(int argc, char **argv, int ws)
+{
+    return dict_completion_matches (argc, argv, ws, strat_generator);
+}
+
+
 void
 set_bool(int *pval, char *str)
 {
@@ -131,8 +203,11 @@ ds_transcript(int argc, char **argv)
 {
     if (argc == 1) 
 	printf(_("transcript is %s\n"), transcript ? _("on") : _("off"));
-    else
+    else {
 	set_bool(&transcript, argv[1]);
+	if (conn)
+	    dict_transcript(conn, transcript);
+    }
 }
 
 void
@@ -192,7 +267,7 @@ ds_show_db(int argc, char **argv)
 {
     if (ensure_connection())
 	return;
-    dict_run_single_command(conn, "SHOW DATABASES", NULL, "110");
+    print_result(conn->db_result);
 }
 
 void
@@ -200,7 +275,7 @@ ds_show_strat(int argc, char **argv)
 {
     if (ensure_connection())
 	return;
-    dict_run_single_command(conn, "SHOW STRATEGIES", NULL, "111");
+    print_result(conn->strat_result);
 }
 
 void

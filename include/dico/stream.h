@@ -90,6 +90,10 @@ void dico_stream_destroy(dico_stream_t *stream);
 off_t dico_stream_bytes_in(dico_stream_t stream);
 off_t dico_stream_bytes_out(dico_stream_t stream);
 
+void dico_stream_set_ioctl(dico_stream_t stream,
+			   int (*ctl) (void *, int, void *));
+int dico_stream_ioctl(dico_stream_t stream, int code, void *ptr);
+
 
 
 /* FD streams */

@@ -71,7 +71,7 @@ format_match(dico_stream_t str, struct match_result *mat)
     stream_printf(str, "%s \"%s\"\n", mat->database, mat->word);
 }
 
-static void
+void
 print_result(struct dict_result *res)
 {
     unsigned long i;

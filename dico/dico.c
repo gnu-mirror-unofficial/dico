@@ -32,7 +32,7 @@ fixup_url()
 {
     xdico_assign_string(&dico_url.proto, "dict");
     if (!dico_url.host)
-	dico_url.host = DEFAULT_DICT_SERVER;
+	xdico_assign_string(&dico_url.host, DEFAULT_DICT_SERVER);
     if (!dico_url.req.database)
 	xdico_assign_string(&dico_url.req.database, "!");
     if (!dico_url.req.strategy)

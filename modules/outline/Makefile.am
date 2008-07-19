@@ -21,4 +21,4 @@ mod_LTLIBRARIES=outline.la
 outline_la_SOURCES = outline.c
 outline_la_LIBADD = ../../lib/libdico.la
 AM_LDFLAGS = -module -avoid-version -no-undefined
-INCLUDES = -I$(top_srcdir)/include
+INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include

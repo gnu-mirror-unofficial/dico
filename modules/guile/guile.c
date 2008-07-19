@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <setjmp.h>
 #include <libguile.h>
+#include <appi18n.h>
 
 
 /* General-purpose eval handlers */

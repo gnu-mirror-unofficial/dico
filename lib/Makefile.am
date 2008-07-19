@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/gnu
+INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/gnu -I../gnu
 
 lib_LTLIBRARIES = libdico.la
 
@@ -30,6 +30,7 @@ libdico_la_SOURCES=\
  fltstream.c\
  iostr.c\
  levenshtein.c\
+ libi18n.c\
  linebuf.c\
  list.c\
  logstream.c\
@@ -47,6 +48,7 @@ libdico_la_SOURCES=\
 libdico_la_LDFLAGS = -version-info 0:0:0
 
 libxdico_a_SOURCES=\
+ appi18n.c\
  iputil.c\
  jiscvt.c\
  timer.c\

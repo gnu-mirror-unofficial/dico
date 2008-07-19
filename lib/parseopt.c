@@ -19,6 +19,7 @@
 #endif
 #include <dico.h>
 #include <string.h>
+#include <libi18n.h>
 
 static struct dico_option *
 find_opt(struct dico_option *opt, const char *str, const char **value)
@@ -86,7 +87,8 @@ dico_parseopt(struct dico_option *opt, int argc, char **argv)
     char *s;
     int rc = 0;
     const char *modname = argv[0];
-	
+
+    _dico_libi18n_init();
     for (argc--, argv++; argc-- > 0; ++argv) {
 	const char *value;
 	struct dico_option *p = find_opt(opt, *argv, &value);

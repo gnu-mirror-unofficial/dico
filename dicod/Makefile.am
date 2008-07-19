@@ -63,9 +63,10 @@ LDADD=\
  ../gnu/libgnu.a\
  ../lib/libextra.a\
  ../lib/libdico.la\
+ @LIBINTL@ @LIBICONV@\
  @LIBLTDL@  
 
-INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu @LTDLINCL@
+INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu -I../gnu @LTDLINCL@
 # dicod_DEPENDENCIES=@LTDLDEPS@
 
 config-lex.c: config-gram.h

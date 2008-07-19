@@ -89,5 +89,8 @@ void xdico_tokenize_end(xdico_input_t *pin);
 int xdico_tokenize_input(xdico_input_t in, char *str,
 			 int *pargc, char ***pargv);
 
+/* appi18n.c */
+void appi18n_init(void);
+    
 #endif
     

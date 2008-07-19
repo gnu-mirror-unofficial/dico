@@ -108,7 +108,7 @@ dico_log(int lvl, int errcode, const char *fmt, ...)
 }
 
 void
-dico_die(int exitcode, int lvl, int errcode, char *fmt, ...)
+dico_die(int exitcode, int lvl, int errcode, const char *fmt, ...)
 {
     va_list ap;
     

@@ -20,6 +20,7 @@
 #include <xdico.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <libi18n.h>
 
 int
 stream_writez(dico_stream_t str, char *buf)

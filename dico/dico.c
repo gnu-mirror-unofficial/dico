@@ -46,6 +46,7 @@ main(int argc, char **argv)
 {
     int index, rc = 0;
 
+    appi18n_init();
     dico_set_program_name(argv[0]);
     parse_init_scripts();
     get_options(argc, argv, &index);

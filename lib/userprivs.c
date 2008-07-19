@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <xalloc.h>
 #include <xdico.h>
+#include <libi18n.h>
 
 /* Switch to the given UID/GID */
 int
@@ -34,6 +35,8 @@ switch_to_privs (uid_t uid, gid_t gid, dico_list_t retain_groups)
     size_t size = 1, j = 1;
     dico_iterator_t itr;
     void *gp;
+
+    _dico_libi18n_init();
     
     if (uid == 0) {
 	dico_log(L_ERR, 0, _("Refusing to run as root"));

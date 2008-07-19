@@ -1018,6 +1018,7 @@ main(int argc, char **argv)
 {
     int rc = 0;
     
+    appi18n_init();
     dico_set_program_name(argv[0]);
     set_quoting_style(NULL, escape_quoting_style);
     log_tag = dico_program_name;

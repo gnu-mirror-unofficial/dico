@@ -15,7 +15,7 @@ dnl Process this file with -*- autoconf -*- to produce a configure script.
 # You should have received a copy of the GNU General Public License
 # along with Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-AC_INIT([dico], 1.99.90, [bug-dico@gnu.org.ua])
+AC_INIT([dico], 1.99.91, [bug-dico@gnu.org.ua])
 AC_CONFIG_SRCDIR([dicod/main.c])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
@@ -69,6 +69,11 @@ AC_CHECK_FUNCS(gethostname select socket strdup strerror strtol \
 
 gl_INIT
 
+# Gettext.
+AM_GNU_GETTEXT([external], [need-formatstring-macros])
+AM_GNU_GETTEXT_VERSION([0.16])
+AC_CONFIG_LINKS(include/gettext.h:gnu/gettext.h)
+
 # Check for zlib
 AC_CHECK_HEADER(zlib.h,
                 AC_CHECK_LIB(z, inflate,
@@ -95,10 +100,6 @@ AC_DEFINE_UNQUOTED([LOG_FACILITY],$LOG_FACILITY,
 	
 # FIXME: This is not a right place for this
 AH_BOTTOM([
-/* Provide placeholders for future i18n framework */
-#define N_(s) s
-#define _(s) s
-
 #if defined (SETVBUF_REVERSED)
 # define SETVBUF(str,buf,mode,size) setvbuf(str,mode,buf,size)
 #else
@@ -370,7 +371,8 @@ AC_CONFIG_FILES([Makefile
 		 dico/Makefile
                  makedict/Makefile
 		 tests/Makefile
-		 doc/Makefile])
+		 doc/Makefile
+		 po/Makefile.in])
 
 AC_OUTPUT
 

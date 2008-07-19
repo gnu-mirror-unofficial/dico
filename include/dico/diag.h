@@ -47,7 +47,7 @@ void dico_set_log_printer(dico_log_printer_t prt);
 void dico_vlog(int lvl, int errcode, const char *fmt, va_list ap);
 void dico_log(int lvl, int errcode, const char *fmt, ...)
     DICO_PRINTFLIKE(3,4);
-void dico_die(int exitcode, int lvl, int errcode, char *fmt, ...)
+void dico_die(int exitcode, int lvl, int errcode, const char *fmt, ...)
     DICO_PRINTFLIKE(4,5);
 int dico_str_to_diag_level(const char *str);
 

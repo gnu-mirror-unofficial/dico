@@ -15,9 +15,10 @@
 # along with Dico.  If not, see <http://www.gnu.org/licenses/>.
 
 noinst_HEADERS=\
+ appi18n.h\
+ libi18n.h\
  dict.h\
- xdico.h\
- Xaw.h
+ xdico.h
 
 pkginclude_HEADERS = dico.h
 

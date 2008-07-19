@@ -32,11 +32,12 @@ LDADD=\
  ../lib/libextra.a\
  ../lib/libdico.la\
  $(READLINE_LIBS)\
+ @LIBINTL@ @LIBICONV@\
  @LIBLTDL@  
 
 AM_CPPFLAGS=-DDEFAULT_DICT_SERVER="\"$(DEFAULT_DICT_SERVER)\""
 
-INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu @LTDLINCL@
+INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu -I../gnu @LTDLINCL@
 
 SUFFIXES=.opt .c
 

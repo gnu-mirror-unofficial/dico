@@ -11,6 +11,7 @@
 .emacsrc
 .libs
 .libs/*
+ABOUT-NLS
 ChangeLog
 INSTALL
 Makefile
@@ -30,4 +31,5 @@ gnu
 libltdl
 libtool
 m4
+po
 stamp-h1

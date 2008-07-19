@@ -55,6 +55,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
+#include <appi18n.h>
 
 static size_t compare_count;
 

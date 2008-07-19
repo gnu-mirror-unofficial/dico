@@ -43,7 +43,7 @@
 #include <xdico.h>
 #include <inttostr.h>
 #include <c-strcase.h>
-#include <gettext.h>
+#include <appi18n.h>
 #define obstack_chunk_alloc malloc
 #define obstack_chunk_free free
 #include <obstack.h>

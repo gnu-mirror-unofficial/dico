@@ -33,6 +33,7 @@
 #define obstack_chunk_free free
 #include <obstack.h>
 #include <xalloc.h>
+#include <appi18n.h>
 
 #define HIRAGANA_BYTE 0x24
 #define KATAKANA_BYTE 0x25

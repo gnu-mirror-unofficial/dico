@@ -29,6 +29,7 @@
 #ifdef USE_LIBZ
 # include <zlib.h>
 #endif
+#include <appi18n.h>
 
 #define DICTORG_ENTRY_PREFIX        "00-database"
 #define DICTORG_ENTRY_PREFIX_LEN    sizeof(DICTORG_ENTRY_PREFIX)-1

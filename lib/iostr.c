@@ -18,6 +18,7 @@
 # include <config.h>
 #endif
 #include <dico.h>
+#include <libi18n.h>
 
 struct _iostr {
     dico_stream_t in;
@@ -98,8 +99,10 @@ dico_io_stream(dico_stream_t in, dico_stream_t out)
 {
     int rc;
     dico_stream_t str;
-    struct _iostr *s = malloc(sizeof(*s));
+    struct _iostr *s;
 
+    _dico_libi18n_init();
+    s = malloc(sizeof(*s));
     if (!s)
 	return NULL;
     rc = dico_stream_create(&str, DICO_STREAM_READ|DICO_STREAM_WRITE, s);

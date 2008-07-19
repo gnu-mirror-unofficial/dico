@@ -134,8 +134,10 @@ get_credentials(char *host, struct auth_cred *cred)
 	parse_netrc(filename, host, cred);
 	free(filename);
     }
-    if (cred->user && !cred->pass)
-	cred->pass = getpass(_("Password:"));
+    if (cred->user && !cred->pass) {
+	char *p = getpass(_("Password:"));
+	cred->pass = p ? xstrdup(p) : NULL;
+    }
     return !(cred->user && cred->pass);
 }
 

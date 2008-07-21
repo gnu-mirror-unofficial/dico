@@ -228,6 +228,7 @@ dict_connect(struct dict_connection **pconn, dico_url_t url)
 
     conn = xzalloc(sizeof(*conn));
     conn->str = str;
+    conn->fd = fd;
     dict_transcript(conn, transcript);
 
     if (dict_read_reply(conn)) {

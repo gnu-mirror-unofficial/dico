@@ -17,6 +17,29 @@
 #include "dico-priv.h"
 #include <sys/ioctl.h>
 
+static char *pager;
+
+static char *
+get_pager_name()
+{
+    return pager ? pager : getenv("PAGER");
+}
+
+void
+ds_pager(int argc, char **argv)
+{
+    if (argc == 1) {
+	char *p = get_pager_name();
+	if (p) {
+	    printf("%s\n", p);
+	    if (!pager)
+		printf("%s\n", _("(Pager set from environment)"));
+	} 
+    } else
+	xdico_assign_string(&pager, argv[1]);
+}
+
+
 dico_stream_t
 create_output_stream()
 {
@@ -75,7 +98,7 @@ create_pfile_stream(FILE *fp)
 dico_stream_t
 create_pager_stream(size_t nlines)
 {
-    char *pager = getenv("PAGER");
+    char *pager = get_pager_name();
     FILE *fp;
 
     if (!pager || !pager[0]

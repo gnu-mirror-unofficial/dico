@@ -52,10 +52,35 @@ get_list(struct dict_result **pres, char *cmd, char *code)
     }
     return 0;
 }
-    
+
+void
+check_disconnect()
+{
+    if (conn) {
+	int rc;
+	fd_set rd, wr, ex;
+	
+	FD_ZERO(&rd);
+	FD_SET(conn->fd, &rd);
+	FD_ZERO(&wr);
+	FD_SET(conn->fd, &wr);
+	FD_ZERO(&ex);
+	FD_SET(conn->fd, &ex);
+
+	do 
+	    rc = select(conn->fd + 1, &rd, &wr, &ex, NULL);
+	while (rc == -1 && errno == EINTR);
+	if (rc < 0 || FD_ISSET(conn->fd, &rd) || FD_ISSET(conn->fd, &rd)) {
+	    dict_conn_close(conn);
+	    conn = NULL;
+	}
+    }
+}
+
 int
 ensure_connection()
 {
+    check_disconnect();
     if (!conn) {
 	if (!dico_url.host) {
 	    script_error(_("Please specify server name or IP address"));

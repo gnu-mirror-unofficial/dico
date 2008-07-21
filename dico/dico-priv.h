@@ -95,6 +95,7 @@ struct dict_result {
 };
 
 struct dict_connection {
+    int fd;
     dico_stream_t str;    /* Communication stream */
     int transcript;       /* True if transcript is enabled */ 
     int capac;            /* Number of reported server capabilities */
@@ -163,7 +164,6 @@ int dict_lookup_url(dico_url_t url);
 int dict_word(char *word);
 int dict_lookup(struct dict_connection *conn, dico_url_t url);
 int dict_single_command(char *cmd, char *arg, char *code);
-dico_stream_t create_pager_stream(size_t nlines);
 void dict_run_single_command(struct dict_connection *conn,
 			     char *cmd, char *arg, char *code);
 void print_result(struct dict_result *res);
@@ -206,3 +206,7 @@ void ds_show_strat(int argc, char **argv);
 
 char **ds_compl_database(int argc, char **argv, int ws);
 char **ds_compl_strategy(int argc, char **argv, int ws);
+
+/* pager.c */
+void ds_pager(int argc, char **argv);
+dico_stream_t create_pager_stream(size_t nlines);

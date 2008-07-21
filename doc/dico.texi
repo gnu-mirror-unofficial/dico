@@ -3385,6 +3385,546 @@ dict://dict.org/m:sun:::
 @node Interactive Mode
 @section Interactive Mode
 @UNREVISED
+  If neither word nor @acronym{URL} nor any operation mode option were
+given on the command line, @command{dico} enters interactive mode.  In
+this mode it reads commands from the standard input, executes them and
+displays the results on the standard output.  If the standard input is
+connected to a terminal, the readline and history facilities are
+enabled (@pxref{Command Line Editing, , Command Line Editing,
+readline, GNU Readline Library}).
+
+  When in interactive mode, @command{dico} displays its prompt and
+waits for you to enter a command.  The default prompt is the name
+of the program, followed by a @samp{greater than} sign and a single
+space:
+
+@smallexample
+dico> _
+@end smallexample
+
+  The input syntax is designed so as to save you maximum amount of
+typing.
+
+  If you type any word, the default action is to look up its
+definition using the default server and database settings, for
+example:
+
+@smallexample
+@group
+dico> @kbd{man}
+From eng-swa, English-Swahili xFried/FreeDict Dictionary:
+man  <n.>
+
+    mwanamume
+@end group
+@end smallexample
+
+  To match the word, instead of defining it, prefix it with a slash
+much as you do in @command{vi}:
+
+@smallexample
+@group
+dico> /man
+From eng-swa, English-Swahili xFried/FreeDict Dictionary:
+0) ``can''
+1) ``man''
+2) ``many''
+3) ``map''
+4) ``may''
+5) ``men''
+@end group
+@end smallexample
+                        
+  Displayed is a list matches retrieved using the default strategy.
+To see a definition for a particular match, type the number shown
+at its left.  For example, to define ``men'':
+
+@smallexample
+@group
+dico> 5
+From eng-swa, English-Swahili xFried/FreeDict Dictionary:
+men <n.>
+
+    wanaume
+@end group
+@end smallexample
+
+  Define and match are two basic actions.  To discern from them, the
+rest of @command{dico} commands begins with a @dfn{command prefix}, a
+single punctuation character selected for this purpose.  The default
+command prefix is a dot, but it can be changed using the @code{prefix}
+command (@pxref{Other Commands, prefix}).
+
+  We will discuss the @command{dico} commands in the following
+subsections.
+
+@menu
+* Server Commands::
+* Database and Strategy::
+* Informational Commands::
+* History Commands::
+* Pager::
+* Program Settings::
+* Session Transcript::
+* Other Commands::
+* Command Summary::
+@end menu
+
+@node Server Commands
+@subsection Server Commands
+@cindex open
+  The @code{open} command establishes connection with a remote
+server.  It takes up to two argument, first of them specifying
+the IP or host name of the server, and optional second one
+specifying the port number to connect to.  For example:
+
+@smallexample
+dico> .open gnu.org.ua
+@end smallexample
+
+  If any or both of its arguments are absent, the @code{open} command
+reuses the value supplied with its previous invocation, or, if it is
+issued for the first time, the default values.  The default for server
+name is @samp{gnu.org.ua}.  It can be changed at configuration time,
+see @FIXME-ref{Building, DEFAULT_DICT_SERVER}.  The default port
+number is 2628.
+
+  Note that you are not required to issue this command.  If it is not
+given, @command{dico} will attempt to connect using its default
+settings before executing any command that requires a connection to
+the server.
+
+@cindex close
+  The @code{close} command closes the connection.  It does not take
+any arguments.
+  
+@node Database and Strategy
+@subsection Database and Strategy
+
+@cindex database
+  The @code{database} command changes or displays the database name which
+is used in define and match commands.  To display the database name,
+type the command without arguments:
+
+@smallexample
+@group
+dico> .database
+!
+@end group
+@end smallexample
+
+  To change the database, give its name as an argument to the command:
+
+@smallexample
+dico> .database *
+@end smallexample
+
+  Once the connection with the server is established, you may use
+command line completion facility to select the database from among
+those offered by the server.  Typing @kbd{TAB} will show you a list
+of databases that begin with the characters you typed:
+
+@smallexample
+dico> .database en@kbd{TAB}
+en-pl-naut  eng-afr     eng-deu     eng-swa
+@end smallexample
+
+  If you supply enough characters to identify a single choice,
+@kbd{TAB} will automatically select it, for example typing @kbd{TAB}
+after
+
+@smallexample
+dico> .database en-
+@end smallexample
+
+@noindent
+completes the database name to:
+
+@smallexample
+dico> .database en-pl-naut
+@end smallexample
+
+@cindex strategy
+  The @code{strategy} command displays or changes the default strategy
+name.  As with @code{database}, the strategy completion is available
+for this command.
+
+@smallexample
+@group
+dico> .strategy
+.
+dico> .strategy re
+@end group
+@end smallexample
+
+@cindex distance
+  If the remote server supports @samp{xlev} experimental capability 
+(@pxref{Extended Commands, XLEV}), you can use @code{distance} command
+to set the maximum Levenshtein distance for strategies that use
+Levenshtein algorithm.  If used without arguments, this command
+displays the distance reported by the server and the configured
+distance, e.g.:
+
+@smallexample
+@group
+dico> .distance
+Reported Levenshtein distance: 1
+No distance configured
+@end group
+@end smallexample
+
+  If used with a single numeric argument, it attemtps to set the
+distance to the supplied value.
+
+@node Informational Commands
+@subsection Informational Commands
+@cindex ls
+
+  The @code{ls} command lists available strategies (@pxref{SHOW, SHOW
+STRAT}):
+
+@smallexample
+dico> .ls
+exact ``Match words exactly''
+prefix ``Match word prefixes''
+soundex ``Match using SOUNDEX algorithm''
+all ``Match everything (experimental)''
+lev ``Match headwords within given Levenshtein distance''
+dlev ``Match headwords within given Damerau-Levenshtein distance''
+re ``POSIX 1003.2 (modern) regular expressions''
+regexp ``Old (basic) regular expressions''
+suffix ``Match word suffixes''
+rev-qu ``Reverse search in Quechua databases''
+@end smallexample
+
+@cindex .ld
+  The @code{ld} command lists available databases (@pxref{SHOW, SHOW
+DB}):
+
+@smallexample
+dico> .ld
+eng-swa ``English-Swahili xFried/FreeDict Dictionary''
+swa-eng ``Swahili-English xFried/FreeDict Dictionary''
+afr-eng ``Afrikaans-English FreeDict Dictionary''
+eng-afr ``English-Afrikaans FreeDict Dictionary''
+@end smallexample
+
+@node History Commands
+@subsection History Commands
+@flindex .dico_history
+  Each issued command is stored in a history list and assigned a
+unique @dfn{event number}.  When @command{dico} exits, it saves the
+command history in a file named @file{.dico_history} in your home
+directory.  Upon startup, it retrieves the history from this file, so
+the history is preserved between sessions.
+
+@cindex history
+  You can view the command history using the @code{history} command:
+
+@smallexample
+dico> .history
+  1) .open dict.org
+  2) entdeckung
+  3) /geschwindigkeit
+@end smallexample
+
+  A number of editing commands is provided, that allow you to refer to
+previous events from the history list and to edit them.  For example,
+to re-issue the 3rd event from the above list, type @samp{!3}.  The
+command with this index will be inserted at the @command{dico} prompt
+and you will be given a possibility to edit it.  For a detailed
+description of all history-editing commands, please refer to
+@ref{Using History Interactively, , Using History Interactively,
+history, GNU History User Manual}.
+
+@node Pager
+@subsection Pager
+
+@cindex pager
+@vindex PAGER
+  When any command produces an output that contains more lines than
+there are rows on the terminal, @command{dico} attempts to use a
+@dfn{pager program} to display it.  The name (and arguments) of
+the pager program is taken from the @command{dico} internal variable,
+or, if it is not set, from the @env{PAGER} environment variable.
+
+  The @command{dico} pager setting can be set or listed using
+@code{pager} command.  When used without arguments, it displays
+the current setting:
+
+@smallexample
+dico> .pager
+less
+(Pager set from environment)
+@end smallexample
+
+  When used with a single argument, it sets the pager:
+
+@smallexample
+dico> .pager "less -R"
+@end smallexample
+
+@node Program Settings
+@subsection Program Settings
+
+  The commands described in this subsection are designed mostly for
+use in @command{dico} initialization file (@pxref{Initialization
+File}).
+
+@cindex autologin
+  The @command{autologin} command sets the name of autologin file to
+be used for authentication.  When used without arguments, it displays
+the current setting.  @xref{Autologin}, for a detailed discussion of
+the autologin feature.
+
+@cindex quiet
+  The @command{quiet} command toggles the display of @command{dico}
+startup banner.  When started, @command{dico} prints a short list
+of information useful for beginning users: the program version and
+warranty conditions and a command to get help, e.g.:
+
+@smallexample
+dico @value{VERSION}
+Copyright (C) 2005, 2006, 2007, 2008 Sergey Poznyakoff
+License GPLv3+: GNU GPL version 3 or later
+<http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Type ? for help summary
+
+dico>
+@end smallexample
+
+ If you find this output superfluos and useless, you can suppress it
+by setting
+
+@smallexample
+quiet yes
+@end smallexample
+
+@noindent
+in your initialization file.
+
+@node Session Transcript
+@subsection Session Transcript
+@cindex transcript
+  @dfn{Session transcript} is a special mode, which displays raw
+@acronym{DICT} commands and answers as they are executed.  It is
+useful for debugging purposes.
+
+  You enable session transcript by issuing the following command:
+
+@smallexample
+dico> .transcript yes
+# @r{or}
+dico> .transcript on
+@end smallexample
+
+  Starting from then, each @acronym{DICT} transaction will be
+displayed on standard error output, for example: 
+
+@smallexample
+dico: Debug: S:220 Pirx.gnu.org.ua dicod (dico 1.99.90)
+<mime.xversion.xlev> <32004.1216639476@@Pirx.gnu.org.ua>
+dico: Debug: C:CLIENT ``dico 1.99.91''
+dico: Debug: S:250 ok
+dico: Debug: C:SHOW DATABASES
+dico: Debug: S:110 26 databases present
+...
+dico: Debug: S:.
+dico: Debug: S:250 ok
+dico: Debug: C:SHOW STRATEGIES
+dico: Debug: S:111 10 strategies present: list follows
+dico: Debug: S:exact ``Match words exactly''
+dico: Debug: S:prefix ``Match word prefixes''
+dico: Debug: S:soundex ``Match using SOUNDEX algorithm''
+...
+dico: Debug: S:.
+dico: Debug: S:250 ok
+@end smallexample
+
+In the example above, ellipsis replaces long lists of data.  As you
+see, session transcripts may produce large amount of data.
+
+  To turn the session transcript off, use the following command:
+
+@smallexample
+dico> .transcript no
+# @r{or}
+dico> .transcript off
+@end smallexample
+
+  Finally, to query the current state of session transcript, issue
+this command without arguments:
+
+@smallexample
+@group
+dico> .transcript
+transcript is on
+@end group
+@end smallexample
+
+@node Other Commands
+@subsection Other Commands
+
+@cindex prefix
+The @code{prefix} command allows you to change command prefix:
+
+@smallexample
+@group
+dico> .prefix
+Command prefix is .
+dico> .prefix @@
+dico> @@prefix
+Command prefix is @@
+@end group
+@end smallexample
+
+@cindex prompt
+  The @code{prompt} command changes the @command{dico} command line
+prompt.  For example, to change it to @samp{dico$}, followed by a single
+space, type:
+
+@smallexample
+@group
+dico> .prompt "dico$ "
+dico$ _
+@end group
+@end smallexample
+
+  Note the use of quotes to include the space character in the
+argument.
+  
+@cindex help
+  The @code{help} command displays a short command usage summary.  For
+convenience, a single question mark can be used instead of it:
+
+@smallexample
+dico> ?
+/WORD                    Match WORD.
+/                        Redisplay previous matches.
+NUMBER                   Define NUMBERth match.
+!NUMBER                  Edit NUMBERth previous command.
+
+.open [HOST [PORT]]      Connect to a DICT server.
+.close                   Close the connection.
+...
+@end smallexample
+
+@cindex version
+@cindex warranty
+  The @code{version} command displays the package name and version
+number, and the @code{warranty} command displays the copyright
+statement.
+
+@cindex quit
+  Finally, the @code{.quit} command leaves the dico shell.  Typing
+end-of-file character (@kbd{C-d}) has the same effect.
+
+@node Command Summary
+@subsection Dico Command Summary
+  For convenience, this subsection lists all available @command{dico}
+commands along with their short description and a reference to the
+part of this manual where they are described in detail.  The command
+names are given without prefix.
+
+@table @code
+@item open @var{host} @var{port}
+Connect to a @acronym{DICT} server.  Both arguments are optional.
+If any of them is absent, the value supplied with the previous
+@code{open} command is used.  If there was no previous value, the
+default is used, i.e., @samp{gnu.org.ua} for @var{host}, and 
+2628 for @var{port}.
+
+@xref{Server Commands, open}.
+
+@item close
+Close the connection.
+
+@xref{Server Commands, close}.
+
+@item autologin [@var{file}]
+Set or display autologin file name.
+
+@item database [@var{name}]
+Set or display current database name.
+
+@xref{Database and Strategy, database}.
+
+@item strategy [@var{name}]
+Set or display current strategy.
+
+@xref{Database and Strategy, strategy}.
+
+@item distance [@var{num}]
+Set or query Levenshtein distance.  This command takes effect only if
+the remote server supports @samp{xlev} experimental capability 
+(@pxref{Extended Commands, XLEV}).
+
+@xref{Database and Strategy, distance}.
+
+@item ls
+List available matching strategies.
+
+@xref{Informational Commands, ls}.
+
+@item ld
+List all accessible databases.
+
+@xref{Informational Commands, ld}.
+
+@item prefix [@var{c}]
+Set or display command prefix.
+
+@xref{Other Commands, prefix}.
+
+@item transcript [@var{bool}]
+Set or display session transcript mode.
+
+@xref{Session Transcript}.
+
+@item prompt @var{string}
+Change command line prompt.
+
+@xref{Other Commands, prompt}.
+
+@item pager @var{string}
+Change or display pager settings.
+
+@xref{Pager}
+
+@item history
+Display command history.
+
+@xref{History Commands}.
+
+@item help
+Display short command usage summary.
+
+@xref{Other Commands, help}.
+
+@item version
+Print program version.
+
+@xref{Other Commands, version}.
+
+@item warranty
+Print copyright statement.
+
+@xref{Other Commands, warranty}.
+
+@item quiet @var{bool}
+Toggle display of @command{dico} welcome banner.  This command can be
+used only in initialization file.
+
+@xref{Program Settings, quiet}.
+
+@item quit
+Quit the shell.
+
+@xref{Other Commands, quit}.
+@end table
 
 @node Initialization File
 @section Initialization File
@@ -3502,7 +4042,8 @@ Additional text for client command, instead of the default @samp{dico
 @table @option
 @item --transcript
 @itemx -t
-Enable session transcript.
+Enable session transcript.  @xref{Session Transcript}, for a
+description.
 @end table
 
 @subheading Other options

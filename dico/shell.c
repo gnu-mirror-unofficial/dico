@@ -16,13 +16,18 @@
 
 #include "dico-priv.h"
 
+int interactive;
+char *prompt;
+#define DICO_PROMPT "dico> "
+
 static void ds_prefix(int argc, char **argv);
 static void ds_help(int argc, char **argv);
 static void ds_quiet(int argc, char **argv);
+static void ds_prompt(int argc, char **argv);
 static char **no_compl(int argc, char **argv, int ws);
 #ifdef WITH_READLINE
 static void ds_history(int argc, char **argv);
-static void retrieve_history(char *str);
+static int retrieve_history(char *str);
 #endif
 
 char *helptext[][2] = {
@@ -76,6 +81,14 @@ struct funtab funtab[] = {
       N_("[BOOL]"),
       N_("Set or display session transcript mode."),
       ds_transcript, no_compl },
+    { "prompt", 2, 2,
+      N_("STRING"),
+      N_("Change command line prompt."),
+      ds_prompt, no_compl },
+    { "pager", 1, 2,
+      N_("STRING"),
+      N_("Change or display pager settings."),
+      ds_pager, no_compl },
 #ifdef WITH_READLINE
     { "history", 1, 1,
       NULL,
@@ -278,11 +291,11 @@ parse_script_file(char *fname, script_getln_fn getln, void *data)
 	p = argv[0];
 	
 #ifdef WITH_READLINE
-	if (*p == '!') {
-	    retrieve_history(p + 1);
-	    continue;
+	if (interactive) {
+	    if (retrieve_history(buf))
+		continue;
+	    add_history(buf);
 	}
-	add_history(buf);
 #endif
 	
 	switch (p[0]) {
@@ -388,8 +401,12 @@ parse_init_scripts()
 }
 
 
-int interactive;
-char *prompt = "dico> ";
+
+static void
+ds_prompt(int argc, char **argv)
+{
+    xdico_assign_string(&prompt, argv[1]);
+}
 
 #ifdef WITH_READLINE
 
@@ -505,29 +522,39 @@ static int
 pre_input (void)
 {
     rl_insert_text(pre_input_line);
+    free(pre_input_line);
     rl_pre_input_hook = NULL;
     rl_redisplay();
     return 0;
 }
 
-static void
+static int
 retrieve_history(char *str)
 {
-    char *p;
-    unsigned int n = strtoul(str, &p, 10);
-    HIST_ENTRY *ent;
+    char *out;
+    int rc;
     
-    if (*p) {
-	script_error(_("Not a number"));
-	return;
+    rc = history_expand(str, &out);
+    switch (rc)	{
+    case -1:
+	script_error("%s", out);
+	free(out);
+	return 1;
+	
+    case 0:
+	break;
+
+    case 1:
+	pre_input_line = out;
+	rl_pre_input_hook = pre_input;
+	return 1;
+	
+    case 2:
+	printf("%s\n", out);
+	free(out);
+	return 1;
     }
-    ent = history_get(n);
-    if (!ent) {
-	script_error(_("No such event"));
-	return;
-    }
-    pre_input_line = ent->line;
-    rl_pre_input_hook = pre_input;
+    return 0;
 }
 	
 
@@ -612,8 +639,11 @@ dico_shell()
 {
     struct init_script dat;
     shell_init(&dat);
-    if (interactive && !quiet_option)  
-	shell_banner();
+    if (interactive) {
+	xdico_assign_string(&prompt, DICO_PROMPT);
+	if (!quiet_option)  
+	    shell_banner();
+    }
     if (!cmdprefix)
 	cmdprefix = '.';
     parse_script_file(NULL, shell_getline, &dat);

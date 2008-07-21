@@ -177,7 +177,7 @@ Other modules may provide more matching strategies.
 @deffn Command MATCH database strategy word
 Match @var{word} in @var{database} using @var{strategy}.  As with
 @code{DEFINE}, the @var{database} can be @samp{!} or @samp{*}
-(@xref{DEFINE}, for a detailed description of these wildcars).
+(@xref{DEFINE}, for a detailed description of these wildcards).
 
 The @var{strategy} is either the name of a strategy to use, or
 a dot (@samp{.}), meaning to use default strategy.  The default

@@ -1014,8 +1014,8 @@ the name of a text file that contains these data, for @acronym{SQL}
 databases, resource is an @acronym{SQL} query, etc.  Below we will
 discuss @acronym{URLS}s and resources used by each database type.
 
-@cindex authenitcation database configuration
-@cindex authenitcation database definition
+@cindex authentication database configuration
+@cindex authentication database definition
 To summarize, the definition of an authentication database is:
 
 @smallexample
@@ -2801,7 +2801,7 @@ write the callback as follows:
       #f))))
 @end smalllisp
 
-  The list retuned by this callback will then be passed as a database
+  The list returned by this callback will then be passed as a database
 handle to another callback functions.  To facilitate access to
 particular elements of this list, it is convenient to define the
 following syntax:
@@ -3226,7 +3226,7 @@ $ dico entdeckung
 word @samp{entdeckung} using its default server name and database.  The
 default server name is read from the initialization file
 (@pxref{Initialization File}).  If it is not present, a predefined
-value specified at configuration timee (@FIXME-pxref{Building}) is
+value specified at configuration time (@FIXME-pxref{Building}) is
 used.  The default database is @samp{!}, which means ``search in all
 available databases until a match is found, and then display all
 matches in that database''. 
@@ -3583,7 +3583,7 @@ No distance configured
 @end group
 @end smallexample
 
-  If used with a single numeric argument, it attemtps to set the
+  If used with a single numeric argument, it attempts to set the
 distance to the supplied value.
 
 @node Informational Commands
@@ -3713,7 +3713,7 @@ Type ? for help summary
 dico>
 @end smallexample
 
- If you find this output superfluos and useless, you can suppress it
+ If you find this output superfluous and useless, you can suppress it
 by setting
 
 @smallexample
@@ -3956,7 +3956,7 @@ located in your home directory, and the one from the current working
 directory.  It is not an error if any or both of these files are absent.
 
   These files contain a series of @command{dico} commands, as
-described in @ref{Interactive Mode}, with the ony difference that
+described in @ref{Interactive Mode}, with the only difference that
 no command prefix is used by default.  The @samp{#} character
 introduces a comment: any characters from (and including) @samp{#} up
 to the newline character are ignored@footnote{The same holds true for
@@ -4119,7 +4119,7 @@ the @var{url}.
 @xref{urls}.
 
 @item dico [@var{options}] @var{opmode}
-  Connect to the dictionaru and query the information required by
+  Connect to the dictionary and query the information required by
 @var{opmode} option, which is one of @option{--dbs},
 @option{--strats}, @option{--serverhelp}, @option{--info}, or
 @option{--serverinfo}.  See below (@pxref{dico-opmode, Operation

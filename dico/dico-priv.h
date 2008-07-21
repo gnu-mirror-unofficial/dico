@@ -208,6 +208,7 @@ void ds_version(int argc, char **argv);
 void ds_warranty(int argc, char **argv);
 void ds_show_db(int argc, char **argv);
 void ds_show_strat(int argc, char **argv);
+void ds_show_info(int argc, char **argv);
 
 char **ds_compl_database(int argc, char **argv, int ws);
 char **ds_compl_strategy(int argc, char **argv, int ws);

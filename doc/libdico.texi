@@ -626,9 +626,6 @@ struct dico_url @{
 @deftypefn Function size_t utf8_strlen (const char *@var{str})
 @end deftypefn
 
-@deftypefn Function size_t utf8_strbytelen (const char *@var{str})
-@end deftypefn
-
 @deftp struct utf8_iterator
 @smallexample
 struct utf8_iterator @{

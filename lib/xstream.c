@@ -25,7 +25,7 @@
 int
 stream_writez(dico_stream_t str, char *buf)
 {
-    return dico_stream_write(str, buf, utf8_strbytelen(buf));
+    return dico_stream_write(str, buf, strlen(buf));
 }
 
 int

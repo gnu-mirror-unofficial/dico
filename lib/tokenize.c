@@ -135,7 +135,7 @@ xdico_tokenize_input(xdico_input_t in, char *str, int *pargc, char ***pargv)
 
     for (i = 0; i < argc; i++) {
 	in->argv[i] = in->rootptr;
-	in->rootptr += utf8_strbytelen(in->rootptr) + 1;
+	in->rootptr += strlen(in->rootptr) + 1;
     }
     in->argv[i] = NULL;
     *pargc = in->argc;

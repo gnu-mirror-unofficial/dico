@@ -3619,6 +3619,22 @@ afr-eng ``Afrikaans-English FreeDict Dictionary''
 eng-afr ``English-Afrikaans FreeDict Dictionary''
 @end smallexample
 
+@cindex info
+  The @code{info} command displays information about a database, whose
+name is given as its argument.  If used without arguments, it displays
+information about the current database.
+
+@smallexample
+dico> .info pl-en-naut
+pl-en-naut - A Polish-English dictionary of nautical terms.
+Copyright (C) 2008 Sergey Poznyakoff
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, no Front-Cover and Back-Cover Texts
+@end smallexample
+
 @node History Commands
 @subsection History Commands
 @flindex .dico_history
@@ -3673,6 +3689,8 @@ less
 @smallexample
 dico> .pager "less -R"
 @end smallexample
+
+  The argument @samp{-} (a dash) disables pager.
 
 @node Program Settings
 @subsection Program Settings
@@ -3891,6 +3909,10 @@ List available matching strategies.
 List all accessible databases.
 
 @xref{Informational Commands, ld}.
+
+@item info [@var{db}]
+Display information about database @var{db}, or the current
+database, if used without argument.
 
 @item prefix [@var{c}]
 Set or display command prefix.

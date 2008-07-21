@@ -350,6 +350,28 @@ ds_show_strat(int argc, char **argv)
 }
 
 void
+ds_show_info(int argc, char **argv)
+{
+    const char *dbname;
+    if (argc == 1) 
+	dbname = dico_url.req.database ? dico_url.req.database : "!";
+    else
+	dbname = argv[1];
+    if (strcmp(dbname, "!") == 0)
+	printf(_("Search all of the databases until a match is found,\n"
+		 "and display all matches in that database.\n"));
+    else if (strcmp(dbname, "*") == 0)
+	printf(_("Search all of the databases and display all matches."));
+    else {
+	int rc;
+	
+	if (ensure_connection())
+	    return;
+	dict_run_single_command(conn, "SHOW INFO", dbname, "112");
+    }
+}
+
+void
 ds_version(int argc, char **argv)
 {
     printf("%s\n", PACKAGE_STRING);

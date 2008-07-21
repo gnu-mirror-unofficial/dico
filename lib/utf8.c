@@ -1538,7 +1538,7 @@ utf8_strlen (const char *s)
 }
 
 size_t
-utf8_strbytelen (const char *s)
+strlen (const char *s)
 {
   size_t len = 0;
   size_t n;
@@ -1970,7 +1970,7 @@ utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char *s, size_t size)
 int
 utf8_mbstr_to_wc(const char *str, unsigned **wptr)
 {
-  size_t sc = utf8_strbytelen(str);
+  size_t sc = strlen(str);
   size_t len, i;
   unsigned *w = calloc(sizeof(w[0]), sc+1);
 

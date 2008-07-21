@@ -22,7 +22,12 @@ static char *pager;
 static char *
 get_pager_name()
 {
-    return pager ? pager : getenv("PAGER");
+    if (pager) {
+	if (strcmp(pager, "-") == 0)
+	    return NULL;
+	return pager;
+    }
+    return getenv("PAGER");
 }
 
 void

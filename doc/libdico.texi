@@ -302,7 +302,7 @@ struct dico_assoc @{
 @deftp {Function Type} filter_xcode_t
 @smallexample
 typedef int (*filter_xcode_t) (const char *, size_t,
-			       char *, size_t, size_t *, size_t, size_t *);
+                               char *, size_t, size_t *, size_t, size_t *);
 @end smallexample
 @end deftp
 
@@ -387,8 +387,8 @@ struct dico_option @{
     enum dico_opt_type type;
     void *data;
     union @{
-	long value;
-	const char **enumstr;
+        long value;
+        const char **enumstr;
     @} v;
     int (*func) (struct dico_option *, const char *);
 @};

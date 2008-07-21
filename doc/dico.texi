@@ -175,7 +175,7 @@ Dico Module Interface
 * Output::
 * Error Reporting::
 
-Dico - a client program.
+Dico --- a client program.
 
 * Single Query Mode::
 * Interactive Mode::
@@ -187,6 +187,18 @@ Single Query Mode
 
 * dico options::
 * urls::
+
+Interactive Mode
+
+* Server Commands::
+* Database and Strategy::
+* Informational Commands::
+* History Commands::
+* Pager::
+* Program Settings::
+* Session Transcript::
+* Other Commands::
+* Command Summary::
 
 Dictionary Server Protocol
 
@@ -3384,7 +3396,6 @@ dict://dict.org/m:sun:::
 
 @node Interactive Mode
 @section Interactive Mode
-@UNREVISED
   If neither word nor @acronym{URL} nor any operation mode option were
 given on the command line, @command{dico} enters interactive mode.  In
 this mode it reads commands from the standard input, executes them and
@@ -3474,8 +3485,8 @@ subsections.
 @subsection Server Commands
 @cindex open
   The @code{open} command establishes connection with a remote
-server.  It takes up to two argument, first of them specifying
-the IP or host name of the server, and optional second one
+server.  It takes up to two arguments, first of them specifying
+the IP or host name of the server, and the optional second one
 specifying the port number to connect to.  For example:
 
 @smallexample
@@ -3530,7 +3541,7 @@ en-pl-naut  eng-afr     eng-deu     eng-swa
 @end smallexample
 
   If you supply enough characters to identify a single choice,
-@kbd{TAB} will automatically select it, for example typing @kbd{TAB}
+@kbd{TAB} will automatically select it, for example typing it
 after
 
 @smallexample
@@ -3553,7 +3564,7 @@ for this command.
 @group
 dico> .strategy
 .
-dico> .strategy re
+dico> .strategy dlev
 @end group
 @end smallexample
 
@@ -3672,10 +3683,17 @@ use in @command{dico} initialization file (@pxref{Initialization
 File}).
 
 @cindex autologin
+@cindex tilde expansion
   The @command{autologin} command sets the name of autologin file to
 be used for authentication.  When used without arguments, it displays
-the current setting.  @xref{Autologin}, for a detailed discussion of
-the autologin feature.
+the current setting.  The argument to @command{autologin} command is
+subject to @dfn{tilde expansion}, i.e. if it begins with @samp{~/},
+this prefix is replaced by the name of the current user home
+directory, followed by @samp{/}.  Similarly, a prefix
+@samp{~@var{login}/} is replaced by the home directory for user
+@var{login}, followed by a slash.
+
+@xref{Autologin}, for a detailed discussion of the autologin feature.
 
 @cindex quiet
   The @command{quiet} command toggles the display of @command{dico}
@@ -3725,6 +3743,7 @@ dico> .transcript on
 displayed on standard error output, for example: 
 
 @smallexample
+dico> .open
 dico: Debug: S:220 Pirx.gnu.org.ua dicod (dico 1.99.90)
 <mime.xversion.xlev> <32004.1216639476@@Pirx.gnu.org.ua>
 dico: Debug: C:CLIENT ``dico 1.99.91''
@@ -3745,7 +3764,7 @@ dico: Debug: S:250 ok
 @end smallexample
 
 In the example above, ellipsis replaces long lists of data.  As you
-see, session transcripts may produce large amount of data.
+see, session transcripts may produce large amount of output.
 
   To turn the session transcript off, use the following command:
 
@@ -3819,7 +3838,7 @@ number, and the @code{warranty} command displays the copyright
 statement.
 
 @cindex quit
-  Finally, the @code{.quit} command leaves the dico shell.  Typing
+  Finally, the @code{quit} command leaves the dico shell.  Typing
 end-of-file character (@kbd{C-d}) has the same effect.
 
 @node Command Summary
@@ -3892,7 +3911,7 @@ Change command line prompt.
 @item pager @var{string}
 Change or display pager settings.
 
-@xref{Pager}
+@xref{Pager}.
 
 @item history
 Display command history.
@@ -3928,11 +3947,51 @@ Quit the shell.
 
 @node Initialization File
 @section Initialization File
-@UNREVISED
+@cindex init file
+@cindex initialization file
+@findex .dico
+  When you start @command{dico}, it automatically executes commands from its
+@dfn{initialization files} (or @dfn{init files}, for short), normally
+called @file{.dico}.  Two init files are read: the one
+located in your home directory, and the one from the current working
+directory.  It is not an error if any or both of these files are absent.
+
+  These files contain a series of @command{dico} commands, as
+described in @ref{Interactive Mode}, with the ony difference that
+no command prefix is used by default.  The @samp{#} character
+introduces a comment: any characters from (and including) @samp{#} up
+to the newline character are ignored@footnote{The same holds true for
+interactive mode as well, but you will hardly need comments on a
+terminal.}.
+
+  Init files are useful to change the defaults for your @command{dico}
+invocation.  Consider this init file, for example:
+
+@smallexample
+# An example init file for @command{dico}
+
+# Turn welcome banner off
+quiet yes
+# Set the location of autologin file
+autologin ~/.dicologin
+# Use this server by default
+open dict.org
+# Search in all databases
+database *
+# Finally, set the custom command prefix
+prefix :
+@end smallexample
+
+Notice, that if you wish to change your command prefix, it is
+preferable to do it as a last command in your init file, as shown in
+this example.  
 
 @node Autologin
 @section Autologin
 @UNREVISED
+  After connecting to a remote server, @command{dico} checks if it
+announces @samp{auth} capability.  If so, it attempts to authenticate
+to the remote server.
 
 @node Dico invocation
 @section Dico invocation
@@ -4020,7 +4079,7 @@ interactive shell.
 Disable authentication.
 
 @item --user=@var{name}
-@item -u
+@item -u @var{name}
 Set user name for authentication.
 
 @item --key=@var{string}

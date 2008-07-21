@@ -159,6 +159,9 @@ int dict_define(struct dict_connection *conn, char *database, char *word);
 int dict_match(struct dict_connection *conn, char *database, char *strategy,
 	       char *word);
 
+char *get_homedir(void);
+int ds_tilde_expand(const char *str, char **output);
+
 /* lookup.c */
 int dict_lookup_url(dico_url_t url);
 int dict_word(char *word);
@@ -169,8 +172,6 @@ void dict_run_single_command(struct dict_connection *conn,
 void print_result(struct dict_result *res);
 void print_match_result(struct dict_result *res);
 void print_reply(struct dict_connection *conn);
-
-char *get_homedir(void);
 
 /* netrc.c */
 char *skipws(char *buf);

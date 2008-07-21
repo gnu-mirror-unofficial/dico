@@ -103,6 +103,42 @@ get_homedir()
     return homedir;
 }
 
+int
+ds_tilde_expand(const char *str, char **output)
+{
+    char *file;
+    char *dir;
+    
+    if (str[0] != '~')
+	return 0;
+    if (str[1] == '/') {
+	dir = get_homedir();
+	str += 2;
+    } else {
+	char *p;
+	size_t len;
+	char *name;
+	struct passwd *pw;
+
+	str++;
+	p = strchr(str, '/');
+	if (!p)
+	    return 0;
+	len = p - str;
+	name = xmalloc(len + 1);
+	memcpy(name, str, len);
+	name[len] = 0;
+	pw = getpwnam(name);
+	free(name);
+	if (pw) {
+	    dir = pw->pw_dir;
+	    str = p + 1;
+	}
+    }
+    *output = dico_full_file_name(dir, str);
+    return 1;
+}
+    
 static void
 auth_cred_dup(struct auth_cred *dst, const struct auth_cred *src)
 {

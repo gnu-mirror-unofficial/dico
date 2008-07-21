@@ -129,7 +129,7 @@ ds_close(int argc, char **argv)
     else 
 	ds_silent_close();
 }
-	
+
 void
 ds_autologin(int argc, char **argv)
 {
@@ -138,8 +138,14 @@ ds_autologin(int argc, char **argv)
 	    printf("%s\n", _("No autologin file."));
 	else
 	    printf("%s\n", autologin_file);
-    } else 
-	xdico_assign_string(&autologin_file, argv[1]);
+    } else {
+	char *str;
+	if (ds_tilde_expand(argv[1], &str)) {
+	    free(autologin_file);
+	    autologin_file = str;
+	} else
+	    xdico_assign_string(&autologin_file, argv[1]);
+    }
 }
 
 void

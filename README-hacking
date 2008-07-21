@@ -56,7 +56,7 @@ To debug dictd, use the following command:
 
 For debugging from Emacs run:
 
-	M-x gdb RET gud-wrapper radiusd RET
+	M-x gdb RET gud-wrapper dictd RET
 
 (the script gud-wrapper is located in the ./utils subdirectory)
 

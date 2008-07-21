@@ -269,20 +269,20 @@ if test "$status_guile" = yes; then
 fi
 
 #
-AC_ARG_WITH(netrc-file,
-            AC_HELP_STRING([--with-netrc-file@<:@=NAME@:>@],
-	                   [Use the autologin file (default NAME is .netrc)]),
+AC_ARG_WITH(autologin-file,
+            AC_HELP_STRING([--with-autologin-file@<:@=NAME@:>@],
+	                   [Use the autologin file (default NAME is .dicologin)]),
             [case $withval in
-	     yes) DEFAULT_NETRC_NAME=".netrc";;
-	     no)  DEFAULT_NETRC_NAME=;;
-	     *)   DEFAULT_NETRC_NAME=$withval;;
+	     yes) DEFAULT_AUTOLOGIN_FILE=".dicologin";;
+	     no)  DEFAULT_AUTOLOGIN_FILE=;;
+	     *)   DEFAULT_AUTOLOGIN_FILE=$withval;;
 	     esac],
-	    [DEFAULT_NETRC_NAME=])
-if test -n "$DEFAULT_NETRC_NAME" ; then
-   AC_DEFINE_UNQUOTED(DEFAULT_NETRC_NAME, "$DEFAULT_NETRC_NAME",
+	    [DEFAULT_AUTOLOGIN_FILE=".dicologin"])
+if test -n "$DEFAULT_AUTOLOGIN_FILE" ; then
+   AC_DEFINE_UNQUOTED(DEFAULT_AUTOLOGIN_FILE, "$DEFAULT_AUTOLOGIN_FILE",
                       [Define to the name of a netrc-style autologin file])
 else
-   AC_DEFINE_UNQUOTED(DEFAULT_NETRC_NAME, NULL,
+   AC_DEFINE_UNQUOTED(DEFAULT_AUTOLOGIN_FILE, NULL,
                       [Define to the name of a netrc-style autologin file])
 fi
 

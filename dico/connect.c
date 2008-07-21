@@ -106,7 +106,6 @@ get_homedir()
 int
 ds_tilde_expand(const char *str, char **output)
 {
-    char *file;
     char *dir;
     
     if (str[0] != '~')
@@ -153,28 +152,42 @@ auth_cred_free(struct auth_cred *cred)
     free(cred->pass);
 }
 
+#define GETCRED_OK     0
+#define GETCRED_FAIL   1
+#define GETCRED_NOAUTH 2
+
 static int
 get_credentials(char *host, struct auth_cred *cred)
 {
     auth_cred_dup(cred, &default_cred);
     if (default_cred.user && default_cred.pass)
-	return 0;
-    else if (autologin_file) {
-	if (access(autologin_file, F_OK))
-	    dico_log(L_WARN, 0, _("File %s does not exist"), autologin_file);
-	else
-	    parse_netrc(autologin_file, host, cred);
-    } else if (DEFAULT_NETRC_NAME) {
-	char *home = get_homedir();
-	char *filename = dico_full_file_name(home, DEFAULT_NETRC_NAME);
-	parse_netrc(filename, host, cred);
-	free(filename);
+	return GETCRED_OK;
+    else {
+	int flags = 0;
+	
+	if (autologin_file) {
+	    if (access(autologin_file, F_OK))
+		dico_log(L_WARN, 0, _("File %s does not exist"),
+			 autologin_file);
+	    else
+		parse_autologin(autologin_file, host, cred, &flags);
+	}
+	
+	if (!flags && DEFAULT_AUTOLOGIN_FILE) {
+	    char *home = get_homedir();
+	    char *filename = dico_full_file_name(home,
+						 DEFAULT_AUTOLOGIN_FILE);
+	    parse_autologin(filename, host, cred, &flags);
+	    free(filename);
+	}
+	if (flags & AUTOLOGIN_NOAUTH)
+	    return GETCRED_NOAUTH;
     }
     if (cred->user && !cred->pass) {
 	char *p = getpass(_("Password:"));
 	cred->pass = p ? xstrdup(p) : NULL;
     }
-    return !(cred->user && cred->pass);
+    return (cred->user && cred->pass) ? GETCRED_OK : GETCRED_FAIL;
 }
 
 void
@@ -286,17 +299,26 @@ dict_connect(struct dict_connection **pconn, dico_url_t url)
 
     if (!noauth_option && dict_capa(conn, "auth")) {
 	struct auth_cred cred;
-	if (get_credentials(url->host, &cred)) {
-	    dico_log(L_WARN, 0,
-		     _("Not enough credentials for authentication"));
-	} else {
-	    int rc = dict_auth(conn, &cred);
+	int rc;
+	
+	switch (get_credentials(url->host, &cred)) {
+	case GETCRED_OK:
+	    rc = dict_auth(conn, &cred);
 	    auth_cred_free(&cred);
 	    if (rc) {
 		dico_log(L_ERR, 0, _("Authentication failed"));
 		dict_conn_close(conn);
 		return 1;
 	    }
+	    break;
+
+	case GETCRED_FAIL:
+	    dico_log(L_WARN, 0,
+		     _("Not enough credentials for authentication"));
+	    break;
+
+	case GETCRED_NOAUTH:
+	    break;
 	}
     }
 

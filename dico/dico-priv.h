@@ -175,7 +175,11 @@ void print_reply(struct dict_connection *conn);
 
 /* netrc.c */
 char *skipws(char *buf);
-int parse_netrc (const char *filename, char *host, struct auth_cred *pcred);
+#define AUTOLOGIN_USERNAME 0x1
+#define AUTOLOGIN_PASSWORD 0x2
+#define AUTOLOGIN_NOAUTH   0x4
+int parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
+		    int *pflags);
 
 /* shell.c */
 struct funtab *find_funtab(const char *name);

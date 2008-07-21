@@ -77,9 +77,10 @@ hostcmp(const char *a, const char *b)
     return 1;
 }
 
-/* Parse traditional .netrc file and set up user and key accordingly. */
+/* Parse netrc-like autologin file and set up user and key accordingly. */
 int
-parse_netrc(const char *filename, char *host, struct auth_cred *pcred)
+parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
+		int *pflags)
 {
     FILE *fp;
     char *buf = NULL;
@@ -88,6 +89,7 @@ parse_netrc(const char *filename, char *host, struct auth_cred *pcred)
     char **def_argv;
     char **p_argv = NULL;
     int line = 0;
+    int flags = 0;
 
     fp = fopen (filename, "r");
     if (!fp) {
@@ -152,18 +154,26 @@ parse_netrc(const char *filename, char *host, struct auth_cred *pcred)
 	VDETAIL(1, (_("No matching line found\n")));
     else {
 	while (*p_argv)	{
-	    if (!p_argv[1]) {
-		dico_log(L_ERR, 0,
-			 _("%s:%d: incomplete sentence"), filename, line);
-		break;
-	    }
-	    if (strcmp(*p_argv, "login") == 0) 
+	    if (strcmp(*p_argv, "login") == 0) { 
 		pcred->user = xstrdup(p_argv[1]);
-	    else if (strcmp(*p_argv, "password") == 0)
+		p_argv += 2;
+		flags |= AUTOLOGIN_USERNAME;
+	    } else if (strcmp(*p_argv, "password") == 0) {
 		pcred->pass = xstrdup(p_argv[1]);
-	    p_argv += 2;
+		p_argv += 2;
+		flags |= AUTOLOGIN_PASSWORD;
+	    } else if (strcmp(*p_argv, "noauth") == 0) {
+		flags |= AUTOLOGIN_NOAUTH;
+		p_argv++;
+	    } else {
+		dico_log(L_ERR, 0,
+			 _("%s:%d: unknown keyword"), filename, line);
+		p_argv++;
+	    }
 	}
 	dico_argcv_free(def_argc, def_argv);
     }
+    if (pflags)
+	*pflags = flags;
     return 0;
 }

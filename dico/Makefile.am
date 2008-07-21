@@ -16,13 +16,13 @@
 
 bin_PROGRAMS = dico
 dico_SOURCES = \
+ autologin.c\
  cmdline.c\
  connect.c\
  dico-priv.h\
  dico.c\
  func.c\
  lookup.c\
- netrc.c\
  pager.c\
  shell.c
 

@@ -3213,7 +3213,6 @@ results on the screen.
 
 @node Single Query Mode
 @section Single Query Mode
-@UNREVISED
 @cindex single query mode
 
   The simplest way to use @command{dico} utility is to invoke it with
@@ -3965,7 +3964,7 @@ interactive mode as well, but you will hardly need comments on a
 terminal.}.
 
   Init files are useful to change the defaults for your @command{dico}
-invocation.  Consider this init file, for example:
+invocation.  Consider, for example, this init file:
 
 @smallexample
 # An example init file for @command{dico}
@@ -3988,21 +3987,155 @@ this example.
 
 @node Autologin
 @section Autologin
-@UNREVISED
+@cindex autologin feature
   After connecting to a remote server, @command{dico} checks if it
-announces @samp{auth} capability.  If so, it attempts to authenticate
-to the remote server.
+announces @samp{auth} capability, and if so, it attempts to authenticate
+to the remote server.  To do so @command{dico} needs two parameters:
+user name and password.  These parameters can either be supplied using
+different sources:
+
+@enumerate 1
+@item
+Command line options @option{--user} and @option{--password}.
+
+@item
+An @acronym{URL} given as a command line argument (@pxref{urls,
+user}).
+
+@item
+Autologin files.
+@end enumerate
+
+  These three sources are consulted in that order, i.e., a user name
+supplied with @option{--user} command line option takes precedence
+over the one found in an @acronym{URL} and over any names supplied by
+autologin files.
+
+  If, after consulting the above data source, the user name is
+established, while the password is not, the resulting action
+depends on whether the standard input is connected to a terminal.
+If it is, @command{dictd} will ask the user to supply a password.
+If it is not, authentication is aborted and connection with the server
+is closed.
+
+@findex .dicologin
+@cindex autologin file
+  An @dfn{autologin file} is a plaintext file that contains
+authentication information for various @acronym{DICT} servers.  At
+most two autologin files are consulted: first the session-specific
+file, if it is supplied by @command{autologin} command (@pxref{Program
+Settings, autologin}) or by the @option{--autologin} command line
+option, next the default file @file{.dicologin} in the user's home
+directory.  The default autologin file is examined only if 
+no matching record was found in the session-specific one.
+
+  The autologin file format is similar to that of @file{.netrc} file
+used by @command{ftp} utility.
+
+  Comments are introduced by a pound sign.  Anything starting from
+@samp{#} up to the end of physical line is ignored.
+
+  Empty lines and comments are ignored.
+
+  Each non-empty line consists of words, separated by any amount of
+white space.  It must begin with one of the following statements:
+
+@table @code
+@kwindex machine, autologin keyword
+@item machine @var{name}
+  This entry contains parameters for authenticating on machine
+@var{name}.
+
+@kwindex default, autologin keyword
+@item default
+  This entry contains parameters for authenticating on any machine,
+except those explicitly listed in @code{machine} statements.  There
+can be at most one @code{default} statement in autologin file.  Its
+exact location does not matter, it will always be matched after all
+explicit @code{machine} statements.
+@end table
+
+  During the lookup, @command{dico} searches the autologin file for a
+@code{machine} statement whose @var{name} matches the remote server
+name as given by @option{--host} command line option, host part of an
+@acronym{URL} (@pxref{urls}), or an argument to the @code{open}
+command (@pxref{Server Commands, open}).  If it reaches the end of
+file without having found such an entry, it uses the @code{default}
+value, if available.
+
+  Once a matching entry is found, its subsequent tokens are analyzed.
+The following tokens are recognized:
+
+@table @code
+@kwindex login, autologin keyword
+@item login @var{name}
+Supply user name for this server.
+
+@kwindex password, autologin keyword
+@item password @var{string}
+Supply a password.
+
+@kwindex noauth, autologin keyword
+@item noauth
+Do not perform authentication on this machine.
+@end table
+
+  For example, the following autologin entry supplies both
+authentication parameters for machine @samp{dict-a.net} and supplies
+only a user name for the rest of machines:
+
+@smallexample
+@group
+machine a.net user smith password guessme
+default user nobody
+@end group
+@end smallexample
+
+  The authentication mechanism is suppressed if the @command{--noauth}
+option has been given in the command line, or a matching entry was
+found in one of the autologin files, which contained the @code{noauth}
+keyword. 
 
 @node Dico invocation
 @section Dico invocation
-@UNREVISED
 
-@FIXME{Provide cross-references}.
+  This section contains a short summary of @command{dico} command line
+options.
+
+@subheading Command Line
+  The following table summarizes the four existing ways of
+@command{dico} invocation:
+  
+@table @command
+@item dico [@var{options}] @var{word}
+  Connect to the dictionary and define or match a @var{word}.
+
+@xref{dico options}.
+
+@item dico [@var{options}] @var{url}
+  Connect to the dictionary and define or match a word, supplied in
+the @var{url}.
+
+@xref{urls}.
+
+@item dico [@var{options}] @var{opmode}
+  Connect to the dictionaru and query the information required by
+@var{opmode} option, which is one of @option{--dbs},
+@option{--strats}, @option{--serverhelp}, @option{--info}, or
+@option{--serverinfo}.  See below (@pxref{dico-opmode, Operation
+modes}) for a description. 
+  
+@item dico [@var{options}]
+Start interactive shell.  @pxref{Interactive Mode}.
+@end table
+
 @subheading Server selection options:
 
 @table @option
 @item --host=@var{server}
 Connect to this server.
+
+@xref{dico options, --host}.
 
 @item --port=@var{port}
 @itemx -p @var{port}
@@ -4017,16 +4150,20 @@ one of the databases offered by the server (as returned by
 @option{--dbs} option), or one of the predefined database names:
 @samp{!} or @samp{*}.
 
+@xref{dico options, --database}.
+
 @item --source=@var{addr}
 Set source address for @acronym{TCP} connections.
 @end table
 
-@subheading Operation modes
+@subheading Operation modifiers
 
 @table @option
 @item --match
 @itemx -m
 Match instead of define.
+
+@xref{dico options,--match}.
 
 @item --strategy=@var{name}
 @itemx -s @var{name}
@@ -4037,6 +4174,8 @@ server-dependent default strategy.
 
 This option implies @option{--match}.
 
+@xref{dico options,--strategy}.
+
 @item --levdist=@var{n}
 @itemx --levenshtein-distance=@var{n}
 Sets maximum Levenshtein distance.  Allowed values of @var{n} are
@@ -4044,14 +4183,32 @@ between 1 and 9 inclusively.  This option has effect only if the
 remote server supports @samp{xlev} extension (@pxref{Extended
 Commands, XLEV}). 
 
+@xref{dico options,--levdist}.
+
+@item --quiet
+@itemx -q
+Do not print the normal @command{dico} welcome banner when entering
+interactive shell.
+
+@xref{Program Settings, quiet}.
+@end table
+
+@anchor{dico-opmode}
+@subheading Operation modes
+
+@table @option
 @item --dbs
 @itemx -D
 Show available databases.
+
+@xref{dico options, --dbs}.
 
 @item --strats
 @itemx --strategies
 @itemx -S
 Show available search strategies.
+
+@xref{dico options, --strats}.
 
 @item --serverhelp
 @itemx -H
@@ -4065,10 +4222,6 @@ Show information about database @var{dbname}.
 @itemx -I
 Show information about the server.
 
-@item --quiet
-@itemx -q
-Do not print the normal @command{dico} welcome banner when entering
-interactive shell.
 @end table
 
 @subheading Authentication
@@ -4078,17 +4231,25 @@ interactive shell.
 @itemx -a
 Disable authentication.
 
+@xref{Autologin}.
+
 @item --user=@var{name}
 @item -u @var{name}
 Set user name for authentication.
+
+@xref{Autologin}.
 
 @item --key=@var{string}
 @itemx -k @var{string}
 @itemx --password=@var{string}
 Set shared secret for authentication.
 
+@xref{Autologin}.
+
 @item --autologin=@var{name}
 Set the name of autologin file to use.
+
+@xref{Autologin}.
 
 @item --client=@var{string}
 @itemx -c @var{string}

@@ -20,12 +20,19 @@ static void ds_prefix(int argc, char **argv);
 static void ds_help(int argc, char **argv);
 static void ds_quiet(int argc, char **argv);
 static char **no_compl(int argc, char **argv, int ws);
+#ifdef WITH_READLINE
+static void ds_history(int argc, char **argv);
+static void retrieve_history(char *str);
+#endif
 
 char *helptext[][2] = {
     { N_("WORD"), N_("Define WORD.") },
     { N_("/WORD"), N_("Match WORD.") },
     { "/", N_("Redisplay previous matches.") },
     { N_("NUMBER"), N_("Define NUMBERth match.") },
+#ifdef WITH_READLINE
+    { "!NUMBER", N_("Edit NUMBERth previous command.") },
+#endif
 };
 
 struct funtab funtab[] = {
@@ -69,6 +76,12 @@ struct funtab funtab[] = {
       N_("[BOOL]"),
       N_("Set or display session transcript mode."),
       ds_transcript, no_compl },
+#ifdef WITH_READLINE
+    { "history", 1, 1,
+      NULL,
+      N_("Display command history."),
+      ds_history, no_compl },
+#endif
     { "help", 1, 1, 
       NULL,
       N_("Display this help text."),
@@ -263,6 +276,15 @@ parse_script_file(char *fname, script_getln_fn getln, void *data)
 	    continue;
 
 	p = argv[0];
+	
+#ifdef WITH_READLINE
+	if (*p == '!') {
+	    retrieve_history(p + 1);
+	    continue;
+	}
+	add_history(buf);
+#endif
+	
 	switch (p[0]) {
 	case '/':
 	    xargv[0] = "match";
@@ -461,6 +483,54 @@ get_history_file_name()
   }
   return filename;
 }
+
+static void
+ds_history(int argc, char **argv)
+{
+    dico_stream_t str;
+    HIST_ENTRY **hlist;
+    int i;
+
+    str = create_pager_stream(history_length);
+    hlist = history_list();
+    for (i = 0; i < history_length; i++) 
+	stream_printf(str, "%4d) %s\n", i + 1, hlist[i]->line);
+    dico_stream_close(str);
+    dico_stream_destroy(&str);
+}
+
+static char *pre_input_line;
+
+static int
+pre_input (void)
+{
+    rl_insert_text(pre_input_line);
+    rl_pre_input_hook = NULL;
+    rl_redisplay();
+    return 0;
+}
+
+static void
+retrieve_history(char *str)
+{
+    char *p;
+    unsigned int n = strtoul(str, &p, 10);
+    HIST_ENTRY *ent;
+    
+    if (*p) {
+	script_error(_("Not a number"));
+	return;
+    }
+    ent = history_get(n);
+    if (!ent) {
+	script_error(_("No such event"));
+	return;
+    }
+    pre_input_line = ent->line;
+    rl_pre_input_hook = pre_input;
+}
+	
+
 #endif
 
 char **
@@ -521,7 +591,6 @@ shell_getline(void *data, char **buf)
 	if (!p)
 	    return 0;
 	*buf = p;
-	add_history(p);
 	return 1;
 #else
 	fprintf(stdout, "%s", prompt);

@@ -115,6 +115,8 @@ struct dict_connection {
 struct auth_cred {
     char *user;
     char *pass;
+    int sasl;
+    dico_list_t mech;
 };
 
 struct funtab {
@@ -178,6 +180,7 @@ char *skipws(char *buf);
 #define AUTOLOGIN_USERNAME 0x1
 #define AUTOLOGIN_PASSWORD 0x2
 #define AUTOLOGIN_NOAUTH   0x4
+#define AUTOLOGIN_MECH     0x8
 int parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
 		    int *pflags);
 

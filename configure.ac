@@ -291,15 +291,15 @@ AC_ARG_WITH([readline],
                            [do not use readline]),
             [
 case "${withval}" in
-  yes) usereadline=yes ;;
-  no)  usereadline=no ;;
+  yes) status_readline=yes ;;
+  no)  status_readline=no ;;
   *)   AC_MSG_ERROR(bad value ${withval} for --without-readline) ;;
-esac],[usereadline=yes])
+esac],[status_readline=yes])
 
 # Test for GNU Readline
 AC_SUBST(READLINE_LIBS)
 
-if test "$usereadline" != "no"; then
+if test "$status_readline" != "no"; then
   
   dnl FIXME This should only link in the curses libraries if it's
   dnl really needed!
@@ -324,12 +324,12 @@ if test "$usereadline" != "no"; then
     LIBS="$LIBS $READLINE_LIBS"
     AC_CHECK_FUNCS(rl_completion_matches)
     LIBS=$saved_LIBS
-    usereadline="yes"
+    status_readline="yes"
   else
-    if test "$usereadline" = "yes"; then
+    if test "$status_readline" = "yes"; then
       AC_MSG_WARN(readline requested but does not seem to be installed)
     fi
-    usereadline = "no"
+    status_readline = "no"
   fi
 fi
 
@@ -338,6 +338,12 @@ AH_BOTTOM([
 #ifndef HAVE_RL_COMPLETION_MATCHES
 # define rl_completion_matches completion_matches
 #endif])
+
+# GNU SASL
+status_gsasl=no
+MU_CHECK_GSASL(0.2.5, [
+    AC_DEFINE(WITH_GSASL,1,[Define if GNU SASL is present])
+    status_gsasl=yes])
 
 # Doc hints.
 # Select a rendition level:
@@ -356,6 +362,33 @@ case `echo $VERSION|sed  's/[[^.]]//g'` in
 *)     RENDITION=PROOF;;
 esac
 
+AC_CONFIG_COMMANDS([status],[
+cat <<EOT
+
+*******************************************************************
+Dico configured with the following settings:
+
+Guile ........................... $status_guile
+GSASL ........................... $status_gsasl
+Readline ........................ $status_readline
+Preprocessor .................... $dicopp
+
+Default server .................. $defserver
+Autologin file .................. $autologin_file
+*******************************************************************
+EOT
+],
+[status_guile=$status_guile
+status_gsasl=$status_gsasl
+status_readline=$status_readline
+if test $use_ext_pp = no; then
+  dicopp=no
+else
+  dicopp="$DEFAULT_PREPROCESSOR"
+fi
+defserver="$DEFAULT_DICT_SERVER"
+autologin_file="$DEFAULT_AUTOLOGIN_FILE"
+])
 	
 AC_CONFIG_FILES([Makefile
                  include/Makefile

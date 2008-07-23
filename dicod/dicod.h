@@ -279,12 +279,15 @@ typedef struct dicod_database {
     char *command;            /* Handler command line (for diagnostics) */
 } dicod_database_t;
 
+/* dicod.c */
 void dicod_server(int argc, char **argv);
 int dicod_loop(dico_stream_t stream);
 int dicod_inetd(void);
 void dicod_init_strategies(void);
 void dicod_server_init(void);
 void dicod_server_cleanup(void);
+int get_input_line(dico_stream_t str, char **buf, size_t *size,
+		   size_t *rdbytes);
 
 dicod_database_t *find_database(const char *name);
 void database_remove_dependent(dicod_module_instance_t *inst);
@@ -440,4 +443,7 @@ char *query_ident_name(struct sockaddr_in *srv_addr,
 int alias_install(const char *kw, int argc, char **argv, dicod_locus_t *ploc);
 int alias_expand(int argc, char **argv, int *pargc, char ***pargv);
 
+/* gsasl.c */
+extern dico_list_t sasl_disabled_mech;
+void register_sasl(void);
 

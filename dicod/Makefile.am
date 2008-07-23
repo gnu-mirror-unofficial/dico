@@ -28,6 +28,7 @@ dicod_SOURCES=\
  config-lex.l\
  dbtext.c\
  dicod.c\
+ gsasl.c\
  ident.c\
  lev.c\
  loader.c\
@@ -64,6 +65,7 @@ LDADD=\
  ../lib/libextra.a\
  ../lib/libdico.la\
  @LIBINTL@ @LIBICONV@\
+ @GSASL_LIBS@\
  @LIBLTDL@  
 
 INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu -I../gnu @LTDLINCL@

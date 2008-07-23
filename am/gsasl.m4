@@ -1,5 +1,5 @@
 dnl This file is part of GNU mailutils.
-dnl Copyright (C) 2003, 2007 Free Software Foundation, Inc.
+dnl Copyright (C) 2003, 2007, 2008 Free Software Foundation, Inc.
 dnl
 dnl GNU Mailutils is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ AC_DEFUN([MU_CHECK_GSASL],
       yes|no) wantgsasl=$withval;;
       *) AC_MSG_ERROR([bad value for --with-gsasl: $withval]);;
       esac],
-     [wantgsasl=no])
+     [wantgsasl=yes])
 
    if test $wantgsasl = yes; then
      AC_CHECK_HEADER(gsasl.h,
@@ -59,7 +59,7 @@ main()
    fi
   fi])
  if test $mu_cv_lib_gsasl != no; then
-   GSASL_LIBS=$mu_cv_lib_gsasl
+   AC_SUBST(GSASL_LIBS,$mu_cv_lib_gsasl)
    ifelse([$2],,,[$2])
  fi])
  

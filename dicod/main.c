@@ -775,6 +775,9 @@ struct config_keyword keywords[] = {
       N_("Define user database for authentication."),
       cfg_section, &user_db_cfg, 0, user_db_config, NULL,
       kwd_user_db },
+    { "sasl-disable-mechanism", N_("mech: list"),
+      N_("Disable SASL mechanisms listed in <mech>."),
+      cfg_string|CFG_LIST, &sasl_disabled_mech, },
     { "alias", N_("name: string"), N_("Define a command alias."),
       cfg_string, NULL, 0, alias_cb, },
     { NULL }
@@ -1044,6 +1047,7 @@ main(int argc, char **argv)
     config_set_keywords(keywords);
     if (config_parse(config_file))
 	exit(1);
+    register_sasl();
     if (dicod_capa_flush())
 	exit(1);
     compile_access_log();

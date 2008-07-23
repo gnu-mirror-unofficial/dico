@@ -239,7 +239,7 @@ parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
 		    pcred->mech = xdico_list_create();
 		    flags |= AUTOLOGIN_MECH;
 		}
-		if (dico_argcv_get(buf, ",", NULL, &c, &v)) {
+		if (dico_argcv_get(p_argv[1], ",", NULL, &c, &v)) {
 		    dico_log(L_ERR, 0,
 			     _("%s:%d: not enough memory"),
 			     filename, line);

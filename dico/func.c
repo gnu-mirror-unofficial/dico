@@ -363,8 +363,6 @@ ds_show_info(int argc, char **argv)
     else if (strcmp(dbname, "*") == 0)
 	printf(_("Search all of the databases and display all matches."));
     else {
-	int rc;
-	
 	if (ensure_connection())
 	    return;
 	dict_run_single_command(conn, "SHOW INFO", dbname, "112");

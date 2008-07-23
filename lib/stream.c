@@ -281,9 +281,13 @@ dico_stream_read_unbuffered(dico_stream_t stream, void *buf, size_t size,
 	return stream->last_err;
     
     if ((stream->flags & _STR_EOF) || size == 0) {
-	if (pread)
-	    *pread = 0;
-	return 0;
+       if (pread) {
+	   *pread = 0;
+	   return 0;
+       } else {
+	   _stream_seterror(stream, EIO, 0);
+	   return EIO;
+       }
     }
     
     if (pread == NULL) {

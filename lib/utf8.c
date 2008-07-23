@@ -1537,20 +1537,6 @@ utf8_strlen (const char *s)
   return len;
 }
 
-size_t
-strlen (const char *s)
-{
-  size_t len = 0;
-  size_t n;
-
-  while (*s && (n = utf8_char_width(s)) != 0)
-    {
-      len += n;
-      s += n;
-    }
-  return len;
-}
-
 
 static int
 utf8_iter0(struct utf8_iterator *itr)

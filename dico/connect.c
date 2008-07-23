@@ -68,7 +68,7 @@ parse_initial_reply(struct dict_connection *conn)
 }
 
 static int
-dict_auth(struct dict_connection *conn, struct auth_cred *cred)
+apop_auth(struct dict_connection *conn, struct auth_cred *cred)
 {
     int i;
     struct md5_ctx md5context;
@@ -90,6 +90,22 @@ dict_auth(struct dict_connection *conn, struct auth_cred *cred)
 	return 1;
     }
     return dict_status_p(conn, "230") == 0;
+}
+
+static int
+dict_auth(struct dict_connection *conn, struct auth_cred *cred)
+{
+    int rc = saslauth(conn, cred);/*FIXME: ignored */
+    switch (rc) {
+    case AUTH_OK:
+	return 0;
+
+    case AUTH_CONT:
+	return apop_auth(conn, cred);
+
+    case AUTH_FAIL:
+	return 1;
+    }
 }
 
 char *
@@ -159,6 +175,7 @@ auth_cred_free(struct auth_cred *cred)
 static int
 get_credentials(char *host, struct auth_cred *cred)
 {
+    memset(cred, 0, sizeof(cred[0]));
     auth_cred_dup(cred, &default_cred);
     if (default_cred.user && default_cred.pass)
 	return GETCRED_OK;
@@ -297,6 +314,8 @@ dict_connect(struct dict_connection **pconn, dico_url_t url)
 		 _("Unexpected reply to CLIENT command: `%s'"),
 		 conn->buf);
 
+    obstack_init(&conn->stk);
+    
     if (!noauth_option && dict_capa(conn, "auth")) {
 	struct auth_cred cred;
 	int rc;
@@ -322,8 +341,6 @@ dict_connect(struct dict_connection **pconn, dico_url_t url)
 	}
     }
 
-    obstack_init(&conn->stk);
-    
     *pconn = conn;
     
     return 0;

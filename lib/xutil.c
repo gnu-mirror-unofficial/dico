@@ -21,6 +21,7 @@
 #include <xalloc.h>
 #include <string.h>
 #include <errno.h>
+#include <c-strcase.h>
 
 void
 trimnl(char *buf, size_t len)
@@ -99,5 +100,48 @@ xdico_assign_string(char **dest, char *str)
 	free (*dest);
     return *dest = str ? xstrdup (str) : NULL;
 }
+    
+static char *mech_to_capa_table[][2] = {
+    { "EXTERNAL", "external" },
+    { "SKEY", "skey" },
+    { "GSSAPI", "gssapi" },
+    { "KERBEROS_V4", "kerberos_v4" }
+};
+
+char *
+xdico_sasl_mech_to_capa(char *mech)
+{
+    int i;
+    size_t len;
+    char *rets, *p;
+    
+    for (i = 0; i < DICO_ARRAY_SIZE(mech_to_capa_table); i++)
+	if (strcmp(mech_to_capa_table[i][0], mech) == 0)
+	    return xstrdup(mech_to_capa_table[i][1]);
+
+    len = strlen(mech) + 1;
+    rets = p = xmalloc(len + 1);
+    *p++ = 'x';
+    for (; *mech; mech++)
+	*p++ = tolower(*mech);
+    *p = 0;
+    return rets;
+}
+	
+int
+xdico_sasl_capa_match_p(const char *mech, const char *capa)
+{
+    int i;
+    
+    for (i = 0; i < DICO_ARRAY_SIZE(mech_to_capa_table); i++)
+	if (strcmp(mech_to_capa_table[i][0], mech) == 0) 
+	    return strcmp(mech_to_capa_table[i][1], capa) == 0;
+
+    if (*capa == 'x') 
+	return c_strcasecmp(mech, capa + 1) == 0;
+    return 0;
+}
+	
+
     
 

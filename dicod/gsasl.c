@@ -38,10 +38,12 @@ disabled_mechanism_p(char *name)
 static void
 send_challenge(dico_stream_t str, char *data)
 {
-    stream_printf(str, "130 challenge follows\r\n");
-    /* FIXME: use dicod_ostream_create */
-    stream_writez(str, data);
-    stream_writez(str, ".\r\n");
+    if (data[0]) { 
+	 stream_printf(str, "130 challenge follows\r\n");
+	 /* FIXME: use dicod_ostream_create */
+	 stream_writez(str, data);
+	 stream_writez(str, "\r\n.\r\n");
+    }
     stream_printf(str, "330 send response\r\n");
 }    
 
@@ -57,10 +59,17 @@ get_sasl_response(dico_stream_t str, char **pret, char **pbuf, size_t *psize)
 	return 1;
     p = *pbuf;
     rdbytes = dico_trim_nl(p);
-    if (rdbytes > sizeof(SASLRESP)
-	&& memcmp(p, SASLRESP, sizeof(SASLRESP) - 1)
-	&& isspace(p[sizeof(SASLRESP)])) {
-	for (p += sizeof(SASLRESP); isspace(*p); p++);
+    if (rdbytes >= sizeof(SASLRESP)
+	&& memcmp(p, SASLRESP, sizeof(SASLRESP) - 1) == 0
+	&& isspace(p[sizeof(SASLRESP) - 1])) {
+	for (p += sizeof(SASLRESP), rdbytes -= sizeof(SASLRESP); isspace(*p);
+	     p++, rdbytes--);
+	if (*p == '"') {
+	    /* Simple unquoting */
+	    p++;
+	    rdbytes--;
+	    p[rdbytes-1] = 0;
+	}
 	*pret = p;
 	return 0;
     }
@@ -95,13 +104,19 @@ sasl_auth(dico_stream_t str, char *mechanism, char *initresp)
 
     gsasl_callback_hook_set(ctx, &username);
     output = NULL;
-    inbuf = xstrdup(initresp);
-    insize = strlen(initresp) + 1;
+    if (initresp) {
+	    inbuf = xstrdup(initresp);
+	    insize = strlen(initresp) + 1;
+    } else {
+	    inbuf = NULL;
+	    insize = 0;
+    }
     input = inbuf;
     while ((rc = gsasl_step64(sess_ctx, input, &output)) == GSASL_NEEDS_MORE) {
 	send_challenge(str, output);
 	
 	free(output);
+	output = NULL;
 	if (get_sasl_response(str, &input, &inbuf, &insize)) 
 	    return RC_FAIL;
     }
@@ -168,38 +183,79 @@ dicod_saslauth(dico_stream_t str, int argc, char **argv)
 
 
 static int
+cb_validate(Gsasl *ctx, Gsasl_session *sctx)
+{
+    int rc;
+    char **pusername = gsasl_callback_hook_get(ctx);
+    const char *authid = gsasl_property_get(sctx, GSASL_AUTHID);
+    const char *pass = gsasl_property_get(sctx, GSASL_PASSWORD);
+    char *dbpass;
+
+    if (!authid)
+	return GSASL_NO_AUTHID;
+    if (!pass)
+	return GSASL_NO_PASSWORD;
+    
+    if (udb_get_password(user_db, authid, &dbpass)) {
+	dico_log(L_ERR, 0,
+		 _("failed to get password for `%s' from the database"),
+		 authid);
+	return GSASL_AUTHENTICATION_ERROR;
+    }
+    rc = strcmp(dbpass, pass);
+    free(dbpass);
+    if (rc == 0) {
+	*pusername = strdup(authid);
+	return GSASL_OK;
+    } 
+    return GSASL_AUTHENTICATION_ERROR;
+}
+    
+static int
 callback(Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop)
 {
     int rc = GSASL_NO_CALLBACK;
-    char *username = gsasl_callback_hook_get(ctx);
+    char **pusername = gsasl_callback_hook_get(ctx);
+    char *user;
     char *string;
     
+    user = *pusername;
+
     switch (prop) {
     case GSASL_PASSWORD:
-	if (udb_get_password(user_db, username, &string)) {
+	if (!user) {
+	    user = gsasl_property_get(sctx, GSASL_AUTHID);
+	    if (!user) {
+		dico_log(L_ERR, 0, _("user name not supplied"));
+		return GSASL_NO_AUTHID;
+	    }
+	    *pusername = user;
+	}
+	if (udb_get_password(user_db, user, &string)) {
 	    dico_log(L_ERR, 0,
 		     _("failed to get password for `%s' from the database"),
-		     username);
+		     user);
 	    return GSASL_NO_PASSWORD;
 	} 
 	gsasl_property_set(sctx, prop, string);
 	rc = GSASL_OK;
 	break;
-
+#if 0
     case GSASL_AUTHID:
-	gsasl_property_set(sctx, prop, username);
+	/* FIXME */
+	gsasl_property_set(sctx, prop, user);
 	rc = GSASL_OK;
 	break;
 
     case GSASL_AUTHZID:
-	if (!username) {
+	if (!user) {
 	    dico_log(L_ERR, 0, _("user name not supplied"));
 	    return GSASL_NO_AUTHZID;
 	}
-	gsasl_property_set(sctx, prop, username);
+	gsasl_property_set(sctx, prop, user);
 	rc = GSASL_OK;
 	break;
-
+#endif	
     case GSASL_SERVICE:
 	gsasl_property_set(sctx, prop, "dico");
 	rc = GSASL_OK;
@@ -216,8 +272,12 @@ callback(Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop)
 	rc = GSASL_OK;
 	break;
 
+    case GSASL_VALIDATE_SIMPLE:
+	rc = cb_validate(ctx, sctx);
+	break;
+	
     default:
-	dico_log(L_NOTICE, 0, _("Unknown callback property %d"), prop);
+	dico_log(L_NOTICE, 0, _("Unsupported callback property %d"), prop);
 	break;
     }
 
@@ -227,7 +287,7 @@ callback(Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop)
 static int
 init_sasl_0()
 {
-    int rc = gsasl_init (&ctx);
+    int rc = gsasl_init(&ctx);
     if (rc != GSASL_OK) {
 	dico_log(L_ERR, 0, _("cannot initialize libgsasl: %s"),
 		 gsasl_strerror(rc));
@@ -241,7 +301,7 @@ static int
 init_sasl_1()
 {
     static struct dicod_command cmd =
-	{ "SASLAUTH", 3, "mechanism initial-response",
+	{ "SASLAUTH", 2, 3, "mechanism [initial-response]",
 	  "Start SASL authentication",
 	  dicod_saslauth };
     static int sasl_initialized;
@@ -252,34 +312,6 @@ init_sasl_1()
     }
     return 0;
 }
-
-static char *mech_to_capa_table[][2] = {
-    { "EXTERNAL", "external" },
-    { "SKEY", "skey" },
-    { "GSSAPI", "gssapi" },
-    { "KERBEROS_V4", "kerberos_v4" }
-};
-
-static char *
-xlate_mech_to_capa(char *mech)
-{
-    int i;
-    size_t len;
-    char *rets, *p;
-    
-    for (i = 0; i < DICO_ARRAY_SIZE(mech_to_capa_table); i++)
-	if (strcmp(mech_to_capa_table[i][0], mech) == 0)
-	    return mech_to_capa_table[i][1];
-
-    len = strlen(mech) + 1;
-    rets = p = xmalloc(len + 1);
-    *p++ = 'x';
-    for (; *mech; mech++)
-	*p++ = tolower(*mech);
-    *p = 0;
-    return rets;
-}
-	
 
 void
 register_sasl()
@@ -303,8 +335,7 @@ register_sasl()
       int i;
       for (i = 0; i < mechc; i++) {
 	  if (!disabled_mechanism_p(mechv[i])) {
-	      char *name;
-	      name = xlate_mech_to_capa(mechv[i]);
+	      char *name = xdico_sasl_mech_to_capa(mechv[i]);
 	      dicod_capa_register(name, NULL, init_sasl_1, NULL);
 	      dicod_capa_add(name);
 	  }

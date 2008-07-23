@@ -219,3 +219,10 @@ char **ds_compl_strategy(int argc, char **argv, int ws);
 /* pager.c */
 void ds_pager(int argc, char **argv);
 dico_stream_t create_pager_stream(size_t nlines);
+
+/* saslauth.c */
+#define AUTH_OK   0
+#define AUTH_FAIL 1
+#define AUTH_CONT 2
+
+int saslauth(struct dict_connection *conn, struct auth_cred *cred);

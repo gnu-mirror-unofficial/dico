@@ -258,30 +258,30 @@ dicod_define(dico_stream_t str, int argc, char **argv)
 
 
 struct dicod_command command_tab[] = {
-    { "DEFINE", 3, "database word", "look up word in database",
+    { "DEFINE", 3, 3, "database word", "look up word in database",
       dicod_define },
-    { "MATCH", 4, "database strategy word",
+    { "MATCH", 4, 4, "database strategy word",
       "match word in database using strategy",
       dicod_match },
-    { "SHOW DB", 2, NULL, "list all accessible databases",
+    { "SHOW DB", 2, 2, NULL, "list all accessible databases",
       dicod_show_databases, },
-    { "SHOW DATABASES", 2, NULL, "list all accessible databases",
+    { "SHOW DATABASES", 2, 2, NULL, "list all accessible databases",
       dicod_show_databases, },
-    { "SHOW STRAT", 2, NULL, "list available matching strategies",
+    { "SHOW STRAT", 2, 2, NULL, "list available matching strategies",
       dicod_show_strategies },
-    { "SHOW STRATEGIES", 2, NULL, "list available matching strategies",
+    { "SHOW STRATEGIES", 2, 2, NULL, "list available matching strategies",
       dicod_show_strategies  },
-    { "SHOW INFO", 3, "database", "provide information about the database",
+    { "SHOW INFO", 3, 3, "database", "provide information about the database",
       dicod_show_info },
-    { "SHOW SERVER", 2, NULL, "provide site-specific information",
+    { "SHOW SERVER", 2, 2, NULL, "provide site-specific information",
       dicod_show_server },
-    { "CLIENT", 2, "info", "identify client to server",
+    { "CLIENT", 2, 2, "info", "identify client to server",
       dicod_client },
-    { "STATUS", 1, NULL, "display timing information",
+    { "STATUS", 1, 1, NULL, "display timing information",
       dicod_status },
-    { "HELP", 1, NULL, "display this help information",
+    { "HELP", 1, 1, NULL, "display this help information",
       dicod_help },
-    { "QUIT", 1, NULL, "terminate connection", dicod_quit },
+    { "QUIT", 1, 1, NULL, "terminate connection", dicod_quit },
     { NULL }
 };
 
@@ -385,7 +385,7 @@ dicod_handle_command(dico_stream_t str, int argc, char **argv)
     cmd = locate_command(argc, argv);
     if (!cmd) 
 	stream_writez(str, "500 unknown command\r\n");
-    else if (argc != cmd->nparam) 
+    else if (argc < cmd->minparam || argc > cmd->maxparam) 
 	stream_writez(str, "501 wrong number of arguments\r\n");
     else if (!cmd->handler)
 	stream_writez(str, "502 command is not yet implemented, sorry\r\n");

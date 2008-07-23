@@ -29,7 +29,7 @@ void
 register_mime()
 {
     static struct dicod_command cmd =
-	{ "OPTION MIME", 2, NULL, "use MIME headers",
+	{ "OPTION MIME", 2, 2, NULL, "use MIME headers",
 	  dicod_mime };
     dicod_capa_register("mime", &cmd, NULL, NULL);
 }

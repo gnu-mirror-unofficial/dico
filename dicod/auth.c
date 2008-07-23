@@ -98,7 +98,7 @@ void
 register_auth()
 {
     static struct dicod_command cmd =
-	{ "AUTH", 3, "user string", "provide authentication information",
+	{ "AUTH", 3, 3, "user string", "provide authentication information",
 	  dicod_auth };
     dicod_capa_register("auth", &cmd, auth_init, NULL);
 }

@@ -28,7 +28,7 @@ void
 register_xversion()
 {
     static struct dicod_command cmd = 
-	{ "XVERSION", 1, NULL, "show implementation and version info",
+	{ "XVERSION", 1, 1, NULL, "show implementation and version info",
 	  dicod_xversion };
     dicod_capa_register("xversion", &cmd, NULL, NULL);
 }

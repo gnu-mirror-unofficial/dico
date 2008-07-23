@@ -54,6 +54,9 @@ void xdico_assoc_add(dico_assoc_list_t assoc, const char *key,
 		     const char *value);
 char *xdico_assign_string(char **dest, char *str);
 
+char *xdico_sasl_mech_to_capa(char *mech);
+int xdico_sasl_capa_match_p(const char *mech, const char *capa);
+
 
 /* Timer */
 typedef struct timer_slot *xdico_timer_t;
@@ -91,6 +94,7 @@ int xdico_tokenize_input(xdico_input_t in, char *str,
 
 /* appi18n.c */
 void appi18n_init(void);
-    
+
+
 #endif
     

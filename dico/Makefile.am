@@ -24,6 +24,7 @@ dico_SOURCES = \
  func.c\
  lookup.c\
  pager.c\
+ saslauth.c\
  shell.c
 
 LDADD=\

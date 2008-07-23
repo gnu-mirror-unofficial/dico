@@ -308,7 +308,8 @@ typedef void (*dicod_cmd_fn) (dico_stream_t str, int argc, char **argv);
 
 struct dicod_command {
     char *keyword;
-    int nparam;
+    int minparam;
+    int maxparam;
     char *param;
     char *help;
     dicod_cmd_fn handler;

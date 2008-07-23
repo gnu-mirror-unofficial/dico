@@ -21,7 +21,4 @@ char *dico_full_file_name(const char *dir, const char *file);
 size_t dico_trim_nl(char *buf);
 size_t dico_trim_ws(char *buf);
 
-char *xdico_sasl_mech_to_capa(char *mech);
-int xdico_sasl_capa_match_p(const char *mech, const char *capa);
-
 #endif

@@ -95,6 +95,8 @@ int xdico_tokenize_input(xdico_input_t in, char *str,
 /* appi18n.c */
 void appi18n_init(void);
 
+/* xhostname.c */
+char *xdico_local_hostname(void);
 
 #endif
     

@@ -17,8 +17,6 @@
 #include <dicod.h>
 #include <pwd.h>
 #include <grp.h>
-#include <xgethostname.h>
-#include <xgetdomainname.h>
 
 int foreground;     /* Run in foreground mode */
 int single_process; /* Single process mode */
@@ -947,33 +945,6 @@ syslog_log_printer(int lvl, int exitcode, int errcode,
 }
 
 
-char *
-get_full_hostname()
-{
-    struct hostent *hp;
-    char *hostpart = xgethostname();
-    char *ret;
-	
-    hp = gethostbyname(hostpart);
-    if (hp) 
-	ret = xstrdup(hp->h_name);
-    else {
-	char *domainpart = xgetdomainname();
-
-	if (domainpart && domainpart[0] && strcmp(domainpart, "(none)")) {
-	    ret = xmalloc(strlen(hostpart) + 1
-			       + strlen(domainpart) + 1);
-	    strcpy(ret, hostpart);
-	    strcat(ret, ".");
-	    strcat(ret, domainpart);
-	    free(hostpart);
-	} else
-	    ret = hostpart;
-	free(domainpart);
-    }
-    return ret;
-}
-
 void
 dicod_log_setup()
 {
@@ -1026,7 +997,7 @@ main(int argc, char **argv)
     set_quoting_style(NULL, escape_quoting_style);
     log_tag = dico_program_name;
     dicod_log_pre_setup();
-    hostname = get_full_hostname();
+    hostname = xdico_local_hostname();
     dicod_init_command_tab();
     dicod_init_strategies();
     udb_init();

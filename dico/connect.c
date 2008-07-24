@@ -93,16 +93,35 @@ apop_auth(struct dict_connection *conn, struct auth_cred *cred)
 }
 
 static int
-dict_auth(struct dict_connection *conn, struct auth_cred *cred)
+dict_auth(struct dict_connection *conn, dico_url_t url)
 {
-    int rc = saslauth(conn, cred);/*FIXME: ignored */
+    int rc = saslauth(conn, url);
+
     switch (rc) {
     case AUTH_OK:
 	return 0;
 
     case AUTH_CONT:
-	return apop_auth(conn, cred);
+	if (dict_capa(conn, "auth")) {
+	    struct auth_cred cred;
+	    
+	    switch (auth_cred_get(url->host, &cred)) {
+	    case GETCRED_OK:
+		rc = apop_auth(conn, &cred);
+		auth_cred_free(&cred);
+		return rc;
 
+	    case GETCRED_FAIL:
+		dico_log(L_WARN, 0,
+			 _("Not enough credentials for authentication"));
+		break;
+
+	    case GETCRED_NOAUTH:
+		break;
+	    }
+	}
+	return 0;
+	
     case AUTH_FAIL:
 	return 1;
     }
@@ -161,19 +180,26 @@ auth_cred_dup(struct auth_cred *dst, const struct auth_cred *src)
     dst->pass = src->pass ? xstrdup(src->pass) : NULL;
 }    
 
-static void
+static int
+_cred_free(void *item, void *data)
+{
+    free(item);
+    return 0;
+}
+
+void
 auth_cred_free(struct auth_cred *cred)
 {
     free(cred->user);
     free(cred->pass);
+    dico_list_destroy(&cred->mech, _cred_free, NULL);
+    free(cred->service);
+    free(cred->realm);
+    free(cred->hostname);
 }
 
-#define GETCRED_OK     0
-#define GETCRED_FAIL   1
-#define GETCRED_NOAUTH 2
-
-static int
-get_credentials(char *host, struct auth_cred *cred)
+int
+auth_cred_get(char *host, struct auth_cred *cred)
 {
     memset(cred, 0, sizeof(cred[0]));
     auth_cred_dup(cred, &default_cred);
@@ -316,29 +342,10 @@ dict_connect(struct dict_connection **pconn, dico_url_t url)
 
     obstack_init(&conn->stk);
     
-    if (!noauth_option && dict_capa(conn, "auth")) {
-	struct auth_cred cred;
-	int rc;
-	
-	switch (get_credentials(url->host, &cred)) {
-	case GETCRED_OK:
-	    rc = dict_auth(conn, &cred);
-	    auth_cred_free(&cred);
-	    if (rc) {
-		dico_log(L_ERR, 0, _("Authentication failed"));
-		dict_conn_close(conn);
-		return 1;
-	    }
-	    break;
-
-	case GETCRED_FAIL:
-	    dico_log(L_WARN, 0,
-		     _("Not enough credentials for authentication"));
-	    break;
-
-	case GETCRED_NOAUTH:
-	    break;
-	}
+    if (!noauth_option && dict_auth(conn, url)) {
+	dico_log(L_ERR, 0, _("Authentication failed"));
+	dict_conn_close(conn);
+	return 1;
     }
 
     *pconn = conn;

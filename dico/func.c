@@ -18,6 +18,24 @@
 
 static struct dict_connection *conn;
 
+int
+set_bool(int *pval, char *str)
+{
+    if (strcmp(str, "yes") == 0
+	|| strcmp(str, "on") == 0
+	|| strcmp(str, "true") == 0)
+	*pval = 1;
+    else if (strcmp(str, "no") == 0
+	     || strcmp(str, "off") == 0
+	     || strcmp(str, "false") == 0)
+	*pval = 0;
+    else {
+	script_error(_("Expected boolean value"));
+	return 1;
+    }
+    return 0;
+}
+
 void
 ds_silent_close()
 {
@@ -149,6 +167,18 @@ ds_autologin(int argc, char **argv)
 }
 
 void
+ds_sasl(int argc, char **argv)
+{
+    if (argc == 1) {
+	printf("%s\n", sasl_enabled_p() ? _("on") : _("off"));
+    } else {
+	int val;
+	if (set_bool(&val, argv[1]) == 0)
+	    sasl_enable(val);
+    }
+}
+
+void
 ds_database(int argc, char **argv)
 {
     if (argc == 1) {
@@ -212,21 +242,6 @@ ds_compl_strategy(int argc, char **argv, int ws)
 }
 
 
-void
-set_bool(int *pval, char *str)
-{
-    if (strcmp(str, "yes") == 0
-	|| strcmp(str, "on") == 0
-	|| strcmp(str, "true") == 0)
-	*pval = 1;
-    else if (strcmp(str, "no") == 0
-	     || strcmp(str, "off") == 0
-	     || strcmp(str, "false") == 0)
-	*pval = 0;
-    else
-	script_error(_("Expected boolean value"));
-}
-
 void
 ds_transcript(int argc, char **argv)
 {

@@ -117,6 +117,9 @@ struct auth_cred {
     char *pass;
     int sasl;
     dico_list_t mech;
+    char *service;
+    char *realm;
+    char *hostname;
 };
 
 struct funtab {
@@ -164,6 +167,13 @@ int dict_match(struct dict_connection *conn, char *database, char *strategy,
 char *get_homedir(void);
 int ds_tilde_expand(const char *str, char **output);
 
+#define GETCRED_OK     0
+#define GETCRED_FAIL   1
+#define GETCRED_NOAUTH 2
+
+int auth_cred_get(char *host, struct auth_cred *cred);
+void auth_cred_free(struct auth_cred *cred);
+
 /* lookup.c */
 int dict_lookup_url(dico_url_t url);
 int dict_word(char *word);
@@ -195,7 +205,7 @@ char **dict_completion_matches(int argc, char **argv, int ws,
 
 /* func.c */
 int ensure_connection(void);
-void set_bool(int *pval, char *str);
+int set_bool(int *pval, char *str);
 void ds_silent_close(void);
 void ds_open(int argc, char **argv);
 void ds_close(int argc, char **argv);
@@ -212,6 +222,7 @@ void ds_warranty(int argc, char **argv);
 void ds_show_db(int argc, char **argv);
 void ds_show_strat(int argc, char **argv);
 void ds_show_info(int argc, char **argv);
+void ds_sasl(int argc, char **argv);
 
 char **ds_compl_database(int argc, char **argv, int ws);
 char **ds_compl_strategy(int argc, char **argv, int ws);
@@ -225,4 +236,6 @@ dico_stream_t create_pager_stream(size_t nlines);
 #define AUTH_FAIL 1
 #define AUTH_CONT 2
 
-int saslauth(struct dict_connection *conn, struct auth_cred *cred);
+int saslauth(struct dict_connection *conn, dico_url_t url);
+void sasl_enable(int val);
+int sasl_enabled_p(void);

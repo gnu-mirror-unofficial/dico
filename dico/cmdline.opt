@@ -123,6 +123,18 @@ BEGIN
   noauth_option = 1;
 END
 
+OPTION(sasl,,
+       [<Enable SASL authentication (default).>])
+BEGIN
+  sasl_enable(1);
+END
+
+OPTION(nosasl,,
+       [<Disable SASL authentication.>])
+BEGIN
+  sasl_enable(0);
+END
+
 OPTION(user,u,NAME,
        [<Set user name for authentication.>])
 BEGIN

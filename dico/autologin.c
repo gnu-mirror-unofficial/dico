@@ -88,6 +88,47 @@ argv_expand(int *pargc, char ***pargv, int xargc, char **xargv)
     *pargv = nargv;
 }
 
+enum kw_tok {
+    kw_login,
+    kw_password,
+    kw_noauth,
+    kw_nosasl,
+    kw_sasl,
+    kw_mechanism,
+    kw_realm,
+    kw_service,
+    kw_host
+};
+    
+struct keyword {
+    char *name;
+    int arg;
+    enum kw_tok tok;
+};
+
+static struct keyword kwtab[] = {
+    { "login", 1, kw_login },
+    { "password", 1, kw_password },
+    { "noauth", 0, kw_noauth },
+    { "nosasl", 0, kw_nosasl },
+    { "sasl", 0, kw_sasl },
+    { "mechanism", 1, kw_mechanism },
+    { "realm", 1, kw_realm },
+    { "service", 1, kw_service },
+    { "host", 1, kw_host },
+    { NULL }
+};
+
+static struct keyword *
+findkw(const char *name)
+{
+    struct keyword *p;
+    for (p = kwtab; p->name; p++)
+	if (strcmp(p->name, name) == 0)
+	    return p;
+    return NULL;
+}
+
 /* Parse netrc-like autologin file and set up user and key accordingly. */
 int
 parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
@@ -192,68 +233,90 @@ parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
     if (p_argv) {
 	line = def_line;
 
+	pcred->sasl = sasl_enabled_p();
 	while (*p_argv)	{
 	    if (strcmp(*p_argv, "\n") == 0) {
 		line++;
 		p_argv++;
-	    } if (strcmp(*p_argv, "login") == 0) {
-		if (!p_argv[1]) {
-		    dico_log(L_ERR, 0,
-			     _("%s:%d: %s without argument"),
-			     filename, line, p_argv[0]);
-		    break;
-		}
-		pcred->user = xstrdup(p_argv[1]);
-		p_argv += 2;
-		flags |= AUTOLOGIN_USERNAME;
-	    } else if (strcmp(*p_argv, "password") == 0) {
-		if (!p_argv[1]) {
-		    dico_log(L_ERR, 0,
-			     _("%s:%d: %s without argument"),
-			     filename, line, p_argv[0]);
-		    break;
-		}
-		pcred->pass = xstrdup(p_argv[1]);
-		flags |= AUTOLOGIN_PASSWORD;
-		p_argv += 2;
-	    } else if (strcmp(*p_argv, "noauth") == 0) {
-		flags |= AUTOLOGIN_NOAUTH;
-		p_argv++;
-	    } else if (strcmp(*p_argv, "nosasl") == 0) {
-		pcred->sasl = 0;
-		p_argv++;
-	    } else if (strcmp(*p_argv, "sasl") == 0) {
-		pcred->sasl = 1;
-		p_argv++;
-	    } else if (strcmp(*p_argv, "mechanism") == 0) {
-		int i, c;
-		char **v;
-		
-		if (!p_argv[1]) {
-		    dico_log(L_ERR, 0,
-			     _("%s:%d: %s without argument"),
-			     filename, line, p_argv[0]);
-		    break;
-		}
-		if (!(flags & AUTOLOGIN_MECH)) {
-		    pcred->mech = xdico_list_create();
-		    flags |= AUTOLOGIN_MECH;
-		}
-		if (dico_argcv_get(p_argv[1], ",", NULL, &c, &v)) {
-		    dico_log(L_ERR, 0,
-			     _("%s:%d: not enough memory"),
-			     filename, line);
-		    exit(1);
-		}
-		for (i = 0; i < c; i++)
-		    xdico_list_append(pcred->mech, v[i]);
-
-		free(v);
-		p_argv += 2;
 	    } else {
-		dico_log(L_ERR, 0,
-			 _("%s:%d: unknown keyword"), filename, line);
-		p_argv++;
+		struct keyword *kw = findkw(*p_argv);
+		char *arg;
+		
+		if (!kw) {
+		    dico_log(L_ERR, 0,
+			     _("%s:%d: unknown keyword"), filename, line);
+		    p_argv++;
+		    continue;
+		}
+
+		if (kw->arg) {
+		    if (!p_argv[1]) {
+			dico_log(L_ERR, 0,
+				 _("%s:%d: %s without argument"),
+				 filename, line, p_argv[0]);
+			break;
+		    }
+		    arg = p_argv[1];
+		    p_argv += 2;
+		} else
+		    p_argv++;
+		
+		switch (kw->tok) {
+		case kw_login:
+		    pcred->user = xstrdup(arg);
+		    flags |= AUTOLOGIN_USERNAME;
+		    break;
+
+		case kw_password:
+		    pcred->pass = xstrdup(arg);
+		    flags |= AUTOLOGIN_PASSWORD;
+		    break;
+
+		case kw_service:
+		    pcred->service = xstrdup(arg);
+		    break;
+
+		case kw_realm:
+		    pcred->realm = xstrdup(arg);
+		    break;
+
+		case kw_host:
+		    pcred->hostname = xstrdup(arg);
+		    break;
+		    
+		case kw_noauth:
+		    flags |= AUTOLOGIN_NOAUTH;
+		    break;
+		    
+		case kw_nosasl:
+		    pcred->sasl = 0;
+		    break;
+
+		case kw_sasl:
+		    pcred->sasl = 1;
+		    break;
+		    
+		case kw_mechanism: {
+		    int i, c;
+		    char **v;
+		
+		    if (!(flags & AUTOLOGIN_MECH)) {
+			pcred->mech = xdico_list_create();
+			flags |= AUTOLOGIN_MECH;
+		    }
+		    if (dico_argcv_get(arg, ",", NULL, &c, &v)) {
+			dico_log(L_ERR, 0,
+				 _("%s:%d: not enough memory"),
+				 filename, line);
+			exit(1);
+		    }
+		    for (i = 0; i < c; i++)
+			xdico_list_append(pcred->mech, v[i]);
+
+		    free(v);
+		    break;
+		  }
+		}
 	    }
 	}
     }

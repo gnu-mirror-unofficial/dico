@@ -105,12 +105,15 @@ selectmech(struct dict_connection *conn, Gsasl *ctx, struct auth_cred *cred)
     return mech;
 }
 
+#define CRED_HOSTNAME(c) ((c)->hostname ? (c)->hostname :  \
+			  ((c)->hostname = xdico_local_hostname()))
+
 static int
 callback(Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop)
 {
     int rc = GSASL_NO_CALLBACK;
     struct auth_cred *cred = gsasl_callback_hook_get(ctx);
-#define hostname "Trurl.gnu.org.ua"
+
     switch (prop) {
     case GSASL_PASSWORD:
 	gsasl_property_set(sctx, prop, cred->pass);
@@ -124,17 +127,19 @@ callback(Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop)
 	break;
 
     case GSASL_SERVICE:
-	gsasl_property_set(sctx, prop, "dico");//FIXME: configurable
+	gsasl_property_set(sctx, prop,
+			   cred->service ? cred->service : "dico");
 	rc = GSASL_OK;
 	break;
 
     case GSASL_REALM:
-	gsasl_property_set(sctx, prop, hostname);
+	gsasl_property_set(sctx, prop,
+			   cred->realm ? cred->realm : CRED_HOSTNAME(cred));
 	rc = GSASL_OK;
 	break;
 
     case GSASL_HOSTNAME:
-	gsasl_property_set(sctx, prop, hostname);
+	gsasl_property_set(sctx, prop, CRED_HOSTNAME(cred));
 	rc = GSASL_OK;
 	break;
 	
@@ -234,7 +239,7 @@ do_gsasl_auth(Gsasl *ctx, struct dict_connection *conn, char *mech)
 }
 
 int
-saslauth(struct dict_connection *conn, struct auth_cred *cred)
+saslauth0(struct dict_connection *conn, struct auth_cred *cred)
 {
     Gsasl *ctx;
     int rc;
@@ -263,10 +268,63 @@ saslauth(struct dict_connection *conn, struct auth_cred *cred)
     /* FIXME */
     return rc == 0 ? AUTH_OK : AUTH_FAIL;
 }
+
+int
+saslauth(struct dict_connection *conn, dico_url_t url)
+{
+    int rc = AUTH_FAIL;
+    struct auth_cred cred;
+    
+    switch (auth_cred_get(url->host, &cred)) {
+    case GETCRED_OK:
+	if (cred.sasl) {
+	    rc = saslauth0(conn, &cred);
+	    auth_cred_free(&cred);
+	} else
+	    rc = AUTH_CONT;
+	break;
+
+    case GETCRED_FAIL:
+	dico_log(L_WARN, 0,
+		 _("Not enough credentials for authentication"));
+	break;
+
+    case GETCRED_NOAUTH:
+	rc = AUTH_OK;
+    }
+    return rc;
+}
+
+static int sasl_enable_state = 1;
+
+void
+sasl_enable(int val)
+{
+    sasl_enable_state = 1;
+}
+
+int
+sasl_enabled_p()
+{
+    return sasl_enable_state;
+}
+
 #else
 int
-saslauth(struct dict_connection *conn, struct auth_cred *cred)
+saslauth(struct dict_connection *conn, dico_url_t url)
 {
     return AUTH_CONT;
+}
+
+void
+sasl_enable(int val)
+{
+    dico_log(L_WARN, 0, _("Dico compiled without SASL support"));
+}
+
+int
+sasl_enabled_p()
+{
+    return 0;
 }
 #endif

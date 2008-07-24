@@ -54,6 +54,7 @@ libxdico_a_SOURCES=\
  timer.c\
  tokenize.c\
  userprivs.c\
+ xhostname.c\
  xscript.c\
  xstream.c\
  xutil.c

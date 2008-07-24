@@ -3883,6 +3883,15 @@ Close the connection.
 @item autologin [@var{file}]
 Set or display autologin file name.
 
+@xref{Autologin}.
+
+@item sasl [@var{bool}]
+Without argument, show whether the @acronym{SASL} authentication is
+enabled.  With argument, enable or disable it, depending on the value
+of @var{bool}.
+
+@FIXME-xref{SASL}.
+
 @item database [@var{name}]
 Set or display current database name.
 
@@ -4010,6 +4019,11 @@ this example.
 @node Autologin
 @section Autologin
 @cindex autologin feature
+@UNREVISED
+
+@FIXME{The following paragraph is inaccurate.  It should also describe SASL
+authentication and its credentials.}
+
   After connecting to a remote server, @command{dico} checks if it
 announces @samp{auth} capability, and if so, it attempts to authenticate
 to the remote server.  To do so @command{dico} needs two parameters:
@@ -4059,18 +4073,19 @@ used by @command{ftp} utility.
 
   Empty lines and comments are ignored.
 
-  Each non-empty line consists of words, separated by any amount of
-white space.  It must begin with one of the following statements:
+  Non-empty lines compose @dfn{statements}.  Tokens in a statement may
+be separated by spaces, tabs, or newlines.  A valid statement must
+begin with one of the following:
 
 @table @code
 @kwindex machine, autologin keyword
 @item machine @var{name}
-  This entry contains parameters for authenticating on machine
+  This statement contains parameters for authenticating on machine
 @var{name}.
 
 @kwindex default, autologin keyword
 @item default
-  This entry contains parameters for authenticating on any machine,
+  This statement contains parameters for authenticating on any machine,
 except those explicitly listed in @code{machine} statements.  There
 can be at most one @code{default} statement in autologin file.  Its
 exact location does not matter, it will always be matched after all
@@ -4100,18 +4115,59 @@ Supply a password.
 @kwindex noauth, autologin keyword
 @item noauth
 Do not perform authentication on this machine.
+
+@kwindex sasl, autologin keyword
+@item sasl
+Enable @acronym{SASL} authentication.
+
+@kwindex nosasl, autologin keyword
+@item nosasl
+Disable @acronym{SASL} authentication.
+
+@kwindex mechanisms, autologin keyword
+@item mechanisms @var{list}
+Declare acceptable @acronym{SASL} mechanisms.  The @var{list} argument
+is a comma-separated list of mechanism names, without intervening
+whitespace.  Multiple @code{mechanisms} may be given, in which case
+the corresponding lists are concatenated.
+
+@kwindex service, autologin keyword
+@item service @var{name}
+Declare service name, for authentication methods that need it.  If
+this token is omitted, the default service name @samp{dico} is used.
+
+@kwindex realm, autologin keyword
+@item realm @var{name}
+Declare realm for authentication.
+
+@kwindex host, autologin keyword
+@item host @var{name}
+Set host name for this machine.  By default, it is determined
+automatically.
 @end table
 
-  For example, the following autologin entry supplies both
-authentication parameters for machine @samp{dict-a.net} and supplies
-only a user name for the rest of machines:
+  Consider the following autologin entry, for example:
 
 @smallexample
 @group
 machine a.net user smith password guessme
-default user nobody
+machine b.net
+  sasl
+  mechanisms gssapi,digest-md5
+  realm example.net
+  service dico
+  user smith password guessme
+default noauth
 @end group
 @end smallexample
+
+  When connecting to the server @samp{a.net}, @command{dico} will attempt
+usual @acronym{APOP} authentication as user @samp{smith} with password
+@samp{guessme}.  When connecting to the machine @samp{b.net}, it will
+use @acronym{SASL} authentication, using either @acronym{GSSAPI} or
+@acronym{DIGEST-MD5} mechanisms, realm name @samp{example.net},
+service name @samp{dico} and the same user name and password, as for
+@samp{a.net}.
 
   The authentication mechanism is suppressed if the @command{--noauth}
 option has been given in the command line, or a matching entry was
@@ -4254,6 +4310,12 @@ Show information about the server.
 Disable authentication.
 
 @xref{Autologin}.
+
+@item --sasl
+Enable @acronym{SASL} authentication.  @FIXME-xref{SASL}.
+
+@item --nosasl
+Disable @acronym{SASL} authentication.  @FIXME-xref{SASL}.
 
 @item --user=@var{name}
 @item -u @var{name}

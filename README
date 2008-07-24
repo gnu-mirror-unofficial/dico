@@ -46,7 +46,7 @@ with the stress on the last syllable.
 ===============
 
 The dicod daemon is completely implemented. It provides all the
-functionality required by RFC 2229, except for SASL commands.
+functionality required by RFC 2229, including SASL authentication.
 
 The package comes with the following database modules:
 

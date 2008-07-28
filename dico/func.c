@@ -1,18 +1,18 @@
-/* This file is part of Dico. 
+/* This file is part of GNU Dico. 
    Copyright (C) 1998-2000, 2008 Sergey Poznyakoff
 
-   Dico is free software; you can redistribute it and/or modify
+   GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
-   Dico is distributed in the hope that it will be useful,
+   GNU Dico is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with Dico.  If not, see <http://www.gnu.org/licenses/>. */
+   along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "dico-priv.h"
 
@@ -391,18 +391,18 @@ ds_version(int argc, char **argv)
 }
 
 static char gplv3_text[] = "\
-   Dico is free software; you can redistribute it and/or modify\n\
+   GNU Dico is free software; you can redistribute it and/or modify\n\
    it under the terms of the GNU General Public License as published by\n\
    the Free Software Foundation; either version 3, or (at your option)\n\
    any later version.\n\
 \n\
-   Dico is distributed in the hope that it will be useful,\n\
+   GNU Dico is distributed in the hope that it will be useful,\n\
    but WITHOUT ANY WARRANTY; without even the implied warranty of\n\
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n\
    GNU General Public License for more details.\n\
 \n\
    You should have received a copy of the GNU General Public License\n\
-   along with Dico.  If not, see <http://www.gnu.org/licenses/>.\n";
+   along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.\n";
 
 void
 ds_warranty(int argc, char **argv)

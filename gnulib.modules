@@ -1,4 +1,4 @@
-# List of gnulib modules needed for Dico.
+# List of gnulib modules needed for GNU Dico.
 # A module name per line. Empty lines and comments are ignored.
 
 c-strcase

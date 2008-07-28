@@ -1,11 +1,11 @@
-Dico README
+GNU Dico README
 Copyright (C) 2008 Sergey Poznyakoff
 
 * Introduction
 ==============
 
 This file contains brief information about configuring, testing
-and running Dico.  It is *not* intended as a replacement
+and running GNU Dico.  It is *not* intended as a replacement
 for the documentation, it is provided as a brief reference only.
 The (almost) complete documentation for Dico is available in
 doc/ subdirectory. To read it without installing the package

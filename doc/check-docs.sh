@@ -1,6 +1,6 @@
 #! /bin/sh
-# This file is part of mailfrom filter.
-# Copyright (C) 2006, 2007 Sergey Poznyakoff
+# This file is part of GNU Dico.
+# Copyright (C) 2006, 2007, 2008 Sergey Poznyakoff
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

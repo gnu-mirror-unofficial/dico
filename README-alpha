@@ -1,0 +1,66 @@
+This file is part of GNU Dico.
+See end of file for copying conditions.
+
+* Introduction
+
+This is a *pre-release* version, and not ready for production use yet.
+If you are taking source from Git, you will need to have several
+special tools to help contribute.  See the file README-hacking for more
+information.  See chapter `Building' for the detailed instructions on
+how to build the package.
+
+Please, note that the accompanying documentation may be inaccurate
+or incomplete. The ChangeLog file is the authoritative documentation of
+all recent changes.
+
+Please, send comments and problem reports to <bug-dico@gnu.org.ua>.
+
+* Checking Out the Sources
+
+The following instructions apply if you wish to obtain sources from
+the Git repository:
+
+To clone the GNU Dico repository, issue the following command:
+
+  git clone git://git.gnu.org.ua/dico.git
+
+or
+
+  git clone http://git.gnu.org.ua/repo/dico.git
+
+This will create a directory named `dico' and populate it with the
+sources.
+
+For more information about Git access, visit
+http://puszcza.gnu.org.ua/git/?group=dico
+
+* Building
+
+Usual procedures apply:
+
+ ./configure
+ make
+ make install
+
+See the files INSTALL and README for the detailed instructions.
+
+* Copyright information:
+
+Copyright (C) 2008 Sergey Poznyakoff
+
+   Permission is granted to anyone to make or distribute verbatim copies
+   of this document as received, in any medium, provided that the
+   copyright notice and this permission notice are preserved,
+   thus giving the recipient permission to redistribute in turn.
+
+   Permission is granted to distribute modified versions
+   of this document, or of portions of it,
+   under the above conditions, provided also that they
+   carry prominent notices stating who last changed them.
+
+
+Local Variables:
+mode: outline
+paragraph-separate: "[ 	]*$"
+version-control: never
+End:

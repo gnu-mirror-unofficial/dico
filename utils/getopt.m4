@@ -1,18 +1,18 @@
-dnl This file is part of GNU Dico.
+dnl This file is part of GNU GNU Dico.
 dnl Copyright (C) 2007, 2008 Sergey Poznyakoff.
 dnl 
-dnl Dico is free software; you can redistribute it and/or modify
+dnl GNU Dico is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
 dnl the Free Software Foundation; either version 3, or (at your option)
 dnl any later version.
 dnl
-dnl Dico is distributed in the hope that it will be useful,
+dnl GNU Dico is distributed in the hope that it will be useful,
 dnl but WITHOUT ANY WARRANTY; without even the implied warranty of
 dnl MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 dnl GNU General Public License for more details.
 dnl
 dnl You should have received a copy of the GNU General Public License
-dnl along with Dico.  If not, see <http://www.gnu.org/licenses/>.
+dnl along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 divert(-1)
 changequote([<,>])
 changecom(/*,*/)

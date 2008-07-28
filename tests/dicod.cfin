@@ -1,4 +1,4 @@
-/* A sample configuration for dictd */
+/* A sample configuration for GNU dicod */
 
 capability (mime,xversion);
 timing yes;

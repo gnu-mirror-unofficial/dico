@@ -2,7 +2,7 @@
 @smallbook
 @c %**start of header
 @setfilename dico.info
-@settitle Dico
+@settitle GNU Dico
 @c %**end of header
 @setchapternewpage odd
 
@@ -44,7 +44,7 @@ Copyright @copyright{} 2008 Sergey Poznyakoff
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.2 or
 any later version published by the Free Software Foundation; with no
-Invariant Sections, with the Front-Cover texts being ``Dico Manual'',
+Invariant Sections, with the Front-Cover texts being ``GNU Dico Manual'',
 and with the Back-Cover Texts as in (a) below.  A copy of the license
 is included in the section entitled ``GNU Free Documentation License''.
 
@@ -84,7 +84,7 @@ Software Foundation raise funds for GNU development.''
 @node Top
 @top Dico
 
-This edition of the @cite{Dico Manual}, last updated @value{UPDATED},
+This edition of the @cite{GNU Dico Manual}, last updated @value{UPDATED},
 documents Dico Version @value{VERSION}.
 
 @end ifnottex
@@ -241,16 +241,16 @@ The Libdico Library
 @UNREVISED
 
 @node Intro
-@chapter Introduction to Dico
+@chapter Introduction to GNU Dico
 @cindex Dico overview
 @cindex two-layer model
 @cindex protocol layer
 @cindex database layer
 @cindex RFC 2229
 @cindex DICT protocol
-@dfn{Dico} is an implementation of @acronym{DICT} dictionary server
+GNU Dico is an implementation of @acronym{DICT} dictionary server
 (described in @acronym{RFC} 2229) and a set of accompanying utilities.
-Dico's server uses two-layer model.  The @dfn{protocol
+The GNU Dico server uses two-layer model.  The @dfn{protocol
 layer} is responsible for correct @acronym{DICT} protocol dialog and
 is served by the @command{dicod} daemon itself.  The @dfn{database
 layer} is responsible for look ups in dictionary databases.  This
@@ -258,7 +258,7 @@ layer is handled by external @dfn{loadable modules}.  Thus, Dico
 does not impose any specific dictionary database format.  A single
 server can handle databases in various formats, provided that
 appropriate modules are available.  Several database modules are
-shipped with Dico:
+shipped with GNU Dico:
 
 @table @asis
 @item dictorg
@@ -341,7 +341,7 @@ disable it using @option{--without-preprocessor} option to
 @cindex guile, configuration
   The @dfn{GNU's Ubiquitous Intelligent Language for Extensions}, or
 @dfn{Guile}@footnote{@uref{http://www.gnu.org/software/guile}.}  can
-be used to write database modules for Dico.  This requires
+be used to write database modules for GNU Dico.  This requires
 Guile version 1.8.4 or newer.  The @command{configure} script will
 probe for the presence of Guile on your system and automatically
 enable its use if its version number is high enough.
@@ -366,7 +366,7 @@ addition, these words can be prefixed with @samp{log_}.
 @node Dicod
 @chapter The @command{dicod} daemon.
 @cindex @command{dicod}, description
-  The main component of Dico is @command{dicod} daemon.  It is
+  The main component of GNU Dico is @command{dicod} daemon.  It is
 responsible for serving client requests and for coordinating the work
 of dictionary modules.
 
@@ -506,7 +506,7 @@ directives any time by running @command{dicod --config-help}.
 
 @node Syntax
 @subsection Configuration File Syntax
-  A Dico configuration consists of statements and comments.
+  A @command{dicod} configuration consists of statements and comments.
 
   There are three classes of lexical tokens: keywords, values, and
 separators. Blanks, tabs, newlines and comments, collectively called
@@ -548,7 +548,7 @@ occurrence of @samp{*/} (star, slash).
   Pragmatic comments are similar to usual comments, except that they
 cause some changes in the way the configuration is parsed.  Pragmatic
 comments begin with a @samp{#} sign and end with the next physical
-newline character.  As of Dico version @value{VERSION}, the following
+newline character.  As of GNU Dico version @value{VERSION}, the following
 pragmatic comments are understood:
 
 @table @code
@@ -1322,7 +1322,7 @@ some remote client.  Never use it in a production environment.
 @cindex access log
 @cindex logging requests
 @cindex Apache
-  Dico provides a feature similar to Apache's @code{CustomLog}, which
+  GNU Dico provides a feature similar to Apache's @code{CustomLog}, which
 allows to keep a log of @code{MATCH} and @code{DEFINE} requests.  To
 enable this feature, specify the name of the log file using the
 following directive:
@@ -1443,7 +1443,7 @@ The word from the request.
 
   For the reference, here is the list of format specifiers that
 have different meaning than in Apache: @samp{%C}, @samp{%H}, @samp{%m},
-@samp{%q}.  The following format specifiers are unique to Dico:
+@samp{%q}.  The following format specifiers are unique to @command{dicod}:
 @samp{%@{@var{n}@}R}, @samp{%V}, @samp{%W}.
 
   Absence of the @code{access-log-format} directive is equivalent to
@@ -1586,8 +1586,8 @@ Request additional capabilities from @var{list}.
 @end deffn
 
   The argument to @code{capability} directive must contain names
-of existing Dico capabilities.  These are listed in the following
-table:
+of existing @command{dicod} capabilities.  These are listed in the
+following table:
 
 @table @asis
 @item auth
@@ -1599,7 +1599,7 @@ The @code{OPTION MIME} command is supported.  Notice that
 you should always specify this capability.
 
 @item xversion
-The @code{XVERSION} command is supported.  It is a Dico extension that
+The @code{XVERSION} command is supported.  It is a GNU extension that
 displays the @command{dicod} implementation and version number. 
 @xref{Extended Commands, XVERSION}.
 
@@ -1669,7 +1669,7 @@ order of search is as follows:
 
 @enumerate 1
 @item
-Dico module directory: @file{$prefix/lib/dico}.
+GNU Dico module directory: @file{$prefix/lib/dico}.
 
 @item
 Additional search directories specified with the
@@ -1970,7 +1970,7 @@ earlier.
 @subsection Using Preprocessor to Improve the Configuration.
 @cindex preprocessor
 @cindex m4
-  Before parsing configuration file, Dico preprocesses
+  Before parsing configuration file, @command{dicod} preprocesses
 it.  The built-in preprocessor handles only file inclusion
 and @code{#line} statements (@pxref{Pragmatic Comments}), while the
 rest of traditional preprocessing facilities, such as macro expansion,
@@ -1994,7 +1994,7 @@ information is then used by the parser to display meaningful
 diagnostic.  An initial set of macro definitions is supplied by the 
 @file{pp-setup} file, located in
 @file{@var{$prefix}/share/dico/@var{version}/include} directory (where
-@var{version} means the version of the Dico package).
+@var{version} means the version of GNU Dico package).
 
 The default @file{pp-setup} file renames all @command{m4} built-in
 macro names so they all start with the prefix @samp{m4_}.  This
@@ -2004,7 +2004,7 @@ well.
 
 As an example of how the use of preprocessor may improve
 @command{dicod} configuration, consider the following fragment taken
-from one of the installations of Dico.  This installation offers quite
+from one of the installations of GNU Dico.  This installation offers quite
 a few Freedict dictionaries.  The database definition for each of them
 is almost the same, except for the dictionary name and eventual
 description entry for several databases that miss it.  To avoid
@@ -2148,14 +2148,14 @@ Print program version and exit.
 @node Modules
 @chapter Modules
 @cindex Modules
-  Dico comes with a set of loadable modules for handling several
+  GNU Dico comes with a set of loadable modules for handling several
 database formats and for extending its functionality.  Modules
 are binary loadable files, installed in
 @file{@var{$prefix}/lib/dico}.  Modules are configurable on per-module
 (@pxref{Handlers, command}) and per-database (@pxref{Databases,
 handler} basis.
 
-  Dico version @value{VERSION} is shipped with the following modules:
+  GNU Dico version @value{VERSION} is shipped with the following modules:
 @samp{Outline}, @samp{Dictorg} and @samp{Guile}.  The @samp{Outpline}
 module handles databases written in Emacs Outline format.  It is
 useful for small databases.  The @samp{Dictorg} module handles
@@ -2222,8 +2222,9 @@ optional.
 @cindex Ambrose Bierce
 @cindex Devil's Dictionary
 @flindex devils.out
-  The Dico package is shipped with Ambrose Bierce's @cite{Devil's
-Dictionary} in outline format, see @file{tests/devils.out}.
+  As an example of outline format, the GNU Dico package includes
+Ambrose Bierce's @cite{Devil's Dictionary} in this format, see
+@file{tests/devils.out}. 
 
   Outline module initialization does not require any command line
 parameters, specifying @code{command "outline";} is enough.  To
@@ -2356,7 +2357,7 @@ For a detailed description of Guile and its features, see
 @ref{Top,,Overview,guile,The Guile Reference Manual}.
 
   The @command{guile} module provides an interface to Guile that allows writing
-Dico modules in Scheme language.  The module is loaded
+GNU Dico modules in Scheme.  The module is loaded
 using the following configuration file statement:
 
 @smallexample
@@ -2707,7 +2708,7 @@ Return the number of elements in the result set @var{resh}.
 @cindex strategy functions, Guile
 @cindex Scheme strategy functions
 @cindex Guile strategy functions
-  Dico provides the following Scheme primitives, that access various
+  GNU Dico provides the following Scheme primitives, that access various
 fields of the @code{strat} argument to @code{match} callback:
   
 @defun dico-strat-selector? @var{strat}
@@ -2750,7 +2751,7 @@ It must return @code{#t} if @var{key} matches @var{word}, and
 
 @node Example Module
 @subsection Example Module
-  In this subsection we will show how to build a simple Dico module
+  In this subsection we will show how to build a simple @command{dicod} module
 written in Scheme.  The source code of this module, called
 @file{example.scm} and a short database for it, @file{example.db}, are
 shipped with the distribution in the directory @file{tests}.
@@ -3025,7 +3026,7 @@ current interface.
 @deftypevr {dico_database_module} unsigned dico_capabilities
 @vrindex DICO_CAPA_DEFAULT
 Additional capabilities.  This member is reserved for future use (as
-of Dico version @value{VERSION}.  Use @code{DICO_CAPA_DEFAULT} to
+of GNU Dico version @value{VERSION}.  Use @code{DICO_CAPA_DEFAULT} to
 initialize it.
 @end deftypevr
 
@@ -4380,7 +4381,7 @@ needed in order to find the bug:
 @item Conditions under which the bug appears.
 @item It is often helpful to send the contents of @file{config.log}
 file along with your bug report. This file is created after running
-@command{./configure} in Dico source root directory.
+@command{./configure} in the source root directory of GNU Dico.
 @end itemize
 
 @node Dictionary Server Protocol

@@ -293,6 +293,8 @@ query_ident_name(struct sockaddr_in *srv_addr, struct sockaddr_in *clt_addr)
     if (bind(fd, (struct sockaddr*) &s, sizeof(s)) < 0) {
 	dico_log(L_ERR, errno,
 		 _("cannot bind AUTH socket"));
+	close(fd);
+	return NULL;
     }
 
     s = *clt_addr;

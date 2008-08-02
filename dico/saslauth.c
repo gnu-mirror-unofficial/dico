@@ -293,6 +293,7 @@ saslauth(struct dict_connection *conn, dico_url_t url)
     case GETCRED_FAIL:
 	dico_log(L_WARN, 0,
 		 _("Not enough credentials for authentication"));
+	rc = AUTH_CONT;
 	break;
 
     case GETCRED_NOAUTH:

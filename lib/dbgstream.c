@@ -54,10 +54,14 @@ dbg_write(void *data, const char *buf, size_t size, size_t *pret)
     struct dbg_stream *p = data;
 
     if (p->ts) {
-	char nbuf[128];
-	time_t t = time(NULL);
-	char *s = fmtline(t, nbuf, sizeof(nbuf));
+	char nbuf[128], *s;
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
 	dico_stream_write(p->transport, "[", 1);
+	s = fmtline(tv.tv_sec, nbuf, sizeof(nbuf));
+	dico_stream_write(p->transport, s, strlen(s));
+	dico_stream_write(p->transport, ".", 1);
+	s = fmtline(tv.tv_usec, nbuf, sizeof(nbuf));
 	dico_stream_write(p->transport, s, strlen(s));
 	dico_stream_write(p->transport, "] ", 2);
     }

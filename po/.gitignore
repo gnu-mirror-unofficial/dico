@@ -1,7 +1,7 @@
-.reference
 *.gmo
 *.mo
 *.po
+.reference
 LINGUAS
 Makefile
 Makefile.in
@@ -11,9 +11,10 @@ Makevars.template
 POTFILES
 Rules-quot
 boldquot.sed
+dico.pot
 en@boldquot.header
 en@quot.header
-dico.pot
+insert-header.sed
 insert-header.sin
 quot.sed
 remove-potcdate.sed

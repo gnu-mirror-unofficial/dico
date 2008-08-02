@@ -173,6 +173,13 @@ BEGIN
   debug_level++;
 END
 
+OPTION(time-stamp,,,
+       [<Include time stamp in the debugging output.>])
+BEGIN
+  int n = 1;
+  dico_stream_ioctl(debug_stream, DICO_DBG_CTL_SET_TS, &n);
+END  
+
 OPTION(source-info,,,
        [<Include source line information in the debugging output.>])
 BEGIN

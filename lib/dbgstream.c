@@ -22,11 +22,15 @@
 #endif
 #include <dico.h>
 #include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <time.h>
 
 struct dbg_stream {
     dico_stream_t transport;  /* Transport log-stream */
     const char *file;         /* Source file */
     unsigned line;            /* Source line */
+    int ts;                   /* Print timestamps */
 };
 
 static char *
@@ -49,6 +53,15 @@ dbg_write(void *data, const char *buf, size_t size, size_t *pret)
 {
     struct dbg_stream *p = data;
 
+    if (p->ts) {
+	char nbuf[128];
+	time_t t = time(NULL);
+	char *s = fmtline(t, nbuf, sizeof(nbuf));
+	dico_stream_write(p->transport, "[", 1);
+	dico_stream_write(p->transport, s, strlen(s));
+	dico_stream_write(p->transport, "] ", 2);
+    }
+    
     if (p->file) {
 	char *s;
 	char nbuf[128];
@@ -86,6 +99,15 @@ dbg_ioctl(void *data, int code, void *call_data)
 
     case DICO_DBG_CTL_SET_LINE:
 	p->line = *(unsigned*)call_data;
+	break;
+
+    case DICO_DBG_CTL_SET_TS:
+	p->ts = *(int*)call_data;
+	break;
+
+    default:
+	errno = EINVAL;
+	return 1;
     }
     return 0;
 }

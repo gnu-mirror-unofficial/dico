@@ -55,6 +55,7 @@ dico_stream_t dico_log_stream_create(int level);
 dico_stream_t dico_dbg_stream_create(void);
 #define DICO_DBG_CTL_SET_FILE 0
 #define DICO_DBG_CTL_SET_LINE 1
+#define DICO_DBG_CTL_SET_TS 2
 
 #define DICO_DEBUG_SINFO(str)						\
     do {								\

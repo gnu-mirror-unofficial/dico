@@ -27,6 +27,11 @@ unsigned levenshtein_threshold;
 char *autologin_file;
 int quiet_option;
 
+int debug_level;
+int debug_source_info;
+dico_stream_t debug_stream;
+
+
 void
 fixup_url()
 {
@@ -48,6 +53,7 @@ main(int argc, char **argv)
 
     appi18n_init();
     dico_set_program_name(argv[0]);
+    debug_stream = dico_dbg_stream_create();
     parse_init_scripts();
     get_options(argc, argv, &index);
     fixup_url();

@@ -107,6 +107,7 @@ dict_auth(struct dict_connection *conn, dico_url_t url)
 	    
 	    switch (auth_cred_get(url->host, &cred)) {
 	    case GETCRED_OK:
+		XDICO_DEBUG(1, _("Attempting APOP authentication\n"));
 		rc = apop_auth(conn, &cred);
 		auth_cred_free(&cred);
 		return rc;
@@ -117,6 +118,7 @@ dict_auth(struct dict_connection *conn, dico_url_t url)
 		break;
 
 	    case GETCRED_NOAUTH:
+		XDICO_DEBUG(1, _("Skipping authenitcation\n"));
 		break;
 	    }
 	}
@@ -203,9 +205,11 @@ auth_cred_get(char *host, struct auth_cred *cred)
 {
     memset(cred, 0, sizeof(cred[0]));
     auth_cred_dup(cred, &default_cred);
-    if (default_cred.user && default_cred.pass)
+    if (default_cred.user && default_cred.pass) {
+	XDICO_DEBUG(1,
+		    _("Obtained authentication credentials from the command line\n"));
 	return GETCRED_OK;
-    else {
+    } else {
 	int flags = 0;
 	
 	if (autologin_file) {
@@ -240,7 +244,7 @@ dict_transcript(struct dict_connection *conn, int state)
 	return;
     if (state == 0) {
 	dico_stream_t transport;
-	if (dico_stream_ioctl(conn->str, XSCRIPT_CLT_GET_TRANSPORT,
+	if (dico_stream_ioctl(conn->str, XSCRIPT_CTL_GET_TRANSPORT,
 			      &transport)) {
 	    dico_log(L_CRIT, errno,
 		     _("INTERNAL ERROR at %s:%d: cannot get stream transport"),
@@ -249,7 +253,7 @@ dict_transcript(struct dict_connection *conn, int state)
 	    return;
 	}
 	
-	if (dico_stream_ioctl(conn->str, XSCRIPT_CLT_SET_TRANSPORT, NULL)) {
+	if (dico_stream_ioctl(conn->str, XSCRIPT_CTL_SET_TRANSPORT, NULL)) {
 	    dico_log(L_CRIT, errno,
 		     _("INTERNAL ERROR at %s:%d: cannot set stream transport"),
 		     __FILE__,
@@ -280,6 +284,8 @@ dict_connect(struct dict_connection **pconn, dico_url_t url)
     dico_stream_t str;
     struct dict_connection *conn;
     
+    XDICO_DEBUG_F2(1, _("Connecting to %s:%d\n"), url->host,
+		   url->port ? url->port : DICO_DICT_PORT);
     fd = socket(PF_INET, SOCK_STREAM, 0);
     if (fd == -1) {
 	dico_log(L_ERR, errno,
@@ -322,7 +328,6 @@ dict_connect(struct dict_connection **pconn, dico_url_t url)
     conn->str = str;
     conn->fd = fd;
     dict_transcript(conn, transcript);
-
     if (dict_read_reply(conn)) {
 	dico_log(L_ERR, 0, _("No reply from server"));
 	return 1;
@@ -332,7 +337,8 @@ dict_connect(struct dict_connection **pconn, dico_url_t url)
 	dict_conn_close(conn);
 	return 1;
     }
-    
+	       
+    XDICO_DEBUG(1, _("Sending client information\n"));
     stream_printf(conn->str, "CLIENT \"%s\"\r\n", client);
     dict_read_reply(conn);
     if (!dict_status_p(conn, "250")) 
@@ -359,6 +365,7 @@ dict_read_reply(struct dict_connection *conn)
     int rc;
     if (conn->buf)
 	conn->buf[0] = 0;
+    XDICO_DEBUG(1, _("Waiting for reply\n"));
     rc = dico_stream_getline(conn->str, &conn->buf, &conn->size,
 			     &conn->level);
     if (rc == 0)
@@ -415,7 +422,9 @@ int
 dict_define(struct dict_connection *conn, char *database, char *word)
 {
     int rc;
-    
+
+    XDICO_DEBUG_F2(1, _("Sending query for word \"%s\" in database \"%s\"\n"),
+		   word, database);
     stream_printf(conn->str, "DEFINE \"%s\" \"%s\"\r\n",
 		  quotearg_n (0, database),
 		  quotearg_n (1, word));
@@ -425,6 +434,9 @@ dict_define(struct dict_connection *conn, char *database, char *word)
 	char *p;
 	
 	count = strtoul (conn->buf + 3, &p, 10);
+	XDICO_DEBUG_F1(1, ngettext("Reading %lu definition\n",
+				   "Reading %lu definitions\n", count),
+		       count);
 	for (i = 0; i < count; i++) {
 	    dict_read_reply(conn);
 	    if (!dict_status_p(conn, "151")) {
@@ -452,6 +464,7 @@ dict_match(struct dict_connection *conn, char *database, char *strategy,
     int rc;
     if (levenshtein_threshold && conn->levdist != levenshtein_threshold
 	&& dict_capa(conn, "xlev")) {
+	XDICO_DEBUG(1, _("Setting Levenshtein threshold\n"));
 	stream_printf(conn->str, "XLEV %u\n", levenshtein_threshold);
 	dict_read_reply(conn);
 	if (!dict_status_p(conn, "250"))
@@ -461,6 +474,9 @@ dict_match(struct dict_connection *conn, char *database, char *strategy,
 	    dico_log(L_WARN, 0, _("Server reply: %s"), conn->buf);
 	}
     }
+    XDICO_DEBUG_F3(1, _("Sending query to match word \"%s\" in "
+			"database \"%s\", "
+			"using \"%s\"\n"), word, database, strategy);
     stream_printf(conn->str, "MATCH \"%s\" \"%s\" \"%s\"\r\n",
 		  quotearg_n (0, database),
 		  quotearg_n (1, strategy),
@@ -471,6 +487,9 @@ dict_match(struct dict_connection *conn, char *database, char *strategy,
 	char *p;
 	
 	count = strtoul (conn->buf + 3, &p, 10);
+	XDICO_DEBUG_F1(1, ngettext("Reading %lu match\n",
+				   "Reading %lu matches\n", count),
+		       count);
     
 	dict_multiline_reply(conn);
 	dict_result_create(conn, dict_result_match, count,

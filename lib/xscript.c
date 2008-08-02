@@ -143,11 +143,11 @@ transcript_ioctl(void *data, int code, void *call_data)
 {
     struct transcript_stream *p = data;
     switch (code) {
-    case XSCRIPT_CLT_GET_TRANSPORT:
+    case XSCRIPT_CTL_GET_TRANSPORT:
 	*(dico_stream_t*)call_data = p->transport;
 	break;
 
-    case XSCRIPT_CLT_SET_TRANSPORT:
+    case XSCRIPT_CTL_SET_TRANSPORT:
 	p->transport = call_data;
 	break;
 

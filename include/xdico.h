@@ -71,8 +71,8 @@ double timer_get_system(xdico_timer_t t);
 void timer_format_time(dico_stream_t stream, double t);
 
 /* xstript */
-#define XSCRIPT_CLT_GET_TRANSPORT 0
-#define XSCRIPT_CLT_SET_TRANSPORT 1
+#define XSCRIPT_CTL_GET_TRANSPORT 0
+#define XSCRIPT_CTL_SET_TRANSPORT 1
 dico_stream_t xdico_transcript_stream_create(dico_stream_t transport,
 					     dico_stream_t logstr,
 					     const char *prefix[]);
@@ -97,6 +97,56 @@ void appi18n_init(void);
 
 /* xhostname.c */
 char *xdico_local_hostname(void);
+
+/* xdebug.c */
+extern int debug_level;
+extern int debug_source_info;
+extern dico_stream_t debug_stream;
+
+#define XDICO_DEBUG(l, s)						\
+    do {								\
+	if (debug_level >= l) {						\
+	    if (debug_source_info)					\
+		DICO_DEBUG_SINFO(debug_stream);				\
+	    dico_stream_write(debug_stream, s, strlen(s));		\
+	}								\
+    } while (0)
+
+#define XDICO_DEBUG_F1(l,f,a1)						\
+    do {								\
+	if (debug_level >= l) {						\
+	    if (debug_source_info)					\
+		DICO_DEBUG_SINFO(debug_stream);				\
+	    stream_printf(debug_stream, f, a1);				\
+	}								\
+    } while (0)
+
+#define XDICO_DEBUG_F2(l,f,a1,a2)					\
+    do {								\
+	if (debug_level >= l) {						\
+	    if (debug_source_info)					\
+		DICO_DEBUG_SINFO(debug_stream);				\
+	    stream_printf(debug_stream, f, a1, a2);			\
+	}								\
+    } while (0)
+
+#define XDICO_DEBUG_F3(l,f,a1,a2,a3)					\
+    do {								\
+	if (debug_level >= l) {						\
+	    if (debug_source_info)					\
+		DICO_DEBUG_SINFO(debug_stream);				\
+	    stream_printf(debug_stream, f, a1, a2, a3);			\
+	}								\
+    } while (0)
+
+#define XDICO_DEBUG_F4(l,f,a1,a2,a3,a4)					\
+    do {								\
+	if (debug_level >= l) {						\
+	    if (debug_source_info)					\
+		DICO_DEBUG_SINFO(debug_stream);				\
+	    stream_printf(debug_stream, f, a1, a2, a3, a4);		\
+	}								\
+    } while (0)
 
 #endif
     

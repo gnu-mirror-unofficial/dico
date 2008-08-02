@@ -24,6 +24,7 @@ libdico_la_SOURCES=\
  argcv.c\
  assoc.c\
  base64.c\
+ dbgstream.c\
  diag.c\
  fdiostr.c\
  fdstream.c\

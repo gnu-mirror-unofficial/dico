@@ -244,7 +244,8 @@ saslauth0(struct dict_connection *conn, struct auth_cred *cred)
     Gsasl *ctx;
     int rc;
     char *mech;
-    
+
+    XDICO_DEBUG(1, _("Trying SASL\n"));
     rc = gsasl_init(&ctx);
     if (rc != GSASL_OK)	{
 	dico_log(L_ERR, 0, _("Cannot initialize libgsasl: %s"),
@@ -264,6 +265,11 @@ saslauth0(struct dict_connection *conn, struct auth_cred *cred)
 	     mech);
     
     rc = do_gsasl_auth(ctx, conn, mech);
+
+    XDICO_DEBUG_F1(1, "%s\n",
+		   rc == 0 ?
+		   _("SASL authentication succeeded") :
+		   _("SASL authentication failed"));
 
     /* FIXME */
     return rc == 0 ? AUTH_OK : AUTH_FAIL;
@@ -290,6 +296,7 @@ saslauth(struct dict_connection *conn, dico_url_t url)
 	break;
 
     case GETCRED_NOAUTH:
+	XDICO_DEBUG(1, _("Skipping authenitcation\n"));
 	rc = AUTH_OK;
     }
     return rc;

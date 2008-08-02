@@ -16,8 +16,6 @@
 
 #include "dico-priv.h"
 
-#define VDETAIL(n,s) 
-
 char *
 skipws(char *buf)
 {
@@ -157,7 +155,7 @@ parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
 	}
 	return 1;
     } else
-	VDETAIL(1, (_("Opening netrc file %s...\n"), filename));
+	XDICO_DEBUG_F1(1, _("Reading autologin file %s...\n"), filename);
 
     while (getline (&buf, &n, fp) > 0 && n > 0) {
 	int rc;
@@ -198,7 +196,7 @@ parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
 	}
 	if (strcmp(argv[0], "machine") == 0) {
 	    if (hostcmp(argv[1], host) == 0) {
-		VDETAIL(1, (_("Found matching line %d\n"), line));
+		XDICO_DEBUG_F1(1, _("Found matching line %d\n"), line);
 		stop = 1;
 		host_argc = argc;
 		host_argv = argv;
@@ -208,13 +206,13 @@ parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
 		continue;
 	    }
 	} else if (strcmp(argv[0], "default") == 0) {
-		VDETAIL(1, (_("Found default line %d\n"), line));
-		def_argc = argc;
-		def_argv = argv;
-		pp_argc = &def_argc;
-		pp_argv = &def_argv;
-		def_line = line;
-		continue;
+	    XDICO_DEBUG_F1(1, _("Found default line %d\n"), line);
+	    def_argc = argc;
+	    def_argv = argv;
+	    pp_argc = &def_argc;
+	    pp_argv = &def_argv;
+	    def_line = line;
+	    continue;
 	} 
 	dico_argcv_free(argc, argv);
     }
@@ -226,7 +224,7 @@ parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
     else if (def_argv) 
 	p_argv = def_argv + 1;
     else {
-	VDETAIL(1, (_("No matching line found\n")));
+	XDICO_DEBUG(1, _("No matching line found\n"));
 	p_argv = NULL;
     }
 

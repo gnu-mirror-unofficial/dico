@@ -234,7 +234,8 @@ dict_lookup_url(dico_url_t url)
 	return 1;
 
     dict_lookup(conn, url);
-    
+
+    XDICO_DEBUG(1, _("Quitting\n"));
     stream_printf(conn->str, "QUIT\r\n");
     dict_read_reply(conn);
     dict_conn_close(conn);

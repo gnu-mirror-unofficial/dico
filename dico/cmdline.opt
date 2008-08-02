@@ -167,6 +167,18 @@ BEGIN
   transcript = 1;
 END
 
+OPTION(verbose,v,,
+       [<Increase debugging verbosity level.>])
+BEGIN
+  debug_level++;
+END
+
+OPTION(source-info,,,
+       [<Include source line information in the debugging output.>])
+BEGIN
+  debug_source_info = 1;
+END  
+
 OPTIONS_END
 
 void

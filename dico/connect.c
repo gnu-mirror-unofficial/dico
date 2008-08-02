@@ -365,10 +365,9 @@ dict_read_reply(struct dict_connection *conn)
     int rc;
     if (conn->buf)
 	conn->buf[0] = 0;
-    XDICO_DEBUG(1, _("Waiting for reply\n"));
     rc = dico_stream_getline(conn->str, &conn->buf, &conn->size,
 			     &conn->level);
-    if (rc == 0)
+    if (rc == 0) 
 	conn->level = dico_trim_nl(conn->buf);
     return rc;
 }

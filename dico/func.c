@@ -109,8 +109,11 @@ ensure_connection()
 	    script_error(_("Cannot connect to the server"));
 	    return 1;
 	}
+	XDICO_DEBUG(1, _("Getting list of databases\n"));
 	get_list(&conn->db_result, "SHOW DATABASES", "110");
+	XDICO_DEBUG(1, _("Getting list of strategies\n"));
 	get_list(&conn->strat_result, "SHOW STRATEGIES", "111");
+	XDICO_DEBUG(1, _("Finished getting server information\n"));
     }
     return 0;
 }
@@ -242,6 +245,21 @@ ds_compl_strategy(int argc, char **argv, int ws)
 }
 
 
+void
+ds_verbose(int argc, char **argv)
+{
+    if (argc == 1)
+	printf("%d\n", debug_level);
+    else {
+	char *p;
+	int n = strtoul(argv[1], &p, 10);
+	if (*p)
+	    script_error(_("invalid number"));
+	else
+	    debug_level = n;
+    }
+}
+
 void
 ds_transcript(int argc, char **argv)
 {

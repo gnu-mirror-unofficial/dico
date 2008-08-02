@@ -81,6 +81,10 @@ struct funtab funtab[] = {
       N_("[BOOL]"),
       N_("Set or display session transcript mode."),
       ds_transcript, no_compl },
+    { "verbose", 1, 2,
+      N_("[NUMBER]"),
+      N_("Set or display verbosity level."),
+      ds_verbose, no_compl },
     { "prompt", 2, 2,
       N_("STRING"),
       N_("Change command line prompt."),
@@ -213,12 +217,12 @@ typedef int (*script_getln_fn)(void *data, char **buf);
 
 
 int line = 0;
-char *filename;
+const char *filename;
 
 void
 script_diag(int category, int errcode, const char *fmt, va_list ap)
 {
-    char *pfx;
+    const char *pfx;
     char *newfmt;
     
     if (category == L_WARN) 
@@ -271,7 +275,7 @@ is_command(char **ptr)
 
 
 void
-parse_script_file(char *fname, script_getln_fn getln, void *data)
+parse_script_file(const char *fname, script_getln_fn getln, void *data)
 {
     char *buf = NULL;
     xdico_input_t input;

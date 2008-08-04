@@ -30,6 +30,8 @@ struct dicod_user_db {
 int
 udb_open(dicod_user_db_t db)
 {
+    if (!db)
+	return 1;
     if (!db->_db_open)
 	return 0;
     return db->_db_open(&db->handle, db->url);

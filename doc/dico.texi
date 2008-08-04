@@ -926,6 +926,10 @@ Use encryption keys from the named file to decrypt @acronym{AUTH}
 replies encrypted using @acronym{DES}.
 @end deffn
 
+@deffn {Configuration} ident-timeout @var{number}
+Set timeout for @acronym{AUTH} input/output operation to @var{number}
+of seconds.  Default timeout is 3 seconds.
+
 @node Authentication
 @subsection Authentication
 @cindex authentication
@@ -1371,6 +1375,11 @@ Remote client (from @code{CLIENT} command (@pxref{CLIENT})).
 @item %D
 The time taken to serve the request, in microseconds.
 
+@item %d
+Request command verb in abbreviated form, suitable for use in
+@acronym{URL}s, i.e. @samp{d} for @code{DEFINE}, and @samp{m} for
+@code{MATCH}.  @xref{urls}.
+
 @item %h
 Remote host.
 
@@ -1444,7 +1453,7 @@ The word from the request.
   For the reference, here is the list of format specifiers that
 have different meaning than in Apache: @samp{%C}, @samp{%H}, @samp{%m},
 @samp{%q}.  The following format specifiers are unique to @command{dicod}:
-@samp{%@{@var{n}@}R}, @samp{%V}, @samp{%W}.
+@samp{d}, @samp{%@{@var{n}@}R}, @samp{%V}, @samp{%W}.
 
   Absence of the @code{access-log-format} directive is equivalent to
 the following statement:
@@ -3934,6 +3943,9 @@ Set or display session transcript mode.
 
 @xref{Session Transcript}.
 
+@item verbose [@var{number}]
+Set or display debugging verbosity level. @FIXME-xref{}.
+
 @item prompt @var{string}
 Change command line prompt.
 
@@ -4349,6 +4361,16 @@ Additional text for client command, instead of the default @samp{dico
 @itemx -t
 Enable session transcript.  @xref{Session Transcript}, for a
 description.
+
+@item --verbose            
+@itemx -v
+Increase debugging verbosity level.
+
+@item --time-stamp
+Include time stamp in the debugging output.
+
+@item --source-info
+Include source line information in the debugging output.
 @end table
 
 @subheading Other options

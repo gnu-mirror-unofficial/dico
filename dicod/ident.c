@@ -266,18 +266,145 @@ ident_decrypt(const char *file, const char *name, struct ident_info *info)
     return 1;
 }
 
+struct io_buffer {
+    size_t size;
+    size_t level;
+    char *buffer;
+};
+
+static void
+io_buffer_init(struct io_buffer *iob)
+{
+    iob->size = 0;
+    iob->level = 0;
+    iob->buffer = NULL;
+}
+
+static void
+io_buffer_free(struct io_buffer *iob)
+{
+    free(iob->buffer);
+}
+
+/* Recompute the timeout TVAL taking into account the time elapsed since
+   START */
+static int
+recompute_timeout(struct timeval *start, struct timeval *tval)
+{
+    struct timeval now, diff;
+
+    gettimeofday(&now, NULL);
+    timersub(&now, start, &diff);
+    if (timercmp(&diff, tval, <)) {
+	struct timeval tmp;
+	timersub(tval, &diff, &tmp);
+	*tval = tmp;
+	return 0;
+    }
+    return 1;
+}
+
+enum socket_io_retval {
+    socket_io_ok,
+    socket_io_failure,
+    socket_io_connect,
+    socket_io_noreply,
+    socket_io_error,
+};
+
+enum socket_io_retval 
+socket_io(int fd, int conflag, long timeout,
+	  struct io_buffer *inb, struct io_buffer *outb)
+{
+    struct timeval tval, start;
+
+    gettimeofday(&start, NULL);
+    for (;;) {
+	int rc;
+	fd_set rd, wr;
+	
+	if (!inb && !outb)
+	    return socket_io_ok;
+	
+	FD_ZERO(&rd);
+	FD_ZERO(&wr);
+
+	if (inb)
+	    FD_SET(fd, &rd);
+	if (outb)
+	    FD_SET(fd, &wr);
+
+	tval.tv_sec = timeout;
+	tval.tv_usec = 0;
+	if (recompute_timeout (&start, &tval)) {
+	    errno = ETIMEDOUT;
+	    return socket_io_noreply;
+	}
+	
+	rc = select(fd + 1, &rd, &wr, NULL, &tval);
+
+	if (rc == 0) {
+	    errno = ETIMEDOUT;
+	    return socket_io_noreply;
+	}
+	
+	if (rc == -1 && errno == EINTR)
+	    continue;
+	if (rc < 0) 
+	    return socket_io_failure;
+	if (outb && FD_ISSET(fd, &wr)) {
+	    if (!conflag) {
+		int val;
+		int len = sizeof(val);
+		if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &val, &len)) 
+		    return socket_io_failure;
+		if (val) {
+		    errno = val;
+		    return socket_io_connect;
+		}
+		conflag = 1;
+	    }
+	    rc = write (fd, outb->buffer + outb->level,
+			outb->size - outb->level);
+	    if (rc < 1) 
+		return socket_io_error;
+	    else {
+		outb->level += rc;
+		if (outb->level == outb->size)
+		    outb = NULL;
+	    }
+	}
+	if (inb && FD_ISSET(fd, &rd)) {
+	    if (inb->size == inb->level) {
+		if (inb->size == 0)
+		    inb->size = 16;
+		inb->buffer = x2realloc(inb->buffer, &inb->size);
+	    }
+	    rc = read(fd, inb->buffer + inb->level, inb->size - inb->level);
+	    if (rc < 1) 
+		return socket_io_error;
+	    else {
+		inb->level += rc;
+		if (inb->buffer[inb->level - 1] == '\n')
+		    inb = NULL;
+	    }
+	}
+    }
+    return socket_io_ok;
+}
+
 char *
 query_ident_name(struct sockaddr_in *srv_addr, struct sockaddr_in *clt_addr)
 {
     int fd;
+    int rc;
+    int conflag;
     char buf[UINTMAX_STRSIZE_BOUND];
     struct sockaddr_in s;
-    ssize_t bytes;
-    FILE *fp;
-    char *bufp;
-    size_t size;
-    char *name;
+    struct io_buffer ib, ob;
+    char *name = NULL;
     RETSIGTYPE (*sighan) (int);
+    enum socket_io_retval retval;
     
     fd = socket(PF_INET, SOCK_STREAM, 0);
     if (fd == -1) {
@@ -285,7 +412,9 @@ query_ident_name(struct sockaddr_in *srv_addr, struct sockaddr_in *clt_addr)
 		 _("cannot create socket for AUTH identification"));
 	return NULL;
     }
-    /* FIXME: Switch socket to non-blocked mode */
+    rc = fcntl(fd, F_GETFL);
+    rc |= O_NONBLOCK;
+    fcntl(fd, F_SETFL, rc);
 
     s.sin_family = AF_INET;
     s.sin_addr.s_addr = srv_addr->sin_addr.s_addr;
@@ -299,62 +428,80 @@ query_ident_name(struct sockaddr_in *srv_addr, struct sockaddr_in *clt_addr)
 
     s = *clt_addr;
     s.sin_port = htons(113);
+    
     if (connect(fd, (struct sockaddr*) &s, sizeof(s)) == -1) {
-	dico_log(L_ERR, errno,
-		 _("cannot connect to AUTH server %s"),
-		 inet_ntoa(s.sin_addr));
-	close(fd);
-	return NULL;
-    }
+	if (errno == EINPROGRESS)
+	    conflag = 0;
+	else {
+	    dico_log(L_ERR, errno,
+		     _("cannot connect to AUTH server %s"),
+		     inet_ntoa(s.sin_addr));
+	    close(fd);
+	    return NULL;
+	}
+    } else
+	conflag = 1;
 
     sighan = signal(SIGPIPE, SIG_IGN);
 
-    fp = fdopen(fd, "r+");
-    if (!fp) {
-	close(fd);
-	signal(SIGPIPE, sighan);
-	return NULL;
-    }
+    io_buffer_init(&ib);
+    io_buffer_init(&ob);
+    asprintf(&ob.buffer, "%u , %u\r\n",
+	     ntohs(clt_addr->sin_port),
+	     ntohs(srv_addr->sin_port));
+    ob.size = strlen(ob.buffer);
     
-    fprintf(fp, "%u , %u\r\n",
-	    ntohs(clt_addr->sin_port),
-	    ntohs(srv_addr->sin_port));
+    retval = socket_io(fd, conflag, ident_timeout, &ib, &ob);
+    io_buffer_free(&ob);
 
-    bufp = NULL;
-    size = 0;
-    bytes = getline(&bufp, &size, fp);
-    fclose(fp);
-    signal(SIGPIPE, sighan);
-    
-    if (bytes <= 0) {
+    switch (retval) {
+    case socket_io_ok:
+	trimnl(ib.buffer, ib.level);
+	name = ident_extract_username(ib.buffer);
+	if (!name) {
+	    dico_log(L_ERR, 0,
+		     _("Malformed IDENT response: `%s', from %s"),
+		     ib.buffer, inet_ntoa(s.sin_addr));
+	} else if (is_des_p(name)) {
+	    if (!ident_keyfile) {
+		dico_log (L_ERR, 0,
+			  _("Keyfile for AUTH responses not specified in "
+			    "config; use `ident-keyfile FILE'"));
+		name = NULL;
+	    } else {
+		struct ident_info info;
+		if (ident_decrypt(ident_keyfile, name, &info) == 0)
+		    name = xstrdup(umaxtostr(ntohs(info.uid), buf));
+		else
+		    name = NULL;
+	    }
+	} else
+	    name = xstrdup(name);
+	break;
+	
+    case socket_io_failure:
+	dico_log(L_ERR, errno,
+		 _("failure while communicating with AUTH server %s"),
+		 inet_ntoa(s.sin_addr));
+	break;
+	
+    case socket_io_connect:
+	dico_log(L_ERR, errno,
+		 _("cannot connect to AUTH server %s"),
+		 inet_ntoa(s.sin_addr));
+	break;
+	    
+    case socket_io_noreply:
 	dico_log(L_ERR, errno, _("no reply from AUTH server %s"),
 		 inet_ntoa(s.sin_addr));
-	return NULL;
+	break;
+	
+    case socket_io_error:
+	dico_log(L_ERR, errno,
+		 _("I/O error while communicating with AUTH server %s"),
+		 inet_ntoa(s.sin_addr));
     }
 
-    trimnl(bufp, bytes);
-    name = ident_extract_username(bufp);
-    if (!name) {
-	dico_log(L_ERR, 0,
-		 _("Malformed IDENT response: `%s', from %s"),
-		 bufp, inet_ntoa(s.sin_addr));
-	free(bufp);
-	return NULL;
-    } else if (is_des_p(name)) {
-	if (!ident_keyfile) {
-	    dico_log (L_ERR, 0,
-		      _("Keyfile for AUTH responses not specified in config; "
-			"use `ident-keyfile FILE'"));
-	    name = NULL;
-	} else {
-	    struct ident_info info;
-	    if (ident_decrypt(ident_keyfile, name, &info) == 0)
-		name = xstrdup(umaxtostr(ntohs(info.uid), buf));
-	    else
-		name = NULL;
-	}
-    } else
-	name = xstrdup(name);
-    free(bufp);
+    io_buffer_free(&ib);
     return name;
 }

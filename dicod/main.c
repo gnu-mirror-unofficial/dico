@@ -99,6 +99,7 @@ dico_list_t /* of char * */ user_groups; /* List of groups he is member of */
 int identity_check;     /* Enable identity check */
 char *identity_name;    /* Name received from AUTH query. */
 char *ident_keyfile;    /* Keyfile for decrypting AUTH replies. */
+long ident_timeout = 3; /* Timeout for AUTH I/O */
 
 /* Provide timing information */
 int timing_option;
@@ -699,6 +700,9 @@ struct config_keyword keywords[] = {
     { "identity-check", N_("arg"),
       N_("Enable identification check using AUTH protocol (RFC 1413)"),
       cfg_bool, &identity_check },
+    { "ident-timeout", N_("val"),
+      N_("Set timeout for AUTH I/O operations."),
+      cfg_long, &ident_timeout },
     { "ident-keyfile", N_("name"),
       N_("Name of the file containing the keys for decrypting AUTH replies."),
       cfg_string, &ident_keyfile },

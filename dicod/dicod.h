@@ -19,6 +19,7 @@
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -93,6 +94,7 @@ extern char *access_log_file;
 extern int identity_check;
 extern char *identity_name;
 extern char *ident_keyfile;
+extern long ident_timeout;
 
 extern struct sockaddr server_addr;
 extern int server_addrlen;

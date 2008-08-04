@@ -41,7 +41,8 @@ access_log_status(const char *first, const char *last)
   %B          Size of response in bytes.
   %b          Size of response in bytes in CLF format, i.e. a '-' rather
               than a 0 when no bytes are sent.
-  %C          *Remote client (from CLIENT command). 
+  %C          *Remote client (from CLIENT command).
+  %d          *Abbreviated request command verb ('d' or 'm').
   %D          The time taken to serve the request, in microseconds.
   %h          Remote host
   %H          *Request command verb (DEFINE or MATCH)
@@ -261,6 +262,15 @@ alog_command_verb(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 }
 
 static void
+alog_command_verb_abbr(FILE *fp, struct alog_instr *instr,
+		       int argc, char **argv)
+{
+    print_str(fp,
+	      strcasecmp(argv[0], "DEFINE") == 0 ? "d" :
+	      strcasecmp(argv[0], "MATCH") == 0 ? "m" : "?");
+}
+
+static void
 alog_logname(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 {
     print_str(fp, identity_name);
@@ -389,6 +399,8 @@ static struct alog_tab alog_tab[] = {
     { 'b', alog_response_size_clf },
     /* * Remote client (from CLIENT command). */
     { 'C', alog_client },
+    /* * Abbreviated request command verb ('d' or 'm'). */
+    { 'd', alog_command_verb_abbr },
     /* The time taken to serve the request, in microseconds. */
     { 'D', alog_time_ms },
     /* Remote host */

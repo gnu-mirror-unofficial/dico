@@ -1,4 +1,8 @@
-Jim Breen <jwb@csse.monash.edu.au> for creating excellent Japanese dictionaries
-and for making them available under a free license.
-Philip Brown <phil@bolthole.com> for his Kdrill program that inspired me to 
-write gjdict, a primitive predecessor of Dico.
+GNU Dico THANKS file.
+
+Many people further contributed to GNU Dico by reporting problems,
+suggesting various improvements or submitting actual code. Here is a list
+of these people. Help us keep it complete and exempt of errors.
+
+Karl Berry              <karl@freefriends.org> 
+

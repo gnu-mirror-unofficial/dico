@@ -20,10 +20,6 @@
 #include <sys/wait.h>
 #include <hash.h>
 
-#define debug1(level, fmt, arg)			\
-    if (debug_level)				\
-	dico_log(L_DEBUG, 0, fmt, arg)
-
 struct input_file_ident {
     ino_t i_node;
     dev_t device;
@@ -538,7 +534,7 @@ preprocess_config(const char *extpp)
 	    asprintf(&cmd, "%s %s -", extpp, setup_file);
 	else
 	    cmd = extpp;
-	debug1(1, "Running preprocessor: `%s'", cmd);
+	XDICO_DEBUG_F1(2, "Running preprocessor: `%s'", cmd);
 	outfile = popen(cmd, "w");
 	if (!outfile) {
 	    dico_log(L_ERR, errno,
@@ -613,7 +609,7 @@ pp_extrn_start(int argc, const char **argv, pid_t *ppid)
     FILE *fp = NULL;
     
     dico_argcv_string(argc, argv, &ppcmd);
-    debug1(1, "Running preprocessor: `%s'", ppcmd);
+    XDICO_DEBUG_F1(2, "Running preprocessor: `%s'", ppcmd);
 	
     pipe(pout);
     switch (pid = fork()) {

@@ -32,6 +32,8 @@ int mode = MODE_DAEMON;
 /* Debug verbosity level */
 int debug_level;
 char *debug_level_str;
+int debug_source_info;
+dico_stream_t debug_stream;
 
 /* Maximum number of children in allowed in daemon mode. */
 unsigned int max_children = 64;
@@ -1001,6 +1003,7 @@ main(int argc, char **argv)
     set_quoting_style(NULL, escape_quoting_style);
     log_tag = dico_program_name;
     dicod_log_pre_setup();
+    debug_stream = dico_dbg_stream_create();
     hostname = xdico_local_hostname();
     dicod_init_command_tab();
     dicod_init_strategies();

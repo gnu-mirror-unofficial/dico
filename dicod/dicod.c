@@ -211,6 +211,23 @@ dicod_server_cleanup()
     dico_iterator_destroy(&itr);
 }    
 
+static void
+log_connection(const char *msg)
+{
+    if (debug_level) {
+	char *p = sockaddr_to_astr(&client_addr, client_addrlen);
+	if (debug_source_info)						
+	    DICO_DEBUG_SINFO(debug_stream);
+	stream_writez(debug_stream, msg);
+	dico_stream_write(debug_stream, " ", 1);
+	if (identity_name) 
+	    stream_printf(debug_stream, "%s@", identity_name);
+	stream_writez(debug_stream, p);
+	dico_stream_write(debug_stream, "\n", 1);
+	free(p);
+    }
+}
+
 int
 dicod_loop(dico_stream_t str)
 {
@@ -235,6 +252,7 @@ dicod_loop(dico_stream_t str)
     if (identity_check && server_addr.sa_family == AF_INET) 
 	identity_name = query_ident_name((struct sockaddr_in *)&server_addr,
 					 (struct sockaddr_in *)&client_addr);
+    log_connection(_("connection from"));
     
     open_databases();
     check_db_visibility();
@@ -252,6 +270,8 @@ dicod_loop(dico_stream_t str)
     close_databases();    
     init_auth_data();
     access_log_free_cache();
+
+    log_connection(_("session finished:"));
     return 0;
 }
 

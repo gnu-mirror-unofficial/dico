@@ -86,7 +86,6 @@ extern char *user_name;
 extern dico_list_t user_groups;
 extern int transcript;
 extern const char *preprocessor;
-extern int debug_level;
 extern char *debug_level_str;
 extern unsigned long total_forks;
 extern char *access_log_format;

@@ -380,8 +380,6 @@ handle_connection(int n)
 	close(connfd);
 	return 0;
     }
-    
-    /*FIXME: log_connection(&addr, addrlen);*/
 
     if (single_process) {
 	int status;

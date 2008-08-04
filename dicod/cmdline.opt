@@ -93,6 +93,12 @@ BEGIN
    debug_level = atoi(optarg);
 END
 
+OPTION(source-info,,,
+       [<Include source line information in the debugging output.>])
+BEGIN
+  debug_source_info = 1;
+END  
+
 OPTION(trace-grammar,,,
        [<Trace parsing of configuration file.>])
 BEGIN

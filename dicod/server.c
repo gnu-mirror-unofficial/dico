@@ -370,10 +370,6 @@ handle_connection(int n)
 	/*exit (EXIT_FAILURE);*/
     }
 
-    if (identity_check && server_addr.sa_family == AF_INET) 
-	identity_name = query_ident_name((struct sockaddr_in *)&server_addr,
-					 (struct sockaddr_in *)&client_addr);
-    
     if (dicod_acl_check(connect_acl, 1) == 0) {
 	char *p = sockaddr_to_astr(&client_addr, client_addrlen);
 	dico_log(L_NOTICE, 0,

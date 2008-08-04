@@ -232,6 +232,10 @@ dicod_loop(dico_stream_t str)
 	str = xdico_transcript_stream_create(str, logstr, NULL);
     }
 
+    if (identity_check && server_addr.sa_family == AF_INET) 
+	identity_name = query_ident_name((struct sockaddr_in *)&server_addr,
+					 (struct sockaddr_in *)&client_addr);
+    
     open_databases();
     check_db_visibility();
     initial_banner(str);

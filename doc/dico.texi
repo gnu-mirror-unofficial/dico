@@ -929,6 +929,7 @@ replies encrypted using @acronym{DES}.
 @deffn {Configuration} ident-timeout @var{number}
 Set timeout for @acronym{AUTH} input/output operation to @var{number}
 of seconds.  Default timeout is 3 seconds.
+@end deffn
 
 @node Authentication
 @subsection Authentication
@@ -2118,7 +2119,11 @@ Run in inetd mode.  @xref{Inetd Mode}.
 @itemx --debug=@var{level}
 Set debug verbosity level.  The @var{level} argument is an integer 
 ranging from @samp{0} (no debugging) to @samp{100} (maximum debugging
-information_.
+information).
+
+@opsummary{source-info}
+@item --source-info
+Include source line information in the debugging output.
 
 @opsummary{trace-grammar}
 @item --trace-grammar

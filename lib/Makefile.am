@@ -32,7 +32,6 @@ libdico_la_SOURCES=\
  iostr.c\
  levenshtein.c\
  libi18n.c\
- linebuf.c\
  list.c\
  logstream.c\
  mapstream.c\

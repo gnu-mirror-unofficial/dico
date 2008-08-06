@@ -387,7 +387,6 @@ handle_connection(int n)
 
 	str = dico_fd_io_stream_create(connfd, connfd);
 	dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
-	dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
 	status = dicod_loop(str);
 	dico_stream_close(str);
 	dico_stream_destroy(&str);
@@ -409,8 +408,7 @@ handle_connection(int n)
 	    signal(SIGHUP, SIG_DFL);
         
 	    str = dico_fd_io_stream_create(connfd, connfd);
-	    dico_stream_set_buffer(str, lb_in, 512);
-	    dico_stream_set_buffer(str, lb_out, 512);
+	    dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
 	    status = dicod_loop(str);
 	    dico_stream_close(str);
 	    dico_stream_destroy(&str);

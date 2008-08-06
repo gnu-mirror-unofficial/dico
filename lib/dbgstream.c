@@ -24,7 +24,7 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include <time.h>
+#include <sys/time.h>
 
 struct dbg_stream {
     dico_stream_t transport;  /* Transport log-stream */

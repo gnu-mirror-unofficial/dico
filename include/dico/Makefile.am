@@ -19,7 +19,6 @@ pkginclude_HEADERS = \
  assoc.h\
  diag.h\
  filter.h\
- lbuf.h\
  list.h\
  parseopt.h\
  strat.h\

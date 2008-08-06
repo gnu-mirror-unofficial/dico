@@ -32,7 +32,6 @@
 #include <dico/filter.h>
 #include <dico/diag.h>
 #include <dico/util.h>
-#include <dico/lbuf.h>
 #include <dico/parseopt.h>
 
 #endif

@@ -283,7 +283,6 @@ dicod_inetd()
     if (!str)
         return 1;
     dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
-    dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
 
     client_addrlen = sizeof(client_addr);
     if (getsockname (0, &client_addr, &client_addrlen) == -1)

@@ -65,6 +65,7 @@ LDADD=\
  ../lib/libextra.a\
  ../lib/libdico.la\
  @LIBINTL@ @LIBICONV@\
+ @LIBDICOSASL@\
  @GSASL_LIBS@\
  @LIBLTDL@  
 

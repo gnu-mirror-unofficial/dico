@@ -17,7 +17,7 @@
 #include "dico-priv.h"
 
 #ifdef WITH_GSASL
-#include <gsasl.h>
+#include <gsaslstr.h>
 
 static dico_list_t
 get_implemented_mechs(Gsasl *ctx)
@@ -229,10 +229,12 @@ do_gsasl_auth(Gsasl *ctx, struct dict_connection *conn, char *mech)
 	    return 1;
     }
 
-    if (dict_status_p(conn, "230"))
+    if (dict_status_p(conn, "230")) {
 	/* Authentication successful */
+	insert_gsasl_stream(sess, &conn->str);
 	return 0;
-
+    }
+    
     print_reply(conn);
     
     return 1;

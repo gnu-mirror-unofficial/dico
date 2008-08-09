@@ -17,6 +17,7 @@
 noinst_HEADERS=\
  appi18n.h\
  libi18n.h\
+ gsaslstr.h\
  dict.h\
  xdico.h
 

@@ -18,7 +18,8 @@ INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/gnu -I../gnu
 
 lib_LTLIBRARIES = libdico.la
 
-noinst_LIBRARIES=libxdico.a libextra.a
+noinst_LIBRARIES=libxdico.a libextra.a @BUILD_LIBDICOSASL@
+EXTRA_LIBRARIES=libdicosasl.a
 
 libdico_la_SOURCES=\
  argcv.c\
@@ -29,7 +30,6 @@ libdico_la_SOURCES=\
  fdiostr.c\
  fdstream.c\
  fltstream.c\
- gsaslstr.c\
  iostr.c\
  levenshtein.c\
  libi18n.c\
@@ -61,6 +61,9 @@ libxdico_a_SOURCES=\
  xutil.c
 
 libextra_a_SOURCES=xalloc-die.c
+
+libdicosasl_a_SOURCES=\
+ gsaslstr.c
 
 noinst_HEADERS=\
  cursor.xbm\

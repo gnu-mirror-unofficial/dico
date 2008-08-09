@@ -34,6 +34,7 @@ LDADD=\
  ../lib/libdico.la\
  $(READLINE_LIBS)\
  @LIBINTL@ @LIBICONV@\
+ @LIBDICOSASL@\
  @GSASL_LIBS@\
  @LIBLTDL@  
 

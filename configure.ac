@@ -71,7 +71,7 @@ gl_INIT
 
 # Gettext.
 AM_GNU_GETTEXT([external], [need-formatstring-macros])
-AM_GNU_GETTEXT_VERSION([0.16])
+AM_GNU_GETTEXT_VERSION([0.17])
 AC_CONFIG_LINKS(include/gettext.h:gnu/gettext.h)
 
 # Check for zlib
@@ -343,7 +343,9 @@ AH_BOTTOM([
 status_gsasl=no
 MU_CHECK_GSASL(0.2.5, [
     AC_DEFINE(WITH_GSASL,1,[Define if GNU SASL is present])
-    status_gsasl=yes])
+    status_gsasl=yes
+    AC_SUBST(BUILD_LIBDICOSASL,'libdicosasl.a')
+    AC_SUBST(LIBDICOSASL,'../lib/libdicosasl.a')])
 
 # Doc hints.
 # Select a rendition level:

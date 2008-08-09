@@ -228,6 +228,14 @@ log_connection(const char *msg)
     }
 }
 
+static dico_stream_t iostr;
+
+void
+replace_io_stream(dico_stream_t str)
+{
+    iostr = str;
+}
+
 int
 dicod_loop(dico_stream_t str)
 {
@@ -248,7 +256,8 @@ dicod_loop(dico_stream_t str)
 	    xalloc_die();
 	str = xdico_transcript_stream_create(str, logstr, NULL);
     }
-
+    replace_io_stream(str);
+    
     if (identity_check && server_addr.sa_family == AF_INET) 
 	identity_name = query_ident_name((struct sockaddr_in *)&server_addr,
 					 (struct sockaddr_in *)&client_addr);
@@ -256,21 +265,21 @@ dicod_loop(dico_stream_t str)
     
     open_databases();
     check_db_visibility();
-    initial_banner(str);
+    initial_banner(iostr);
 
     input = xdico_tokenize_begin();
-    while (!got_quit && get_input_line(str, &buf, &size, &rdbytes) == 0) {
+    while (!got_quit && get_input_line(iostr, &buf, &size, &rdbytes) == 0) {
 	trimnl(buf, rdbytes);
 	xdico_tokenize_input(input, buf, &argc, &argv);
 	if (argc == 0)
 	    continue;
-	dicod_handle_command(str, argc, argv);
+	dicod_handle_command(iostr, argc, argv);
     }
     xdico_tokenize_end(&input);
     close_databases();    
     init_auth_data();
     access_log_free_cache();
-
+    /* FIXME: destroy stream here, or at least do it if transcript is set */
     log_connection(_("session finished:"));
     return 0;
 }

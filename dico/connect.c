@@ -244,7 +244,7 @@ dict_transcript(struct dict_connection *conn, int state)
 	return;
     if (state == 0) {
 	dico_stream_t transport;
-	if (dico_stream_ioctl(conn->str, XSCRIPT_CTL_GET_TRANSPORT,
+	if (dico_stream_ioctl(conn->str, DICO_IOCTL_GET_TRANSPORT,
 			      &transport)) {
 	    dico_log(L_CRIT, errno,
 		     _("INTERNAL ERROR at %s:%d: cannot get stream transport"),
@@ -253,7 +253,7 @@ dict_transcript(struct dict_connection *conn, int state)
 	    return;
 	}
 	
-	if (dico_stream_ioctl(conn->str, XSCRIPT_CTL_SET_TRANSPORT, NULL)) {
+	if (dico_stream_ioctl(conn->str, DICO_IOCTL_SET_TRANSPORT, NULL)) {
 	    dico_log(L_CRIT, errno,
 		     _("INTERNAL ERROR at %s:%d: cannot set stream transport"),
 		     __FILE__,

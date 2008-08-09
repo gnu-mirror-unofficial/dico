@@ -295,6 +295,22 @@ dicod_add_command(struct dicod_command *cmd)
     xdico_list_append(command_list, cmd);
 }
 
+static int
+cmd_comp(const void *a, const void *b)
+{
+    const struct dicod_command *ca = a;
+    const struct dicod_command *cb = b;
+    return c_strcasecmp (ca->keyword, cb->keyword);
+}
+	
+void
+dicod_remove_command(const char *name)
+{
+    struct dicod_command cmd;
+    cmd.keyword = name;
+    dico_list_remove(command_list, &cmd, cmd_comp);
+}
+
 void
 dicod_init_command_tab()
 {

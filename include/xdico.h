@@ -71,8 +71,6 @@ double timer_get_system(xdico_timer_t t);
 void timer_format_time(dico_stream_t stream, double t);
 
 /* xstript */
-#define XSCRIPT_CTL_GET_TRANSPORT 0
-#define XSCRIPT_CTL_SET_TRANSPORT 1
 dico_stream_t xdico_transcript_stream_create(dico_stream_t transport,
 					     dico_stream_t logstr,
 					     const char *prefix[]);

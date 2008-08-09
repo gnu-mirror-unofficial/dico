@@ -19,7 +19,7 @@
 dico_list_t sasl_disabled_mech;
 
 #ifdef WITH_GSASL
-#include <gsasl.h>
+#include <gsaslstr.h>
 
 static Gsasl *ctx;   
 
@@ -83,7 +83,8 @@ get_sasl_response(dico_stream_t str, char **pret, char **pbuf, size_t *psize)
 #define RC_NOMECH  2
 
 static int
-sasl_auth(dico_stream_t str, char *mechanism, char *initresp)
+sasl_auth(dico_stream_t str, char *mechanism, char *initresp,
+	  Gsasl_session **psess)
 {
     int rc;
     Gsasl_session *sess_ctx;
@@ -125,6 +126,7 @@ sasl_auth(dico_stream_t str, char *mechanism, char *initresp)
 	dico_log(L_ERR, 0, _("GSASL error: %s"), gsasl_strerror(rc));
 	free(output);
 	free(inbuf);
+	gsasl_finish(sess_ctx);
 	return RC_FAIL;
     }
 
@@ -137,6 +139,7 @@ sasl_auth(dico_stream_t str, char *mechanism, char *initresp)
     
     if (username == NULL) {
 	dico_log(L_ERR, 0, _("GSASL %s: cannot get username"), mechanism);
+	gsasl_finish(sess_ctx);
 	return RC_FAIL;
     }
 
@@ -144,8 +147,7 @@ sasl_auth(dico_stream_t str, char *mechanism, char *initresp)
     udb_get_groups(user_db, username, &user_groups);
     check_db_visibility();
 
-    /* FIXME: Install a Gsasl stream */
-    
+    *psess = sess_ctx;
     return RC_SUCCESS;
 }
 
@@ -154,6 +156,7 @@ dicod_saslauth(dico_stream_t str, int argc, char **argv)
 {
     int rc;
     char *resp;
+    Gsasl_session *sess;
     
     if (udb_open(user_db)) {
 	dico_log(L_ERR, 0, _("failed to open user database"));
@@ -162,12 +165,18 @@ dicod_saslauth(dico_stream_t str, int argc, char **argv)
 		      "use \"SHOW INFO\" for server information\r\n");
 	return;
     }
-    rc = sasl_auth(str, argv[1], argv[2]);
+    rc = sasl_auth(str, argv[1], argv[2], &sess);
     udb_close(user_db);
     switch (rc) {
     case RC_SUCCESS:
 	resp = "230 Authentication successful";
-	break;
+	stream_printf(str, "%s\r\n", resp);
+	/* FIXME: If insert_gsasl_stream fails, client gets wrong response */
+	if (insert_gsasl_stream(sess, &str) == 0) {
+	    replace_io_stream(str);
+	    dicod_remove_command("SASLAUTH");
+	}
+	return;
 
     case RC_FAIL:
 	resp = "531 Access denied, "

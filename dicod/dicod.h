@@ -282,6 +282,7 @@ typedef struct dicod_database {
 
 /* dicod.c */
 void dicod_server(int argc, char **argv);
+void replace_io_stream(dico_stream_t str);
 int dicod_loop(dico_stream_t stream);
 int dicod_inetd(void);
 void dicod_init_strategies(void);
@@ -319,6 +320,7 @@ struct dicod_command {
 void dicod_handle_command(dico_stream_t str, int argc, char **argv);
 void dicod_init_command_tab(void);
 void dicod_add_command(struct dicod_command *cmd);
+void dicod_remove_command(const char *name);
 
 /* capa.c */
 void dicod_capa_register(const char *name, struct dicod_command *cmd,

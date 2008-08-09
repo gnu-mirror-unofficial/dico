@@ -377,7 +377,8 @@ _stream_fill_buffer(dico_stream_t stream)
 	return 0;
 	
     case dico_buffer_full:
-	if (dico_stream_read_unbuffered(stream, stream->buffer, stream->bufsize,
+	if (dico_stream_read_unbuffered(stream,
+					stream->buffer, stream->bufsize,
 					&stream->level))
 	    return 1;
 	break;
@@ -498,6 +499,8 @@ dico_stream_read(dico_stream_t stream, void *buf, size_t size, size_t *pread)
 	    nbytes += n;
 	    bufp += n;
 	    size -= n;
+	    if (stream->buftype == dico_buffer_line && bufp[-1] == '\n')
+		break;
 	}
 
 	if (pread)

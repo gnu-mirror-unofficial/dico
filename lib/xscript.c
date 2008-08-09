@@ -143,16 +143,16 @@ transcript_ioctl(void *data, int code, void *call_data)
 {
     struct transcript_stream *p = data;
     switch (code) {
-    case XSCRIPT_CTL_GET_TRANSPORT:
+    case DICO_IOCTL_GET_TRANSPORT:
 	*(dico_stream_t*)call_data = p->transport;
 	break;
 
-    case XSCRIPT_CTL_SET_TRANSPORT:
+    case DICO_IOCTL_SET_TRANSPORT:
 	p->transport = call_data;
 	break;
 
     default:
-	errno = ENOSYS;
+	errno = EINVAL;
 	return -1;
     }
     return 0;

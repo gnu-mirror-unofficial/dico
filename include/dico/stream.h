@@ -94,6 +94,13 @@ void dico_stream_set_ioctl(dico_stream_t stream,
 			   int (*ctl) (void *, int, void *));
 int dico_stream_ioctl(dico_stream_t stream, int code, void *ptr);
 
+
+/* IOCTLS */
+#define DICO_IOCTL_GET_TRANSPORT 0
+#define DICO_IOCTL_SET_TRANSPORT 1
+#define DICO_DBG_CTL_SET_FILE    2
+#define DICO_DBG_CTL_SET_LINE    3
+#define DICO_DBG_CTL_SET_TS      4
 
 
 /* FD streams */

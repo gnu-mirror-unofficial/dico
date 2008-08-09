@@ -18,6 +18,7 @@
 # include <config.h>
 #endif
 #include <dico.h>
+#include <libi18n.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -31,14 +32,20 @@
 
 struct g_buf {
     char *buffer;
+    size_t pos;
     size_t size;
     size_t level;
 };
 
-#define g_buf_ptr(p) (p).buffer
-#define g_buf_level(p) (p).level
-#define g_buf_drop(p) (p).level = 0
+#define g_buf_ptr(p) ((p).buffer + (p).pos)
+#define g_buf_level(p) ((p).level - (p).pos)
+#define g_buf_drop(p) (p).level = (p).pos = 0
 #define g_buf_free(p) free((p).buffer)
+#define g_buf_advance(p, s)			\
+    do {					\
+	if (((p).pos += s) >= (p).level)	\
+	    g_buf_drop(p);			\
+    } while (0)
 
 int
 g_buf_grow(struct g_buf *pb, const char *ptr, size_t size)
@@ -85,8 +92,10 @@ _gsasl_read(void *data, char *buf, size_t size, size_t *pret)
     char *bufp = NULL;
   
     if ((len = g_buf_level(s->buf))) {
+	if (len > size)
+	    len = size;
 	memcpy(buf, g_buf_ptr(s->buf), len);
-	g_buf_drop(s->buf);
+	g_buf_advance(s->buf, len);
 	if (pret)
 	    *pret = len;
 	return 0;
@@ -216,7 +225,45 @@ dico_gsasl_stream(Gsasl_session *sess, dico_stream_t transport)
     dico_stream_set_flush(str, _gsasl_flush);
     dico_stream_set_close(str, _gsasl_close);
     dico_stream_set_destroy(str, _gsasl_destroy);
+    dico_stream_set_buffer(str, dico_buffer_line, 1024);
     return str;
+}
+
+int
+insert_gsasl_stream(Gsasl_session *sess, dico_stream_t *pstr)
+{
+    int rc;
+    dico_stream_t gsasl_str;
+    dico_stream_t str = *pstr;
+    dico_stream_t prev = NULL, s;
+    
+    while ((rc = dico_stream_ioctl(str, DICO_IOCTL_GET_TRANSPORT, &s)) == 0
+	   && s) {
+	prev = str;
+	str = s;
+    }
+    if (rc && errno != EINVAL && errno != ENOSYS) {
+	dico_log(L_ERR, errno, _("Cannot get transport stream"));
+	return rc;
+    }
+    if (!str) {
+	dico_log(L_ERR, 0, _("Cannot get transport stream"));
+	return 1;
+    }
+
+    gsasl_str = dico_gsasl_stream(sess, str);
+    if (!gsasl_str) {
+	dico_log(L_ERR, errno, _("Cannot create GSASL stream"));
+	return 1;
+    }
+    
+    if (!prev)
+	*pstr = gsasl_str;
+    else if (dico_stream_ioctl(prev, DICO_IOCTL_SET_TRANSPORT, gsasl_str)) {
+	dico_log(L_ERR, errno, _("Cannot install GSASL stream"));
+	return 1;
+    }
+    return 0;
 }
 
 #endif

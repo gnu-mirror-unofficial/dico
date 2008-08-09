@@ -121,6 +121,7 @@ callback(Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop)
 	break;
 
     case GSASL_AUTHID:
+    case GSASL_ANONYMOUS_TOKEN:
 	gsasl_property_set(sctx, prop, cred->user);
 	break;
 

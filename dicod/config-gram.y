@@ -400,7 +400,7 @@ string_to_unsigned(uintmax_t *sval, const char *string, uintmax_t maxval)
     return 0;
 }
 
-static int
+int
 string_to_bool(const char *string, int *pval)
 {
     if (strcmp(string, "yes") == 0

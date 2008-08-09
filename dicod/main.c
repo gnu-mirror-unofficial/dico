@@ -684,6 +684,37 @@ alias_cb(enum cfg_callback_command cmd,
 }
 
 
+#ifdef WITH_GSASL
+int
+sasl_cb(enum cfg_callback_command cmd,
+	dicod_locus_t *locus,
+	void *varptr,
+	config_value_t *value,
+	void *cb_data)
+{
+    if (cmd == callback_set_value) {
+	if (value->type != TYPE_STRING) 
+	    config_error(locus, 0, _("expected boolean value but found list"));
+	else
+	    string_to_bool(value->v.string, &sasl_enable);
+    }
+    return 0;
+}
+
+struct config_keyword kwd_sasl[] = {
+    { "sasl-disable-mechanism", N_("mech: list"),
+      N_("Disable SASL mechanisms listed in <mech>."),
+      cfg_string|CFG_LIST, &sasl_disabled_mech, },
+    { "sasl-enable-mechanism", N_("mech: list"),
+      N_("Enable SASL mechanisms listed in <mech>."),
+      cfg_string|CFG_LIST, &sasl_enabled_mech, },
+    { "service", N_("name: string"),
+      N_("Set service name for GSSAPI and Kerberos."),
+      cfg_string, &sasl_service },
+    { NULL }
+};
+#endif
+
     
 struct config_keyword keywords[] = {
     { "user", N_("name"), N_("Run with these user privileges."),
@@ -779,11 +810,13 @@ struct config_keyword keywords[] = {
       N_("Define user database for authentication."),
       cfg_section, &user_db_cfg, 0, user_db_config, NULL,
       kwd_user_db },
-    { "sasl-disable-mechanism", N_("mech: list"),
-      N_("Disable SASL mechanisms listed in <mech>."),
-      cfg_string|CFG_LIST, &sasl_disabled_mech, },
     { "alias", N_("name: string"), N_("Define a command alias."),
       cfg_string, NULL, 0, alias_cb, },
+#ifdef WITH_GSASL
+    { "sasl", NULL,
+      N_("Control SASL authentication."),
+      cfg_section, NULL, 0, sasl_cb, NULL, kwd_sasl },
+#endif
     { NULL }
 };
 

@@ -16,7 +16,10 @@
 
 #include <dicod.h>
 
+int sasl_enable = 1;
+dico_list_t sasl_enabled_mech;
 dico_list_t sasl_disabled_mech;
+char *sasl_service;
 
 #ifdef WITH_GSASL
 #include <gsaslstr.h>
@@ -32,6 +35,9 @@ cmp_names(const void *item, const void *data)
 static int
 disabled_mechanism_p(char *name)
 {
+    if (sasl_enabled_mech
+	&& !dico_list_locate(sasl_enabled_mech, name, cmp_names))
+	return 1;
     return !!dico_list_locate(sasl_disabled_mech, name, cmp_names);
 }
 
@@ -267,7 +273,7 @@ callback(Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop)
 	break;
 #endif	
     case GSASL_SERVICE:
-	gsasl_property_set(sctx, prop, "dico");
+	gsasl_property_set(sctx, prop, sasl_service);
 	rc = GSASL_OK;
 	break;
 
@@ -319,6 +325,7 @@ init_sasl_1()
     if (!sasl_initialized) {
 	sasl_initialized = 1;
 	dicod_add_command(&cmd);
+	sasl_service = xstrdup ("dico");
     }
     return 0;
 }
@@ -331,7 +338,7 @@ register_sasl()
   int mechc;
   char **mechv;
 
-  if (init_sasl_0())
+  if (!sasl_enable || init_sasl_0())
       return;
   rc =  gsasl_server_mechlist(ctx, &listmech);
   if (rc != GSASL_OK) {

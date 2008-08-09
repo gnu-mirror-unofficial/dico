@@ -229,6 +229,7 @@ void line_finish(void);
 char *line_finish0(void);
 int quote_char(int c);
 int unquote_char(int c);
+int string_to_bool(const char *string, int *pval);
 
 void format_docstring(FILE *stream, const char *docstring, int level);
 void format_statement_array(FILE *stream, struct config_keyword *kwp,
@@ -448,6 +449,10 @@ int alias_install(const char *kw, int argc, char **argv, dicod_locus_t *ploc);
 int alias_expand(int argc, char **argv, int *pargc, char ***pargv);
 
 /* gsasl.c */
+extern int sasl_enable;
+extern dico_list_t sasl_enabled_mech;
 extern dico_list_t sasl_disabled_mech;
+extern char *sasl_service;
+
 void register_sasl(void);
 

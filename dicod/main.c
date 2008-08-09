@@ -708,9 +708,12 @@ struct config_keyword kwd_sasl[] = {
     { "sasl-enable-mechanism", N_("mech: list"),
       N_("Enable SASL mechanisms listed in <mech>."),
       cfg_string|CFG_LIST, &sasl_enabled_mech, },
-    { "service", N_("name: string"),
+    { "service", N_("name"),
       N_("Set service name for GSSAPI and Kerberos."),
       cfg_string, &sasl_service },
+    { "realm", N_("name"),
+      N_("Set realm name for GSSAPI and Kerberos."),
+      cfg_string, &sasl_realm },
     { NULL }
 };
 #endif

@@ -112,39 +112,38 @@ selectmech(struct dict_connection *conn, Gsasl *ctx, struct auth_cred *cred)
 static int
 callback(Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop)
 {
-    int rc = GSASL_NO_CALLBACK;
+    int rc = GSASL_OK;
     struct auth_cred *cred = gsasl_callback_hook_get(ctx);
 
     switch (prop) {
     case GSASL_PASSWORD:
 	gsasl_property_set(sctx, prop, cred->pass);
-	rc = GSASL_OK;
 	break;
 
     case GSASL_AUTHID:
-    case GSASL_AUTHZID:
 	gsasl_property_set(sctx, prop, cred->user);
-	rc = GSASL_OK;
 	break;
 
+    case GSASL_AUTHZID:
+	gsasl_property_set(sctx, prop, NULL);
+	break;
+	
     case GSASL_SERVICE:
 	gsasl_property_set(sctx, prop,
 			   cred->service ? cred->service : "dico");
-	rc = GSASL_OK;
 	break;
 
     case GSASL_REALM:
 	gsasl_property_set(sctx, prop,
 			   cred->realm ? cred->realm : CRED_HOSTNAME(cred));
-	rc = GSASL_OK;
 	break;
 
     case GSASL_HOSTNAME:
 	gsasl_property_set(sctx, prop, CRED_HOSTNAME(cred));
-	rc = GSASL_OK;
 	break;
 	
     default:
+	rc = GSASL_NO_CALLBACK;
 	dico_log(L_NOTICE, 0, _("Unknown callback property %d"), prop);
 	break;
     }

@@ -20,6 +20,7 @@ int sasl_enable = 1;
 dico_list_t sasl_enabled_mech;
 dico_list_t sasl_disabled_mech;
 char *sasl_service;
+char *sasl_realm;
 
 #ifdef WITH_GSASL
 #include <gsaslstr.h>
@@ -229,16 +230,15 @@ cb_validate(Gsasl *ctx, Gsasl_session *sctx)
 static int
 callback(Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop)
 {
-    int rc = GSASL_NO_CALLBACK;
-    char **pusername = gsasl_callback_hook_get(ctx);
-    char *user;
+    int rc = GSASL_OK;
+    const char **pusername;
+    const char *user;
     char *string;
-
-    if (pusername)
-	user = *pusername;
 
     switch (prop) {
     case GSASL_PASSWORD:
+	pusername = gsasl_callback_hook_get(ctx);
+	user = *pusername;
 	if (!user) {
 	    user = gsasl_property_get(sctx, GSASL_AUTHID);
 	    if (!user) {
@@ -254,45 +254,45 @@ callback(Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop)
 	    return GSASL_NO_PASSWORD;
 	} 
 	gsasl_property_set(sctx, prop, string);
-	rc = GSASL_OK;
-	break;
-#if 0
-    case GSASL_AUTHID:
-	/* FIXME */
-	gsasl_property_set(sctx, prop, user);
-	rc = GSASL_OK;
+	free(string);
 	break;
 
-    case GSASL_AUTHZID:
-	if (!user) {
-	    dico_log(L_ERR, 0, _("user name not supplied"));
-	    return GSASL_NO_AUTHZID;
-	}
-	gsasl_property_set(sctx, prop, user);
-	rc = GSASL_OK;
-	break;
-#endif	
     case GSASL_SERVICE:
 	gsasl_property_set(sctx, prop, sasl_service);
-	rc = GSASL_OK;
 	break;
 
     case GSASL_REALM:
-	/* FIXME: Use a separate realm? */
-	gsasl_property_set(sctx, prop, hostname);
-	rc = GSASL_OK;
+	gsasl_property_set(sctx, prop, sasl_realm ? sasl_realm : hostname);
 	break;
 
     case GSASL_HOSTNAME:
 	gsasl_property_set(sctx, prop, hostname);
-	rc = GSASL_OK;
 	break;
 
     case GSASL_VALIDATE_SIMPLE:
 	rc = cb_validate(ctx, sctx);
 	break;
+
+#if 0
+    FIXME:
+    case GSASL_VALIDATE_EXTERNAL:
+    case GSASL_VALIDATE_SECURID:
+#endif
+
+    case GSASL_VALIDATE_ANONYMOUS:
+	pusername = gsasl_callback_hook_get(ctx);
+	user = gsasl_property_get(sctx, GSASL_ANONYMOUS_TOKEN);
+	*pusername = user;
+	break;
+
+    case GSASL_VALIDATE_GSSAPI:
+	pusername = gsasl_callback_hook_get(ctx);
+	user = gsasl_property_get(sctx, GSASL_AUTHZID);
+	*pusername = user;
+	break;
 	
     default:
+	rc = GSASL_NO_CALLBACK;
 	dico_log(L_NOTICE, 0, _("Unsupported callback property %d"), prop);
 	break;
     }
@@ -325,7 +325,8 @@ init_sasl_1()
     if (!sasl_initialized) {
 	sasl_initialized = 1;
 	dicod_add_command(&cmd);
-	sasl_service = xstrdup ("dico");
+	if (!sasl_service)
+	    sasl_service = xstrdup ("dico");
     }
     return 0;
 }

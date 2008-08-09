@@ -70,6 +70,7 @@ AC_CHECK_FUNCS(gethostname select socket strdup strerror strtol \
 gl_INIT
 
 # Gettext.
+AM_ICONV
 AM_GNU_GETTEXT([external], [need-formatstring-macros])
 AM_GNU_GETTEXT_VERSION([0.17])
 AC_CONFIG_LINKS(include/gettext.h:gnu/gettext.h)

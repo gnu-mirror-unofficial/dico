@@ -227,8 +227,9 @@ callback(Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop)
     char **pusername = gsasl_callback_hook_get(ctx);
     char *user;
     char *string;
-    
-    user = *pusername;
+
+    if (pusername)
+	user = *pusername;
 
     switch (prop) {
     case GSASL_PASSWORD:

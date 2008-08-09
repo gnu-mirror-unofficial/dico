@@ -658,7 +658,7 @@ void
 dict_conn_close(struct dict_connection *conn)
 {
     struct dict_result *res;
-    
+#if 0    
     dico_stream_close(conn->str);
     dico_stream_destroy(&conn->str);
     free(conn->msgid);
@@ -669,6 +669,7 @@ dict_conn_close(struct dict_connection *conn)
 	dict_result_free(res);
 	res = prev;
     }
+#endif
     obstack_free(&conn->stk, NULL);
     free(conn);
 }

@@ -99,7 +99,7 @@ selectmech(struct dict_connection *conn, Gsasl *ctx, struct auth_cred *cred)
     itr = xdico_iterator_create(impl);
     mech = mech_intersect_first(itr, conn);
     dico_iterator_destroy(&itr);
-    dico_list_destroy(&impl, _free_el, NULL);
+    dico_list_destroy(&impl, NULL, NULL);
     if (mech)
 	upcase(mech);
     return mech;
@@ -174,8 +174,10 @@ sasl_read_response(struct dict_connection *conn, char **data)
 static void
 sasl_free_data(struct dict_connection *conn, char **pdata)
 {
-    obstack_free(&conn->stk, *pdata);
-    *pdata = NULL;
+    if (*pdata) {
+	obstack_free(&conn->stk, *pdata);
+	*pdata = NULL;
+    }
 }
     
 int

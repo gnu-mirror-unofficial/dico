@@ -308,9 +308,10 @@ parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
 				 filename, line);
 			exit(1);
 		    }
-		    for (i = 0; i < c; i++)
+		    
+		    for (i = 0; i < c; i++) 
 			xdico_list_append(pcred->mech, v[i]);
-
+		    
 		    free(v);
 		    break;
 		  }

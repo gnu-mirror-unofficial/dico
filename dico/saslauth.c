@@ -99,6 +99,7 @@ selectmech(struct dict_connection *conn, Gsasl *ctx, struct auth_cred *cred)
     itr = xdico_iterator_create(impl);
     mech = mech_intersect_first(itr, conn);
     dico_iterator_destroy(&itr);
+    /* FIXME: Revise 2nd argument. */
     dico_list_destroy(&impl, NULL, NULL);
     if (mech)
 	upcase(mech);

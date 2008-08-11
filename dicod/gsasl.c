@@ -21,6 +21,7 @@ dico_list_t sasl_enabled_mech;
 dico_list_t sasl_disabled_mech;
 char *sasl_service;
 char *sasl_realm;
+dico_list_t sasl_anon_groups;
 
 #ifdef WITH_GSASL
 #include <gsaslstr.h>
@@ -89,6 +90,20 @@ get_sasl_response(dico_stream_t str, char **pret, char **pbuf, size_t *psize)
 #define RC_FAIL    1
 #define RC_NOMECH  2
 
+struct sasl_data {
+    const char *username;
+    int anon;
+};
+
+static int
+_append_item (void *item, void *data)
+{
+    char *copy = xstrdup (item);
+    dico_list_t list = data;
+    xdico_list_append (list, copy);
+    return 0;
+}
+
 static int
 sasl_auth(dico_stream_t str, char *mechanism, char *initresp,
 	  Gsasl_session **psess)
@@ -99,7 +114,7 @@ sasl_auth(dico_stream_t str, char *mechanism, char *initresp,
     char *output;
     char *inbuf;
     size_t insize;
-    char *username = NULL;
+    struct sasl_data sdata = { NULL, 0 };
 
     if (disabled_mechanism_p(mechanism)) 
 	return RC_NOMECH;
@@ -110,14 +125,14 @@ sasl_auth(dico_stream_t str, char *mechanism, char *initresp,
 	return rc == GSASL_UNKNOWN_MECHANISM ? RC_NOMECH : RC_FAIL;
     }
 
-    gsasl_callback_hook_set(ctx, &username);
+    gsasl_callback_hook_set(ctx, &sdata);
     output = NULL;
     if (initresp) {
-	    inbuf = xstrdup(initresp);
-	    insize = strlen(initresp) + 1;
+	inbuf = xstrdup(initresp);
+	insize = strlen(initresp) + 1;
     } else {
-	    inbuf = NULL;
-	    insize = 0;
+	inbuf = NULL;
+	insize = 0;
     }
     input = inbuf;
     while ((rc = gsasl_step64(sess_ctx, input, &output)) == GSASL_NEEDS_MORE) {
@@ -144,14 +159,20 @@ sasl_auth(dico_stream_t str, char *mechanism, char *initresp,
     free(output);
     free(inbuf);
     
-    if (username == NULL) {
+    if (sdata.username == NULL) {
 	dico_log(L_ERR, 0, _("GSASL %s: cannot get username"), mechanism);
 	gsasl_finish(sess_ctx);
 	return RC_FAIL;
     }
 
-    user_name = xstrdup(username);
-    udb_get_groups(user_db, username, &user_groups);
+    user_name = xstrdup(sdata.username);
+    if (sdata.anon) {
+	if (sasl_anon_groups) {
+	    user_groups = xdico_list_create();
+	    dico_list_iterate (sasl_anon_groups, _append_item, user_groups);
+	}
+    } else
+	udb_get_groups(user_db, sdata.username, &user_groups);
     check_db_visibility();
 
     *psess = sess_ctx;
@@ -202,7 +223,7 @@ static int
 cb_validate(Gsasl *ctx, Gsasl_session *sctx)
 {
     int rc;
-    char **pusername = gsasl_callback_hook_get(ctx);
+    struct sasl_data *pdata = gsasl_callback_hook_get(ctx);
     const char *authid = gsasl_property_get(sctx, GSASL_AUTHID);
     const char *pass = gsasl_property_get(sctx, GSASL_PASSWORD);
     char *dbpass;
@@ -221,7 +242,7 @@ cb_validate(Gsasl *ctx, Gsasl_session *sctx)
     rc = strcmp(dbpass, pass);
     free(dbpass);
     if (rc == 0) {
-	*pusername = strdup(authid);
+	pdata->username = xstrdup(authid);
 	return GSASL_OK;
     } 
     return GSASL_AUTHENTICATION_ERROR;
@@ -231,21 +252,21 @@ static int
 callback(Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop)
 {
     int rc = GSASL_OK;
-    const char **pusername;
+    struct sasl_data *pdata;
     const char *user;
     char *string;
 
     switch (prop) {
     case GSASL_PASSWORD:
-	pusername = gsasl_callback_hook_get(ctx);
-	user = *pusername;
+	pdata = gsasl_callback_hook_get(ctx);
+	user = pdata->username;
 	if (!user) {
 	    user = gsasl_property_get(sctx, GSASL_AUTHID);
 	    if (!user) {
 		dico_log(L_ERR, 0, _("user name not supplied"));
 		return GSASL_NO_AUTHID;
 	    }
-	    *pusername = user;
+	    pdata->username = user;
 	}
 	if (udb_get_password(user_db, user, &string)) {
 	    dico_log(L_ERR, 0,
@@ -280,15 +301,16 @@ callback(Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop)
 #endif
 
     case GSASL_VALIDATE_ANONYMOUS:
-	pusername = gsasl_callback_hook_get(ctx);
+	pdata = gsasl_callback_hook_get(ctx);
 	user = gsasl_property_get(sctx, GSASL_ANONYMOUS_TOKEN);
-	*pusername = user;
+	pdata->username = user;
+	pdata->anon = 1;
 	break;
 
     case GSASL_VALIDATE_GSSAPI:
-	pusername = gsasl_callback_hook_get(ctx);
+	pdata = gsasl_callback_hook_get(ctx);
 	user = gsasl_property_get(sctx, GSASL_AUTHZID);
-	*pusername = user;
+	pdata->username = user;
 	break;
 	
     default:

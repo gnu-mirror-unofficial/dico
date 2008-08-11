@@ -454,6 +454,7 @@ extern dico_list_t sasl_enabled_mech;
 extern dico_list_t sasl_disabled_mech;
 extern char *sasl_service;
 extern char *sasl_realm;
+extern dico_list_t sasl_anon_groups;
 
 void register_sasl(void);
 

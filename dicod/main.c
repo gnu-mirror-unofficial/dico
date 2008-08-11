@@ -702,10 +702,10 @@ sasl_cb(enum cfg_callback_command cmd,
 }
 
 struct config_keyword kwd_sasl[] = {
-    { "sasl-disable-mechanism", N_("mech: list"),
+    { "disable-mechanism", N_("mech: list"),
       N_("Disable SASL mechanisms listed in <mech>."),
       cfg_string|CFG_LIST, &sasl_disabled_mech, },
-    { "sasl-enable-mechanism", N_("mech: list"),
+    { "enable-mechanism", N_("mech: list"),
       N_("Enable SASL mechanisms listed in <mech>."),
       cfg_string|CFG_LIST, &sasl_enabled_mech, },
     { "service", N_("name"),
@@ -714,6 +714,9 @@ struct config_keyword kwd_sasl[] = {
     { "realm", N_("name"),
       N_("Set realm name for GSSAPI and Kerberos."),
       cfg_string, &sasl_realm },
+    { "anon-group", N_("arg"),
+      N_("Define groups for anonymous users."),
+      cfg_string|CFG_LIST, &sasl_anon_groups },
     { NULL }
 };
 #endif

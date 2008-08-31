@@ -721,7 +721,275 @@ struct config_keyword kwd_sasl[] = {
 };
 #endif
 
+static dico_list_t strat_forward;
+
+static int
+flush_strat_forward_fn(void *item, void *data)
+{
+    dico_strategy_t strat = item;
+    dico_strategy_t p = dico_list_locate(strat_forward,
+					 strat->name,
+					 dico_strat_name_cmp);
+    if (p && p->stratcl) {
+	strat->stratcl = p->stratcl;
+	p->stratcl = NULL;
+    }
+    return 0;
+}
+
+static int
+_free_mem(void *item, void *data)
+{
+    free(item);
+    return 0;
+}
+
+static int
+destroy_strat_forward_fn(void *item, void *data)
+{
+    dico_strategy_t strat = item;
+    dico_list_destroy(&strat->stratcl, _free_mem, NULL);
+    free(strat);
+    return 0;
+}
+
+void
+flush_strat_forward()
+{
+    dico_strategy_iterate(flush_strat_forward_fn, NULL);
+    dico_list_destroy(&strat_forward, destroy_strat_forward_fn, NULL);
+}
+
+int
+strategy_cb(enum cfg_callback_command cmd,
+	    dicod_locus_t *locus,
+	    void *varptr,
+	    config_value_t *value,
+	    void *cb_data)
+{
+    void **pdata = cb_data;
+
+    switch (cmd) {
+    case callback_section_begin:
+	if (value->type != TYPE_STRING) 
+	    config_error(locus, 0, _("Section name must be a string"));
+	else if (!value->v.string)
+	    config_error(locus, 0, _("missing section name"));
+	else {
+	    dico_strategy_t strat = dico_list_locate(strat_forward,
+						     (void*)value->v.string,
+						     dico_strat_name_cmp);
+	    if (!strat) {
+		strat = dico_strategy_create(value->v.string, "");
+		strat->stratcl = xdico_list_create();
+		if (!strat_forward)
+		    strat_forward = xdico_list_create();
+		xdico_list_append(strat_forward, strat);
+	    } 
+	    *pdata = strat;
+	}
+	break;
+		
+    case callback_section_end:
+	break;
+	
+    case callback_set_value:
+	config_error(locus, 0, _("Unexpected statement"));
+    }
+    return 0;
+}
+
+int
+strategy_deny_all_cb(enum cfg_callback_command cmd,
+		     dicod_locus_t *locus,
+		     void *varptr,
+		     config_value_t *value,
+		     void *cb_data)
+{
+    int bool;
     
+    if (cmd != callback_set_value) {
+	config_error(locus, 0, _("Unexpected block statement"));
+	return 1;
+    }
+    if (value->type == TYPE_STRING
+	&& string_to_bool(value->v.string, &bool) == 0) {
+	if (bool)
+	    stratcl_add_disable(*(dico_list_t*) varptr);
+    } else
+	config_error(locus, 0, _("Expected boolean value"));
+    return 0;
+}
+
+struct compile_pattern_closure {
+    dico_list_t list;
+    dicod_locus_t *locus;
+};
+
+static int
+add_deny_word(void *item, void *data)
+{
+    char *word = item;
+    struct compile_pattern_closure *cpc = data;
+    stratcl_add_word(cpc->list, word);
+    return 0;
+}
+
+int
+strategy_deny_word_cb(enum cfg_callback_command cmd,
+		      dicod_locus_t *locus,
+		      void *varptr,
+		      config_value_t *value,
+		      void *cb_data)
+{
+    struct compile_pattern_closure cpc;
+
+    if (cmd != callback_set_value) {
+	config_error(locus, 0, _("Unexpected block statement"));
+	return 1;
+    }
+    cpc.list = *(dico_list_t*) varptr;
+    cpc.locus = locus;
+    if (value->type == TYPE_LIST)
+	dico_list_iterate(value->v.list, add_deny_word, &cpc);
+    else if (value->type == TYPE_STRING)
+	add_deny_word((void*)value->v.string, &cpc);
+    else
+	config_error(locus, 0, _("expected list or string"));
+    return 0;
+}
+
+int
+strategy_deny_length(enum cfg_callback_command cmd,
+		     dicod_locus_t *locus,
+		     dico_list_t list,
+		     config_value_t *value,
+		     enum cmp_op op)
+{
+    if (cmd != callback_set_value) {
+	config_error(locus, 0, _("Unexpected block statement"));
+	return 0;
+    }
+    if (value->type == TYPE_STRING) {
+	uintmax_t val;
+	
+	if (string_to_unsigned(&val, value->v.string, (size_t)-1, locus))
+	    return 0;
+	stratcl_add_cmp(list, op, val);
+    } else
+	config_error(locus, 0, _("Expected number"));
+    return 0;
+}
+
+int
+strategy_deny_length_lt_cb(enum cfg_callback_command cmd,
+			   dicod_locus_t *locus,
+			   void *varptr,
+			   config_value_t *value,
+			   void *cb_data)
+{
+    return strategy_deny_length(cmd, locus, *(dico_list_t*) varptr,
+				value, cmp_lt);
+}
+
+int
+strategy_deny_length_le_cb(enum cfg_callback_command cmd,
+			   dicod_locus_t *locus,
+			   void *varptr,
+			   config_value_t *value,
+			   void *cb_data)
+{
+    return strategy_deny_length(cmd, locus, *(dico_list_t*) varptr,
+				value, cmp_le);
+}
+
+int
+strategy_deny_length_gt_cb(enum cfg_callback_command cmd,
+			   dicod_locus_t *locus,
+			   void *varptr,
+			   config_value_t *value,
+			   void *cb_data)
+{
+    return strategy_deny_length(cmd, locus, *(dico_list_t*) varptr,
+				value, cmp_gt);
+}
+
+int
+strategy_deny_length_ge_cb(enum cfg_callback_command cmd,
+			   dicod_locus_t *locus,
+			   void *varptr,
+			   config_value_t *value,
+			   void *cb_data)
+{
+    return strategy_deny_length(cmd, locus, *(dico_list_t*) varptr,
+				value, cmp_ge);
+}
+
+int
+strategy_deny_length_eq_cb(enum cfg_callback_command cmd,
+			   dicod_locus_t *locus,
+			   void *varptr,
+			   config_value_t *value,
+			   void *cb_data)
+{
+    return strategy_deny_length(cmd, locus, *(dico_list_t*) varptr,
+				value, cmp_eq);
+}
+
+int
+strategy_deny_length_ne_cb(enum cfg_callback_command cmd,
+			   dicod_locus_t *locus,
+			   void *varptr,
+			   config_value_t *value,
+			   void *cb_data)
+{
+    return strategy_deny_length(cmd, locus, *(dico_list_t*) varptr,
+				value, cmp_ne);
+}
+
+
+
+struct config_keyword kwd_strategy[] = {
+    { "deny-all", N_("arg: bool"), N_("Deny all * and ! look ups"),
+      cfg_string, NULL, offsetof(struct dico_strategy, stratcl),
+      strategy_deny_all_cb },
+    { "deny-word", N_("cond"), N_("Deny * and ! look-ups on these words."),
+      cfg_string|CFG_LIST, NULL, offsetof(struct dico_strategy, stratcl),
+      strategy_deny_word_cb, },
+    { "deny-length-lt",
+      N_("len: number"),
+      N_("Deny * and ! look-ups on words with length < <len>."),
+      cfg_string, NULL, offsetof(struct dico_strategy, stratcl),
+      strategy_deny_length_lt_cb, },
+    { "deny-length-le",
+      N_("len: number"),
+      N_("Deny * and ! look-ups on words with length <= <len>."),
+      cfg_string, NULL, offsetof(struct dico_strategy, stratcl),
+      strategy_deny_length_le_cb, },
+    { "deny-length-gt",
+      N_("len: number"),
+      N_("Deny * and ! look-ups on words with length > <len>."),
+      cfg_string, NULL, offsetof(struct dico_strategy, stratcl),
+      strategy_deny_length_gt_cb, },
+    { "deny-length-ge",
+      N_("len: number"),
+      N_("Deny * and ! look-ups on words with length >= <len>."),
+      cfg_string, NULL, offsetof(struct dico_strategy, stratcl),
+      strategy_deny_length_ge_cb, },
+    { "deny-length-eq",
+      N_("len: number"),
+      N_("Deny * and ! look-ups on words with length == <len>."),
+      cfg_string, NULL, offsetof(struct dico_strategy, stratcl),
+      strategy_deny_length_eq_cb, },
+    { "deny-length-ne",
+      N_("len: number"),
+      N_("Deny * and ! look-ups on words with length != <len>."),
+      cfg_string, NULL, offsetof(struct dico_strategy, stratcl),
+      strategy_deny_length_ne_cb, },
+    { NULL }
+};
+
+
 struct config_keyword keywords[] = {
     { "user", N_("name"), N_("Run with these user privileges."),
       cfg_string, NULL, 0, set_user  },
@@ -823,6 +1091,9 @@ struct config_keyword keywords[] = {
       N_("Control SASL authentication."),
       cfg_section, NULL, 0, sasl_cb, NULL, kwd_sasl },
 #endif
+    { "strategy", N_("name: string"),
+      N_("Additional configuration for strategy <name>"),
+      cfg_section, NULL, 0, strategy_cb, NULL, kwd_strategy },
     { NULL }
 };
 
@@ -1077,6 +1348,7 @@ main(int argc, char **argv)
 
     begin_timing("server");
     dicod_server_init();
+    flush_strat_forward();
     switch (mode) {
     case MODE_DAEMON:
 	dicod_server(argc, argv);

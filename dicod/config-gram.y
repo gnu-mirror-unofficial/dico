@@ -380,18 +380,19 @@ string_to_signed(intmax_t *sval, const char *string,
 }
     
 int
-string_to_unsigned(uintmax_t *sval, const char *string, uintmax_t maxval)
+string_to_unsigned(uintmax_t *sval, const char *string, uintmax_t maxval,
+		   dicod_locus_t *loc)
 {
     uintmax_t t;
     char *p;
     
     t = strtoumax(string, &p, 0);
     if (*p) {
-	config_error(&locus, 0, _("cannot convert `%s' to number"),
+	config_error(loc, 0, _("cannot convert `%s' to number"),
 		     string);
 	return 1;
     } else if (t > maxval) {
-	config_error(&locus, 0,
+	config_error(loc, 0,
 		     _("%s: value out of allowed range 0..%"PRIuMAX),
 		     string, maxval);
 	return 1;
@@ -526,7 +527,7 @@ string_convert(void *target, enum config_data_type type, const char *string)
 	break;
 	    
     case cfg_ushort:
-	if (string_to_unsigned(&uval, string, USHRT_MAX) == 0)
+	if (string_to_unsigned(&uval, string, USHRT_MAX, &locus) == 0)
 	    *(unsigned short*)target = uval;
 	else
 	    return 1;
@@ -543,7 +544,7 @@ string_convert(void *target, enum config_data_type type, const char *string)
 	break;
 	    
     case cfg_uint:
-	if (string_to_unsigned(&uval, string, UINT_MAX) == 0)
+	if (string_to_unsigned(&uval, string, UINT_MAX, &locus) == 0)
 	    *(unsigned int*)target = uval;
 	else
 	    return 1;
@@ -557,14 +558,14 @@ string_convert(void *target, enum config_data_type type, const char *string)
 	break;
 	    
     case cfg_ulong:
-	if (string_to_unsigned(&uval, string, ULONG_MAX) == 0)
+	if (string_to_unsigned(&uval, string, ULONG_MAX, &locus) == 0)
 	    *(unsigned long*)target = uval;
 	else
 	    return 1;
 	break;
 	    
     case cfg_size:
-	if (string_to_unsigned(&uval, string, SIZE_MAX) == 0)
+	if (string_to_unsigned(&uval, string, SIZE_MAX, &locus) == 0)
 	    *(size_t*)target = uval;
 	else
 	    return 1;
@@ -575,11 +576,12 @@ string_convert(void *target, enum config_data_type type, const char *string)
 				INTMAX_MIN, INTMAX_MAX);
 	    
     case cfg_uintmax:
-	return string_to_unsigned((uintmax_t*)target, string, UINTMAX_MAX);
+	return string_to_unsigned((uintmax_t*)target, string, UINTMAX_MAX,
+				  &locus);
 	    
     case cfg_time:
 	/*FIXME: Use getdate */
-	if (string_to_unsigned(&uval, string, (time_t)-1) == 0)
+	if (string_to_unsigned(&uval, string, (time_t)-1, &locus) == 0)
 	    *(time_t*)target = uval;
 	else
 	    return 1;

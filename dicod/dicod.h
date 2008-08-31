@@ -230,6 +230,8 @@ char *line_finish0(void);
 int quote_char(int c);
 int unquote_char(int c);
 int string_to_bool(const char *string, int *pval);
+int string_to_unsigned(uintmax_t *sval, const char *string, uintmax_t maxval,
+		       dicod_locus_t *loc);
 
 void format_docstring(FILE *stream, const char *docstring, int level);
 void format_statement_array(FILE *stream, struct config_keyword *kwp,
@@ -457,4 +459,19 @@ extern char *sasl_realm;
 extern dico_list_t sasl_anon_groups;
 
 void register_sasl(void);
+
+/* stratcl.c */
+enum cmp_op {
+    cmp_eq,
+    cmp_ne,
+    cmp_lt,
+    cmp_le,
+    cmp_gt,
+    cmp_ge
+};
+
+void stratcl_add_word(dico_list_t list, const char *word);
+void stratcl_add_cmp(dico_list_t list, enum cmp_op op, size_t len);
+void stratcl_add_disable(dico_list_t list);
+int stratcl_check_word(dico_list_t list, const char *word);
 

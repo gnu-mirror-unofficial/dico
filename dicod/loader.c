@@ -222,6 +222,13 @@ dicod_word_first(dico_stream_t stream, const char *word,
     dico_iterator_t itr;
 
     begin_timing(tid);
+
+    if (strat && stratcl_check_word(strat->stratcl, word)) {
+	access_log_status(nomatch, nomatch);
+	dico_stream_writeln(stream, nomatch, nomatch_len);
+	return;
+    }
+
     itr = xdico_iterator_create(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
 	if (database_visible_p(db)) {
@@ -278,8 +285,14 @@ dicod_word_all(dico_stream_t stream, const char *word,
     dico_list_t reslist = xdico_list_create();
     size_t total = 0;
     struct dbres *rp;
-
+    
     begin_timing(tid);
+
+    if (strat && stratcl_check_word(strat->stratcl, word)) {
+	access_log_status(nomatch, nomatch);
+	dico_stream_writeln(stream, nomatch, nomatch_len);
+	return;
+    }
 
     itr = xdico_iterator_create(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {

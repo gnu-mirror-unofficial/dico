@@ -88,7 +88,7 @@ check_disconnect()
 	do 
 	    rc = select(conn->fd + 1, &rd, &wr, &ex, NULL);
 	while (rc == -1 && errno == EINTR);
-	if (rc < 0 || FD_ISSET(conn->fd, &rd) || FD_ISSET(conn->fd, &rd)) {
+	if (rc < 0 || FD_ISSET(conn->fd, &rd)) {
 	    dict_conn_close(conn);
 	    conn = NULL;
 	}

@@ -39,6 +39,7 @@ dicod_SOURCES=\
  regex.c\
  server.c\
  stat.c\
+ stratcl.c\
  udb.c\
  xidle.c\
  xversion.c

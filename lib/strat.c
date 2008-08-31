@@ -28,8 +28,8 @@ static dico_strategy_t default_strategy;
 
 #define DEFSTRATNAME(s) ((s)[0] == '.' && (s)[1] == 0)
 
-static int
-strat_name_cmp(const void *item, const void *data)
+int
+dico_strat_name_cmp(const void *item, const void *data)
 {
     dico_strategy_t strat = (dico_strategy_t) item;
     const char *name = data;
@@ -37,16 +37,25 @@ strat_name_cmp(const void *item, const void *data)
 }
 
 dico_strategy_t
-dico_strategy_dup(const dico_strategy_t strat)
+dico_strategy_create(const char *name, const char *descr)
 {
     dico_strategy_t np;
-    size_t size = sizeof(*np) + strlen(strat->name) + strlen(strat->descr) + 2;
+    size_t size = sizeof(*np) + strlen(name) + strlen(descr) + 2;
     np = malloc(size);
     if (np) {
 	np->name = (char*)(np + 1);
-	strcpy(np->name, strat->name);
+	strcpy(np->name, name);
 	np->descr = np->name + strlen(np->name) + 1;
-	strcpy(np->descr, strat->descr);
+	strcpy(np->descr, descr);
+    }
+    return np;
+}
+
+dico_strategy_t
+dico_strategy_dup(const dico_strategy_t strat)
+{
+    dico_strategy_t np = dico_strategy_create(strat->name, strat->descr);
+    if (np) {
 	np->sel = strat->sel;
 	np->closure = strat->closure;
     }
@@ -58,7 +67,7 @@ dico_strategy_find(const char *name)
 {
     if (DEFSTRATNAME(name)) 
 	return default_strategy;
-    return dico_list_locate(strategy_list, (void*)name, strat_name_cmp);
+    return dico_list_locate(strategy_list, (void*)name, dico_strat_name_cmp);
 }
 
 int

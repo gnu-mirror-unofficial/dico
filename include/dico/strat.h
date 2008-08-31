@@ -26,8 +26,12 @@ struct dico_strategy {
     dico_select_t sel;
     void *closure;
     int is_default;
+    dico_list_t stratcl;
 };
 
+int dico_strat_name_cmp(const void *item, const void *data);
+
+dico_strategy_t dico_strategy_create(const char *name, const char *descr);
 dico_strategy_t dico_strategy_dup(const dico_strategy_t strat);
 dico_strategy_t dico_strategy_find(const char *name);
 int dico_strategy_add(const dico_strategy_t strat);

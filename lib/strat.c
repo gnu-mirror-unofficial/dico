@@ -43,6 +43,7 @@ dico_strategy_create(const char *name, const char *descr)
     size_t size = sizeof(*np) + strlen(name) + strlen(descr) + 2;
     np = malloc(size);
     if (np) {
+	memset(np, 0, size);
 	np->name = (char*)(np + 1);
 	strcpy(np->name, name);
 	np->descr = np->name + strlen(np->name) + 1;

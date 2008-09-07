@@ -22,7 +22,7 @@ static int
 lev_sel(int cmd, const char *word, const char *dict_word, void *closure)
 {
     if (cmd == DICO_SELECT_RUN) {
-	int dist = dico_levenshtein_distance(word, dict_word, closure != NULL);
+	int dist = dico_levenshtein_distance(word, dict_word, (int)closure);
 	if (dist < 0)
 	    return 0;
 	return dist <= levenshtein_distance;
@@ -30,18 +30,23 @@ lev_sel(int cmd, const char *word, const char *dict_word, void *closure)
     return 0;
 }
 
-static struct dico_strategy levstrat = {
-    "lev",
-    "Match headwords within given Levenshtein distance",
-    lev_sel,
-    NULL
-};
-
-static struct dico_strategy dlevstrat = {
-    "dlev",
-    "Match headwords within given Damerau-Levenshtein distance",
-    lev_sel,
-    (void*)1
+static struct dico_strategy levstrat[] = {
+    { "lev",
+      "Match headwords within given Levenshtein distance",
+      lev_sel,
+      NULL },
+    { "nlev",
+      "Match headwords within given Levenshtein distance (normalized)",
+      lev_sel,
+      (void*)DICO_LEV_NORM },
+    { "dlev",
+      "Match headwords within given Damerau-Levenshtein distance",
+      lev_sel,
+      (void*)DICO_LEV_DAMERAU },
+    { "ndlev",
+      "Match headwords within given Damerau-Levenshtein distance (normalized)",
+      lev_sel,
+      (void*)(DICO_LEV_NORM|DICO_LEV_DAMERAU) }
 };
 
 static void
@@ -60,12 +65,13 @@ dicod_xlevdist(dico_stream_t str, int argc, char **argv)
 void
 register_lev()
 {
+    int i;
     static struct dicod_command cmd =
 	{ "XLEV", 2, 2, "distance", "Set Levenshtein distance",
 	  dicod_xlevdist };
-    dico_strategy_add(&levstrat);
-    dico_strategy_add(&dlevstrat);
-    dico_set_default_strategy("lev");
+    for (i = 0; i < DICO_ARRAY_SIZE(levstrat); i++)
+	dico_strategy_add(&levstrat[i]);
+    dico_set_default_strategy("nlev");
     dicod_capa_register("xlev", &cmd, NULL, NULL);
 }
 

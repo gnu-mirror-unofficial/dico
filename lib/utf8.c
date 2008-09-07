@@ -1975,3 +1975,39 @@ utf8_mbstr_to_wc(const char *str, unsigned **wptr)
   *wptr = w;
   return sc;
 }
+
+#define ISWS(c) ((c)==' '||(c)=='\t'||(c)=='\n')
+
+int
+utf8_mbstr_to_norm_wc(const char *str, unsigned **nptr)
+{
+    int inws = 0;
+    size_t len = strlen(str);
+    unsigned *base = calloc(len + 1, sizeof(base[0]));
+    size_t i = 0;
+    
+    if (!base)
+	return -1;
+
+    while (len > 0) {
+	unsigned wc;
+	int rc = utf8_mbtowc(&wc, (unsigned char *)str, len);
+	if (rc <= 0)
+	    return 1;
+	str += rc;
+	len -= rc;
+	if (rc == 1 && ISWS(wc)) {
+	    if (!inws) {
+		wc = ' ';
+		inws = 1;
+	    } else
+		continue;
+	} else
+	    inws = 0;
+	base[i++] = wc;
+    }
+    base[i++] = 0;
+    *nptr = realloc(base, i * sizeof(base[0]));
+    return 0;
+}
+    

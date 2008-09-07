@@ -55,8 +55,12 @@ int utf8_wc_strcmp (const unsigned *a, const unsigned *b);
 int utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char *s,
 		     size_t size);
 int utf8_mbstr_to_wc(const char *str, unsigned **wptr);
+int utf8_mbstr_to_norm_wc(const char *str, unsigned **nptr);
 
-int dico_levenshtein_distance(const char *a, const char *b, int damerau);
+#define DICO_LEV_NORM    0x1
+#define DICO_LEV_DAMERAU 0x2
+
+int dico_levenshtein_distance(const char *a, const char *b, int flags);
 #define DICO_SOUNDEX_SIZE 5
 int dico_soundex(const char *s, char codestr[DICO_SOUNDEX_SIZE]);
 

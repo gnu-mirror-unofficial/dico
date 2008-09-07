@@ -33,7 +33,7 @@
 #endif
 
 int
-dico_levenshtein_distance(const char *astr, const char *bstr, int damerau)
+dico_levenshtein_distance(const char *astr, const char *bstr, int flags)
 {
     unsigned *a, *b;
     int alen;
@@ -42,20 +42,23 @@ dico_levenshtein_distance(const char *astr, const char *bstr, int damerau)
     unsigned *row[3];
     int i, j, idx, nrows;
     int dist;
+    int (*conv) (const char *, unsigned **) =
+	(flags & DICO_LEV_NORM) ? utf8_mbstr_to_norm_wc : utf8_mbstr_to_wc;
     
-    if (utf8_mbstr_to_wc(astr, &a) < 0) 
+    if (conv(astr, &a) < 0) 
 	return -1;
-    if (utf8_mbstr_to_wc(bstr, &b) < 0) {
+    if (conv(bstr, &b) < 0) {
 	free(a);
 	return -1;
     }
     alen = utf8_wc_strlen(a);
     blen = utf8_wc_strlen(b);
     
-    rowptr = calloc(sizeof(rowptr[0]), (2 + !!damerau) * (blen + 1));
+    rowptr = calloc(sizeof(rowptr[0]),
+		    (2 + !!(flags & DICO_LEV_DAMERAU)) * (blen + 1));
     row[0] = rowptr;
     row[1] = rowptr + blen + 1;
-    if (damerau) {
+    if (flags & DICO_LEV_DAMERAU) {
 	nrows = 3;
 	row[2] = row[1] + blen + 1;
     } else
@@ -73,17 +76,18 @@ dico_levenshtein_distance(const char *astr, const char *bstr, int damerau)
 	DEBUG(row[idx][0]);
 	for (j = 0; j < blen; j++) { 
 	    unsigned n, cost;
+	    int prev = (idx + nrows - 1) % nrows;
 	    
 	    cost = !(utf8_wc_toupper(a[i]) == utf8_wc_toupper(b[j]));
-	    n = MIN(row[!idx][j+1] + 1,   /* Deletion */
+	    n = MIN(row[prev][j+1] + 1,   /* Deletion */
 		    row[idx][j] + 1);     /* Insertion */
-	    n = MIN(n, row[!idx][j] + cost); /* Substitution */
-	    if (damerau) {
-		if (i > 1 && j > 1
+	    n = MIN(n, row[prev][j] + cost); /* Substitution */
+	    if (flags & DICO_LEV_DAMERAU) {
+		if (i > 2 && j > 2
 		    && utf8_wc_toupper(a[i-1]) == utf8_wc_toupper(b[j-2])
 		    && utf8_wc_toupper(a[i-2]) == utf8_wc_toupper(b[j-1]))
 		    /* Transposition */
-		    n = MIN(n, row[(idx + 1) % nrows][j - 2] + cost);
+		    n = MIN(n, row[(idx + 1) % nrows][j - 3] + cost);
 	    }
 	    row[idx][j+1] = n;
 	    DEBUG(row[idx][j+1]);

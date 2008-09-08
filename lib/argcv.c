@@ -219,6 +219,10 @@ argcv_quoted_length (const char *str, int *quote)
 {
   size_t len = 0;
 
+  if (*str == 0) {
+      *quote = 1;
+      return 0;
+  }
   *quote = 0;
   for (; *str; str++)
     {

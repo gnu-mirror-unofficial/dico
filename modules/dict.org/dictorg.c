@@ -491,6 +491,13 @@ static int exact_match(struct dictdb *, const char *, struct result *);
 static int prefix_match(struct dictdb *, const char *, struct result *);
 static int suffix_match(struct dictdb *, const char *, struct result *);
 
+#define RESERVED_WORD(db, word)			            \
+    (!(db)->show_dictorg_entries                            \
+	&& strlen(word) >= sizeof(DICTORG_ENTRY_PREFIX)-1   \
+	&& memcmp(word, DICTORG_ENTRY_PREFIX,               \
+		  sizeof(DICTORG_ENTRY_PREFIX)-1) == 0)
+
+
 static struct strategy_def strat_tab[] = {
     { { "exact", "Match words exactly" }, exact_match },
     { { "prefix", "Match word prefixes" }, prefix_match },
@@ -543,7 +550,8 @@ common_match(struct dictdb *db, const char *word,
 	    return 0;
 	}
 	for (p++; p < ep; p++) 
-	    dico_list_append(res->list, p);
+	    if (!RESERVED_WORD(db, p->word))
+		dico_list_append(res->list, p);
 	res->compare_count = compare_count;
 	return 0;
     }
@@ -580,9 +588,9 @@ compare_prefix(const void *a, const void *b)
     const struct index_entry *pkey = a;
     const struct index_entry *pelt = b;
     size_t wordlen = pkey->wordlen;
-    if (pelt->wordlen < wordlen)
-	wordlen = pelt->wordlen;
     compare_count++;
+    if (pelt->wordlen < wordlen)
+	return -1;
     return utf8_strncasecmp(pkey->word, pelt->word, wordlen);
 }
 
@@ -633,7 +641,7 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
     if (ep) {
 	struct rev_entry *p;
 	struct index_entry **tmp;
-	size_t i;
+	size_t i,j;
 	size_t count = 1;
 	dico_list_t list;
 
@@ -654,9 +662,11 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
 	    return 1;
 	} 
 
-	for (i = 0,p++; i < count; i++, p++)
-	    tmp[i] = p->ptr;
+	for (i = j = 0, p++; i < count; i++, p++) 
+	    if (!RESERVED_WORD(db, p->ptr->word)) 
+		tmp[j++] = p->ptr;
 	
+	count = j;
 	qsort(tmp, count, sizeof(tmp[0]), compare_entry_ptr);
 
 	list = dico_list_create();
@@ -668,8 +678,9 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
 	}
 
 	for (i = 0; i < count; i++) 
-	    if (i == 0 || compare_entry(tmp[i-1], tmp[i]))
+	    if (i == 0 || compare_entry(tmp[i-1], tmp[i])) 
 		dico_list_append(list, tmp[i]);
+     
 	free(tmp);
 	res->type = result_match;
 	res->list = list;
@@ -786,7 +797,8 @@ _match_all(struct dictdb *db, const char *word,
     }
     
     for (i = 0; i < db->numwords; i++) 
-	if (sel(DICO_SELECT_RUN, word, db->index[i].word, closure)) 
+	if (!RESERVED_WORD(db, db->index[i].word)
+	    && sel(DICO_SELECT_RUN, word, db->index[i].word, closure)) 
 	    dico_list_append(list, &db->index[i]);
 	
     compare_count = db->numwords;
@@ -807,12 +819,6 @@ _match_all(struct dictdb *db, const char *word,
     res->compare_count = compare_count;
     return (dico_result_t) res;
 }
-
-#define RESERVED_WORD(db, word)			            \
-    (!(db)->show_dictorg_entries                            \
-	&& strlen(word) >= sizeof(DICTORG_ENTRY_PREFIX)-1   \
-	&& memcmp(word, DICTORG_ENTRY_PREFIX,               \
-		  sizeof(DICTORG_ENTRY_PREFIX)-1) == 0)
 
 dico_result_t
 mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)

@@ -136,6 +136,7 @@ Configuration
 * Capabilities::
 * Handlers::
 * Databases::
+* Strategies and Default Searches::
 * Tuning::
 * Command Aliases::
 * Preprocessor::         Using preprocessor to improve the configuration.
@@ -499,6 +500,7 @@ directives any time by running @command{dicod --config-help}.
 * Capabilities::
 * Handlers::
 * Databases::
+* Strategies and Default Searches::
 * Tuning::
 * Command Aliases::
 * Preprocessor::         Using preprocessor to improve the configuration.
@@ -1729,7 +1731,7 @@ module-load-path (/usr/lib/dico,/usr/local/dico/lib);
   Dictionary databases are defined using @code{database} block
 statement.
 
-@deffn {Configuration} database
+@deffn {Configuration} database @{ @var{statements} @}
 Define a dictionary database.  At least two sub-statements must be
 defined for each database: @code{name} and @code{handler}.
 @end deffn
@@ -1883,6 +1885,78 @@ the @acronym{UNIX} socket @file{/tmp/dicod.sock}, without
 authorization.  It is not visible to users coming from elsewhere,
 unless they authenticate themselves.
 
+@node Strategies and Default Searches
+@subsection Strategies and Default Searches
+@cindex default searches
+  @dfn{Default search} is a @code{MATCH} request with @samp{*} or
+@samp{!} as database argument (@pxref{MATCH}).  The former means
+search in all available databases, the latter means search in all
+databases until a match is found.
+
+  Default searches may be quite expensive and may cause considerable
+strain on the server.  For example, the command @code{MATCH * priefix
+""} returns all entries from all available database, which would
+consume a lot of resources both on the server and on the client side.
+
+  To minimize harmful effects from such potentially dangerous
+requests, Dico allows to limit the use of certain strategies in
+default searches.
+
+@deffn {Configuration} strategy @var{name} @{ @var{statements} @}
+Restrict the use of strategy @var{name} in default searches.
+@end deffn
+
+The @var{statements} define conditions the 4th argument of a
+@code{MATCH} command must match in order to deny the request.  The
+following statements are defined:
+
+@deffn {Configuration} deny-all @var{bool}
+Unconditionally deny this strategy in default searches.
+@end deffn
+
+@deffn {Configuration} deny-word @var{list}
+Deny this strategy if the search word matches one of the words from
+@var{list}.
+@end deffn
+
+@deffn {Configuration} deny-length-lt @var{number}
+Deny if length of the search word is less than @var{number}.
+@end deffn
+
+@deffn {Configuration} deny-length-le @var{number}
+Deny if length of the search word is less than or equal to @var{number}.
+@end deffn
+
+@deffn {Configuration} deny-length-gt @var{number}
+Deny if length of the search word is greater than @var{number}.
+@end deffn
+
+@deffn {Configuration} deny-length-ge @var{number}
+Deny if length of the search word is greater than or equal to @var{number}.
+@end deffn
+
+@deffn {Configuration} deny-length-eq @var{number}
+Deny if length of the search word is equal to @var{number}.
+@end deffn
+
+@deffn {Configuration} deny-length-ne @var{number}
+Deny if length of the search word is not equal to @var{number}.
+@end deffn
+
+For example, the following statement denies the use of @samp{prefix}
+strategy in default searches if its argument is an empty string:
+
+@smallexample
+strategy prefix @{
+  deny-length-eq 0;
+@}
+@end smallexample
+
+If the @code{dicod} daemon is configured this way, it will always return
+a @samp{552} reply on commands @code{MATCH * prefix ""} or @code{MATCH
+! prefix ""}.  However, use of empty prefix on a concrete database, as
+in @code{MATCH eng-deu prefix ""}, will still be allowed.
+  
 @node Tuning
 @subsection Tuning
 

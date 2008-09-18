@@ -45,6 +45,10 @@ struct dico_option {
 
 #define DICO_OPTSTR(s) #s, (sizeof(#s) - 1)
 
-int dico_parseopt(struct dico_option *opt, int argc, char **argv);
+#define DICO_PARSEOPT_PARSE_ARGV0 0x01
+#define DICO_PARSEOPT_PERMUTE     0x02
+
+int dico_parseopt(struct dico_option *opt, int argc, char **argv,
+		  int flags, int *index);
 
 #endif

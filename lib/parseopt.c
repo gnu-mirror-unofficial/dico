@@ -81,22 +81,45 @@ find_value(const char **enumstr, const char *value)
 }
 
 int
-dico_parseopt(struct dico_option *opt, int argc, char **argv)
+dico_parseopt(struct dico_option *opt, int argc, char **argv, int flags,
+	      int *pindex)
 {
+    int i;
     long n;
     char *s;
     int rc = 0;
     const char *modname = argv[0];
 
     _dico_libi18n_init();
-    for (argc--, argv++; argc-- > 0; ++argv) {
+
+    for (i = (flags & DICO_PARSEOPT_PARSE_ARGV0) ? 0 : 1;
+	 i < argc; i++) {
 	const char *value;
-	struct dico_option *p = find_opt(opt, *argv, &value);
+	struct dico_option *p = find_opt(opt, argv[i], &value);
 	
 	if (!p) {
-	    dico_log(L_ERR, 0, _("%s: %s: unknown option"), modname, *argv);
-	    rc = 1;
-	    continue;
+	    if (pindex) {
+		if (flags & DICO_PARSEOPT_PERMUTE) {
+		    int j;
+
+		    for (j = i + 1; j < argc; j++) 
+			if ((p = find_opt(opt, argv[j], &value)))
+			    break;
+		    
+		    if (p) {
+			char *tmp = argv[j];
+			argv[j] = argv[i];
+			argv[i] = tmp;
+		    } else
+			break;
+		} else
+		    break;
+	    } else {
+		dico_log(L_ERR, 0, _("%s: %s: unknown option"),
+			 modname, argv[i]);
+		rc = 1;
+		continue;
+	    }
 	}
 				
 	switch (p->type) {
@@ -159,5 +182,7 @@ dico_parseopt(struct dico_option *opt, int argc, char **argv)
 	if (p->func && p->func (p, value))
 	    rc = 1;
     }
+    if (pindex)
+	*pindex = i;
     return rc;
 }

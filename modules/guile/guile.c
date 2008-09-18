@@ -660,7 +660,7 @@ mod_init(int argc, char **argv)
 {
     SCM port;
     
-    if (dico_parseopt(init_option, argc, argv))
+    if (dico_parseopt(init_option, argc, argv, 0, NULL))
 	return 1;
 
     scm_init_guile();

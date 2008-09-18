@@ -43,7 +43,7 @@ struct dico_option init_option[] = {
 int
 mod_init(int argc, char **argv)
 {
-    if (dico_parseopt(init_option, argc, argv))
+    if (dico_parseopt(init_option, argc, argv, 0, NULL))
 	return 1;
     if (dbdir) {
 	struct stat st;
@@ -378,7 +378,7 @@ mod_init_db(const char *dbname, int argc, char **argv)
 	{ NULL }
     };
 	
-    if (dico_parseopt(option, argc, argv))
+    if (dico_parseopt(option, argc, argv, 0, NULL))
 	return NULL;
 
     if (!filename) {

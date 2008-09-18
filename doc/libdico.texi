@@ -363,6 +363,11 @@ typedef int (*filter_xcode_t) (const char *, size_t,
 @section parseopt
 @UNREVISED
 
+@table @code
+@item DICO_PARSEOPT_PARSE_ARGV0
+@item DICO_PARSEOPT_PERMUTE
+@end table
+
 @deftp Enumeration dico_opt_type
 
 @table @code
@@ -399,7 +404,7 @@ struct dico_option @{
 @end deffn
 
 @deftypefn Function int dico_parseopt (struct dico_option *@var{opt}, @
-  int @var{argc}, char **@var{argv})
+  int @var{argc}, char **@var{argv}, int @var{flags}, int *@var{index})
 @end deftypefn
   
 @node stream

@@ -56,6 +56,7 @@ dicod_load_module0(dicod_module_instance_t *inst, int argc, char **argv)
     if (!lt_dladvise_init(&advise) && !lt_dladvise_ext(&advise)
         && !lt_dladvise_global(&advise))
 	handle = lt_dlopenadvise(argv[0], advise);
+    lt_dladvise_destroy(&advise);
 
     if (!handle) {
 	dico_log(L_ERR, 0, _("cannot load module %s: %s"), argv[0],

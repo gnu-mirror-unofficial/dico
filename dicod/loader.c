@@ -44,7 +44,8 @@ dicod_loader_init()
 static int
 dicod_load_module0(dicod_module_instance_t *inst, int argc, char **argv)
 {
-    lt_dlhandle handle;
+    lt_dlhandle handle = NULL;
+    lt_dladvise advise = NULL;
     struct dico_database_module *pmod;    
 
     if (inst->handle) {
@@ -52,7 +53,10 @@ dicod_load_module0(dicod_module_instance_t *inst, int argc, char **argv)
 	return 1;
     }
 	
-    handle = lt_dlopenext(argv[0]);
+    if (!lt_dladvise_init(&advise) && !lt_dladvise_ext(&advise)
+        && !lt_dladvise_global(&advise))
+	handle = lt_dlopenadvise(argv[0], advise);
+
     if (!handle) {
 	dico_log(L_ERR, 0, _("cannot load module %s: %s"), argv[0],
 		 lt_dlerror());

@@ -269,6 +269,25 @@ if test "$status_guile" = yes; then
 	         [status_guile=no])
 fi
 
+# Check for Python
+AC_ARG_WITH([python],
+            AC_HELP_STRING([--without-python],
+                           [do not build Python interface]),
+            [
+case "${withval}" in
+  yes) status_python=yes ;;
+  no)  status_python=no ;;
+  *)   AC_MSG_ERROR(bad value ${withval} for --without-python) ;;
+esac],[status_python=yes])
+
+if test "$status_python" = yes; then
+  PYTHON_LIBS=`python-config --libs`
+  PYTHON_INCLUDES=`python-config --includes`
+  AC_SUBST(PYTHON_LIBS)
+  AC_SUBST(PYTHON_INCLUDES)
+  AC_SUBST([BUILD_DICO_PYTHON_DIR],['$(DICO_PYTHON_DIR)'])
+fi
+
 #
 AC_ARG_WITH(autologin-file,
             AC_HELP_STRING([--with-autologin-file@<:@=NAME@:>@],
@@ -372,6 +391,7 @@ cat <<EOT
 Dico configured with the following settings:
 
 Guile ........................... $status_guile
+Python .......................... $status_python
 GSASL ........................... $status_gsasl
 Readline ........................ $status_readline
 Preprocessor .................... $dicopp
@@ -382,6 +402,7 @@ Autologin file .................. $autologin_file
 EOT
 ],
 [status_guile=$status_guile
+status_python=$status_python
 status_gsasl=$status_gsasl
 status_readline=$status_readline
 if test $use_ext_pp = no; then
@@ -404,6 +425,7 @@ AC_CONFIG_FILES([Makefile
 		 modules/outline/Makefile
 		 modules/dict.org/Makefile
 		 modules/guile/Makefile
+		 modules/python/Makefile
 		 dico/Makefile
                  makedict/Makefile
 		 tests/Makefile

@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 1998-2000, 2008 Sergey Poznyakoff
+# Copyright (C) 2008 Wojciech Polak
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,9 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-DICO_GUILE_DIR=guile
-DICO_PYTHON_DIR=python
-SUBDIRS = outline dict.org \
-	@BUILD_DICO_GUILE_DIR@ \
-	@BUILD_DICO_PYTHON_DIR@
-EXTRA_DIST = template.c template.py template.scm
+moddir=@DICO_MODDIR@
+
+DICO_PYTHON_MODULES=python.la
+mod_LTLIBRARIES=python.la
+
+python_la_SOURCES = python.c
+python_la_LIBADD = ../../lib/libdico.la @PYTHON_LIBS@
+AM_LDFLAGS = -module -avoid-version -no-undefined
+INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include @PYTHON_INCLUDES@

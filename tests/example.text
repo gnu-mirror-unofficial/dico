@@ -1,10 +1,10 @@
 -- Comments begin with double-dash.
 -- Empty lines are ignored.
 -- There may be at most one `descr:' entry.
-descr: Short English-Polish numerals dictionary
+descr: Short English-Czech numerals dictionary
 -- Any number of `info:' entries are allowed.  These are concatenated
 -- to make a single info statement.
-info: Short English-Polish dictionary of numerals (1 - 10)
+info: Short English-Czech dictionary of numerals (1 - 10)
 info: Hardly worth copyrighting, but just in case:
 info: 
 info: This dictionary is public domain. You can do with it whatever you
@@ -13,15 +13,15 @@ info: like to do, except changing the meaning of the words, of course.
 -- Anything having two fields is taken to be a word definition:
 
 one  jeden
-two  dwa
-three  trzy
-four  cztery
-five  pięc
-six  sześć
-seven  siedem
-eight  osiem
-nine  dziewięć
-ten dziesięć
+two  dva
+three  tři
+four  čtyři
+five  pět
+six  šest
+seven  sedm
+eight  osm
+nine  devět
+ten deset
 
 -- Errors are silently ignored:
 bye

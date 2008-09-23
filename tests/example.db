@@ -1,6 +1,10 @@
 ;; -*- scheme -*-
 ("Short English-Polish numerals dictionary"
- "Short English-Polish dictionary of numerals (1 - 10)"
+ "Short English-Polish dictionary of numerals (1 - 10)\n\
+Hardly worth copyrighting, but just in case:\n\
+\n\
+This dictionary is public domain. You can do with it whatever you\n\
+info: like to do, except changing the meaning of the words, of course.\n"
  ("one" . "jeden")
  ("two" . "dwa")
  ("three" . "trzy")

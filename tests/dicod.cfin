@@ -6,10 +6,19 @@ access-log-file "<BUILDDIR>/tests/access_log";
 access-log-format "%h %l %u %t \"%r\" %>s %b \"\" \"%C\"";
 
 module-load-path ("<BUILDDIR>/modules/outline",
-                  "<BUILDDIR>/modules/guile");
+                  "<BUILDDIR>/modules/guile",
+		  "<BUILDDIR>/modules/python");
 
 load-module outline {
 	command "outline";
+}
+
+load-module guile {
+	command "guile debug";
+}
+
+load-module python {
+	command "python";
 }
 
 database {
@@ -17,15 +26,20 @@ database {
 	handler "outline <SRCDIR>/tests/devils.out";
 }
 
-load-module guile {
-	command "guile debug "
+database {
+	name "plnum";
+	handler "guile"
 	        " init-script=<SRCDIR>/tests/example.scm "
-		" init-fun=example-init";
+		" init-fun=example-init"
+		" example.db";
 }
 
 database {
-	name "numerals";
-	handler "guile example.db";
+	name "cznum";
+	handler "python "
+	        "load-path=<SRCDIR>/tests "
+	        "init-script=example "
+		"<SRCDIR>/tests/example.text";
 }
 
 alias d DEFINE;

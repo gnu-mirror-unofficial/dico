@@ -44,7 +44,7 @@
          (map fun list)))
 
 (define (open-module name . rest)
-  (let ((args (cdr rest)))
+  (let ((args rest))
     (cond
      ((null? args)
       (format (current-error-port) "open-module: not enough arguments\n")

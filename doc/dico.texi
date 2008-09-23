@@ -2520,7 +2520,7 @@ Installation}, guile, The Guile Reference Manual}.
 @group
 database @{
         name "@var{dbname}";
-        handler "@var{mod-name} @var{cmdline}";
+        handler "@var{mod-name} [@var{options}] @var{cmdline}";
 @}
 @end group
 @end smallexample
@@ -2535,6 +2535,16 @@ gives the name for this database,
 @item mod-name
 is the name given to Guile module in @code{load-module} statement (see
 above),
+
+@item options
+@kwindex init-script
+@kwindex init-args
+@kwindex init-fun
+Options, that allow to override global settings given in the
+@code{load-module} statement.  The following options are understood:
+@code{init-script}, @code{init-args}, and @code{init-fun}.  Their
+meaning is the same as for @code{load-module} statement (see above),
+except that they affect only this particular database.
 
 @item cmdline
 is the command line that will be passed to the Guile
@@ -2693,8 +2703,9 @@ Virtual table: @code{(cons "open" open-db)}@*
 Open the database.  The argument @var{name} contains database name as
 given in @code{name} statement of @code{database} block
 (@pxref{Databases}).  Optional argument @var{args} is a list of
-command line parameters specified in @code{handler} statement.  For
-example, if the configuration file contained:
+command line parameters obtained from @var{cmdline} in @code{handler}
+statement (@pxref{guile-cmdline}).  For example, if the configuration
+file contained: 
 
 @smallexample
 @group

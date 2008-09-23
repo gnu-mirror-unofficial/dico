@@ -704,6 +704,27 @@ mod_init_db(const char *dbname, int argc, char **argv)
     struct _guile_database *db;
     int i;
     int err = 0;
+    char *init_script = NULL;
+    char *init_args = NULL;
+    char *init_fun = guile_init_fun;
+    
+    struct dico_option db_option[] = {
+	{ DICO_OPTSTR(init-script), dico_opt_string, &init_script },
+	{ DICO_OPTSTR(init-args), dico_opt_string, &init_args },
+	{ DICO_OPTSTR(init-fun), dico_opt_string, &init_fun },
+	{ NULL }
+    };
+
+    if (dico_parseopt(db_option, argc, argv, DICO_PARSEOPT_PERMUTE, &i))
+	return NULL;
+    argc -= i;
+    argv += i;
+    
+    if (init_script && guile_load(init_script, init_args)) {
+	dico_log(L_ERR, 0, _("mod_init: cannot load init script %s"), 
+		 init_script);
+	return NULL;
+    }
     
     db = malloc(sizeof(*db));
     if (!db) {
@@ -712,7 +733,7 @@ mod_init_db(const char *dbname, int argc, char **argv)
     }
     db->dbname = dbname;
     memcpy(db->vtab, global_vtab, sizeof(db->vtab));
-    if (guile_init_fun && init_vtab(guile_init_fun, dbname, db->vtab)) {
+    if (init_fun && init_vtab(init_fun, dbname, db->vtab)) {
 	free(db);
 	return NULL;
     }

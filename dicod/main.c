@@ -947,8 +947,6 @@ strategy_deny_length_ne_cb(enum cfg_callback_command cmd,
 				value, cmp_ne);
 }
 
-
-
 struct config_keyword kwd_strategy[] = {
     { "deny-all", N_("arg: bool"), N_("Deny all * and ! look ups"),
       cfg_string, NULL, offsetof(struct dico_strategy, stratcl),

@@ -2514,6 +2514,7 @@ Installation}, guile, The Guile Reference Manual}.
 
 @end table
 
+@anchor{guile-cmdline}
   Guile databases are declared using the following syntax:
 
 @smallexample

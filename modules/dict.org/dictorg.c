@@ -30,8 +30,7 @@ memerr(const char *fname)
 
 static int register_strategies(void);
 
-
-struct dico_option init_option[] = {
+static struct dico_option init_option[] = {
     { DICO_OPTSTR(dbdir), dico_opt_string, &dbdir },
     { DICO_OPTSTR(sort), dico_opt_bool, &sort_index },
     { DICO_OPTSTR(trim-ws), dico_opt_bool, &trim_ws },
@@ -40,7 +39,7 @@ struct dico_option init_option[] = {
     { NULL }
 };
 
-int
+static int
 mod_init(int argc, char **argv)
 {
     if (dico_parseopt(init_option, argc, argv, 0, NULL))
@@ -70,7 +69,7 @@ mod_init(int argc, char **argv)
     return 0;
 }
 
-void
+static void
 free_db(struct dictdb *db)
 {
     size_t i;
@@ -110,7 +109,7 @@ mkname(const char *fname, const char *suf)
 
 #define ISWS(c) ((c) == ' ' || (c) == '\t')
 
-int
+static int
 b64_decode(const char *val, size_t len, size_t *presult)
 {
     size_t v = 0;
@@ -310,7 +309,7 @@ open_index(struct dictdb *db, int tws)
     return rc;
 }
 
-int
+static int
 mod_free_db(dico_handle_t hp)
 {
     struct dictdb *db = (struct dictdb *) hp;
@@ -360,7 +359,7 @@ open_stream(struct dictdb *db)
 
 static int compare_entry(const void *a, const void *b);
 
-dico_handle_t
+static dico_handle_t
 mod_init_db(const char *dbname, int argc, char **argv)
 {
     struct dictdb *db;
@@ -725,14 +724,14 @@ find_db_entry(struct dictdb *db, const char *name)
     return buf;
 }
 
-char *
+static char *
 mod_info(dico_handle_t hp)
 {
     struct dictdb *db = (struct dictdb *) hp;
     return find_db_entry(db, DICTORG_INFO_ENTRY_NAME);
 }
 
-char *
+static char *
 mod_descr(dico_handle_t hp)
 {
     struct dictdb *db = (struct dictdb *) hp;
@@ -820,7 +819,7 @@ _match_all(struct dictdb *db, const char *word,
     return (dico_result_t) res;
 }
 
-dico_result_t
+static dico_result_t
 mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 {
     struct dictdb *db = (struct dictdb *) hp;
@@ -834,7 +833,7 @@ mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 	return _match_simple(db, strat->name, word);
 }
 
-dico_result_t
+static dico_result_t
 mod_define(dico_handle_t hp, const char *word)
 {
     struct dictdb *db = (struct dictdb *) hp;
@@ -884,7 +883,7 @@ printdef(dico_stream_t str, struct dictdb *db, const struct index_entry *ep)
     }
 }
 
-int
+static int
 mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 {
     struct result *res = (struct result *) rp;
@@ -901,21 +900,21 @@ mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
     return 0;
 }
 
-size_t
+static size_t
 mod_result_count (dico_result_t rp)
 {
     struct result *res = (struct result *) rp;
     return dico_list_count(res->list);
 }
 
-size_t
+static size_t
 mod_compare_count (dico_result_t rp)
 {
     struct result *res = (struct result *) rp;
     return res->compare_count;
 }
 
-void
+static void
 mod_free_result(dico_result_t rp)
 {
     struct result *res = (struct result *) rp;

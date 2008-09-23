@@ -17,10 +17,21 @@
 SUFFIXES = .cfin .conf
 
 noinst_DATA=dicod.conf
+
 CLEANFILES=dicod.conf
 
 .cfin.conf:
 	sed 's|<BUILDDIR>|'`cd $(top_builddir); pwd`'|g;s|<SRCDIR>|'`cd $(top_srcdir); pwd`'|g' \
 		$< > $@
+
+noinst_PROGRAMS=levtest
+levtest_SOURCES=levtest.c
+LDADD=\
+ ../lib/libxdico.a\
+ ../gnu/libgnu.a\
+ ../lib/libextra.a\
+ ../lib/libdico.la\
+ @LIBINTL@ @LIBICONV@
+INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu -I../gnu
 
 EXTRA_DIST=dicod.cfin devils.out example.scm example.db

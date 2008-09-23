@@ -17,9 +17,10 @@
 moddir=@DICO_MODDIR@
 
 DICO_GUILE_MODULES=guile.la
-mod_LTLIBRARIES=guile.la
+mod_LTLIBRARIES=@BUILD_DICO_GUILE_MODULES@
+EXTRA_LTLIBRARIES=$(DICO_GUILE_MODULES)
 
 guile_la_SOURCES = guile.c
 guile_la_LIBADD = ../../lib/libdico.la @GUILE_LIBS@
-AM_LDFLAGS = -module -avoid-version -no-undefined
+AM_LDFLAGS = -module -avoid-version -no-undefined -rpath $(moddir)
 INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include @GUILE_INCLUDES@

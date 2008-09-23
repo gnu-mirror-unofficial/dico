@@ -56,6 +56,10 @@ The package comes with the following database modules:
 - guile
  An abstract layer for interfacing with database modules written in
  Guile.
+
+- python
+ An abstract layer for interfacing with database modules written in
+ Python.
  
 - outline
  Support for databases in Emacs outline format. This module is

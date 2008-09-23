@@ -83,11 +83,11 @@ dico_levenshtein_distance(const char *astr, const char *bstr, int flags)
 		    row[idx][j] + 1);     /* Insertion */
 	    n = MIN(n, row[prev][j] + cost); /* Substitution */
 	    if (flags & DICO_LEV_DAMERAU) {
-		if (i > 2 && j > 2
-		    && utf8_wc_toupper(a[i-1]) == utf8_wc_toupper(b[j-2])
-		    && utf8_wc_toupper(a[i-2]) == utf8_wc_toupper(b[j-1]))
+		if (i > 0 && j > 0
+		    && utf8_wc_toupper(a[i]) == utf8_wc_toupper(b[j-1])
+		    && utf8_wc_toupper(a[i-1]) == utf8_wc_toupper(b[j]))
 		    /* Transposition */
-		    n = MIN(n, row[(idx + 1) % nrows][j - 3] + cost);
+		    n = MIN(n, row[(idx + 1) % nrows][j - 1] + cost);
 	    }
 	    row[idx][j+1] = n;
 	    DEBUG(row[idx][j+1]);

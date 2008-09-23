@@ -17,9 +17,10 @@
 moddir=@DICO_MODDIR@
 
 DICO_PYTHON_MODULES=python.la
-mod_LTLIBRARIES=python.la
+mod_LTLIBRARIES=@BUILD_DICO_PYTHON_MODULES@
+EXTRA_LTLIBRARIES=$(DICO_PYTHON_MODULES)
 
 python_la_SOURCES = python.c
 python_la_LIBADD = ../../lib/libdico.la @PYTHON_LIBS@
-AM_LDFLAGS = -module -avoid-version -no-undefined
+AM_LDFLAGS = -module -avoid-version -no-undefined -rpath $(moddir)
 INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include @PYTHON_INCLUDES@

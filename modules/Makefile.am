@@ -14,9 +14,5 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-DICO_GUILE_DIR=guile
-DICO_PYTHON_DIR=python
-SUBDIRS = outline dict.org \
-	@BUILD_DICO_GUILE_DIR@ \
-	@BUILD_DICO_PYTHON_DIR@
+SUBDIRS = outline dict.org guile python
 EXTRA_DIST = template.c template.py template.scm

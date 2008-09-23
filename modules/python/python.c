@@ -27,7 +27,7 @@ static char *init_script;
 static char *load_path;
 static char *root_class = "DicoModule";
 
-struct dico_option init_option[] = {
+static struct dico_option init_option[] = {
     { DICO_OPTSTR(init-script), dico_opt_string, &init_script },
     { DICO_OPTSTR(load-path), dico_opt_string, &load_path },
     { DICO_OPTSTR(root-class), dico_opt_string, &root_class },
@@ -122,7 +122,7 @@ _PyStrategy_str (PyObject *self)
     return PyString_FromString (py_strat->strat->name);
 }
 
-PyTypeObject PyStrategyType = {
+static PyTypeObject PyStrategyType = {
     PyObject_HEAD_INIT(&PyType_Type)
     0,
     "DicoStrategy",      /* tp_name */

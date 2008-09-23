@@ -155,7 +155,7 @@ rettype_error(SCM proc)
     free(name);
 }
 
-int
+static int
 guile_call_proc(SCM *result, SCM proc, SCM arglist)
 {
     jmp_buf jmp_env;
@@ -216,7 +216,7 @@ _guile_strategy_print(SCM message_smob, SCM port, scm_print_state * pstate)
     return 1;
 }
 
-SCM
+static SCM
 _guile_strategy_create(SCM owner, const dico_strategy_t strat)
 {
     struct _guile_strategy *sp;
@@ -646,7 +646,7 @@ set_load_path(struct dico_option *opt, const char *val)
     return 0;
 }
 
-struct dico_option init_option[] = {
+static struct dico_option init_option[] = {
     { DICO_OPTSTR(debug), dico_opt_bool, &guile_debug },
     { DICO_OPTSTR(init-script), dico_opt_string, &guile_init_script },
     { DICO_OPTSTR(init-args), dico_opt_string, &guile_init_args },
@@ -655,7 +655,7 @@ struct dico_option init_option[] = {
     { NULL }
 };
 
-int
+static int
 mod_init(int argc, char **argv)
 {
     SCM port;

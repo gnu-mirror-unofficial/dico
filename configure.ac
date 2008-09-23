@@ -15,7 +15,7 @@ dnl Process this file with -*- autoconf -*- to produce a configure script.
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-AC_INIT([GNU Dico], 1.99.95, [bug-dico@gnu.org.ua])
+AC_INIT([GNU Dico], 1.99.96, [bug-dico@gnu.org.ua])
 AC_CONFIG_SRCDIR([dicod/main.c])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
@@ -265,7 +265,7 @@ if test "$status_guile" = yes; then
   MU_CHECK_GUILE(,[
             AC_SUBST(GUILE_LIBS)
 	    AC_SUBST(GUILE_INCLUDES)
-            AC_SUBST([BUILD_DICO_GUILE_DIR],['$(DICO_GUILE_DIR)'])],
+            AC_SUBST([BUILD_DICO_GUILE_MODULES],['$(DICO_GUILE_MODULES)'])],
 	         [status_guile=no])
 fi
 
@@ -281,11 +281,15 @@ case "${withval}" in
 esac],[status_python=yes])
 
 if test "$status_python" = yes; then
-  PYTHON_LIBS=`python-config --libs`
-  PYTHON_INCLUDES=`python-config --includes`
-  AC_SUBST(PYTHON_LIBS)
-  AC_SUBST(PYTHON_INCLUDES)
-  AC_SUBST([BUILD_DICO_PYTHON_DIR],['$(DICO_PYTHON_DIR)'])
+  AC_ARG_VAR([PYTHON_CONFIG], [The name of python-config binary])
+  AC_PATH_PROG([PYTHON_CONFIG], python-config)
+  if test -n "$PYTHON_CONFIG"; then
+    AC_SUBST(PYTHON_LIBS,`python-config --libs`)
+    AC_SUBST(PYTHON_INCLUDES,`python-config --includes`)
+    AC_SUBST([BUILD_DICO_PYTHON_MODULES],['$(DICO_PYTHON_MODULES)'])
+  else
+    status_python=no     
+  fi	
 fi
 
 #

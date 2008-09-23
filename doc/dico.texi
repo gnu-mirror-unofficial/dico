@@ -114,6 +114,7 @@ Building the Package
 
 * Default Preprocessor::
 * Guile Support::
+* Python Support::
 * Other Settings::
 
 The @command{dicod} daemon.
@@ -160,6 +161,7 @@ Modules
 * Outline::
 * Dictorg::
 * Guile::
+* Python::
 
 The @command{guile} module.
 
@@ -276,6 +278,10 @@ Ubiquitous Intelligent Language for Extensions}
 (@uref{http://www.gnu.org/software/guile}) and allows to write
 database modules in Scheme programming language.
 
+@item python
+  This module provides an interface to database modules written in
+Python (@uref{http://www.python.org}).  
+
 @item outline
   This module handles simple databases in GNU Emacs @dfn{outline}
 format.  It is designed mostly for test purposes.
@@ -302,6 +308,7 @@ options are specific for Dico.  We will describe them in this chapter.
 @menu
 * Default Preprocessor::
 * Guile Support::
+* Python Support::
 * Other Settings::
 @end menu
 
@@ -349,6 +356,17 @@ enable its use if its version number is high enough.
 
 @opindex --without-guile, configuration option
   If you do not wish to use Guile, use @option{--without-guile} to
+disable it.
+
+@node Python Support
+@section Pyhton Support
+@cindex python, configuration
+  The support for Python (@uref{http://www.python.org}) is enabled
+automatically if @command{configure} detects that Python version 2.5 or
+later is installed on your machine.
+
+@opindex --without-python, configuration option
+  If you do not wish to use Python, use @option{--without-python} to
 disable it.
 
 @node Other Settings
@@ -2244,13 +2262,14 @@ are binary loadable files, installed in
 handler} basis.
 
   GNU Dico version @value{VERSION} is shipped with the following modules:
-@samp{Outline}, @samp{Dictorg} and @samp{Guile}.  The @samp{Outpline}
-module handles databases written in Emacs Outline format.  It is
-useful for small databases.  The @samp{Dictorg} module handles
-databases in format designed by @cite{@acronym{DICT} development
+@samp{Outline}, @samp{Dictorg}, @samp{Guile}, and @samp{Python}.  The
+@samp{Outpline} module handles databases written in Emacs Outline
+format.  It is useful for small databases.  The @samp{Dictorg} module
+handles databases in format designed by @cite{@acronym{DICT} development
 group}.  The most existing free databases are written in this format.
-Finally, the @samp{Guile} module allows you to use arbitrary database
-modules written in Scheme programming language.
+Finally, the @samp{Guile} and @samp{Python} allow you to use
+arbitrary database modules written in Scheme and Python programming
+languages, correspondingly.
 
   In this chapter we will describe these modules in detail.
 
@@ -2258,6 +2277,7 @@ modules written in Scheme programming language.
 * Outline::
 * Dictorg::
 * Guile::
+* Python::
 @end menu
 
 @node Outline
@@ -2789,6 +2809,11 @@ Virtual Table: @code{(cons "result-count" result-count)}@*
 
 Return the number of elements in the result set @var{resh}.
 @end deffn
+
+@node Python
+@section The @command{python} module.
+@cindex Python
+@UNREVISED
 
 @node Dico Scheme Primitives
 @subsection Dico Scheme Primitives

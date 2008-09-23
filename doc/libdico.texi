@@ -713,8 +713,16 @@ struct utf8_iterator @{
   unsigned **@var{wptr})
 @end deftypefn
   
+@deftypefn Function int utf8_mbstr_to_norm_wc (const char *@var{str}, @
+  unsigned **@var{wptr})
+@end deftypefn
+  
 @deftypefn Function int dico_levenshtein_distance (const char *@var{a}, @
-  const char *@var{b}, int @var{damerau})
+  const char *@var{b}, int @var{flags})
+@table @code
+@item DICO_LEV_NORM
+@item DICO_LEV_DAMERAU
+@end table
 @end deftypefn
   
 @deftypefn Function int dico_soundex (const char *@var{s}, @

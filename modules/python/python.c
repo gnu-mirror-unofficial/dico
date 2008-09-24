@@ -143,10 +143,11 @@ static PyTypeObject PyStrategyType = {
 };
 
 static dico_stream_t dico_stream_output;
-static dico_stream_t dico_stream_log;
+static dico_stream_t dico_stream_log_err;
+static dico_stream_t dico_stream_log_info;
 
 static PyObject *
-_capture_stdout (PyObject *self, PyObject *args)
+_capture_stdout_result (PyObject *self, PyObject *args)
 {
     char *buf = "";
     if (!PyArg_ParseTuple (args, "s", &buf))
@@ -157,19 +158,35 @@ _capture_stdout (PyObject *self, PyObject *args)
 }
 
 static PyObject *
+_capture_stdout_info (PyObject *self, PyObject *args)
+{
+    char *buf = "";
+    if (!PyArg_ParseTuple (args, "s", &buf))
+	return NULL;
+    if (dico_stream_log_info)
+      dico_stream_write (dico_stream_log_info, buf, strlen (buf));
+    return _ro (Py_None);
+}
+
+static PyObject *
 _capture_stderr (PyObject *self, PyObject *args)
 {
     char *buf = "";
     if (!PyArg_ParseTuple (args, "s", &buf))
 	return NULL;
-    if (dico_stream_log)
-      dico_stream_write (dico_stream_log, buf, strlen (buf));
+    if (dico_stream_log_err)
+      dico_stream_write (dico_stream_log_err, buf, strlen (buf));
     return _ro (Py_None);
 }
 
-static PyMethodDef capture_stdout_method[] =
+static PyMethodDef capture_stdout_result_method[] =
 {
-    { "write", _capture_stdout, 1 },
+    { "write", _capture_stdout_result, 1 },
+    { NULL, NULL, 0, NULL }
+};
+static PyMethodDef capture_stdout_info_method[] =
+{
+    { "write", _capture_stdout_info, 1 },
     { NULL, NULL, 0, NULL }
 };
 static PyMethodDef capture_stderr_method[] =
@@ -254,7 +271,8 @@ mod_init (int argc, char **argv)
     if (!Py_IsInitialized ())
 	Py_Initialize ();
 
-    dico_stream_log = dico_log_stream_create (L_ERR);
+    dico_stream_log_err = dico_log_stream_create (L_ERR);
+    dico_stream_log_info = dico_log_stream_create (L_INFO);
     return 0;
 }
 
@@ -290,7 +308,7 @@ mod_init_db (const char *dbname, int argc, char **argv)
 {
     int pindex;
     struct _python_database *db;
-    PyObject *py_err, *py_name, *py_module, *py_class;
+    PyObject *py_err, *py_out, *py_name, *py_module, *py_class;
     PyThreadState *py_ths;
 
     if (dico_parseopt (init_option, argc, argv, DICO_PARSEOPT_PERMUTE,
@@ -333,6 +351,9 @@ mod_init_db (const char *dbname, int argc, char **argv)
     py_err = Py_InitModule ("stderr", capture_stderr_method);
     if (py_err)
 	PySys_SetObject ("stderr", py_err);
+    py_out = Py_InitModule ("stdout", capture_stdout_info_method);
+    if (py_out)
+	PySys_SetObject ("stdout", py_out);
 
     py_name = PyString_FromString (init_script);
     py_module = PyImport_Import (py_name);
@@ -566,7 +587,7 @@ mod_define (dico_handle_t hp, const char *word)
 static int
 mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 {
-    PyObject *py_args, *py_fnc, *py_res, *py_out_orig, *py_out;
+    PyObject *py_args, *py_fnc, *py_res, *py_out;
     struct python_result *gres = (struct python_result *)rp;
     struct _python_database *db = (struct _python_database *)gres->db;
 
@@ -574,10 +595,13 @@ mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 
     dico_stream_output = str;
 
-    py_out_orig = PySys_GetObject ("stdout");
-    py_out = Py_InitModule ("stdout", capture_stdout_method);
+    py_out = Py_InitModule ("stdout", capture_stdout_result_method);
     if (py_out)
 	PySys_SetObject ("stdout", py_out);
+    else {
+	dico_log (L_ERR, 0, _("mod_output_result: cannot capture stdout"));
+	return 1;
+    }
 
     py_args = PyTuple_New (2);
     PyTuple_SetItem (py_args, 0, gres->result);
@@ -593,8 +617,9 @@ mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 	    PyErr_Print ();
     }
 
+    py_out = Py_InitModule ("stdout", capture_stdout_info_method);
     if (py_out)
-	PySys_SetObject ("stdout", py_out_orig);
+	PySys_SetObject ("stdout", py_out);
 
     dico_stream_output = NULL;
     return 0;

@@ -244,9 +244,39 @@ dico_register_strat (PyObject *self, PyObject *args)
     return _ro (Py_None);
 }
 
+static PyObject *
+dico_register_markup (PyObject *self, PyObject *py_obj)
+{
+    int rc;
+    char *type;
+
+    if (!PyString_Check (py_obj)) {
+	PyErr_SetString (PyExc_TypeError, _("This parameter must be a string"));
+        return NULL;
+    }
+
+    type = strdup (PyString_AsString (py_obj));
+    rc = dico_markup_register (type);
+    free (type);
+    if (rc)
+	return NULL;
+
+    return _ro (Py_None);
+}
+
+static PyObject *
+dico_current_markup (PyObject *self)
+{
+    return _ro (PyString_FromString (dico_markup_type));
+}
+
 static PyMethodDef dico_methods[] = {
     { "register_strat", dico_register_strat, METH_VARARGS,
       "Register a new strategy." },
+    { "register_markup", dico_register_markup, METH_O,
+      "Register a new markup type." },
+    { "current_markup", dico_current_markup, METH_NOARGS,
+      "Return current dico markup type." },
     { NULL, NULL, 0, NULL }
 };
 

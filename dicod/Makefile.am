@@ -33,6 +33,7 @@ dicod_SOURCES=\
  lev.c\
  loader.c\
  main.c\
+ markup.c\
  mime.c\
  ostream.c\
  pp.c\

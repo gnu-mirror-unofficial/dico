@@ -36,6 +36,7 @@ libdico_la_SOURCES=\
  list.c\
  logstream.c\
  mapstream.c\
+ markup.c\
  parseopt.c\
  qp.c\
  soundex.c\

@@ -66,11 +66,11 @@ struct dico_database_module {
     char *(*dico_db_info) (dico_handle_t hp);
     char *(*dico_db_descr) (dico_handle_t hp);
     dico_result_t (*dico_match) (dico_handle_t hp,
-				   const dico_strategy_t strat,
-				   const char *word);
+				 const dico_strategy_t strat,
+				 const char *word);
     dico_result_t (*dico_define) (dico_handle_t hp, const char *word);
     int (*dico_output_result) (dico_result_t rp, size_t n,
-				 dico_stream_t str);
+			       dico_stream_t str);
     size_t (*dico_result_count) (dico_result_t rp);
     size_t (*dico_compare_count) (dico_result_t rp);
     void (*dico_free_result) (dico_result_t rp);

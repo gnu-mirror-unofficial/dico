@@ -20,6 +20,7 @@ pkginclude_HEADERS = \
  diag.h\
  filter.h\
  list.h\
+ markup.h\
  parseopt.h\
  strat.h\
  stream.h\

@@ -14,26 +14,14 @@
    You should have received a copy of the GNU General Public License
    along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef __dico_h
-#define __dico_h
-
-#include <stdlib.h>
-#include <stdarg.h>
+#ifndef __dico_markup_h
+#define __dico_markup_h
 
 #include <dico/types.h>
-#include <dico/argcv.h>
-#include <dico/list.h>
-#include <dico/assoc.h>
-#include <dico/stream.h>
-#include <dico/url.h>
-#include <dico/xlat.h>
-#include <dico/strat.h>
-#include <dico/utf8.h>
-#include <dico/filter.h>
-#include <dico/diag.h>
-#include <dico/util.h>
-#include <dico/parseopt.h>
-#include <dico/markup.h>
+
+const char *dico_markup_type;
+dico_list_t dico_markup_list;
+const char *dico_markup_lookup(const char *name);
+int dico_markup_register(const char *name);
 
 #endif
-    

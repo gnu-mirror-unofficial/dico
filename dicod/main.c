@@ -1318,6 +1318,7 @@ main(int argc, char **argv)
     udb_init();
     register_auth();
     register_mime();
+    register_markup();
     register_xidle();
     register_xversion();
     register_lev();

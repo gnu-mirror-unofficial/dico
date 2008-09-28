@@ -124,9 +124,14 @@
   (if (car rh)
       ;; Result comes from DEFINE command
       (let ((res (list-ref (cdr rh) n)))
-	(display (car res))
-	(newline)
-	(display (cdr res)))
+	(cond
+	 ((string=? (dico-current-markup) "html")
+	  (format #t "<dt>~A</dt>~%<dd>~A</dd>"
+		  (car res) (cdr res)))
+	 (else
+	  (display (car res))
+	  (newline)
+	  (display (cdr res)))))
       ;; Result comes from MATCH command
       (display (list-ref (cdr rh) n))))
 
@@ -144,4 +149,4 @@
 
 ;;
 (dico-register-strat "suffix" "Match word suffixes")
-
+(dico-register-markup "html")

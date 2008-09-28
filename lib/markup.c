@@ -18,7 +18,7 @@
 # include <config.h>
 #endif
 #include <dico.h>
-#include <strings.h>
+#include <string.h>
 
 const char *dico_markup_type = "none";
 dico_list_t dico_markup_list;
@@ -44,8 +44,12 @@ dico_markup_register(const char *name)
 	    return 1;
     }
 
-    if (!dico_markup_lookup(name))
-	return dico_list_append(dico_markup_list, (void *)name);
+    if (!dico_markup_lookup(name)) {
+	char *s = strdup(name);
+	if (!s)
+	    return 1;
+	return dico_list_append(dico_markup_list, s);
+    }
     return 0;
 }
 

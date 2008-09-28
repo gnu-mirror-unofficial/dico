@@ -216,16 +216,6 @@ _guile_strategy_print(SCM message_smob, SCM port, scm_print_state * pstate)
     return 1;
 }
 
-static SCM
-_guile_strategy_create(SCM owner, const dico_strategy_t strat)
-{
-    struct _guile_strategy *sp;
-
-    sp = scm_gc_malloc(sizeof(struct _guile_strategy), "strategy");
-    sp->strat = strat;
-    SCM_RETURN_NEWSMOB(_guile_strategy_tag, sp);
-}
-
 static void
 _guile_init_strategy()
 {
@@ -358,6 +348,33 @@ SCM_DEFINE(scm_dico_register_strat, "dico-register-strat", 2, 1, 0,
 }
 #undef FUNC_NAME
 
+
+SCM_DEFINE(scm_dico_register_markup, "dico-register-markup", 1, 0, 0,
+	   (SCM TYPE),
+	   "Register new markup type.")
+#define FUNC_NAME s_scm_dico_register_markup
+{
+    int rc;
+    char *str;
+    SCM_ASSERT(scm_is_string(TYPE), TYPE, SCM_ARG1, FUNC_NAME);
+    str = scm_to_locale_string(TYPE);
+    rc = dico_markup_register(str);
+    free(str);
+    if (rc)
+	scm_memory_error(FUNC_NAME);
+    return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
+SCM_DEFINE(scm_dico_current_markup, "dico-current-markup", 0, 0, 0,
+	   (),
+	   "Return current dico markup type.")
+#define FUNC_NAME s_scm_dico_current_markup
+{
+    return scm_makfrom0str(dico_markup_type);
+}
+#undef FUNC_NAME
+    
 
 static long scm_tc16_dico_port;
 struct _guile_dico_port {
@@ -508,12 +525,18 @@ _guile_init_funcs (void)
 		       scm_dico_strat_default_p);
     scm_c_define_gsubr(s_scm_dico_register_strat, 2, 1, 0,
 		       scm_dico_register_strat);
+    scm_c_define_gsubr(s_scm_dico_register_markup, 1, 0, 0,
+		       scm_dico_register_markup);
+    scm_c_define_gsubr(s_scm_dico_current_markup, 0, 0, 0,
+		       scm_dico_current_markup);
     scm_c_export("dico-strat-selector?", 
 		 "dico-strat-select?",
 		 "dico-strat-name",
 		 "dico-strat-description",
 	         "dico-strat-default?",
 		 "dico-register-strat",
+		 "dico-register-markup",
+		 "dico-current-markup",
 		 NULL);
 }
 

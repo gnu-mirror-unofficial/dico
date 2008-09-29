@@ -131,8 +131,11 @@ P [1-9][0-9]*
          /* Other tokens */
 \n       { locus.line++; } 
 [,;{}()] return yytext[0];
-.        { config_error(&locus, 0, _("stray character \\%03o"),
-			(unsigned char) yytext[0]); }
+.        { if (isascii (yytext[0]) && isprint (yytext[0]))
+	     config_error(&locus, 0, _("stray character %c"), yytext[0]);
+           else
+             config_error(&locus, 0, _("stray character \\%03o"),
+		   	  (unsigned char) yytext[0]); }
 %%
 
 pid_t pp_pid;

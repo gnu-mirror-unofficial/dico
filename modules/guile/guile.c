@@ -360,8 +360,23 @@ SCM_DEFINE(scm_dico_register_markup, "dico-register-markup", 1, 0, 0,
     str = scm_to_locale_string(TYPE);
     rc = dico_markup_register(str);
     free(str);
-    if (rc)
+    switch (rc) {
+    case 0:
+	break;
+
+    case ENOMEM:
 	scm_memory_error(FUNC_NAME);
+
+    case EINVAL:
+	scm_misc_error(FUNC_NAME,
+		       "Invalid markup name: ~S",
+		       scm_list_1(TYPE));
+
+    default:
+	scm_misc_error(FUNC_NAME,
+		       "Unexpected error: ~S",
+		       scm_list_1(scm_from_int(rc)));
+    }
     return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME

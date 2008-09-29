@@ -337,6 +337,7 @@ void register_mime(void);
 
 /* markup.c */
 void register_markup(void);
+void markup_flush_capa(void);
 
 /* xidle.c */
 void register_xidle(void);

@@ -19,7 +19,7 @@
 static void
 dicod_markup(dico_stream_t str, int argc, char **argv)
 {
-    char *p;
+    const char *p;
     if (argc == 2) {
 	/* Report current markup type */
 	stream_printf(str, "280 %s is current markup type\r\n",
@@ -40,4 +40,23 @@ register_markup()
     dicod_capa_register("markup", &cmd, NULL, NULL);
     if (dico_markup_register("none"))
 	xalloc_die();
+}
+
+#define MARKUP_CAPA_PREFIX "markup-"
+
+void
+markup_flush_capa()
+{
+    dico_iterator_t itr;
+    const char *p;
+    
+    itr = xdico_iterator_create(dico_markup_list);
+    for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) {
+	size_t len = sizeof(MARKUP_CAPA_PREFIX) + strlen(p);
+	char *str = xmalloc(len);
+	strcat(strcpy(str, MARKUP_CAPA_PREFIX), p);
+	dicod_capa_register(str, NULL, NULL, NULL);
+	dicod_capa_add(str);
+    }
+    dico_iterator_destroy(&itr);
 }

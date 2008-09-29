@@ -1344,10 +1344,11 @@ main(int argc, char **argv)
     dicod_log_setup();
     
     dicod_loader_init();
-
+    
     begin_timing("server");
     dicod_server_init();
     flush_strat_forward();
+    markup_flush_capa();
     switch (mode) {
     case MODE_DAEMON:
 	dicod_server(argc, argv);

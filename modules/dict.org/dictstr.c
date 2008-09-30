@@ -322,7 +322,7 @@ stream_get8(dico_stream_t str, unsigned char *p)
     return dico_stream_read(str, p, 1, NULL);
 }
 
-int
+static int
 stream_get16(dico_stream_t str, uint16_t *pres)
 {
     unsigned char buf[2];
@@ -332,7 +332,7 @@ stream_get16(dico_stream_t str, uint16_t *pres)
     return rc;
 }
 
-int
+static int
 stream_get32(dico_stream_t str, uint32_t *pres)
 {
     unsigned char buf[4];

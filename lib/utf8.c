@@ -1926,12 +1926,38 @@ utf8_wc_strcasecmp (const unsigned *a, const unsigned *b)
   return 0;
 }
 
+unsigned *
+utf8_wc_quote (const unsigned *s)
+{
+  size_t len = utf8_wc_strlen (s);
+  unsigned *clone = calloc (2 * len + 1, sizeof s[0]);
+  if (clone)
+    {
+      size_t i, j;
+      for (i = j = 0; i < len; i++)
+	{
+	  switch (s[i])
+	    {
+	    case '\\':
+	    case '"':
+	      clone[j++] = '\\';
+	      /* fall through */
+	    default:
+	      clone[j++] = s[i];
+	    }
+	}
+      clone[j] = 0;
+      clone = realloc (clone, (j + 1)*sizeof (clone[0]));
+    }
+  return clone;
+}
 
 int
-utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char *s, size_t size)
+utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char **sptr)
 {
   size_t i;
-  size_t wbc;
+  size_t wbc, size;
+  char *s;
   
   wbc = 0;
   for (i = 0; i < wordlen; i++)
@@ -1940,17 +1966,29 @@ utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char *s, size_t size)
       int rc = utf8_wctomb (r, wordbuf[i]);
       if (rc <= 0)
 	  return rc;
-      if (s)
-	{
-	  if (wbc + rc < size)
-	    memcpy (s + wbc, r, rc);
-	  else
-	    break;
-	}
+      wbc += rc;
+    }
+
+  s = malloc (wbc + 1);
+  if (!s)
+    {
+      errno = ENOMEM;
+      return -1;
+    }
+  
+  wbc = 0;
+  for (i = 0; i < wordlen; i++)
+    {
+      char r[4];
+      int rc = utf8_wctomb (r, wordbuf[i]);
+      if (rc <= 0)
+	  return rc;
+      memcpy (s + wbc, r, rc);
       wbc += rc;
     }
   s[wbc] = 0;
-  return wbc;
+  *sptr = s;
+  return 0;
 }
 
 int
@@ -1965,10 +2003,11 @@ utf8_mbstr_to_wc(const char *str, unsigned **wptr)
   for (i = 0, len = strlen(str); len; i++)
     {
       int rc = utf8_mbtowc (w + i, (unsigned char *)str, len);
-      if (rc <= 0) {
-	free(w);
-	return -1;
-      }
+      if (rc <= 0)
+	{
+	  free(w);
+	  return -1;
+	}
       str += rc;
       len -= rc;
     }
@@ -2011,3 +2050,25 @@ utf8_mbstr_to_norm_wc(const char *str, unsigned **nptr)
     return 0;
 }
     
+int
+utf8_quote (const char *str, char **sptr)
+{
+  int rc;
+  unsigned *ws, *ret;
+  
+  rc = utf8_mbstr_to_wc (str, &ws);
+  if (rc < 0)
+    return rc;
+  ret = utf8_wc_quote (ws);
+  if (ret)
+    {
+      rc = utf8_wc_to_mbstr (ret, utf8_wc_strlen (ret), sptr);
+      free (ret);
+    }
+  else
+    {
+      errno = ENOMEM;
+      rc = -1;
+    }
+  return rc;
+}

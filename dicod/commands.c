@@ -88,9 +88,13 @@ _show_database(void *item, void *data)
     dicod_database_t *dict = item;
     dico_stream_t str = data;
     char *descr = dicod_get_database_descr(dict);
-    stream_printf(str, "%s \"%s\"\r\n",
-		  dict->name, quotearg(descr ? descr : ""));
+    char *pdescr;
+
+    if (utf8_quote(descr ? descr : "", &pdescr))
+	xalloc_die();
+    stream_printf(str, "%s \"%s\"\r\n", dict->name, pdescr);
     dicod_free_database_descr(dict, descr);
+    free(pdescr);
     return 0;
 }
 

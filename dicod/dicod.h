@@ -120,7 +120,11 @@ extern struct dico_stat current_stat, total_stat;
 #define MODE_INETD   1
 #define MODE_PREPROC 2
 
-void get_options(int argc, char *argv[]);
+struct dicod_conf_override {
+    int transcript;
+};
+
+void get_options(int argc, char *argv[], struct dicod_conf_override *conf);
 
 typedef struct {
     char *file;

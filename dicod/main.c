@@ -1301,10 +1301,25 @@ dicod_log_pre_setup()
 }
 
 
+void
+init_conf_override(struct dicod_conf_override *ovr)
+{
+    ovr->transcript = -1;
+}
+
+void
+apply_conf_override(struct dicod_conf_override *ovr)
+{
+    if (ovr->transcript >= 0)
+	transcript = ovr->transcript;
+}
+
+
 int
 main(int argc, char **argv)
 {
     int rc = 0;
+    struct dicod_conf_override ovr;
     
     appi18n_init();
     dico_set_program_name(argv[0]);
@@ -1326,7 +1341,8 @@ main(int argc, char **argv)
     include_path_setup();
     config_lex_trace(0);
     dico_argcv_quoting_style = dico_argcv_quoting_hex;
-    get_options(argc, argv);
+    init_conf_override(&ovr);
+    get_options(argc, argv, &ovr);
 
     if (mode == MODE_PREPROC)
 	return preprocess_config(preprocessor);
@@ -1334,6 +1350,9 @@ main(int argc, char **argv)
     config_set_keywords(keywords);
     if (config_parse(config_file))
 	exit(1);
+
+    apply_conf_override(&ovr);
+    
     register_sasl();
     if (dicod_capa_flush())
 	exit(1);

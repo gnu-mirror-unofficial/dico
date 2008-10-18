@@ -30,6 +30,7 @@ dicod_SOURCES=\
  dicod.c\
  gsasl.c\
  ident.c\
+ lang.c\
  lev.c\
  loader.c\
  main.c\

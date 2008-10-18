@@ -69,6 +69,13 @@ mod_descr(dico_handle_t hp)
     return NULL;
 }
 
+dico_list_t
+dico_db_lang (dico_handle_t hp)
+{
+    /* FIXME */
+    return NULL;
+}
+
 static dico_result_t
 mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 {
@@ -120,6 +127,7 @@ struct dico_database_module DICO_EXPORT(sample, module) = {
     mod_close,
     mod_info,
     mod_descr,
+    mod_lang,
     mod_match,
     mod_define,
     mod_output_result,

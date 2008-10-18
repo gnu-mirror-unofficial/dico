@@ -752,6 +752,7 @@ struct dico_database_module DICO_EXPORT(python, module) = {
     mod_close,
     mod_info,
     mod_descr,
+    NULL, /* FIXME: dico_db_lang */
     mod_match,
     mod_define,
     mod_output_result,

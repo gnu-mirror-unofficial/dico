@@ -34,10 +34,12 @@ dicod_markup(dico_stream_t str, int argc, char **argv)
 void
 register_markup()
 {
-    static struct dicod_command cmd =
+    static struct dicod_command cmd[] = {
 	{ "OPTION MARKUP", 2, 3, "type", "Set output markup type",
-	  dicod_markup };
-    dicod_capa_register("markup", &cmd, NULL, NULL);
+	  dicod_markup },
+	{ NULL }
+    };
+    dicod_capa_register("markup", cmd, NULL, NULL);
     if (dico_markup_register("none"))
 	xalloc_die();
 }

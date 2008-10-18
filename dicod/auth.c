@@ -97,10 +97,12 @@ auth_init(void *ptr)
 void
 register_auth()
 {
-    static struct dicod_command cmd =
+    static struct dicod_command cmd[] = {
 	{ "AUTH", 3, 3, "user string", "provide authentication information",
-	  dicod_auth };
-    dicod_capa_register("auth", &cmd, auth_init, NULL);
+	  dicod_auth },
+	{ NULL }
+    };	
+    dicod_capa_register("auth", cmd, auth_init, NULL);
 }
 
 

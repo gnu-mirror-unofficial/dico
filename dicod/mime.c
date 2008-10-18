@@ -28,8 +28,10 @@ dicod_mime(dico_stream_t str, int argc, char **argv)
 void
 register_mime()
 {
-    static struct dicod_command cmd =
+    static struct dicod_command cmd[] = {
 	{ "OPTION MIME", 2, 2, NULL, "use MIME headers",
-	  dicod_mime };
-    dicod_capa_register("mime", &cmd, NULL, NULL);
+	  dicod_mime },
+	{ NULL }
+    };
+    dicod_capa_register("mime", cmd, NULL, NULL);
 }

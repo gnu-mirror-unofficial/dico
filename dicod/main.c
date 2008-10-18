@@ -402,7 +402,28 @@ load_module_cb(enum cfg_callback_command cmd,
     return 0;
 }
 
-int
+static int
+add_char_ptr(void *item, void *data)
+{
+    dico_list_t list = data;
+    xdico_list_append(list, xstrdup(*(char**)item));
+    return 0;
+}
+
+/* FIXME: Find a way to modify list items in place */
+static void
+fix_lang_list(dicod_database_t *db)
+{
+    dico_list_t newlist;
+    if (!db->lang)
+	return;
+    newlist = xdico_list_create();
+    dico_list_iterate(db->lang, add_char_ptr, newlist);
+    dico_list_destroy(&db->lang, NULL, NULL);
+    db->lang = newlist;
+}
+
+static int
 set_database(enum cfg_callback_command cmd,
 	     dicod_locus_t *locus,
 	     void *varptr,
@@ -426,6 +447,7 @@ set_database(enum cfg_callback_command cmd,
 	if (!database_list)
 	    database_list = xdico_list_create();
 	dict = *pdata;
+	fix_lang_list(dict);
 	xdico_list_append(database_list, dict);
 	*pdata = NULL;
 	break;
@@ -582,6 +604,9 @@ struct config_keyword kwd_database[] = {
       N_("Full description of the database, to be shown in reply to "
 	 "SHOW INFO command."),
       cfg_string, NULL, offsetof(dicod_database_t, info) },
+    { "languages", N_("arg"),
+      N_("List of languages this database is available in."),
+      cfg_string|CFG_LIST, NULL, offsetof(dicod_database_t, lang) },
     { "handler", N_("name"), N_("Name of the handler for this database."),
       cfg_string, NULL, 0, set_dict_handler },
     { "visibility-acl", N_("arg: acl"),
@@ -1135,7 +1160,8 @@ check_db_visibility()
     
     itr = xdico_iterator_create(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
-	db->visible = dicod_acl_check(db->acl, global);
+	db->visible = dicod_acl_check(db->acl, global)
+	                 && dicod_lang_check(dicod_get_database_languages(db));
     }
     dico_iterator_destroy(&itr);
 }
@@ -1216,6 +1242,7 @@ database_remove_dependent(dicod_module_instance_t *inst)
 void
 dicod_database_free(dicod_database_t *dp)
 {
+    dico_list_destroy(&dp->lang, dicod_free_item, NULL);
     dico_argcv_free(dp->argc, dp->argv);
     free(dp);
 }
@@ -1333,6 +1360,7 @@ main(int argc, char **argv)
     udb_init();
     register_auth();
     register_mime();
+    register_lang();
     register_markup();
     register_xidle();
     register_xversion();

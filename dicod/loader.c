@@ -208,6 +208,19 @@ dicod_free_database_info(dicod_database_t *db, char *info)
 	free(info);
 }
 
+dico_list_t
+dicod_get_database_languages(dicod_database_t *db)
+{
+    if (db->lang)
+	return db->lang;
+    else {
+	dicod_module_instance_t *inst = db->instance;
+	if (inst->module->dico_db_lang)
+	    return inst->module->dico_db_lang(db->mod_handle);
+    }
+    return NULL;
+}
+
 
 static char nomatch[] = "552 No match";
 static size_t nomatch_len = (sizeof(nomatch)-1);

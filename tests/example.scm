@@ -20,15 +20,17 @@
   #:use-module (ice-9 format))
 
 (define-syntax db:get
-  (syntax-rules (info descr name corpus)
+  (syntax-rules (info descr name lang corpus)
     ((db:get dbh name)
      (list-ref dbh 0))
     ((db:get dbh descr)
      (list-ref dbh 1))
     ((db:get dbh info)
      (list-ref dbh 2))
+    ((db:get dbh lang)
+     (list-ref dbh 3))
     ((db:get dbh corpus)
-     (list-tail dbh 3))))
+     (list-tail dbh 4))))
 
 (define (mapcan fun list)
   (apply (lambda ( . slist)
@@ -68,6 +70,9 @@
 
 (define (info dbh)
   (db:get dbh info))
+
+(define (lang dbh)
+  (db:get dbh lang))
 
 (define (define-word dbh word)
   (let ((res (mapcan (lambda (elt)
@@ -142,6 +147,7 @@
   (list (cons "open" open-module)
         (cons "descr" descr)
         (cons "info" info)
+	(cons "lang" lang)
         (cons "define" define-word)
         (cons "match" match-word)
         (cons "output" output)

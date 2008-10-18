@@ -21,8 +21,6 @@
 #include <stdlib.h>
 
 /* Lists */
-typedef struct list *dico_list_t;
-typedef struct iterator *dico_iterator_t;
 
 typedef int (*dico_list_iterator_t)(void *item, void *data);
 typedef int (*dico_list_comp_t)(const void *, const void *);

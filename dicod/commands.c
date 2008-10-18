@@ -405,7 +405,8 @@ dicod_handle_command(dico_stream_t str, int argc, char **argv)
     cmd = locate_command(argc, argv);
     if (!cmd) 
 	stream_writez(str, "500 unknown command\r\n");
-    else if (argc < cmd->minparam || argc > cmd->maxparam) 
+    else if (argc < cmd->minparam
+	     || (cmd->maxparam != DICOD_MAXPARAM_INF && argc > cmd->maxparam))
 	stream_writez(str, "501 wrong number of arguments\r\n");
     else if (!cmd->handler)
 	stream_writez(str, "502 command is not yet implemented, sorry\r\n");

@@ -142,6 +142,12 @@ xdico_sasl_capa_match_p(const char *mech, const char *capa)
     return 0;
 }
 	
-
+
+int
+dicod_free_item (void *item, void *data DICO_ARG_UNUSED)
+{
+    free(item);
+    return 0;
+}
     
 

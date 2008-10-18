@@ -932,6 +932,7 @@ struct dico_database_module DICO_EXPORT(dictorg, module) = {
     NULL,
     mod_info,
     mod_descr,
+    NULL, /* FIXME: dico_db_lang */
     mod_match,
     mod_define,
     mod_output_result,

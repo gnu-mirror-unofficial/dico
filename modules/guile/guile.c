@@ -113,13 +113,17 @@ _add_load_path(char *path)
 {
     SCM scm, path_scm;
     SCM *pscm;
-
+    
     path_scm = SCM_VARIABLE_REF(scm_c_lookup("%load-path"));
     for (scm = path_scm; scm != SCM_EOL; scm = SCM_CDR(scm)) {
 	SCM val = SCM_CAR(scm);
-	if (scm_is_string(val))
-	    if (strcmp(scm_i_string_chars(val), path) == 0)
+	if (scm_is_string(val)) {
+	    char *s = scm_to_locale_string(val);
+	    int res = strcmp(s, path);
+	    free(s);
+	    if (res == 0)
 		return;
+	}
     }
 
     pscm = SCM_VARIABLE_LOC(scm_c_lookup("%load-path"));
@@ -247,15 +251,19 @@ SCM_DEFINE(scm_dico_strat_select_p, "dico-strat-select?", 3, 0, 0,
 #define FUNC_NAME s_scm_dico_strat_select_p
 {
     struct _guile_strategy *sp;
+    char *key, *word;
+    int rc;
     
     SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
     SCM_ASSERT(scm_is_string(WORD), WORD, SCM_ARG2, FUNC_NAME);
     SCM_ASSERT(scm_is_string(KEY), KEY, SCM_ARG3, FUNC_NAME);
     sp = (struct _guile_strategy *) SCM_CDR(STRAT);
-    return sp->strat->sel(DICO_SELECT_RUN,
-			  scm_i_string_chars(KEY),
-			  scm_i_string_chars(WORD),
-			  sp->strat->closure) ? SCM_BOOL_T : SCM_BOOL_F;
+    key = scm_to_locale_string(KEY);
+    word = scm_to_locale_string(WORD);
+    rc = sp->strat->sel(DICO_SELECT_RUN, key, word, sp->strat->closure);
+    free(key);
+    free(word);
+    return rc ? SCM_BOOL_T : SCM_BOOL_F;
 }
 #undef FUNC_NAME
 
@@ -567,6 +575,7 @@ enum guile_proc_ind {
     close_proc,
     info_proc,
     descr_proc,
+    lang_proc,
     match_proc,
     define_proc,
     output_proc,
@@ -582,6 +591,7 @@ static char *guile_proc_name[] = {
     "close",
     "info",
     "descr",
+    "lang",
     "match",
     "define",
     "output",
@@ -870,7 +880,7 @@ mod_get_text(struct _guile_database *db, int n)
 			    scm_list_1(scm_cons(SCM_IM_QUOTE, db->handle))))
 	    return NULL;
 	if (scm_is_string(res)) 
-	    return strdup(scm_i_string_chars(res));
+	    return scm_to_locale_string(res);
 	else {
 	    rettype_error(db->vtab[n]);
 	    return NULL;
@@ -891,6 +901,36 @@ mod_descr(dico_handle_t hp)
 {
     struct _guile_database *db = (struct _guile_database *)hp;
     return mod_get_text(db, descr_proc);
+}
+
+static dico_list_t
+mod_lang(dico_handle_t hp)
+{
+    struct _guile_database *db = (struct _guile_database *)hp;
+    dico_list_t list = NULL;
+    SCM proc = db->vtab[lang_proc];
+    if (proc) {
+	SCM res;
+	
+	if (guile_call_proc(&res, proc,
+			    scm_list_1(scm_cons(SCM_IM_QUOTE, db->handle))))
+	    return NULL;
+	if (scm_is_string(res)) {
+	    list = dico_list_create();
+	    dico_list_append(list, scm_to_locale_string(res));
+	} else if (scm_is_pair(res)) {
+	    list = dico_list_create();
+	    while (res != SCM_EOL && scm_is_pair(res)) {
+		dico_list_append(list, scm_to_locale_string(SCM_CAR(res)));
+		res = SCM_CDR(res);
+	    }
+	} else {
+	    rettype_error(proc);
+	    return NULL;
+	}
+    }
+
+    return list;
 }
 
 
@@ -1040,6 +1080,7 @@ struct dico_database_module DICO_EXPORT(guile, module) = {
     mod_close,
     mod_info,
     mod_descr,
+    mod_lang,
     mod_match,
     mod_define,
     mod_output_result,

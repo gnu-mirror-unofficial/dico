@@ -29,6 +29,9 @@
 (define (info dbh)
   #f)
 
+(define (lang dbh)
+  (list))
+
 (define (define-word dbh word)
   #f)
 
@@ -46,6 +49,7 @@
         (cons "close" close-module)
         (cons "descr" descr)
         (cons "info" info)
+	(cons "lang" lang)
         (cons "define" define-word)
         (cons "match" match-word)
         (cons "output" output)

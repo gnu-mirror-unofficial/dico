@@ -57,6 +57,8 @@ char *xdico_assign_string(char **dest, char *str);
 char *xdico_sasl_mech_to_capa(char *mech);
 int xdico_sasl_capa_match_p(const char *mech, const char *capa);
 
+int dicod_free_item (void *item, void *data);
+
 
 /* Timer */
 typedef struct timer_slot *xdico_timer_t;

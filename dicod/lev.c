@@ -66,13 +66,15 @@ void
 register_lev()
 {
     int i;
-    static struct dicod_command cmd =
+    static struct dicod_command cmd[] = {
 	{ "XLEV", 2, 2, "distance", "Set Levenshtein distance",
-	  dicod_xlevdist };
+	  dicod_xlevdist },
+	{ NULL }
+    };
     for (i = 0; i < DICO_ARRAY_SIZE(levstrat); i++)
 	dico_strategy_add(&levstrat[i]);
     dico_set_default_strategy("nlev");
-    dicod_capa_register("xlev", &cmd, NULL, NULL);
+    dicod_capa_register("xlev", cmd, NULL, NULL);
 }
 
 	  

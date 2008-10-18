@@ -26,6 +26,9 @@
    * Info
    <text>
 
+   * Languages
+   <lang1> [<lang2>...]
+   
    * Dictionary
    ** <entry>
    <text>
@@ -75,7 +78,7 @@ struct outline_file {
     struct entry *index;
     struct entry *suf_index;
     
-    struct entry *info_entry, *descr_entry;
+    struct entry *info_entry, *descr_entry, *lang_entry;
 };
 
 #define STATE_INITIAL 0
@@ -441,6 +444,7 @@ outline_free_db (dico_handle_t hp)
     free(file->name);
     free(file->info_entry);
     free(file->descr_entry);
+    free(file->lang_entry);
     for (i = 0; i < file->count; i++) {
 	free(file->index[i].word);
 	if (file->suf_index)
@@ -516,6 +520,9 @@ outline_init_db(const char *dbname, int argc, char **argv)
 		} else if (strcasecmp(ep->word, "description") == 0) {
 		    file->descr_entry = ep;
 		    break;
+		} else if (strcasecmp(ep->word, "languages") == 0) {
+		    file->lang_entry = ep;
+		    break;
 		} else if (strcasecmp(ep->word, "dictionary") == 0)
 		    state = STATE_DICT;
 	    }
@@ -580,6 +587,42 @@ outline_descr(dico_handle_t hp)
 	return buf;
     }
     return NULL;
+}
+
+dico_list_t
+outline_lang(dico_handle_t hp)
+{
+    struct outline_file *file = (struct outline_file *) hp;
+    dico_list_t list = NULL;
+
+    if (file->lang_entry) {
+	list = dico_list_create();
+	if (list) {
+	    int rc;
+	    int lc;
+	    char **lv;
+	    char *buf = read_buf(file, file->lang_entry);
+
+	    rc = dico_argcv_get_np(buf, strlen(buf), "\n", NULL, 0,
+				   &lc, &lv, NULL);
+	    if (rc == 0) {
+		if (lc == 0)
+		    dico_list_destroy(&list, NULL, NULL);
+		else {
+		    int i;
+		    for (i = 0; i < lc; i++) 
+			dico_list_append(list, lv[i]);
+		    free(lv);
+		}
+	    } else {
+		dico_log(L_ERR, 0, _("outline_lang: not enough memory"));
+		dico_list_destroy(&list, NULL, NULL);
+	    }
+	} else {
+	    dico_log(L_ERR, 0, _("outline_lang: not enough memory"));
+	}
+    }
+    return list;
 }
 
 
@@ -761,6 +804,7 @@ struct dico_database_module DICO_EXPORT(outline, module) = {
     NULL,
     outline_info,
     outline_descr,
+    outline_lang,
     outline_match,
     outline_define,
     outline_output_result,

@@ -71,8 +71,11 @@ dicod_capa_flush()
 	if (cp->enabled) {
 	    if (cp->init && cp->init(cp->closure))
 		return 1;
-	    if (cp->cmd)
-		dicod_add_command(cp->cmd);
+	    if (cp->cmd) {
+		struct dicod_command *cmd;
+		for (cmd = cp->cmd; cmd->keyword; cmd++)
+		    dicod_add_command(cmd);
+	    }
 	}
     }
     return 0;

@@ -268,10 +268,11 @@ typedef struct dicod_module_instance {
 } dicod_module_instance_t;
 
 typedef struct dicod_database {
-    char *name;   /* Dictionary name */
-    char *descr;  /* Description (SHOW DB) */
-    char *info;   /* Info (SHOW INFO) */
-
+    char *name;        /* Dictionary name */
+    char *descr;       /* Description (SHOW DB) */
+    char *info;        /* Info (SHOW INFO) */
+    dico_list_t lang;
+    
     dicod_acl_t  acl;  /* ACL for this database */
     int visible;       /* Result of the last dicod_acl_check */
     
@@ -324,6 +325,8 @@ struct dicod_command {
     dicod_cmd_fn handler;
 };
 
+#define DICOD_MAXPARAM_INF (-1)
+
 void dicod_handle_command(dico_stream_t str, int argc, char **argv);
 void dicod_init_command_tab(void);
 void dicod_add_command(struct dicod_command *cmd);
@@ -335,6 +338,10 @@ void dicod_capa_register(const char *name, struct dicod_command *cmd,
 int dicod_capa_add(const char *name);
 void dicod_capa_iterate(int (*fun)(const char*, int, void *), void *closure);
 int dicod_capa_flush(void);
+
+/* lang.c */
+void register_lang(void);
+int dicod_lang_check(dico_list_t list);
 
 /* mime.c */
 void register_mime(void);
@@ -399,6 +406,7 @@ char *dicod_get_database_descr(dicod_database_t *db);
 void dicod_free_database_descr(dicod_database_t *db, char *descr);
 char *dicod_get_database_info(dicod_database_t *db);
 void dicod_free_database_info(dicod_database_t *db, char *info);
+dico_list_t dicod_get_database_languages(dicod_database_t *db);
 
 void dicod_match_word_db(dicod_database_t *db, dico_stream_t stream,
 			 const dico_strategy_t strat, const char *word);

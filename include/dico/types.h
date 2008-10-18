@@ -67,7 +67,7 @@ struct dico_database_module {
     int (*dico_close) (dico_handle_t hp);
     char *(*dico_db_info) (dico_handle_t hp);
     char *(*dico_db_descr) (dico_handle_t hp);
-    dico_list_t (*dico_db_lang) (dico_handle_t hp);
+    int (*dico_db_lang) (dico_handle_t hp, dico_list_t list[2]);
     dico_result_t (*dico_match) (dico_handle_t hp,
 				 const dico_strategy_t strat,
 				 const char *word);

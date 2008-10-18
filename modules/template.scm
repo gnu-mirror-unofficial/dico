@@ -30,7 +30,7 @@
   #f)
 
 (define (lang dbh)
-  (list))
+  (cons (list) (list)))
 
 (define (define-word dbh word)
   #f)

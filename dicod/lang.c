@@ -16,7 +16,8 @@
 
 #include <dicod.h>
 
-dico_list_t dicod_lang_preferences;
+dico_list_t dicod_lang_lazy_prefs;
+dico_list_t dicod_lang_prefs[2];
 
 static int
 cmp_string_ci(const void *a, const void *b)
@@ -25,23 +26,53 @@ cmp_string_ci(const void *a, const void *b)
 }
 
 int
-dicod_lang_check(dico_list_t list)
+dicod_lang_check(dico_list_t list[2])
 {
-    return list == NULL || dicod_lang_preferences == NULL
-	   || dico_list_intersect_p(dicod_lang_preferences, list,
-				    cmp_string_ci);
+    if (!list[0] && !list[1])
+	return 1;
+    
+    if (dicod_lang_lazy_prefs) {
+	if (list[0] && dico_list_intersect_p(dicod_lang_lazy_prefs, list[0],
+					     cmp_string_ci))
+	    return 1;
+	if (list[1] && dico_list_intersect_p(dicod_lang_lazy_prefs, list[1],
+					     cmp_string_ci))
+	    return 1;
+	return 0;
+    } 
+
+    if (dicod_lang_prefs[0] && list[0]
+	&& !dico_list_intersect_p(dicod_lang_prefs[0], list[0], cmp_string_ci))
+	return 0;
+    if (dicod_lang_prefs[1] && list[1]
+	&& !dico_list_intersect_p(dicod_lang_prefs[1], list[1], cmp_string_ci))
+	return 0;
+    return 1;
 }
 
 void
 dicod_lang(dico_stream_t str, int argc, char **argv)
 {
-    dico_list_destroy(&dicod_lang_preferences, dicod_free_item, NULL);
+    dico_list_destroy(&dicod_lang_lazy_prefs, dicod_free_item, NULL);
+    dico_list_destroy(&dicod_lang_prefs[0], dicod_free_item, NULL);
+    dico_list_destroy(&dicod_lang_prefs[1], dicod_free_item, NULL);
     if (argc > 2) {
+	int n = 0;
 	int i;
-    
-	dicod_lang_preferences = xdico_list_create();
-	for (i = 2; i < argc; i++)
-	    xdico_list_append(dicod_lang_preferences, xstrdup(argv[i]));
+	
+	for (i = 2; i < argc; i++) {
+	    if (n == 0 && strcmp(argv[i], ":") == 0) 
+		n = 1;
+	    else {
+		if (!dicod_lang_prefs[n])
+		    dicod_lang_prefs[n] = xdico_list_create();
+		xdico_list_append(dicod_lang_prefs[n], xstrdup(argv[i]));
+	    }
+	}
+	if (n == 0) {
+	    dicod_lang_lazy_prefs = dicod_lang_prefs[0];
+	    dicod_lang_prefs[0] = NULL;
+	}
     }
     check_db_visibility();
     stream_writez(str, "250 ok - set language preferences\r\n");
@@ -56,30 +87,40 @@ _display_pref(void *item, void *data)
     return 0;
 }
 
+static void
+show_lang_lists(dico_stream_t str, dico_list_t list[2])
+{
+    dico_list_iterate(list[0], _display_pref, str);
+    dico_stream_write(str, " :", 2);
+    dico_list_iterate(list[1], _display_pref, str);
+    dico_stream_write(str, "\r\n", 2);
+}    
+
 void
 dicod_show_lang_pref(dico_stream_t str, int argc, char **argv)
 {
-    stream_printf(str, "280 %lu",
-		  (unsigned long) dico_list_count(dicod_lang_preferences));
-    dico_list_iterate(dicod_lang_preferences, _display_pref, str);
-    dico_stream_write(str, "\r\n", 2);
+    stream_writez(str, "280");
+    if (dicod_lang_lazy_prefs) {
+	dico_list_iterate(dicod_lang_lazy_prefs, _display_pref, str);
+	dico_stream_write(str, "\r\n", 2);
+    } else 
+	show_lang_lists(str, dicod_lang_prefs);
 }
 
 void
 dicod_show_lang_info(dico_stream_t str, int argc, char **argv)
 {
-    dico_list_t langlist;
     dicod_database_t *db = find_database(argv[3]);
     if (!db) {
 	stream_writez(str,
 		      "550 invalid database, use SHOW DB for a list\r\n");
-	return;
-    } else 
-	langlist = dicod_get_database_languages(db);
-   
-    stream_printf(str, "280 %lu", (unsigned long) dico_list_count(langlist));
-    dico_list_iterate(langlist, _display_pref, str);
-    dico_stream_write(str, "\r\n", 2);
+    } else {
+	dico_list_t langlist[2];
+
+	dicod_get_database_languages(db, langlist);
+	stream_writez(str, "280");
+	show_lang_lists(str, langlist);
+    }
 }
 
 static int
@@ -87,11 +128,10 @@ _show_database_lang(void *item, void *data)
 {
     dicod_database_t *db = item;
     dico_stream_t str = data;
-    dico_list_t langlist = dicod_get_database_languages(db);
-    stream_printf(str, "%s %lu", db->name,
-		  (unsigned long) dico_list_count(langlist));
-    dico_list_iterate(langlist, _display_pref, str);
-    dico_stream_write(str, "\r\n", 2);
+    dico_list_t langlist[2];
+    dicod_get_database_languages(db, langlist);
+    stream_printf(str, "%s", db->name);
+    show_lang_lists(str, langlist);
     return 0;
 }
 

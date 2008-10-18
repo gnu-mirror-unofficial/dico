@@ -27,7 +27,7 @@
    <text>
 
    * Languages
-   <lang1> [<lang2>...]
+   <lang> [<lang>...] [: <lang> [<lang>...]] 
    
    * Dictionary
    ** <entry>
@@ -589,40 +589,42 @@ outline_descr(dico_handle_t hp)
     return NULL;
 }
 
-dico_list_t
-outline_lang(dico_handle_t hp)
+int
+outline_lang(dico_handle_t hp, dico_list_t list[2])
 {
     struct outline_file *file = (struct outline_file *) hp;
-    dico_list_t list = NULL;
 
+    list[0] = list[1] = NULL;
     if (file->lang_entry) {
-	list = dico_list_create();
-	if (list) {
-	    int rc;
-	    int lc;
-	    char **lv;
-	    char *buf = read_buf(file, file->lang_entry);
+	int n = 0;
+	int rc;
+	int lc;
+	char **lv;
+	char *buf = read_buf(file, file->lang_entry);
 
-	    rc = dico_argcv_get_np(buf, strlen(buf), "\n", NULL, 0,
-				   &lc, &lv, NULL);
-	    if (rc == 0) {
-		if (lc == 0)
-		    dico_list_destroy(&list, NULL, NULL);
-		else {
-		    int i;
-		    for (i = 0; i < lc; i++) 
-			dico_list_append(list, lv[i]);
-		    free(lv);
+	rc = dico_argcv_get_np(buf, strlen(buf), "\n", NULL, 0,
+			       &lc, &lv, NULL);
+	if (rc == 0) {
+	    if (lc) {
+		int i;
+		for (i = 0; i < lc; i++) {
+		    if (n == 0 && strcmp(lv[i], ":") == 0) { 
+			n = 1;
+			free(lv[i]);
+		    } else {
+			if (!list[n])
+			    list[n] = dico_list_create();
+			dico_list_append(list[n], lv[i]);
+		    }
 		}
-	    } else {
-		dico_log(L_ERR, 0, _("outline_lang: not enough memory"));
-		dico_list_destroy(&list, NULL, NULL);
 	    }
+	    free(lv);
 	} else {
 	    dico_log(L_ERR, 0, _("outline_lang: not enough memory"));
+	    return 1;
 	}
     }
-    return list;
+    return 0;
 }
 
 

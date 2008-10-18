@@ -208,17 +208,42 @@ dicod_free_database_info(dicod_database_t *db, char *info)
 	free(info);
 }
 
-dico_list_t
-dicod_get_database_languages(dicod_database_t *db)
+static int
+_dup_lang_item(void *item, void *data)
 {
-    if (db->lang)
-	return db->lang;
-    else {
+    char *lang = item;
+    dico_list_t dst = data;
+    xdico_list_append(dst, xstrdup(lang));
+    return 0;
+}
+
+dico_list_t
+dicod_langlist_copy(dico_list_t src)
+{
+    dico_list_t dst = xdico_list_create();
+    dico_list_iterate(src, _dup_lang_item, dst);
+    return dst;
+}
+
+void
+dicod_get_database_languages(dicod_database_t *db, dico_list_t dlist[])
+{
+    if (!(db->flags & DICOD_DBF_LANG)) {
 	dicod_module_instance_t *inst = db->instance;
-	if (inst->module->dico_db_lang)
-	    return inst->module->dico_db_lang(db->mod_handle);
+	if (inst->module->dico_db_lang) {
+	    /* FIXME: Return code? */
+	    inst->module->dico_db_lang(db->mod_handle, db->langlist);
+	    if (db->langlist[0] || db->langlist[1]) {
+		if (!db->langlist[0])
+		    db->langlist[0] = dicod_langlist_copy(db->langlist[1]);
+		else if (!db->langlist[1])
+		    db->langlist[1] = dicod_langlist_copy(db->langlist[0]);
+	    }
+	}
+	db->flags |= DICOD_DBF_LANG;
     }
-    return NULL;
+    dlist[0] = db->langlist[0];
+    dlist[1] = db->langlist[1];
 }
 
 

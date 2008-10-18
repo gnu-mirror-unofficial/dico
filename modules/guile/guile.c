@@ -904,26 +904,46 @@ mod_descr(dico_handle_t hp)
 }
 
 static dico_list_t
-mod_lang(dico_handle_t hp)
+scm_to_langlist(SCM scm, SCM procsym)
+{
+    dico_list_t list = NULL;
+
+    if (scm == SCM_EOL)
+	return NULL;
+    else if (scm_is_string(scm)) {
+	list = dico_list_create();
+	dico_list_append(list, scm_to_locale_string(scm));
+    } else if (scm_is_pair(scm)) {
+	SCM x;
+	list = dico_list_create();
+	for (x = SCM_CAR(scm); x != SCM_EOL && scm_is_pair(x);
+	     x = SCM_CDR(x)) 
+	    dico_list_append(list, scm_to_locale_string(SCM_CAR(x)));
+    } else 
+	rettype_error(procsym);
+    return list;
+}
+
+static int
+mod_lang(dico_handle_t hp, dico_list_t list[2])
 {
     struct _guile_database *db = (struct _guile_database *)hp;
-    dico_list_t list = NULL;
     SCM proc = db->vtab[lang_proc];
+    list[0] = list[1] = NULL;
     if (proc) {
 	SCM res;
 	
 	if (guile_call_proc(&res, proc,
 			    scm_list_1(scm_cons(SCM_IM_QUOTE, db->handle))))
-	    return NULL;
-	if (scm_is_string(res)) {
-	    list = dico_list_create();
-	    dico_list_append(list, scm_to_locale_string(res));
+	    return 1;
+	if (res == SCM_EOL)
+	    /* ok, nothing */;
+	else if (scm_is_string(res)) {
+	    list[0] = dico_list_create();
+	    dico_list_append(list[0], scm_to_locale_string(res));
 	} else if (scm_is_pair(res)) {
-	    list = dico_list_create();
-	    while (res != SCM_EOL && scm_is_pair(res)) {
-		dico_list_append(list, scm_to_locale_string(SCM_CAR(res)));
-		res = SCM_CDR(res);
-	    }
+	    list[0] = scm_to_langlist(SCM_CAR(res), proc);
+	    list[1] = scm_to_langlist(SCM_CDR(res), proc);
 	} else {
 	    rettype_error(proc);
 	    return NULL;

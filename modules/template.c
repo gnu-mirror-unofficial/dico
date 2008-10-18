@@ -69,8 +69,8 @@ mod_descr(dico_handle_t hp)
     return NULL;
 }
 
-dico_list_t
-dico_db_lang (dico_handle_t hp)
+int
+dico_db_lang (dico_handle_t hp, dico_list_t list[2])
 {
     /* FIXME */
     return NULL;

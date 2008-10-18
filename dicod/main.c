@@ -412,15 +412,15 @@ add_char_ptr(void *item, void *data)
 
 /* FIXME: Find a way to modify list items in place */
 static void
-fix_lang_list(dicod_database_t *db)
+fix_lang_list(dicod_database_t *db, int n)
 {
     dico_list_t newlist;
-    if (!db->lang)
+    if (!db->langlist[n])
 	return;
     newlist = xdico_list_create();
-    dico_list_iterate(db->lang, add_char_ptr, newlist);
-    dico_list_destroy(&db->lang, NULL, NULL);
-    db->lang = newlist;
+    dico_list_iterate(db->langlist[n], add_char_ptr, newlist);
+    dico_list_destroy(&db->langlist[n], NULL, NULL);
+    db->langlist[n] = newlist;
 }
 
 static int
@@ -447,7 +447,8 @@ set_database(enum cfg_callback_command cmd,
 	if (!database_list)
 	    database_list = xdico_list_create();
 	dict = *pdata;
-	fix_lang_list(dict);
+	fix_lang_list(dict, 0);
+	fix_lang_list(dict, 1);
 	xdico_list_append(database_list, dict);
 	*pdata = NULL;
 	break;
@@ -604,9 +605,12 @@ struct config_keyword kwd_database[] = {
       N_("Full description of the database, to be shown in reply to "
 	 "SHOW INFO command."),
       cfg_string, NULL, offsetof(dicod_database_t, info) },
-    { "languages", N_("arg"),
-      N_("List of languages this database is available in."),
-      cfg_string|CFG_LIST, NULL, offsetof(dicod_database_t, lang) },
+    { "languages-from", N_("arg"),
+      N_("List of languages this database translates from."),
+      cfg_string|CFG_LIST, NULL, offsetof(dicod_database_t, langlist[0]) },
+    { "languages-to", N_("arg"),
+      N_("List of languages this database translates to."),
+      cfg_string|CFG_LIST, NULL, offsetof(dicod_database_t, langlist[1]) },
     { "handler", N_("name"), N_("Name of the handler for this database."),
       cfg_string, NULL, 0, set_dict_handler },
     { "visibility-acl", N_("arg: acl"),
@@ -1160,8 +1164,13 @@ check_db_visibility()
     
     itr = xdico_iterator_create(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
-	db->visible = dicod_acl_check(db->acl, global)
-	                 && dicod_lang_check(dicod_get_database_languages(db));
+	if (!dicod_acl_check(db->acl, global))
+	    db->visible = 0;
+	else {
+	    dico_list_t list[2];
+	    dicod_get_database_languages(db, list);
+	    db->visible = dicod_lang_check(list);
+	}
     }
     dico_iterator_destroy(&itr);
 }
@@ -1242,7 +1251,8 @@ database_remove_dependent(dicod_module_instance_t *inst)
 void
 dicod_database_free(dicod_database_t *dp)
 {
-    dico_list_destroy(&dp->lang, dicod_free_item, NULL);
+    dico_list_destroy(&dp->langlist[0], dicod_free_item, NULL);
+    dico_list_destroy(&dp->langlist[1], dicod_free_item, NULL);
     dico_argcv_free(dp->argc, dp->argv);
     free(dp);
 }

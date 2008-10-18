@@ -187,7 +187,7 @@ typedef struct config_value {
 
 typedef int (*config_callback_fn) (
     enum cfg_callback_command cmd,
-    dicod_locus_t *       /* locus */,
+    dicod_locus_t *    /* locus */,
     void *             /* varptr */,
     config_value_t *   /* value */,
     void *             /* cb_data */
@@ -267,11 +267,16 @@ typedef struct dicod_module_instance {
     lt_dlhandle handle;
 } dicod_module_instance_t;
 
+#define DICOD_DBF_LANG 0x0001
+
 typedef struct dicod_database {
+    int flags;
+    
     char *name;        /* Dictionary name */
     char *descr;       /* Description (SHOW DB) */
     char *info;        /* Info (SHOW INFO) */
-    dico_list_t lang;
+    
+    dico_list_t langlist[2]; /* List of "source/dest" languages */
     
     dicod_acl_t  acl;  /* ACL for this database */
     int visible;       /* Result of the last dicod_acl_check */
@@ -341,7 +346,7 @@ int dicod_capa_flush(void);
 
 /* lang.c */
 void register_lang(void);
-int dicod_lang_check(dico_list_t list);
+int dicod_lang_check(dico_list_t list[2]);
 
 /* mime.c */
 void register_mime(void);
@@ -406,7 +411,8 @@ char *dicod_get_database_descr(dicod_database_t *db);
 void dicod_free_database_descr(dicod_database_t *db, char *descr);
 char *dicod_get_database_info(dicod_database_t *db);
 void dicod_free_database_info(dicod_database_t *db, char *info);
-dico_list_t dicod_get_database_languages(dicod_database_t *db);
+void dicod_get_database_languages(dicod_database_t *db, dico_list_t list[]);
+dico_list_t dicod_langlist_copy(dico_list_t src);
 
 void dicod_match_word_db(dicod_database_t *db, dico_stream_t stream,
 			 const dico_strategy_t strat, const char *word);

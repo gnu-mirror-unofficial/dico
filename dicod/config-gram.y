@@ -164,7 +164,11 @@ slist0  : QSTRING
 	  }
         ;
 
-list    : '(' values ')'
+list    : '(' ')'
+          {
+	      $$ = NULL;
+	  }
+        | '(' values ')'
           {
 	      $$ = $2;
 	  }

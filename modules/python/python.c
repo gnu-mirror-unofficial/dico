@@ -525,6 +525,79 @@ mod_descr (dico_handle_t hp)
     return _mod_get_text (db->py_instance, "descr");
 }
 
+static dico_list_t
+_tuple_to_langlist (PyObject *py_obj)
+{
+    dico_list_t list = NULL;
+
+    if (py_obj && PyString_Check (py_obj)) {
+	char *text = strdup (PyString_AsString (py_obj));
+	list = dico_list_create ();
+	dico_list_append (list, text);
+    }
+    else if (py_obj && PyTuple_Check (py_obj)) {
+	PyObject *py_item;
+	PyObject *py_iterator = PyObject_GetIter (py_obj);
+
+	list = dico_list_create ();
+
+	if (py_iterator) {
+	    while (py_item = PyIter_Next (py_iterator)) {
+		if (PyString_Check (py_item)) {
+		    char *text = strdup (PyString_AsString (py_item));
+		    dico_list_append (list, text);
+		}
+		Py_DECREF (py_item);
+	    }
+	    Py_DECREF (py_iterator);
+	    if (PyErr_Occurred ()) {
+		PyErr_Print ();
+		return NULL;
+	    }
+	}
+    }
+    return list;
+}
+
+static int
+mod_lang (dico_handle_t hp, dico_list_t list[2])
+{
+    PyObject *py_fnc, *py_res;
+    struct _python_database *db = (struct _python_database *)hp;
+    list[0] = list[1] = NULL;
+
+    PyThreadState_Swap (db->py_ths);
+    if (!PyObject_HasAttrString (db->py_instance, "lang"))
+	return 1;
+
+    py_fnc = PyObject_GetAttrString (db->py_instance, "lang");
+    if (py_fnc && PyCallable_Check (py_fnc)) {
+	py_res = PyObject_CallObject (py_fnc, NULL);
+	Py_DECREF (py_fnc);
+	if (py_res && PyString_Check (py_res)) {
+	    char *text = strdup (PyString_AsString (py_res));
+	    Py_DECREF (py_res);
+	    list[0] = dico_list_create ();
+	    dico_list_append (list[0], text);
+	}
+	else if (py_res && PyTuple_Check (py_res)) {
+	    if (PyTuple_Size (py_res) >= 2) {
+		list[0] = _tuple_to_langlist (PyTuple_GetItem (py_res, 0));
+		list[1] = _tuple_to_langlist (PyTuple_GetItem (py_res, 1));
+	    }
+	    else if (PyTuple_Size (py_res) == 1) {
+		list[0] = _tuple_to_langlist (PyTuple_GetItem (py_res, 0));
+	    }
+	    Py_DECREF (py_res);
+	}
+	else if (PyErr_Occurred ()) {
+	    PyErr_Print ();
+	    return 1;
+	}
+    }
+    return 0;
+}
+
 struct python_result {
     struct _python_database *db;
     PyObject *result;
@@ -752,7 +825,7 @@ struct dico_database_module DICO_EXPORT(python, module) = {
     mod_close,
     mod_info,
     mod_descr,
-    NULL, /* FIXME: dico_db_lang */
+    mod_lang,
     mod_match,
     mod_define,
     mod_output_result,

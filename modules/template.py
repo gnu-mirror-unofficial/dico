@@ -36,6 +36,10 @@ class DicoModule:
         """Return a full information about the database."""
         return False
 
+    def lang (self):
+        """Optional. Return supported languages (src, dst)."""
+        return ("en", "pl")
+
     def define_word (self, word):
         """Define a word."""
         return False

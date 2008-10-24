@@ -22,8 +22,12 @@ import sys
 class DicoResult:
     result = {}
 
+    compcount = 0
+    
     def __init__ (self, *argv):
         self.result = argv[0]
+        if len (argv) == 2:
+                self.compcount = argv[1]
 
     def count (self):
         return len (self.result)
@@ -34,7 +38,7 @@ class DicoResult:
     def append (self, elt):
         self.result.append (elt)
 
-
+        
 class DicoDefineResult (DicoResult):
     def output (self, n):
         print "%d. %s" % (n + 1, self.result[n])
@@ -44,7 +48,7 @@ class DicoMatchResult (DicoResult):
     def output (self, n):
         sys.stdout.softspace = 0
         print self.result[n],
-        
+
 class DicoModule:
     adict =  {}
     dbname = ''
@@ -98,9 +102,9 @@ class DicoModule:
                 if w.startswith (word):
                     res.append (w)
             if len (res):
-                return DicoMatchResult (res)
+                return DicoMatchResult (res, len (self.adict))
         elif strat.has_selector:
-            res = DicoMatchResult ([])
+            res = DicoMatchResult ([], len (self.adict))
             for k in self.adict:
                 if strat.select (word, k):
                     res.append (k)
@@ -114,3 +118,7 @@ class DicoModule:
 
     def result_count (self, rh):
         return rh.count ()
+
+    def compare_count (self, rh):
+        return rh.compcount
+    

@@ -946,11 +946,11 @@ mod_lang(dico_handle_t hp, dico_list_t list[2])
 	    list[1] = scm_to_langlist(SCM_CDR(res), proc);
 	} else {
 	    rettype_error(proc);
-	    return NULL;
+	    return 1;
 	}
     }
 
-    return list;
+    return 1;
 }
 
 

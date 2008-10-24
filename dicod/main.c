@@ -421,6 +421,7 @@ fix_lang_list(dicod_database_t *db, int n)
     dico_list_iterate(db->langlist[n], add_char_ptr, newlist);
     dico_list_destroy(&db->langlist[n], NULL, NULL);
     db->langlist[n] = newlist;
+    db->flags |= DICOD_DBF_LANG; /* Prevent dico_db_lang from being called */
 }
 
 static int

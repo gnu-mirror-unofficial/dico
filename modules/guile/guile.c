@@ -950,7 +950,7 @@ mod_lang(dico_handle_t hp, dico_list_t list[2])
 	}
     }
 
-    return 1;
+    return 0;
 }
 
 

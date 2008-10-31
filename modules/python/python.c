@@ -275,7 +275,7 @@ static PyMethodDef dico_methods[] = {
       "Register a new strategy." },
     { "register_markup", dico_register_markup, METH_O,
       "Register a new markup type." },
-    { "current_markup", dico_current_markup, METH_NOARGS,
+    { "current_markup", (PyCFunction) dico_current_markup, METH_NOARGS,
       "Return current dico markup type." },
     { NULL, NULL, 0, NULL }
 };
@@ -530,15 +530,17 @@ _tuple_to_langlist (PyObject *py_obj)
 {
     dico_list_t list = NULL;
 
-    if (py_obj && PyString_Check (py_obj)) {
+    if (!py_obj)
+	return NULL;
+    
+    if (PyString_Check (py_obj)) {
 	char *text = strdup (PyString_AsString (py_obj));
 	list = dico_list_create ();
 	dico_list_append (list, text);
-    }
-    else if (py_obj && PyTuple_Check (py_obj)) {
+    } else if (PyTuple_Check (py_obj) || PyList_Check (py_obj)) {
 	PyObject *py_item;
 	PyObject *py_iterator = PyObject_GetIter (py_obj);
-
+	
 	list = dico_list_create ();
 
 	if (py_iterator) {
@@ -574,23 +576,54 @@ mod_lang (dico_handle_t hp, dico_list_t list[2])
     if (py_fnc && PyCallable_Check (py_fnc)) {
 	py_res = PyObject_CallObject (py_fnc, NULL);
 	Py_DECREF (py_fnc);
-	if (py_res && PyString_Check (py_res)) {
-	    char *text = strdup (PyString_AsString (py_res));
-	    Py_DECREF (py_res);
-	    list[0] = dico_list_create ();
-	    dico_list_append (list[0], text);
-	}
-	else if (py_res && PyTuple_Check (py_res)) {
-	    if (PyTuple_Size (py_res) >= 2) {
-		list[0] = _tuple_to_langlist (PyTuple_GetItem (py_res, 0));
-		list[1] = _tuple_to_langlist (PyTuple_GetItem (py_res, 1));
+	if (py_res) {
+	    if (PyString_Check (py_res)) {
+		char *text = strdup (PyString_AsString (py_res));
+		Py_DECREF (py_res);
+		list[0] = dico_list_create ();
+		dico_list_append (list[0], text);
+	    } else if (PyTuple_Check (py_res)) {
+		switch (PyTuple_Size (py_res)) {
+		case 2:
+		    list[0] = _tuple_to_langlist (PyTuple_GetItem (py_res, 0));
+		    list[1] = _tuple_to_langlist (PyTuple_GetItem (py_res, 1));
+		    break;
+		    
+		case 1:
+		    list[0] = _tuple_to_langlist (PyTuple_GetItem (py_res, 0));
+		    break;
+
+		default:
+		    dico_log (L_ERR, 0,
+			      _("Method `lang' must return at most"
+				" 2 elements"));
+		    return 1;
+		}
+		Py_DECREF (py_res);
+	    } else if (PyList_Check (py_res)) {
+		switch (PyList_Size (py_res)) {
+		case 2:
+		    list[0] = _tuple_to_langlist (PyList_GetItem (py_res, 0));
+		    list[1] = _tuple_to_langlist (PyList_GetItem (py_res, 1));
+		    break;
+		    
+		case 1:
+		    list[0] = _tuple_to_langlist (PyList_GetItem (py_res, 0));
+		    break;
+
+		default:
+		    dico_log (L_ERR, 0,
+			      _("Method `lang' must return at most"
+				" 2 elements"));
+		    return 1;
+		}
+		Py_DECREF (py_res);
+	    } else {
+		dico_log (L_ERR, 0, _("Method `lang' must return a tuple or "
+				      "a list"));
+		return 1;
 	    }
-	    else if (PyTuple_Size (py_res) == 1) {
-		list[0] = _tuple_to_langlist (PyTuple_GetItem (py_res, 0));
-	    }
-	    Py_DECREF (py_res);
-	}
-	else if (PyErr_Occurred ()) {
+	} else if (PyErr_Occurred ()) {
 	    PyErr_Print ();
 	    return 1;
 	}

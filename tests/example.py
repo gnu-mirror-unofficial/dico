@@ -55,6 +55,7 @@ class DicoModule:
     filename = ''
     mod_descr = ''
     mod_info = []
+    langlist = ()
 
     def __init__ (self, *argv):
         self.filename = argv[0]
@@ -72,6 +73,13 @@ class DicoModule:
             if line.startswith ('info: '):
                 self.mod_info.append (line[6:].strip (' \n'))
                 continue
+            if line.startswith ('lang: '):
+                s = line[6:].strip (' \n').split(':', 2)
+                if (len(s) == 1):
+                    self.langlist = (s[0].split (), s[0].split ())
+                else:
+                    self.langlist = (s[0].split (), s[1].split ())
+                continue
             f = line.strip (' \n').split (' ', 1)
             if len (f) == 2:
                 self.adict[f[0].lower()] = f[1].strip (' ')
@@ -84,6 +92,9 @@ class DicoModule:
     def descr (self):
         return self.mod_descr
 
+    def lang (self):
+        return self.langlist
+    
     def info (self):
         return '\n'.join (self.mod_info)
     

@@ -417,13 +417,11 @@ fix_lang_list(dicod_database_t *db, int n)
     dico_list_t newlist;
     if (!db->langlist[n])
 	return;
-    if (dicod_any_lang_list_p(db->langlist[n])) {
-	newlist = NULL;
-    } else {
-	newlist = xdico_list_create();
-	dico_list_iterate(db->langlist[n], add_char_ptr, newlist);
-    }
+    newlist = xdico_list_create();
+    dico_list_iterate(db->langlist[n], add_char_ptr, newlist);
     dico_list_destroy(&db->langlist[n], NULL, NULL);
+    if (dicod_any_lang_list_p(newlist)) 
+	dico_list_destroy(&newlist, dicod_free_item, NULL);
     db->langlist[n] = newlist;
     db->flags |= DICOD_DBF_LANG; /* Prevent dico_db_lang from being called */
 }

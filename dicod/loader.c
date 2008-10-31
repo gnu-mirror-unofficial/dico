@@ -242,16 +242,16 @@ dicod_get_database_languages(dicod_database_t *db, dico_list_t dlist[])
 	if (inst->module->dico_db_lang) {
 	    /* FIXME: Return code? */
 	    inst->module->dico_db_lang(db->mod_handle, db->langlist);
-	    if (dicod_any_lang_list_p(db->langlist[0]))
-		dico_list_destroy(&db->langlist[0], dicod_free_item, NULL);
-	    if (dicod_any_lang_list_p(db->langlist[1]))
-		dico_list_destroy(&db->langlist[1], dicod_free_item, NULL);
 	    if (db->langlist[0] || db->langlist[1]) {		
 		if (!db->langlist[0])
 		    db->langlist[0] = dicod_langlist_copy(db->langlist[1]);
 		else if (!db->langlist[1])
 		    db->langlist[1] = dicod_langlist_copy(db->langlist[0]);
 	    }
+	    if (dicod_any_lang_list_p(db->langlist[0]))
+		dico_list_destroy(&db->langlist[0], dicod_free_item, NULL);
+	    if (dicod_any_lang_list_p(db->langlist[1]))
+		dico_list_destroy(&db->langlist[1], dicod_free_item, NULL);
 	}
 	db->flags |= DICOD_DBF_LANG;
     }

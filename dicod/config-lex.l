@@ -86,10 +86,10 @@ P [1-9][0-9]*
         /* Identifiers */
 <INITIAL>{ID}           return ident();
          /* Strings */
-[a-zA-Z0-9_\./:-]+    { line_begin();
-                        line_add(yytext, yyleng);
-                        line_finish();
-                        return STRING; }
+[a-zA-Z0-9_\.\*/:-]+    { line_begin();
+                          line_add(yytext, yyleng);
+                          line_finish();
+                          return STRING; }
          /* Quoted strings */
 \"[^\\"\n]*\"         { line_begin();
                         line_add(yytext + 1, yyleng - 2);

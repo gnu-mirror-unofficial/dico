@@ -317,6 +317,7 @@ char *get_full_hostname(void);
 void check_db_visibility(void);
 void reset_db_visibility(void);
 #define database_visible_p(db) ((db)->visible)
+int dicod_any_lang_list_p(dico_list_t list);
 
 
 typedef void (*dicod_cmd_fn) (dico_stream_t str, int argc, char **argv);

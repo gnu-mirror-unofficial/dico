@@ -183,8 +183,10 @@ dicod_show_server(dico_stream_t str, int argc, char **argv)
 	}
     }
     stream_writez(str, "\r\n");
-    stream_write_multiline(ostr, server_info);
-    stream_writez(ostr, "\r\n");
+    if (server_info) {
+	stream_write_multiline(ostr, server_info);
+	stream_writez(ostr, "\r\n");
+    }
     dico_stream_close(ostr);
     dico_stream_destroy(&ostr);
     stream_writez(str, ".\r\n");
@@ -198,7 +200,7 @@ dicod_status(dico_stream_t str, int argc, char **argv)
     if (timing_option) 
 	report_timing(str, timer_stop("dicod"), &total_stat);
     else
-	stream_writez(str, "No timing data available");
+	stream_writez(str, " No timing data available");
     stream_writez(str, "\r\n");
 }
 

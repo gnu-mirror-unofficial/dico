@@ -266,13 +266,14 @@ static size_t nomatch_len = (sizeof(nomatch)-1);
 
 typedef void (*outproc_t)(dicod_database_t *db, dico_result_t res,
 			  const char *word, dico_stream_t stream,
+			  void *data,
 			  size_t count);
 
 void
 dicod_word_first(dico_stream_t stream, const char *word,
 		 const dico_strategy_t strat,
 		 const char *begfmt, const char *endmsg,
-		 outproc_t proc, const char *tid)
+		 outproc_t proc, void *data, const char *tid)
 {
     dicod_database_t *db;
     dico_iterator_t itr;
@@ -306,7 +307,7 @@ dicod_word_first(dico_stream_t stream, const char *word,
 		if (mp->dico_compare_count)
 		    current_stat.compares = mp->dico_compare_count(res);
 		stream_printf(stream, begfmt, (unsigned long) count);
-		proc(db, res, word, stream, count);
+		proc(db, res, word, stream, data, count);
 		stream_writez(stream, (char*) endmsg);
 		report_current_timing(stream, tid);
 		dico_stream_write(stream, "\r\n", 2);
@@ -334,7 +335,7 @@ void
 dicod_word_all(dico_stream_t stream, const char *word,
 	       const dico_strategy_t strat,
 	       const char *begfmt, const char *endmsg,
-	       outproc_t proc, const char *tid)
+	       outproc_t proc, void *data, const char *tid)
 {
     dicod_database_t *db;
     dico_iterator_t itr;
@@ -392,7 +393,7 @@ dicod_word_all(dico_stream_t stream, const char *word,
 	    current_stat.defines = total;
 	stream_printf(stream, begfmt, (unsigned long) total);
 	for (rp = dico_iterator_first(itr); rp; rp = dico_iterator_next(itr)) {
-	    proc(rp->db, rp->res, word, stream, rp->count);
+	    proc(rp->db, rp->res, word, stream, data, rp->count);
 	    rp->db->instance->module->dico_free_result(rp->res);
 	    free(rp);
 	}
@@ -408,22 +409,18 @@ dicod_word_all(dico_stream_t stream, const char *word,
 static void
 print_matches(dicod_database_t *db, dico_result_t res,
 	      const char *word,
-	      dico_stream_t stream, size_t count)
+	      dico_stream_t stream, void *data, size_t count)
 {
     size_t i;
     struct dico_database_module *mp = db->instance->module;
-    dico_stream_t ostr = dicod_ostream_create(stream, db->content_type,
-	                                      db->content_transfer_encoding,
-	                                      db->mime_headers);
-
+    dico_stream_t ostr = data;
+    
     for (i = 0; i < count; i++) {
 	stream_writez(ostr, db->name);
 	dico_stream_write(ostr, " \"", 2);
 	mp->dico_output_result(res, i, ostr);
 	dico_stream_write(ostr, "\"\r\n", 3);
     }
-    dico_stream_close(ostr);
-    dico_stream_destroy(&ostr);
 }
 
 void
@@ -448,12 +445,17 @@ dicod_match_word_db(dicod_database_t *db, dico_stream_t stream,
 	access_log_status(nomatch, nomatch);
 	dico_stream_writeln(stream, nomatch, nomatch_len);
     } else {
+	dico_stream_t ostr;
+	
 	current_stat.matches = count;
 	if (mp->dico_compare_count)
 	    current_stat.compares = mp->dico_compare_count(res);
 	stream_printf(stream, "152 %lu matches found: list follows\r\n",
 		      (unsigned long) count);
-	print_matches(db, res, word, stream, count);
+	ostr = dicod_ostream_create(stream, NULL, NULL, NULL);
+	print_matches(db, res, word, stream, ostr, count);
+	dico_stream_close(ostr);
+	dico_stream_destroy(&ostr);
 	dico_stream_write(stream, ".\r\n", 3);
 	stream_writez(stream, "250 Command complete");
 	report_current_timing(stream, "match");
@@ -468,20 +470,26 @@ void
 dicod_match_word_first(dico_stream_t stream,
 		       const dico_strategy_t strat, const char *word)
 {
+    dico_stream_t ostr = dicod_ostream_create(stream, NULL, NULL, NULL);
     dicod_word_first(stream, word, strat,
 		     "152 %lu matches found: list follows\r\n",
 		     ".\r\n250 Command complete",
-		     print_matches, "match");
+		     print_matches, ostr, "match");
+    dico_stream_close(ostr);
+    dico_stream_destroy(&ostr);
 }
 
 void
 dicod_match_word_all(dico_stream_t stream,
 		     const dico_strategy_t strat, const char *word)
 {
+    dico_stream_t ostr = dicod_ostream_create(stream, NULL, NULL, NULL);
     dicod_word_all(stream, word, strat,
 		   "152 %lu matches found: list follows\r\n",
 		   ".\r\n250 Command complete",
-		   print_matches, "match");
+		   print_matches, ostr, "match");
+    dico_stream_close(ostr);
+    dico_stream_destroy(&ostr);
 }
 
 
@@ -489,7 +497,7 @@ dicod_match_word_all(dico_stream_t stream,
 static void
 print_definitions(dicod_database_t *db, dico_result_t res,
 		  const char *word,
-		  dico_stream_t stream, size_t count)
+		  dico_stream_t stream, void *data, size_t count)
 {
     size_t i;
     char *descr = dicod_get_database_descr(db);
@@ -536,7 +544,7 @@ dicod_define_word_db(dicod_database_t *db, dico_stream_t stream,
 	    current_stat.compares = mp->dico_compare_count(res);
 	stream_printf(stream, "150 %lu definitions found: list follows\r\n",
 		      (unsigned long) count);
-	print_definitions(db, res, word, stream, count);
+	print_definitions(db, res, word, stream, NULL, count);
 	stream_writez(stream, "250 Command complete");
 	report_current_timing(stream, "define");
 	dico_stream_write(stream, "\r\n", 2);
@@ -552,7 +560,7 @@ dicod_define_word_first(dico_stream_t stream, const char *word)
     dicod_word_first(stream, word, NULL,
 		     "150 %lu definitions found: list follows\r\n",
 		     "250 Command complete",
-		     print_definitions, "define");
+		     print_definitions, NULL, "define");
 }
 
 void
@@ -561,6 +569,6 @@ dicod_define_word_all(dico_stream_t stream, const char *word)
     dicod_word_all(stream, word, NULL,
 		   "150 %lu definitions found: list follows\r\n",
 		   "250 Command complete",
-		   print_definitions, "define");
+		   print_definitions, NULL, "define");
 }
 	    

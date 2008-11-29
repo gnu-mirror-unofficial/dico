@@ -114,6 +114,8 @@ P [1-9][0-9]*
 "<<"(-" "?)?\"{ID}\"[ \t]*"//".*\n |
 "<<"(-" "?)?\"{ID}\"[ \t]*\n {
                         BEGIN(ML); multiline_begin(yytext+2); locus.line++; }
+         /* Ignore m4 line statements */
+<ML>^"#line ".*\n {  locus.line++; }
 <ML>.*\n { char *p = multiline_strip_tabs(yytext);
 	   
            if (!strncmp(p, multiline_delimiter, multiline_delimiter_len)

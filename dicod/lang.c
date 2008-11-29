@@ -146,7 +146,7 @@ dicod_show_lang_db(dico_stream_t str, int argc, char **argv)
 	
 	stream_printf(str, "110 %lu databases present\r\n",
 		      (unsigned long) count);
-	ostr = dicod_ostream_create(str, NULL, NULL);
+	ostr = dicod_ostream_create(str, NULL, NULL, NULL);
 	database_iterate(_show_database_lang, ostr);
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);

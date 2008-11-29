@@ -298,7 +298,7 @@ Dico database modules both in @acronym{C} and in
 @command{./configure}, then @command{make}, followed by @command{make
 install}, and you are done.
 
-  The actions the @command{configure} script performs can be altered
+  Actions the @command{configure} script performs can be altered
 using a set of command line options and variables.  Some of these
 options are generic, i.e. common for all packages using the GNU
 @command{autoconf} system.  For a detailed description of these option
@@ -333,7 +333,7 @@ instructs it to use @command{/usr/local/bin/gm4}:
 $ ./configure DEFAULT_PREPROCESSOR="/usr/local/bin/gm4 -s"
 @end smallexample
 
-Note the use of @option{-s} preprocessor option.  It instructs
+Note the use of the @option{-s} preprocessor option.  It instructs
 @command{m4} to produce line directives which help @command{dicod}
 produce correct diagnostics about eventual configuration errors.
 Unless your @command{m4} implementation does not have this feature, we
@@ -388,6 +388,79 @@ addition, these words can be prefixed with @samp{log_}.
   The main component of GNU Dico is @command{dicod} daemon.  It is
 responsible for serving client requests and for coordinating the work
 of dictionary modules.
+
+@cindex database
+@cindex headword
+@cindex article
+  @command{Dicod} operates on a set of @dfn{databases}.  Each database
+contains a set of @dfn{headwords} with corresponding @dfn{articles},
+therefore it can be regarded as a dictionary, in which articles supply
+definitions (or translations) for headwords.
+
+@cindex name, database
+@cindex database name
+@cindex information, database
+@cindex database description
+@cindex description, database
+@cindex database description
+  Each database has a unique name -- a string of characters that serves
+to identify this particular database in a set of available databases.
+Two more pieces of textual data are associated with a database.  A
+@dfn{database information} string (or @dfn{info}, for short), supplies
+a short description of the database.  It is a sentence, tersely
+describing the database, e.g. @samp{English-German Dictionary}.  A
+@dfn{database description} provides full description of the
+dictionary, with author credits and copyright information.  The length
+of this description is not limited.
+
+  Both pieces of information can be requested by the remote user.  The
+command @code{SHOW DB} lists all available databases along with their
+descriptions:
+
+@smallexample
+SHOW DB
+110 3 databases present
+jargon "Jargon File (4.3.1, 29 Jun 2001)"
+deu-eng "German-English Freedict dictionary"
+en-pl-naut "English-Polish dictionary of nautical terms"
+.
+250 ok
+@end smallexample
+
+Each line of output lists a name of the dictionary, and the
+corresponding description.
+
+The @code{SHOW INFO} command displays full information about a
+database, whose name is given as its argument:
+
+@smallexample
+SHOW INFO en-pl-naut
+112 information for en-pl-naut
+An English-Polish dictionary of nautical terms
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, no Front-Cover and Back-Cover Texts
+.
+250 ok
+@end smallexample
+
+  A definition for any given headword can be requested using the
+@code{DEFINE} command.  It takes two arguments, the name of the
+database and the headword to look for in that database, e.g.:
+
+@smallexample
+DEFINE en-pl-naut sprit
+@end smallexample
+
+If the headword is found in the database, its definition will be
+displayed, otherwise a diagnostic message will be returned, telling
+that the headword was not found.
+
+@cindex strategy
+  @FIXME{Write it}
+  
 
 @cindex @command{dicod}, operation modes
 There are two @dfn{operation modes}: @samp{daemon} and @samp{inetd}.
@@ -2675,6 +2748,7 @@ The following example function returns a complete virtual function table:
         (cons "close" close-module)
         (cons "descr" descr)
         (cons "info" info)
+        (cons "lang" lang)
         (cons "define" define-word)
         (cons "match" match-word)
         (cons "output" output)
@@ -2780,6 +2854,11 @@ callback is called to do the search: @code{define-word} is called for
 This callback returns an opaque entity, called @dfn{result handle},
 which is then passed to @code{output} callback, which is responsible
 for outputting it.
+
+@deffn {Guile Callback} lang dbh
+Virtual Table: @code{(cons "lang" lang)}@*
+@FIXME{Returns (cons (list @var{source}) (list @var{dest}))}
+@end deffn
 
 @deffn {Guile Callback} define-word dbh word
 Virtual Table: @code{(cons "define" define-word)}@*

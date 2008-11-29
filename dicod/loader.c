@@ -413,7 +413,8 @@ print_matches(dicod_database_t *db, dico_result_t res,
     size_t i;
     struct dico_database_module *mp = db->instance->module;
     dico_stream_t ostr = dicod_ostream_create(stream, db->content_type,
-	                                      db->content_transfer_encoding);
+	                                      db->content_transfer_encoding,
+	                                      db->mime_headers);
 
     for (i = 0; i < count; i++) {
 	stream_writez(ostr, db->name);
@@ -498,7 +499,8 @@ print_definitions(dicod_database_t *db, dico_result_t res,
 	stream_printf(stream, "151 \"%s\" %s \"%s\"\r\n",
 		      word, db->name, descr ? descr : "");
 	ostr = dicod_ostream_create(stream, db->content_type,
-				    db->content_transfer_encoding);
+				    db->content_transfer_encoding,
+	                            db->mime_headers);
 	mp->dico_output_result(res, i, ostr);
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);

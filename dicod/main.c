@@ -626,6 +626,9 @@ struct config_keyword kwd_database[] = {
       N_("Content transfer encoding for MIME replies."),
       cfg_string, NULL, offsetof(dicod_database_t, content_transfer_encoding),
       set_dict_encoding },
+    { "mime-headers", N_("text"),
+      N_("Additional MIME headers"),
+      cfg_string, NULL, offsetof(dicod_database_t, mime_headers), },
     { NULL }
 };
 

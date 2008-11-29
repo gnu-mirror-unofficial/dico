@@ -28,6 +28,7 @@ struct ostream {
     int flags;
     const char *type;
     const char *encoding;
+    const char *headers;
 };
 
 #define CONTENT_TYPE_HEADER "Content-type: "
@@ -52,6 +53,17 @@ print_headers(struct ostream *ostr)
 	dico_stream_write(ostr->transport, (char*) ostr->encoding,
 			  strlen(ostr->encoding));
 	dico_stream_write(ostr->transport, "\r\n", 2);
+    }
+
+    if (ostr->headers) {
+	const char *p;
+	
+	for (p = ostr->headers; *p; ) {
+	    size_t n = strcspn(p, "\n");
+	    dico_stream_write(ostr->transport, p, n);
+	    dico_stream_write(ostr->transport, "\r\n", 2);
+	    p += n + 1;
+	}
     }
 
     rc = dico_stream_write(ostr->transport, "\r\n", 2);
@@ -108,7 +120,8 @@ ostream_destroy(void *data)
 }
 
 dico_stream_t
-dicod_ostream_create(dico_stream_t str, const char *type, const char *enc)
+dicod_ostream_create(dico_stream_t str, const char *type, const char *enc,
+                     const char *headers)
 {
     struct ostream *ostr = xmalloc(sizeof(*ostr));
     dico_stream_t stream;
@@ -120,6 +133,7 @@ dicod_ostream_create(dico_stream_t str, const char *type, const char *enc)
     ostr->flags = 0;
     ostr->type = type;
     ostr->encoding = enc;
+    ostr->headers = headers;
     dico_stream_set_write(stream, ostream_write);
     dico_stream_set_flush(stream, ostream_flush);
     dico_stream_set_destroy(stream, ostream_destroy);

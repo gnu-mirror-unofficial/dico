@@ -37,7 +37,7 @@ dicod_help(dico_stream_t str, int argc, char **argv)
     dico_stream_t ostr;
 	
     stream_writez(str, "113 help text follows\r\n");
-    ostr = dicod_ostream_create(str, NULL, NULL);
+    ostr = dicod_ostream_create(str, NULL, NULL, NULL);
     
     if (text) {
 	if (text[0] == '+') {
@@ -67,7 +67,7 @@ dicod_show_info(dico_stream_t str, int argc, char **argv)
 	dico_stream_t ostr;
 	char *info = dicod_get_database_info(dict);
 	stream_printf(str, "112 information for %s\r\n", dbname);
-	ostr = dicod_ostream_create(str, NULL, NULL);
+	ostr = dicod_ostream_create(str, NULL, NULL, NULL);
 	if (info) {
 	    stream_write_multiline(ostr, info);
 	    dicod_free_database_info(dict, info);
@@ -109,7 +109,7 @@ dicod_show_databases(dico_stream_t str, int argc, char **argv)
 	
 	stream_printf(str, "110 %lu databases present\r\n",
 		      (unsigned long) count);
-	ostr = dicod_ostream_create(str, NULL, NULL);
+	ostr = dicod_ostream_create(str, NULL, NULL, NULL);
 	database_iterate(_show_database, ostr);
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);
@@ -140,7 +140,7 @@ dicod_show_strategies(dico_stream_t str, int argc, char **argv)
 	
 	stream_printf(str, "111 %lu strategies present: list follows\r\n",
 		      (unsigned long) count);
-	ostr = dicod_ostream_create(str, NULL, NULL);
+	ostr = dicod_ostream_create(str, NULL, NULL, NULL);
 	dico_strategy_iterate(_show_strategy, ostr);
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);
@@ -155,7 +155,7 @@ dicod_show_server(dico_stream_t str, int argc, char **argv)
     dico_stream_t ostr;
     
     stream_writez(str, "114 server information\r\n");
-    ostr = dicod_ostream_create(str, NULL, NULL);
+    ostr = dicod_ostream_create(str, NULL, NULL, NULL);
     stream_writez(str, "dicod ");
     if (show_sys_info_p()) {
 	struct utsname uts;

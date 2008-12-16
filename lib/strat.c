@@ -29,7 +29,7 @@ static dico_strategy_t default_strategy;
 #define DEFSTRATNAME(s) ((s)[0] == '.' && (s)[1] == 0)
 
 int
-dico_strat_name_cmp(const void *item, const void *data)
+dico_strat_name_cmp(const void *item, void *data)
 {
     dico_strategy_t strat = (dico_strategy_t) item;
     const char *name = data;
@@ -52,6 +52,15 @@ dico_strategy_create(const char *name, const char *descr)
     return np;
 }
 
+int
+dico_strat_free(void *item, void *data)
+{
+    dico_strategy_t strat = item;
+    dico_list_destroy(&strat->stratcl);
+    free(strat);
+    return 0;
+}
+
 dico_strategy_t
 dico_strategy_dup(const dico_strategy_t strat)
 {
@@ -68,7 +77,7 @@ dico_strategy_find(const char *name)
 {
     if (DEFSTRATNAME(name)) 
 	return default_strategy;
-    return dico_list_locate(strategy_list, (void*)name, dico_strat_name_cmp);
+    return dico_list_locate(strategy_list, (void*)name);
 }
 
 int
@@ -78,6 +87,8 @@ dico_strategy_add(const dico_strategy_t strat)
 	strategy_list = dico_list_create();
 	if (!strategy_list)
 	    return 1;
+	dico_list_set_comparator(strategy_list, dico_strat_name_cmp);
+	dico_list_set_free_item(strategy_list, dico_strat_free, NULL);
     }
     if (!dico_strategy_find(strat->name)) {
 	dico_strategy_t new_strat = dico_strategy_dup(strat);
@@ -91,7 +102,7 @@ dico_strategy_add(const dico_strategy_t strat)
 dico_iterator_t 
 dico_strategy_iterator()
 {
-    return dico_iterator_create(strategy_list);
+    return dico_list_iterator(strategy_list);
 }
 
 size_t

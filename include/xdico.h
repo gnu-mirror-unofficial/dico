@@ -46,12 +46,14 @@ char *make_full_file_name(const char *dir, const char *file);
 void trimnl(char *buf, size_t len);
 
 dico_list_t xdico_list_create(void);
-dico_iterator_t xdico_iterator_create(dico_list_t list);
-void xdico_list_append(struct list *list, void *data);
-void xdico_list_prepend(struct list *list, void *data);
-dico_assoc_list_t xdico_assoc_create(void);
-void xdico_assoc_add(dico_assoc_list_t assoc, const char *key,
-		     const char *value);
+dico_iterator_t xdico_list_iterator(dico_list_t list);
+void xdico_list_append(struct dico_list *list, void *data);
+void xdico_list_prepend(struct dico_list *list, void *data);
+dico_assoc_list_t xdico_assoc_create(int);
+void xdico_assoc_append(dico_assoc_list_t assoc, const char *key,
+			const char *value);
+int xdico_assoc_add(dico_assoc_list_t assoc, const char *key,
+		    const char *value, size_t count, int replace);
 char *xdico_assign_string(char **dest, char *str);
 
 char *xdico_sasl_mech_to_capa(char *mech);

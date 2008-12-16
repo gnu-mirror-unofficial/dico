@@ -115,6 +115,13 @@ dbtext_get_password(void *handle, const char *qpw, const char *key,
 }
 
 static int
+_free_group(void *item, void *data)
+{
+    free(item);
+    return 0;
+}
+
+static int
 dbtext_get_groups(void *handle, const char *qgr, const char *key,
 		  dico_list_t *pgroups)
 {
@@ -131,8 +138,10 @@ dbtext_get_groups(void *handle, const char *qgr, const char *key,
 	char *val;
 
 	while ((val = find_key(fp, key, &buf, &size))) {
-	    if (!groups)
+	    if (!groups) {
 		groups = xdico_list_create();
+		dico_list_set_free_item(groups, _free_group, NULL);
+	    }
 	    xdico_list_append(groups, xstrdup(val));
 	}
 

@@ -100,6 +100,7 @@ filter_wr_flush(void *data)
 	    if (fs->buf[fs->level-1] != '\n')
 		rc = dico_stream_write(fs->transport, "\r\n", 2);
 	}
+	fs->level = 0;
     }
     return rc;
 }

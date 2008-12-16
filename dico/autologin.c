@@ -127,6 +127,13 @@ findkw(const char *name)
     return NULL;
 }
 
+static int
+_cred_free(void *item, void *data)
+{
+    free(item);
+    return 0;
+}
+
 /* Parse netrc-like autologin file and set up user and key accordingly. */
 int
 parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
@@ -300,6 +307,7 @@ parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
 		
 		    if (!(flags & AUTOLOGIN_MECH)) {
 			pcred->mech = xdico_list_create();
+			dico_list_set_free_item(pcred->mech, _cred_free, NULL);
 			flags |= AUTOLOGIN_MECH;
 		    }
 		    if (dico_argcv_get(arg, ",", NULL, &c, &v)) {

@@ -531,7 +531,7 @@ compile_access_log()
 void
 format_access_log(FILE *fp, int argc, char **argv)
 {
-    dico_iterator_t itr = xdico_iterator_create(access_log_prog);
+    dico_iterator_t itr = xdico_list_iterator(access_log_prog);
     struct alog_instr *p;
 
     for (p = dico_iterator_first(itr); p;

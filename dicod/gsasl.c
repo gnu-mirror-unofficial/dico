@@ -29,7 +29,7 @@ dico_list_t sasl_anon_groups;
 static Gsasl *ctx;   
 
 static int
-cmp_names(const void *item, const void *data)
+cmp_names(const void *item, void *data)
 {
     return c_strcasecmp(*(char**)item, data);
 }
@@ -38,9 +38,9 @@ static int
 disabled_mechanism_p(char *name)
 {
     if (sasl_enabled_mech
-	&& !dico_list_locate(sasl_enabled_mech, name, cmp_names))
+	&& !_dico_list_locate(sasl_enabled_mech, name, cmp_names))
 	return 1;
-    return !!dico_list_locate(sasl_disabled_mech, name, cmp_names);
+    return !!_dico_list_locate(sasl_disabled_mech, name, cmp_names);
 }
 
 static void

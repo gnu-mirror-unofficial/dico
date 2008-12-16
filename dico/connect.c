@@ -182,19 +182,12 @@ auth_cred_dup(struct auth_cred *dst, const struct auth_cred *src)
     dst->pass = src->pass ? xstrdup(src->pass) : NULL;
 }    
 
-static int
-_cred_free(void *item, void *data)
-{
-    free(item);
-    return 0;
-}
-
 void
 auth_cred_free(struct auth_cred *cred)
 {
     free(cred->user);
     free(cred->pass);
-    dico_list_destroy(&cred->mech, _cred_free, NULL);
+    dico_list_destroy(&cred->mech);
     free(cred->service);
     free(cred->realm);
     free(cred->hostname);

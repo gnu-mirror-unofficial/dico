@@ -221,6 +221,7 @@ dico_list_t
 dicod_langlist_copy(dico_list_t src)
 {
     dico_list_t dst = xdico_list_create();
+    dico_list_set_free_item(dst, dicod_free_item, NULL);
     dico_list_iterate(src, _dup_lang_item, dst);
     return dst;
 }
@@ -249,9 +250,9 @@ dicod_get_database_languages(dicod_database_t *db, dico_list_t dlist[])
 		    db->langlist[1] = dicod_langlist_copy(db->langlist[0]);
 	    }
 	    if (dicod_any_lang_list_p(db->langlist[0]))
-		dico_list_destroy(&db->langlist[0], dicod_free_item, NULL);
+		dico_list_destroy(&db->langlist[0]);
 	    if (dicod_any_lang_list_p(db->langlist[1]))
-		dico_list_destroy(&db->langlist[1], dicod_free_item, NULL);
+		dico_list_destroy(&db->langlist[1]);
 	}
 	db->flags |= DICOD_DBF_LANG;
     }
@@ -286,7 +287,7 @@ dicod_word_first(dico_stream_t stream, const char *word,
 	return;
     }
 
-    itr = xdico_iterator_create(database_list);
+    itr = xdico_list_iterator(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
 	if (database_visible_p(db)) {
 	    struct dico_database_module *mp = db->instance->module;
@@ -351,7 +352,7 @@ dicod_word_all(dico_stream_t stream, const char *word,
 	return;
     }
 
-    itr = xdico_iterator_create(database_list);
+    itr = xdico_list_iterator(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
 	if (database_visible_p(db)) {
 	    struct dico_database_module *mp = db->instance->module;
@@ -385,7 +386,7 @@ dicod_word_all(dico_stream_t stream, const char *word,
 	access_log_status(nomatch, nomatch);
 	dico_stream_writeln(stream, nomatch, nomatch_len);
     } else {
-	itr = xdico_iterator_create(reslist);
+	itr = xdico_list_iterator(reslist);
 	
 	if (strat)
 	    current_stat.matches = total;
@@ -403,7 +404,7 @@ dicod_word_all(dico_stream_t stream, const char *word,
 	dico_iterator_destroy(&itr);
 	access_log_status(begfmt, endmsg);
     }
-    dico_list_destroy(&reslist, NULL, NULL);
+    dico_list_destroy(&reslist);
 }
 
 static void
@@ -452,7 +453,7 @@ dicod_match_word_db(dicod_database_t *db, dico_stream_t stream,
 	    current_stat.compares = mp->dico_compare_count(res);
 	stream_printf(stream, "152 %lu matches found: list follows\r\n",
 		      (unsigned long) count);
-	ostr = dicod_ostream_create(stream, NULL, NULL, NULL);
+	ostr = dicod_ostream_create(stream, NULL);
 	print_matches(db, res, word, stream, ostr, count);
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);
@@ -470,7 +471,7 @@ void
 dicod_match_word_first(dico_stream_t stream,
 		       const dico_strategy_t strat, const char *word)
 {
-    dico_stream_t ostr = dicod_ostream_create(stream, NULL, NULL, NULL);
+    dico_stream_t ostr = dicod_ostream_create(stream, NULL);
     dicod_word_first(stream, word, strat,
 		     "152 %lu matches found: list follows\r\n",
 		     ".\r\n250 Command complete",
@@ -483,7 +484,7 @@ void
 dicod_match_word_all(dico_stream_t stream,
 		     const dico_strategy_t strat, const char *word)
 {
-    dico_stream_t ostr = dicod_ostream_create(stream, NULL, NULL, NULL);
+    dico_stream_t ostr = dicod_ostream_create(stream, NULL);
     dicod_word_all(stream, word, strat,
 		   "152 %lu matches found: list follows\r\n",
 		   ".\r\n250 Command complete",
@@ -506,9 +507,7 @@ print_definitions(dicod_database_t *db, dico_result_t res,
 	dico_stream_t ostr;
 	stream_printf(stream, "151 \"%s\" %s \"%s\"\r\n",
 		      word, db->name, descr ? descr : "");
-	ostr = dicod_ostream_create(stream, db->content_type,
-				    db->content_transfer_encoding,
-	                            db->mime_headers);
+	ostr = dicod_ostream_create(stream, db->mime_headers);
 	mp->dico_output_result(res, i, ostr);
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);

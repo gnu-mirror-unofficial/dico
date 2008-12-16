@@ -257,11 +257,10 @@ read_index(struct dictdb *db, const char *idxname, int tws)
 	memerr("read_index");
 	rc = 1;
     } else {
-	dico_list_iterator_t free_fun = NULL;
 	dico_iterator_t itr;
 	size_t i;
 	struct index_entry *ep;
-	
+
 	rc = 0;
 
 	i = 0;
@@ -273,11 +272,11 @@ read_index(struct dictdb *db, const char *idxname, int tws)
 		break;
 	}
 	if (rc) {
-	    free_fun = free_index_entry;
+	    dico_list_set_free_item(list, free_index_entry, NULL);
 	} else {
 	    db->numwords = dico_list_count(list);
 	    db->index = calloc(db->numwords, sizeof(db->index[0]));
-	    itr = dico_iterator_create(list);
+	    itr = dico_list_iterator(list);
 	    for (i = 0, ep = dico_iterator_first(itr);
 		 ep;
 		 i++, ep = dico_iterator_next(itr)) {
@@ -286,7 +285,7 @@ read_index(struct dictdb *db, const char *idxname, int tws)
 	    }
 	    dico_iterator_destroy(&itr);
 	}
-	dico_list_destroy(&list, free_fun, NULL);
+	dico_list_destroy(&list);
     }
 
     fclose(fp);
@@ -805,7 +804,7 @@ _match_all(struct dictdb *db, const char *word,
 	
     count = dico_list_count(list);
     if (count == 0) {
-	dico_list_destroy(&list, NULL, NULL);
+	dico_list_destroy(&list);
 	return NULL;
     }
 
@@ -848,7 +847,7 @@ mod_define(dico_handle_t hp, const char *word)
     rp = malloc(sizeof(*rp));
     if (!rp) {
 	memerr("mod_define");
-	dico_list_destroy(&res.list, NULL, NULL);
+	dico_list_destroy(&res.list);
 	return NULL;
     }
     *rp = res;
@@ -918,7 +917,7 @@ static void
 mod_free_result(dico_result_t rp)
 {
     struct result *res = (struct result *) rp;
-    dico_list_destroy(&res->list, NULL, NULL);
+    dico_list_destroy(&res->list);
     free(rp);
 }
 

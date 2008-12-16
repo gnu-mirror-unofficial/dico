@@ -76,7 +76,7 @@ open_sockets()
     }
     srvtab = xcalloc(srvcount, sizeof srvtab[0]);
     fdmax = 0;
-    itr = xdico_iterator_create(listen_addr);
+    itr = xdico_list_iterator(listen_addr);
     for (i = 0, sp = dico_iterator_first(itr); sp;
 	 sp = dico_iterator_next(itr)) {
 	int fd = socket(address_family_to_domain(sp->s.sa_family),

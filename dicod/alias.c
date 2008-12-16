@@ -73,7 +73,7 @@ alias_install(const char *kw, int argc, char **argv, dicod_locus_t *ploc)
 }
 
 static int
-list_alias_cmp(const void *a, const void *b)
+list_alias_cmp(const void *a, void *b)
 {
     const struct alias *ap1 = a;
     const struct alias *ap2 = b;
@@ -90,11 +90,13 @@ alias_expand(int argc, char **argv, int *pargc, char ***pargv)
 	return 1;
     
     for (sample.kw = argv[0]; (ap = hash_lookup(alias_table, &sample));) {
-	if (dico_list_locate(alist, ap, list_alias_cmp))
+	if (alist && dico_list_locate(alist, ap))
 	    break;
 	sample.kw = (char*) ap->argv[0];
-	if (!alist)
+	if (!alist) {
 	    alist = xdico_list_create();
+	    dico_list_set_comparator (alist, list_alias_cmp);
+	}
 	xdico_list_append(alist, ap);
     }
 
@@ -102,7 +104,7 @@ alias_expand(int argc, char **argv, int *pargc, char ***pargv)
 	int pos;
 	int nargc;
 	char **nargv;
-	dico_iterator_t itr = xdico_iterator_create(alist);
+	dico_iterator_t itr = xdico_list_iterator(alist);
 	char *kw;
 	
 	nargc = 1;
@@ -124,7 +126,7 @@ alias_expand(int argc, char **argv, int *pargc, char ***pargv)
 	nargv[pos] = kw;
 	*pargc = nargc;
 	*pargv = nargv;
-	dico_list_destroy(&alist, NULL, NULL);
+	dico_list_destroy(&alist);
 	return 0;
     }
     return 1;

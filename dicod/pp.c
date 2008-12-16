@@ -581,7 +581,7 @@ pp_make_argcv(int *pargc, const char ***pargv)
     argv[argc++] = "--preprocessor";
     argv[argc++] = preprocessor;
     argv[argc++] = log_to_stderr ? "--stderr" : "--syslog";
-    itr = xdico_iterator_create(include_path);
+    itr = xdico_list_iterator(include_path);
     for (cp = dico_iterator_first(itr); cp; cp = dico_iterator_next(itr)) {
 	argv[argc++] = "-I";
 	argv[argc++] = cp;
@@ -709,7 +709,7 @@ run_lint()
 	argv[argc++] = "--stderr";
     else 
 	dicod_log_encode_envar();
-    itr = xdico_iterator_create(include_path);
+    itr = xdico_list_iterator(include_path);
     for (cp = dico_iterator_first(itr); cp; cp = dico_iterator_next(itr)) {
 	argv[argc++] = "-I";
 	argv[argc++] = cp;

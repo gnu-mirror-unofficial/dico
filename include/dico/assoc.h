@@ -17,21 +17,33 @@
 #ifndef __dico_assoc_h
 #define __dico_assoc_h
 
-#include <sys/types.h>
+#include <dico/types.h>
 #include <stdlib.h>
 
 /* Association lists */
 struct dico_assoc {
-    char *key;
+    const char *key;
     char *value;
 };
 
-typedef dico_list_t dico_assoc_list_t;
+#define DICO_ASSOC_CI   0x01
+#define DICO_ASSOC_MULT 0x02
 
-dico_assoc_list_t dico_assoc_create(void);
+dico_assoc_list_t dico_assoc_create(int flags);
 void dico_assoc_destroy(dico_assoc_list_t *passoc);
-int dico_assoc_add(dico_assoc_list_t assoc, const char *key, const char *value);
+int dico_assoc_add(dico_assoc_list_t assoc,
+		   const char *key, const char *value,
+		   size_t count, int replace);
+int dico_assoc_append(dico_assoc_list_t assoc, const char *key,
+		      const char *value);
+const char *dico_assoc_find_n(dico_assoc_list_t assoc, const char *key,
+			      size_t n);
 const char *dico_assoc_find(dico_assoc_list_t assoc, const char *key);
+void dico_assoc_remove_n(dico_assoc_list_t assoc, const char *key, size_t n);
 void dico_assoc_remove(dico_assoc_list_t assoc, const char *key);
+
+dico_iterator_t dico_assoc_iterator(dico_assoc_list_t assoc);
+
+int dico_header_parse(dico_assoc_list_t *pasc, const char *text);
 
 #endif

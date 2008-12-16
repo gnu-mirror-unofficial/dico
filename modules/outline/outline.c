@@ -539,14 +539,14 @@ outline_init_db(const char *dbname, int argc, char **argv)
 	return NULL;
     }
 
-    itr = dico_iterator_create(list);
+    itr = dico_list_iterator(list);
     for (i = 0, ep = dico_iterator_first(itr); ep;
 	 i++, ep = dico_iterator_next(itr)) {
 	file->index[i] = *ep;
 	free(ep);
     }
     dico_iterator_destroy(&itr);
-    dico_list_destroy(&list, NULL, NULL);
+    dico_list_destroy(&list);
     qsort(file->index, count, sizeof(file->index[0]), compare_entry);
     
     return (dico_handle_t) file;
@@ -684,7 +684,7 @@ outline_match_all(dico_handle_t hp, const char *word,
 	
     count = dico_list_count(list);
     if (count == 0) {
-	dico_list_destroy(&list, NULL, NULL);
+	dico_list_destroy(&list);
 	return NULL;
     }
 
@@ -792,7 +792,7 @@ outline_free_result(dico_result_t rp)
 {
     struct result *res = (struct result *) rp;
     if (res->type == result_match_list)
-	dico_list_destroy(&res->v.list, NULL, NULL);
+	dico_list_destroy(&res->v.list);
     free(rp);
 }
 

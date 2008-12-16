@@ -64,20 +64,22 @@ udb_get_groups(dicod_user_db_t db, const char *key, dico_list_t *groups)
 
 dico_list_t /* of struct udb_def */ udb_def_list;
 
-void
-udp_define(struct udb_def *dptr)
-{
-    if (!udb_def_list)
-	udb_def_list = xdico_list_create();
-    xdico_list_append(udb_def_list, dptr);
-}
-
 static int
-udb_def_cmp(const void *item, const void *data)
+udb_def_cmp(const void *item, void *data)
 {
     const struct udb_def *def = item;
     const char *proto = data;
     return strcmp(def->proto, proto);
+}
+
+void
+udp_define(struct udb_def *dptr)
+{
+    if (!udb_def_list) {
+	udb_def_list = xdico_list_create();
+	dico_list_set_comparator(udb_def_list, udb_def_cmp);
+    }
+    xdico_list_append(udb_def_list, dptr);
 }
 
 int
@@ -96,7 +98,7 @@ udb_create(dicod_user_db_t *pdb,
 	return 1;
     }
 
-    def = dico_list_locate(udb_def_list, url->proto, udb_def_cmp);
+    def = dico_list_locate(udb_def_list, url->proto);
     if (!def) {
 	config_error(locus, 0, _("%s: invalid URL: unknown protocol"), urlstr);
 	dico_url_destroy(&url);

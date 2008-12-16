@@ -41,7 +41,8 @@
 
 typedef struct dico_line_buffer *dico_linebuf_t;
 typedef struct dico_stream *dico_stream_t;
-typedef struct list *dico_list_t;
+typedef struct dico_list *dico_list_t;
+typedef struct dico_assoc_list *dico_assoc_list_t;
 typedef struct iterator *dico_iterator_t;
 
 typedef struct dico_handle_struct *dico_handle_t;

@@ -30,6 +30,7 @@ libdico_la_SOURCES=\
  fdiostr.c\
  fdstream.c\
  fltstream.c\
+ header.c\
  iostr.c\
  levenshtein.c\
  libi18n.c\

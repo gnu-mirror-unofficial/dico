@@ -37,7 +37,7 @@ dicod_help(dico_stream_t str, int argc, char **argv)
     dico_stream_t ostr;
 	
     stream_writez(str, "113 help text follows\r\n");
-    ostr = dicod_ostream_create(str, NULL, NULL, NULL);
+    ostr = dicod_ostream_create(str, NULL);
     
     if (text) {
 	if (text[0] == '+') {
@@ -67,7 +67,7 @@ dicod_show_info(dico_stream_t str, int argc, char **argv)
 	dico_stream_t ostr;
 	char *info = dicod_get_database_info(dict);
 	stream_printf(str, "112 information for %s\r\n", dbname);
-	ostr = dicod_ostream_create(str, NULL, NULL, NULL);
+	ostr = dicod_ostream_create(str, NULL);
 	if (info) {
 	    stream_write_multiline(ostr, info);
 	    dicod_free_database_info(dict, info);
@@ -109,7 +109,7 @@ dicod_show_databases(dico_stream_t str, int argc, char **argv)
 	
 	stream_printf(str, "110 %lu databases present\r\n",
 		      (unsigned long) count);
-	ostr = dicod_ostream_create(str, NULL, NULL, NULL);
+	ostr = dicod_ostream_create(str, NULL);
 	database_iterate(_show_database, ostr);
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);
@@ -140,7 +140,7 @@ dicod_show_strategies(dico_stream_t str, int argc, char **argv)
 	
 	stream_printf(str, "111 %lu strategies present: list follows\r\n",
 		      (unsigned long) count);
-	ostr = dicod_ostream_create(str, NULL, NULL, NULL);
+	ostr = dicod_ostream_create(str, NULL);
 	dico_strategy_iterate(_show_strategy, ostr);
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);
@@ -155,7 +155,7 @@ dicod_show_server(dico_stream_t str, int argc, char **argv)
     dico_stream_t ostr;
     
     stream_writez(str, "114 server information\r\n");
-    ostr = dicod_ostream_create(str, NULL, NULL, NULL);
+    ostr = dicod_ostream_create(str, NULL);
     stream_writez(str, "dicod ");
     if (show_sys_info_p()) {
 	struct utsname uts;
@@ -291,18 +291,48 @@ struct dicod_command command_tab[] = {
     { NULL }
 };
 
-dico_list_t /* of struct dicod_command */ command_list;
+struct locate_data {
+    int argc;
+    char **argv;
+};
 
+static int
+_cmd_arg_cmp(const void *item, void *data)
+{
+    const struct dicod_command *p = item;
+    const struct locate_data *datptr = data;
+    int i, off = 0;
+
+    for (i = 0; i < datptr->argc; i++) {
+	int len = strlen(datptr->argv[i]);
+	if (c_strncasecmp(p->keyword + off, datptr->argv[i], len) == 0) {
+	    off += len;
+	    if (p->keyword[off] == 0) 
+		return 0;
+	    if (p->keyword[off] == ' ') {
+		off++;
+		continue;
+	    }
+	}
+	break;
+    }
+    return 1;
+}
+
+dico_list_t /* of struct dicod_command */ command_list;
+    
 void
 dicod_add_command(struct dicod_command *cmd)
 {
-    if (!command_list)
+    if (!command_list) {
 	command_list = xdico_list_create();
+	dico_list_set_comparator(command_list, _cmd_arg_cmp);
+    }
     xdico_list_append(command_list, cmd);
 }
 
 static int
-cmd_comp(const void *a, const void *b)
+cmd_comp(const void *a, void *b)
 {
     const struct dicod_command *ca = a;
     const struct dicod_command *cb = b;
@@ -314,7 +344,7 @@ dicod_remove_command(const char *name)
 {
     struct dicod_command cmd;
     cmd.keyword = name;
-    dico_list_remove(command_list, &cmd, cmd_comp);
+    _dico_list_remove(command_list, &cmd, cmd_comp, NULL);
 }
 
 void
@@ -353,43 +383,13 @@ dicod_show_std_help(dico_stream_t str)
     dico_list_iterate(command_list, _print_help, str);
 }
 
-
-struct locate_data {
-    int argc;
-    char **argv;
-};
-
-static int
-_cmd_arg_cmp(const void *item, const void *data)
-{
-    const struct dicod_command *p = item;
-    const struct locate_data *datptr = data;
-    int i, off = 0;
-
-    for (i = 0; i < datptr->argc; i++) {
-	int len = strlen(datptr->argv[i]);
-	if (c_strncasecmp(p->keyword + off, datptr->argv[i], len) == 0) {
-	    off += len;
-	    if (p->keyword[off] == 0) 
-		return 0;
-	    if (p->keyword[off] == ' ') {
-		off++;
-		continue;
-	    }
-	}
-	break;
-    }
-    return 1;
-}
-    
-
 struct dicod_command *
 locate_command(int argc, char **argv)
 {
     struct locate_data ld;
     ld.argc = argc;
     ld.argv = argv;
-    return dico_list_locate(command_list, &ld, _cmd_arg_cmp);
+    return dico_list_locate(command_list, &ld);
 }
 
 void

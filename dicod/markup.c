@@ -52,7 +52,7 @@ markup_flush_capa()
     dico_iterator_t itr;
     const char *p;
     
-    itr = xdico_iterator_create(dico_markup_list);
+    itr = xdico_list_iterator(dico_markup_list);
     for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) {
 	size_t len = sizeof(MARKUP_CAPA_PREFIX) + strlen(p);
 	char *str = xmalloc(len);

@@ -69,7 +69,7 @@ url_parse_arg(dico_url_t url, char *p, char *q)
 	if (alloc_string(&value, s + 1, q))
 	    return 1;
     }
-    dico_assoc_add(url->args, key, value);
+    dico_assoc_append(url->args, key, value);
     free(key);
     free(value);
     return 0;
@@ -84,7 +84,7 @@ url_get_args(dico_url_t url, char **str)
     if (!**str)
 	return 0;
 
-    url->args = dico_assoc_create();
+    url->args = dico_assoc_create(DICO_ASSOC_MULT);
     if (!url->args)
 	return 1;
     for (p = *str, rc = 0; !rc;) {

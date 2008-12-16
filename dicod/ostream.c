@@ -26,49 +26,35 @@ off_t total_bytes_out;
 struct ostream {
     dico_stream_t transport;
     int flags;
-    const char *type;
-    const char *encoding;
-    const char *headers;
+    dico_assoc_list_t headers;
 };
-
-#define CONTENT_TYPE_HEADER "Content-type: "
-#define CONTENT_TRANSFER_ENCODING_HEADER "Content-transfer-encoding: "
 
 static int
 print_headers(struct ostream *ostr)
 {
-    int rc;
-
-    if (ostr->type) {
-	dico_stream_write(ostr->transport, CONTENT_TYPE_HEADER,
-			  sizeof(CONTENT_TYPE_HEADER) - 1);
-	dico_stream_write(ostr->transport, (char *) ostr->type,
-			  strlen(ostr->type));
-	dico_stream_write(ostr->transport, "\r\n", 2);
-    }
-
-    if (ostr->encoding) {
-	dico_stream_write(ostr->transport, CONTENT_TRANSFER_ENCODING_HEADER,
-			  sizeof(CONTENT_TRANSFER_ENCODING_HEADER) - 1);
-	dico_stream_write(ostr->transport, (char*) ostr->encoding,
-			  strlen(ostr->encoding));
-	dico_stream_write(ostr->transport, "\r\n", 2);
-    }
-
+    int rc = 0;
+    char *enc;
+    
     if (ostr->headers) {
-	const char *p;
+	dico_iterator_t itr;
+	struct dico_assoc *p;
 	
-	for (p = ostr->headers; *p; ) {
-	    size_t n = strcspn(p, "\n");
-	    dico_stream_write(ostr->transport, p, n);
+	itr = dico_assoc_iterator(ostr->headers);
+	for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) {
+	    dico_stream_write(ostr->transport, p->key, strlen(p->key));
+	    dico_stream_write(ostr->transport, ": ", 2);
+	    dico_stream_write(ostr->transport, p->value, strlen(p->value));
 	    dico_stream_write(ostr->transport, "\r\n", 2);
-	    p += n + 1;
 	}
+	dico_iterator_destroy(&itr);
     }
-
+    
     rc = dico_stream_write(ostr->transport, "\r\n", 2);
-    if (rc == 0 && ostr->encoding) {
-	dico_stream_t str = dico_codec_stream_create(ostr->encoding,
+    
+    if (rc == 0
+	&& (enc = dico_assoc_find(ostr->headers,
+				  CONTENT_TRANSFER_ENCODING_HEADER))) {
+	dico_stream_t str = dico_codec_stream_create(enc,
 						     FILTER_ENCODE,
 						     ostr->transport);
 	if (str) {
@@ -120,8 +106,7 @@ ostream_destroy(void *data)
 }
 
 dico_stream_t
-dicod_ostream_create(dico_stream_t str, const char *type, const char *enc,
-                     const char *headers)
+dicod_ostream_create(dico_stream_t str, dico_assoc_list_t headers)
 {
     struct ostream *ostr = xmalloc(sizeof(*ostr));
     dico_stream_t stream;
@@ -131,8 +116,6 @@ dicod_ostream_create(dico_stream_t str, const char *type, const char *enc,
 	xalloc_die();
     ostr->transport = str;
     ostr->flags = 0;
-    ostr->type = type;
-    ostr->encoding = enc;
     ostr->headers = headers;
     dico_stream_set_write(stream, ostream_write);
     dico_stream_set_flush(stream, ostream_flush);

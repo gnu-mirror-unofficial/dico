@@ -19,6 +19,13 @@
 #ifdef WITH_GSASL
 #include <gsaslstr.h>
 
+static int
+_free_el(void *item, void *data DICO_ARG_UNUSED)
+{
+    free(item);
+    return 0;
+}
+
 static dico_list_t
 get_implemented_mechs(Gsasl *ctx)
 {
@@ -39,19 +46,13 @@ get_implemented_mechs(Gsasl *ctx)
     if (dico_argcv_get(listmech, "", NULL, &mechc, &mechv) == 0) {
 	int i;
 	supp = xdico_list_create();
+	dico_list_set_free_item(supp, _free_el, NULL);
 	for (i = 0; i < mechc; i++) 
 	    xdico_list_append(supp, mechv[i]);
 	free(mechv);
     }
     free(listmech);
     return supp;
-}
-
-static int
-_free_el(void *item, void *data DICO_ARG_UNUSED)
-{
-    free(item);
-    return 0;
 }
 
 static char *
@@ -69,7 +70,7 @@ mech_intersect_first(dico_iterator_t itr, struct dict_connection *conn)
 }
 
 static int
-str_str_cmp(const void *item, const void *data)
+str_str_cmp(const void *item, void *data)
 {
     return c_strcasecmp(item, data);
 }
@@ -93,14 +94,14 @@ selectmech(struct dict_connection *conn, Gsasl *ctx, struct auth_cred *cred)
 	return NULL;
     if (cred->mech) {
 	dico_list_t supp = dico_list_intersect(cred->mech, impl, str_str_cmp);
-	dico_list_destroy(&impl, _free_el, NULL);
+	dico_list_destroy(&impl);
 	impl = supp;
     }
-    itr = xdico_iterator_create(impl);
+    itr = xdico_list_iterator(impl);
     mech = mech_intersect_first(itr, conn);
     dico_iterator_destroy(&itr);
-    /* FIXME: Revise 2nd argument. */
-    dico_list_destroy(&impl, NULL, NULL);
+    /* FIXME: Revise impl->free_item. */
+    dico_list_destroy(&impl);
     if (mech)
 	upcase(mech);
     return mech;

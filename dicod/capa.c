@@ -27,6 +27,13 @@ struct dicod_capa {
 /* List of supported capabilities: */
 static dico_list_t /* of struct dicod_capa */ capa_list;
 
+static int
+_cmp_capa_name(const void *item, void *data)
+{
+    const struct dicod_capa *cp = item;
+    return strcmp(cp->name, (char*)data);
+}
+
 void
 dicod_capa_register(const char *name, struct dicod_command *cmd,
 		    int (*init)(void*), void *closure)
@@ -37,23 +44,17 @@ dicod_capa_register(const char *name, struct dicod_command *cmd,
     cp->init = init;
     cp->closure = closure;
     cp->enabled = 0;
-    if (!capa_list)
+    if (!capa_list) {
 	capa_list = xdico_list_create();
+	dico_list_set_comparator(capa_list, _cmp_capa_name);
+    }
     xdico_list_append(capa_list, cp);
-}
-
-static int
-_cmp_capa_name(const void *item, const void *data)
-{
-    const struct dicod_capa *cp = item;
-    return strcmp(cp->name, (char*)data);
 }
 
 int
 dicod_capa_add(const char *name)
 {
-    struct dicod_capa *cp = dico_list_locate(capa_list, (void*)name, 
-					     _cmp_capa_name);
+    struct dicod_capa *cp = dico_list_locate(capa_list, (void*)name);
     if (cp == NULL)
 	return 1;
     cp->enabled = 1;
@@ -66,7 +67,7 @@ dicod_capa_flush()
     dico_iterator_t itr;
     struct dicod_capa *cp;
     
-    itr = xdico_iterator_create(capa_list);
+    itr = xdico_list_iterator(capa_list);
     for (cp = dico_iterator_first(itr); cp; cp = dico_iterator_next(itr)) {
 	if (cp->enabled) {
 	    if (cp->init && cp->init(cp->closure))

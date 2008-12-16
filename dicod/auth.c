@@ -106,13 +106,6 @@ register_auth()
 }
 
 
-static int
-_free_group(void *item, void *data)
-{
-    free(item);
-    return 0;
-}
-
 void
 init_auth_data()
 {
@@ -122,7 +115,7 @@ init_auth_data()
     client_id = NULL;
     free(identity_name);
     identity_name = NULL;
-    dico_list_destroy(&user_groups, _free_group, NULL);
+    dico_list_destroy(&user_groups);
     reset_db_visibility();
 }
 

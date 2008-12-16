@@ -366,6 +366,15 @@ set_log_facility(enum cfg_callback_command cmd,
     return 0;
 }
 
+static int
+cmp_modinst_ident(const void *item, void *data)
+{
+    const dicod_module_instance_t *inst = item;
+    if (!inst->ident)
+	return 1;
+    return strcmp(inst->ident, (const char*)data);
+}
+
 int
 load_module_cb(enum cfg_callback_command cmd,
 	       dicod_locus_t *locus,
@@ -389,8 +398,10 @@ load_module_cb(enum cfg_callback_command cmd,
 	break;
 	
     case callback_section_end:
-	if (!modinst_list)
+	if (!modinst_list) {
 	    modinst_list = xdico_list_create();
+	    dico_list_set_comparator(modinst_list, cmp_modinst_ident);
+	}
 	inst = *pdata;
 	xdico_list_append(modinst_list, inst);
 	*pdata = NULL;
@@ -418,13 +429,28 @@ fix_lang_list(dicod_database_t *db, int n)
     if (!db->langlist[n])
 	return;
     newlist = xdico_list_create();
+    dico_list_set_free_item(newlist, dicod_free_item, NULL);
     dico_list_iterate(db->langlist[n], add_char_ptr, newlist);
-    dico_list_destroy(&db->langlist[n], NULL, NULL);
+    dico_list_destroy(&db->langlist[n]);
     if (dicod_any_lang_list_p(newlist)) 
-	dico_list_destroy(&newlist, dicod_free_item, NULL);
+	dico_list_destroy(&newlist);
     db->langlist[n] = newlist;
     db->flags |= DICOD_DBF_LANG; /* Prevent dico_db_lang from being called */
 }
+
+static int
+cmp_database_name(const void *item, void *data)
+{
+    const dicod_database_t *db = item;
+    int rc;
+    
+    if (!db->name)
+	return 1;
+    rc = strcmp(db->name, (const char*)data);
+    if (rc == 0 && !database_visible_p(db))
+	rc = 1;
+    return rc;
+}    
 
 static int
 set_database(enum cfg_callback_command cmd,
@@ -447,8 +473,10 @@ set_database(enum cfg_callback_command cmd,
 	break;
 	
     case callback_section_end:
-	if (!database_list)
+	if (!database_list) {
 	    database_list = xdico_list_create();
+	    dico_list_set_comparator (database_list, cmp_database_name);
+	}
 	dict = *pdata;
 	fix_lang_list(dict, 0);
 	fix_lang_list(dict, 1);
@@ -460,15 +488,6 @@ set_database(enum cfg_callback_command cmd,
 	config_error(locus, 0, _("invalid use of block statement"));
     }
     return 0;
-}
-
-static int
-cmp_modinst_ident(const void *item, const void *data)
-{
-    const dicod_module_instance_t *inst = item;
-    if (!inst->ident)
-	return 1;
-    return strcmp(inst->ident, (const char*)data);
 }
 
 int
@@ -501,7 +520,7 @@ set_dict_handler(enum cfg_callback_command cmd,
 	return 1;
     } 
 
-    inst = dico_list_locate(modinst_list, db->argv[0], cmp_modinst_ident);
+    inst = dico_list_locate(modinst_list, db->argv[0]);
     if (!inst) {
 	config_error(locus, 0, _("%s: handler not declared"), db->argv[0]);
 	/* FIXME: Free memory */
@@ -510,30 +529,6 @@ set_dict_handler(enum cfg_callback_command cmd,
     db->instance = inst;
     
     return 0;
-}
-
-int
-set_dict_encoding(enum cfg_callback_command cmd,
-		  dicod_locus_t *locus,
-		  void *varptr,
-		  config_value_t *value,
-		  void *cb_data)
-{
-    if (cmd != callback_set_value) {
-	config_error(locus, 0, _("Unexpected block statement"));
-	return 1;
-    }
-    if (value->type != TYPE_STRING) {
-	config_error(locus, 0, _("expected scalar value but found list"));
-	return 1;
-    }
-    if (strcmp (value->v.string, "quoted-printable") == 0
-	|| strcmp (value->v.string, "base64") == 0) {
-	*(const char**)varptr = value->v.string;
-	return 0;
-    }
-    config_error(locus, 0, _("unknown encoding type: %s"), value->v.string);
-    return 1;
 }
 
 int enable_capability(enum cfg_callback_command cmd,
@@ -592,6 +587,39 @@ set_defstrat(enum cfg_callback_command cmd,
     return 0;
 }
 
+int
+mime_headers_cb (enum cfg_callback_command cmd,
+		 dicod_locus_t *locus,
+		 void *varptr,
+		 config_value_t *value,
+		 void *cb_data)
+{
+    dico_assoc_list_t *pasc = varptr;
+    const char *enc;
+    
+    if (cmd != callback_set_value) {
+	config_error(locus, 0, _("Unexpected block statement"));
+	return 1;
+    }
+
+    if (value->type != TYPE_STRING) {
+	config_error(locus, 0, _("expected scalar value"));
+	return 1;
+    }
+
+    if (dico_header_parse(pasc, value->v.string)) 
+	config_error(locus, 0, _("cannot parse headers: %s"),
+		     strerror(errno));
+
+    if (enc = dico_assoc_find(*pasc, CONTENT_TRANSFER_ENCODING_HEADER)) {
+        if (!(strcmp (enc, "quoted-printable") == 0
+	      || strcmp (enc, "base64") == 0)) 
+	    config_error(locus, 0, _("unknown encoding type: %s"), enc);
+    }
+    
+    return 0;
+}
+
 struct config_keyword kwd_load_module[] = {
     { "command", N_("arg"), N_("Command line."),
       cfg_string, NULL, offsetof(dicod_module_instance_t, command) },
@@ -619,16 +647,10 @@ struct config_keyword kwd_database[] = {
     { "visibility-acl", N_("arg: acl"),
       N_("ACL controlling visibility of this database"),
       cfg_string, NULL, offsetof(dicod_database_t, acl), apply_acl_cb },
-    { "content-type", N_("arg"), N_("Content type for MIME replies."),
-      cfg_string, NULL, offsetof(dicod_database_t, content_type) },
-    /* FIXME: Install a callback to verify if arg is acceptable. */
-    { "content-transfer-encoding", N_("arg"),
-      N_("Content transfer encoding for MIME replies."),
-      cfg_string, NULL, offsetof(dicod_database_t, content_transfer_encoding),
-      set_dict_encoding },
     { "mime-headers", N_("text"),
       N_("Additional MIME headers"),
-      cfg_string, NULL, offsetof(dicod_database_t, mime_headers), },
+      cfg_string, NULL, offsetof(dicod_database_t, mime_headers),
+      mime_headers_cb },
     { NULL }
 };
 
@@ -762,9 +784,7 @@ static int
 flush_strat_forward_fn(void *item, void *data)
 {
     dico_strategy_t strat = item;
-    dico_strategy_t p = dico_list_locate(strat_forward,
-					 strat->name,
-					 dico_strat_name_cmp);
+    dico_strategy_t p = dico_list_locate(strat_forward, strat->name);
     if (p && p->stratcl) {
 	strat->stratcl = p->stratcl;
 	p->stratcl = NULL;
@@ -772,27 +792,11 @@ flush_strat_forward_fn(void *item, void *data)
     return 0;
 }
 
-static int
-_free_mem(void *item, void *data)
-{
-    free(item);
-    return 0;
-}
-
-static int
-destroy_strat_forward_fn(void *item, void *data)
-{
-    dico_strategy_t strat = item;
-    dico_list_destroy(&strat->stratcl, _free_mem, NULL);
-    free(strat);
-    return 0;
-}
-
 void
 flush_strat_forward()
 {
     dico_strategy_iterate(flush_strat_forward_fn, NULL);
-    dico_list_destroy(&strat_forward, destroy_strat_forward_fn, NULL);
+    dico_list_destroy(&strat_forward);
 }
 
 int
@@ -812,13 +816,17 @@ strategy_cb(enum cfg_callback_command cmd,
 	    config_error(locus, 0, _("missing section name"));
 	else {
 	    dico_strategy_t strat = dico_list_locate(strat_forward,
-						     (void*)value->v.string,
-						     dico_strat_name_cmp);
+						     (void*)value->v.string);
 	    if (!strat) {
 		strat = dico_strategy_create(value->v.string, "");
 		strat->stratcl = xdico_list_create();
-		if (!strat_forward)
+		if (!strat_forward) {
 		    strat_forward = xdico_list_create();
+		    dico_list_set_comparator (strat_forward,
+					      dico_strat_name_cmp);
+		    dico_list_set_free_item(strat_forward,
+					    dico_strat_free, NULL);
+		}
 		xdico_list_append(strat_forward, strat);
 	    } 
 	    *pdata = strat;
@@ -1155,7 +1163,7 @@ reset_db_visibility()
     dicod_database_t *db;
     dico_iterator_t itr;
 
-    itr = xdico_iterator_create(database_list);
+    itr = xdico_list_iterator(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) 
 	db->visible = 1;
     dico_iterator_destroy(&itr);
@@ -1168,7 +1176,7 @@ check_db_visibility()
     dico_iterator_t itr;
     int global = dicod_acl_check(global_acl, 1);
     
-    itr = xdico_iterator_create(database_list);
+    itr = xdico_list_iterator(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
 	if (!dicod_acl_check(db->acl, global))
 	    db->visible = 0;
@@ -1182,25 +1190,10 @@ check_db_visibility()
 }
 
 
-static int
-cmp_database_name(const void *item, const void *data)
-{
-    const dicod_database_t *db = item;
-    int rc;
-    
-    if (!db->name)
-	return 1;
-    rc = strcmp(db->name, (const char*)data);
-    if (rc == 0 && !database_visible_p(db))
-	rc = 1;
-    return rc;
-}    
-
 dicod_database_t *
 find_database(const char *name)
 {
-    return dico_list_locate(database_list, (void*) name,
-			    cmp_database_name);
+    return dico_list_locate(database_list, (void*) name);
 }
 
 static int
@@ -1224,7 +1217,7 @@ database_count()
 int
 database_iterate(dico_list_iterator_t fun, void *data)
 {
-    dico_iterator_t itr = xdico_iterator_create(database_list);
+    dico_iterator_t itr = xdico_list_iterator(database_list);
     dicod_database_t *db;
     int rc = 0;
     
@@ -1241,13 +1234,13 @@ database_iterate(dico_list_iterator_t fun, void *data)
 void
 database_remove_dependent(dicod_module_instance_t *inst)
 {
-    dico_iterator_t itr = xdico_iterator_create(database_list);
+    dico_iterator_t itr = xdico_list_iterator(database_list);
     dicod_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
 	if (dp->instance == inst) {
 	    dico_log(L_NOTICE, 0, _("removing database %s"), dp->name);
-	    dico_iterator_remove_current(itr);
+	    dico_iterator_remove_current(itr, NULL);
 	    dicod_database_free(dp); 
 	}
     }
@@ -1257,8 +1250,8 @@ database_remove_dependent(dicod_module_instance_t *inst)
 void
 dicod_database_free(dicod_database_t *dp)
 {
-    dico_list_destroy(&dp->langlist[0], dicod_free_item, NULL);
-    dico_list_destroy(&dp->langlist[1], dicod_free_item, NULL);
+    dico_list_destroy(&dp->langlist[0]);
+    dico_list_destroy(&dp->langlist[1]);
     dico_argcv_free(dp->argc, dp->argv);
     free(dp);
 }
@@ -1363,7 +1356,7 @@ main(int argc, char **argv)
 {
     int rc = 0;
     struct dicod_conf_override ovr;
-    
+
     appi18n_init();
     dico_set_program_name(argv[0]);
     set_quoting_style(NULL, escape_quoting_style);

@@ -19,58 +19,172 @@
 #endif
 #include <dico.h>
 #include <string.h>
+#include <errno.h>
 
-dico_assoc_list_t
-dico_assoc_create()
-{
-    return dico_list_create();
-}
+struct dico_assoc_list {
+    int flags;
+    dico_list_t list;
+};
 
-int
-dico_assoc_add(dico_assoc_list_t assoc, const char *key, const char *value)
+struct find_closure {
+    size_t count;
+    const char *str;
+};
+    
+static int
+assoc_key_cmp(const void *item, void *data)
 {
-    struct dico_assoc *a;
-    size_t size = sizeof(*a) + strlen(key) + strlen(value) + 2;
-    a = malloc(size);
-    if (!a)
-	    return 1;
-    a->key = (char*)(a + 1);
-    strcpy(a->key, key);
-    a->value = a->key + strlen(a->key) + 1;
-    strcpy(a->value, value);
-    return dico_list_append(assoc, a);
+    const struct dico_assoc *aptr = item;
+    struct find_closure *clos = data;
+    if (strcmp(aptr->key, clos->str) == 0 && --clos->count == 0)
+	return 0;
+    return 1;
 }
 
 static int
-assoc_key_cmp(const void *item, const void *data)
+assoc_key_cmp_ci(const void *item, void *data)
 {
     const struct dico_assoc *aptr = item;
-    const char *sptr = data;
-    return strcmp(aptr->key, sptr);
-}
-
-const char *
-dico_assoc_find(dico_assoc_list_t assoc, const char *key)
-{
-    return dico_list_locate(assoc, (void*)key, assoc_key_cmp);
-}
-
-void
-dico_assoc_remove(dico_assoc_list_t assoc, const char *key)
-{
-    dico_list_remove(assoc, (void*)key, assoc_key_cmp);
+    struct find_closure *clos = data;
+    if (strcasecmp(aptr->key, clos->str) == 0 && --clos->count == 0)
+	return 0;
+    return 1;
 }
 
 static int
 assoc_free(void *item, void *data)
 {
-    free(item);
+    struct dico_assoc *a = item;
+    free(a->value);
+    free(a);
     return 0;
+}
+
+dico_assoc_list_t
+dico_assoc_create(int flags)
+{
+    struct dico_assoc_list *assoc = malloc(sizeof(*assoc));
+    if (assoc) {
+	assoc->flags = flags;
+	assoc->list = dico_list_create();
+	if (!assoc->list) {
+	    int ec = errno;
+	    free(assoc);
+	    assoc = NULL;
+	    errno = ec;
+	} else {
+	    dico_list_set_comparator(assoc->list,
+				     (flags & DICO_ASSOC_CI) ?
+				       assoc_key_cmp_ci : assoc_key_cmp);
+	    dico_list_set_free_item(assoc->list, assoc_free, NULL);
+	}
+    }
+    return assoc;
+}
+
+struct dico_assoc *
+_dico_assoc_find_n(dico_assoc_list_t assoc, const char *key, size_t n)
+{
+    struct find_closure clos;
+    if (n == 0)
+	return NULL;
+    clos.count = n;
+    clos.str = key;
+    return dico_list_locate(assoc->list, &clos);
+}
+
+const char *
+dico_assoc_find_n(dico_assoc_list_t assoc, const char *key, size_t n)
+{
+    struct dico_assoc *kvp = _dico_assoc_find_n(assoc, key, n);
+    return kvp ? kvp->value : NULL;
+}
+
+const char *
+dico_assoc_find(dico_assoc_list_t assoc, const char *key)
+{
+    return dico_assoc_find_n(assoc, key, 1);
+}
+
+void
+dico_assoc_remove_n(dico_assoc_list_t assoc, const char *key, size_t n)
+{
+    struct find_closure clos;
+    if (n == 0)
+	return;
+    clos.count = n;
+    clos.str = key;
+    dico_list_remove(assoc->list, &clos, NULL);
+}
+
+void
+dico_assoc_remove(dico_assoc_list_t assoc, const char *key)
+{
+    return dico_assoc_remove_n(assoc, key, 1);
+}
+
+int
+dico_assoc_add(dico_assoc_list_t assoc, const char *key, const char *value,
+	       size_t count, int replace)
+{
+    struct dico_assoc *a;
+    size_t size;
+
+    if (value == NULL) {
+	dico_assoc_remove_n(assoc, key, count);
+	return 0;
+    }
+    
+    if (!(assoc->flags & DICO_ASSOC_MULT)) {
+	a = _dico_assoc_find_n(assoc, key, count);
+	if (a) {
+	    if (replace) {
+		char *s = strdup(value);
+		if (!s)
+		    return 1;
+		free(a->value);
+		a->value = s;
+		return 0;
+	    }
+	    errno = EEXIST;
+	    return 1;
+	}
+    }
+    
+    size = sizeof(*a) + strlen(key) + 1;
+    a = malloc(size);
+    if (!a)
+	    return 1;
+    a->key = (char*)(a + 1);
+    strcpy((char*) a->key, key);
+    a->value = strdup(value);
+    if (!a->value) {
+	int ec = errno;
+	free(a);
+	errno = ec;
+	return 1;
+    }
+    return dico_list_append(assoc->list, a);
+}
+
+int
+dico_assoc_append(dico_assoc_list_t assoc, const char *key, const char *value)
+{
+    return dico_assoc_add(assoc, key, value, 1, 0);
 }
 
 void
 dico_assoc_destroy(dico_assoc_list_t *passoc)
 {
-    return dico_list_destroy(passoc, assoc_free, NULL);
+    dico_assoc_list_t assoc = *passoc;
+    dico_list_destroy(&assoc->list);
+    free(assoc);
 }
 
+dico_iterator_t
+dico_assoc_iterator(dico_assoc_list_t assoc)
+{
+    if (!assoc)
+	return NULL;
+    return dico_list_iterator(assoc->list);
+}

@@ -29,7 +29,8 @@ struct dico_strategy {
     dico_list_t stratcl;    /* Strategy access control list */  
 };
 
-int dico_strat_name_cmp(const void *item, const void *data);
+int dico_strat_name_cmp(const void *item, void *data);
+int dico_strat_free(void *item, void *data);
 
 dico_strategy_t dico_strategy_create(const char *name, const char *descr);
 dico_strategy_t dico_strategy_dup(const dico_strategy_t strat);

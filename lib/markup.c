@@ -25,7 +25,7 @@ const char *dico_markup_type = "none";
 dico_list_t dico_markup_list;
 
 static int
-cmp_markup_name(const void *item, const void *data)
+cmp_markup_name(const void *item, void *data)
 {
     return strcasecmp((char*)item, (char*)data);
 }
@@ -33,7 +33,7 @@ cmp_markup_name(const void *item, const void *data)
 const char *
 dico_markup_lookup(const char *name)
 {
-    return dico_list_locate(dico_markup_list, (void *)name, cmp_markup_name);
+    return dico_list_locate(dico_markup_list, (void *)name);
 }
 
 int
@@ -55,6 +55,7 @@ dico_markup_register(const char *name)
 	dico_markup_list = dico_list_create();
 	if (!dico_markup_list)
 	    return ENOMEM;
+	dico_list_set_comparator(dico_markup_list, cmp_markup_name);
     }
 
     if (!dico_markup_lookup(name)) {

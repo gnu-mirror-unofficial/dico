@@ -1956,7 +1956,7 @@ int
 utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char **sptr)
 {
   size_t i;
-  size_t wbc, size;
+  size_t wbc;
   char *s;
   
   wbc = 0;

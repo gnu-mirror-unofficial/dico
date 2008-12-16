@@ -202,7 +202,7 @@ _parse_from(struct acl_entry *entry, size_t argc, config_value_t *argv)
 	if (_parse_sockaddr(entry, argv))
 	    return 1;
     } else {
-	dico_iterator_t itr = xdico_iterator_create(argv->v.list);
+	dico_iterator_t itr = xdico_list_iterator(argv->v.list);
 	config_value_t *p;
 	int rc = 0;
 	for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) 
@@ -321,7 +321,7 @@ parse_acl_line(dicod_locus_t *locus, int allow, dicod_acl_t acl,
 /* ACL verification */
 
 static int
-cmp_group_name(const void *item, const void *data)
+cmp_group_name(const void *item, void *data)
 {
     return strcmp((char*)item, (char*)data);
 }

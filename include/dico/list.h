@@ -17,22 +17,28 @@
 #ifndef __dico_list_h
 #define __dico_list_h
 
-#include <sys/types.h>
+#include <dico/types.h>
 #include <stdlib.h>
 
 /* Lists */
 
 typedef int (*dico_list_iterator_t)(void *item, void *data);
-typedef int (*dico_list_comp_t)(const void *, const void *);
+typedef int (*dico_list_comp_t)(const void *, void *);
 
 dico_list_t dico_list_create(void);
-void dico_list_destroy(dico_list_t *list, dico_list_iterator_t free, void *data);
+void dico_list_destroy(dico_list_t *list);
+int dico_list_set_free_item(struct dico_list *list,
+			    dico_list_iterator_t free_item, void *data);
+dico_list_comp_t dico_list_set_comparator(dico_list_t list,
+					  dico_list_comp_t comp);
+dico_list_comp_t dico_list_get_comparator(dico_list_t list);
+
 void dico_list_iterate(dico_list_t list, dico_list_iterator_t itr, void *data);
 void *dico_list_item(dico_list_t list, size_t n);
 size_t dico_list_count(dico_list_t list);
 int dico_list_append(dico_list_t list, void *data);
 int dico_list_prepend(dico_list_t list, void *data);
-int dico_list_insert_sorted(dico_list_t list, void *data, dico_list_comp_t cmp);
+int dico_list_insert_sorted(dico_list_t list, void *data);
 dico_list_t  dico_list_intersect(dico_list_t a, dico_list_t b,
 				 dico_list_comp_t cmp);
 int dico_list_intersect_p(dico_list_t a, dico_list_t b, dico_list_comp_t cmp);
@@ -40,16 +46,19 @@ int dico_list_intersect_p(dico_list_t a, dico_list_t b, dico_list_comp_t cmp);
 #define dico_list_push dico_list_prepend
 void *dico_list_pop(dico_list_t list);
 
-void *dico_list_locate(dico_list_t list, void *data, dico_list_comp_t cmp);
-void *dico_list_remove(dico_list_t list, void *data, dico_list_comp_t cmp);
+void *_dico_list_locate(dico_list_t list, void *data, dico_list_comp_t cmp);
+int _dico_list_remove(dico_list_t list, void *data, dico_list_comp_t cmp,
+		      void **pret);
+void *dico_list_locate(dico_list_t list, void *data);
+int dico_list_remove(dico_list_t list, void *data, void **pret);
 
 void *dico_iterator_current(dico_iterator_t itr);
-dico_iterator_t dico_iterator_create(dico_list_t list);
+dico_iterator_t dico_list_iterator(dico_list_t list);
 void dico_iterator_destroy(dico_iterator_t *ip);
 void *dico_iterator_first(dico_iterator_t ip);
 void *dico_iterator_next(dico_iterator_t ip);
 
-void *dico_iterator_remove_current(dico_iterator_t ip);
+int dico_iterator_remove_current(dico_iterator_t ip, void **pptr);
 void dico_iterator_set_data(dico_iterator_t ip, void *data);
 
 #endif

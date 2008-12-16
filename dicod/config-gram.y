@@ -101,7 +101,7 @@ vallist : vlist
 		  for (i = 0; i < n; i++)
 		      $$.v.arg.v[i] = *(config_value_t *)dico_list_item($1, i);
 	      }
-	      dico_list_destroy(&$1, NULL, NULL);	      
+	      dico_list_destroy(&$1);	      
 	  }
 	;
 
@@ -140,7 +140,7 @@ string  : STRING
 
 slist   : slist0
           {
-	      dico_iterator_t itr = xdico_iterator_create($1);
+	      dico_iterator_t itr = xdico_list_iterator($1);
 	      char *p;
 	      line_begin();
 	      for (p = dico_iterator_first(itr); p;
@@ -148,7 +148,7 @@ slist   : slist0
 		  line_add(p, strlen(p));
 	      $$ = line_finish0();
 	      dico_iterator_destroy(&itr);
-	      dico_list_destroy(&$1, NULL, NULL);
+	      dico_list_destroy(&$1);
 	  }
         ;
 
@@ -260,7 +260,7 @@ config_parse(const char *name)
     if (config_lex_begin(name))
 	return 1;
     cursect = &config_keywords;
-    dico_list_destroy(&sections, NULL, NULL);
+    dico_list_destroy(&sections);
     rc = yyparse();
     config_lex_end();
     if (config_error_count)
@@ -665,7 +665,7 @@ process_ident(struct config_keyword *kwp, config_value_t *value)
 	return;
     } else if (value->type == TYPE_LIST) {
 	if (CFG_IS_LIST(kwp->type)) {
-	    dico_iterator_t itr = xdico_iterator_create(value->v.list);
+	    dico_iterator_t itr = xdico_list_iterator(value->v.list);
 	    enum config_data_type type = CFG_TYPE(kwp->type);
 	    int num = 1;
 	    void *p;
@@ -720,7 +720,7 @@ process_ident(struct config_keyword *kwp, config_value_t *value)
 	ptr = xmalloc(size);
 	if (string_convert(ptr, type, value->v.string)) {
 	    free(ptr);
-	    dico_list_destroy(&list, NULL, NULL);
+	    dico_list_destroy(&list);
 	    return;
 	}
 	xdico_list_append(list, ptr);

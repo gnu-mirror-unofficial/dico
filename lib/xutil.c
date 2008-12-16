@@ -55,42 +55,52 @@ xdico_list_create()
 }
 
 dico_iterator_t
-xdico_iterator_create(dico_list_t list)
+xdico_list_iterator(dico_list_t list)
 {
-    dico_iterator_t p = dico_iterator_create(list); 
+    dico_iterator_t p = dico_list_iterator(list); 
     if (!p && errno == ENOMEM)
 	xalloc_die();
     return p;
 }
 
 void
-xdico_list_append(struct list *list, void *data)
+xdico_list_append(struct dico_list *list, void *data)
 {
     if (dico_list_append(list, data) && errno == ENOMEM)
 	xalloc_die();
 }
 
 void
-xdico_list_prepend(struct list *list, void *data)
+xdico_list_prepend(struct dico_list *list, void *data)
 {
     if (dico_list_prepend(list, data) && errno == ENOMEM)
 	xalloc_die();
 }
 
 dico_assoc_list_t
-xdico_assoc_create()
+xdico_assoc_create(int flags)
 {
-    dico_assoc_list_t p = dico_assoc_create();
+    dico_assoc_list_t p = dico_assoc_create(flags);
     if (!p)
 	xalloc_die();
     return p;
 }
 
 void
-xdico_assoc_add(dico_assoc_list_t assoc, const char *key, const char *value)
+xdico_assoc_append(dico_assoc_list_t assoc, const char *key, const char *value)
 {
-    if (dico_assoc_add(assoc, key, value) && errno == EINVAL)
+    if (dico_assoc_append(assoc, key, value) && errno == ENOMEM)
 	xalloc_die();
+}
+
+int
+xdico_assoc_add(dico_assoc_list_t assoc, const char *key,
+		const char *value, size_t count, int replace)
+{
+    int rc = dico_assoc_add(assoc, key, value, count, replace);
+    if (rc && errno == ENOMEM)
+	xalloc_die();
+    return rc;
 }
 
 char *

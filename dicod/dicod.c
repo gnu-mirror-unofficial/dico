@@ -95,14 +95,14 @@ sig_alarm(int sig)
 static void
 load_modules()
 {
-    dico_iterator_t itr = xdico_iterator_create(modinst_list);
+    dico_iterator_t itr = xdico_list_iterator(modinst_list);
     dicod_module_instance_t *inst;
 
     for (inst = dico_iterator_first(itr); inst;
 	 inst = dico_iterator_next(itr)) {
 	if (dicod_load_module(inst)) {
 	    database_remove_dependent(inst);
-	    dico_iterator_remove_current(itr);
+	    dico_iterator_remove_current(itr, NULL);
 	}
     }
     dico_iterator_destroy(&itr);
@@ -111,13 +111,13 @@ load_modules()
 static void
 init_databases()
 {
-    dico_iterator_t itr = xdico_iterator_create(database_list);
+    dico_iterator_t itr = xdico_list_iterator(database_list);
     dicod_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
 	if (dicod_init_database(dp)) {
 	    dico_log(L_NOTICE, 0, _("removing database %s"), dp->name);
-	    dico_iterator_remove_current(itr);
+	    dico_iterator_remove_current(itr, NULL);
 	    dicod_database_free(dp);
 	}
     }
@@ -127,13 +127,13 @@ init_databases()
 static void
 open_databases()
 {
-    dico_iterator_t itr = xdico_iterator_create(database_list);
+    dico_iterator_t itr = xdico_list_iterator(database_list);
     dicod_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
 	if (dicod_open_database(dp)) {
 	    dico_log(L_NOTICE, 0, _("removing database %s"), dp->name);
-	    dico_iterator_remove_current(itr);
+	    dico_iterator_remove_current(itr, NULL);
 	    dicod_database_free(dp);
 	}
     }
@@ -143,7 +143,7 @@ open_databases()
 static void
 close_databases()
 {
-    dico_iterator_t itr = xdico_iterator_create(database_list);
+    dico_iterator_t itr = xdico_list_iterator(database_list);
     dicod_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
@@ -217,7 +217,7 @@ dicod_server_init()
 void
 dicod_server_cleanup()
 {
-    dico_iterator_t itr = xdico_iterator_create(database_list);
+    dico_iterator_t itr = xdico_list_iterator(database_list);
     dicod_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {

@@ -283,9 +283,7 @@ typedef struct dicod_database {
     
     dico_handle_t mod_handle;        /* Dico module handle */
 
-    char *content_type;
-    char *content_transfer_encoding;
-    char *mime_headers;
+    dico_assoc_list_t mime_headers;
     
     dicod_module_instance_t *instance; /* Pointer to the module instance
 					  structure */
@@ -293,6 +291,8 @@ typedef struct dicod_database {
     char **argv;              /*  ... and pointers */
     char *command;            /* Handler command line (for diagnostics) */
 } dicod_database_t;
+
+#define CONTENT_TRANSFER_ENCODING_HEADER "Content-transfer-encoding"
 
 /* dicod.c */
 void dicod_server(int argc, char **argv);
@@ -429,8 +429,8 @@ void dicod_define_word_all(dico_stream_t stream, const char *word);
 
 /* ostream.c */
 extern off_t total_bytes_out;
-dico_stream_t dicod_ostream_create(dico_stream_t str, const char *type,
-                                   const char *enc, const char *headers);
+dico_stream_t dicod_ostream_create(dico_stream_t str,
+				   dico_assoc_list_t headers);
 
 /* stat.c */
 void begin_timing(const char *name);

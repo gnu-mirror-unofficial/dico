@@ -82,11 +82,44 @@ dico_assoc_create(int flags)
     return assoc;
 }
 
+dico_assoc_list_t
+dico_assoc_dup(dico_assoc_list_t src)
+{
+    dico_iterator_t itr;
+    struct dico_assoc *p;
+    dico_assoc_list_t dst;
+
+
+    dst = dico_assoc_create(src->flags);
+    if (dst == NULL)
+	return NULL;
+	
+    itr = dico_assoc_iterator(src);
+    if (!itr) {
+	int ec = errno;
+	dico_assoc_destroy(&dst);
+	errno = ec;
+	return NULL;
+    }
+    
+    for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) {
+	if (dico_assoc_append(dst, p->key, p->value)) {
+	    int ec = errno;
+	    dico_assoc_destroy(&dst);
+	    errno = ec;
+	    break;
+	}
+    }
+    dico_iterator_destroy(&itr);
+    return dst;
+}
+
+    
 struct dico_assoc *
 _dico_assoc_find_n(dico_assoc_list_t assoc, const char *key, size_t n)
 {
     struct find_closure clos;
-    if (n == 0)
+    if (!assoc || n == 0)
 	return NULL;
     clos.count = n;
     clos.str = key;
@@ -173,12 +206,24 @@ dico_assoc_append(dico_assoc_list_t assoc, const char *key, const char *value)
     return dico_assoc_add(assoc, key, value, 1, 0);
 }
 
+int
+dico_assoc_clear(dico_assoc_list_t assoc)
+{
+    if (!assoc) {
+	errno = EINVAL;
+	return 1;
+    }
+    return dico_list_clear(assoc->list);
+}
+
 void
 dico_assoc_destroy(dico_assoc_list_t *passoc)
 {
-    dico_assoc_list_t assoc = *passoc;
-    dico_list_destroy(&assoc->list);
-    free(assoc);
+    if (passoc && *passoc) {
+	dico_assoc_list_t assoc = *passoc;
+	dico_list_destroy(&assoc->list);
+	free(assoc);
+    }
 }
 
 dico_iterator_t

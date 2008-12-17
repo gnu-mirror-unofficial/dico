@@ -78,6 +78,7 @@ struct dico_database_module {
     size_t (*dico_result_count) (dico_result_t rp);
     size_t (*dico_compare_count) (dico_result_t rp);
     void (*dico_free_result) (dico_result_t rp);
+    int (*dico_result_headers) (dico_result_t rp, dico_assoc_list_t hdr);
 };
 
 #endif

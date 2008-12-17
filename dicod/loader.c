@@ -505,13 +505,24 @@ print_definitions(dicod_database_t *db, dico_result_t res,
     struct dico_database_module *mp = db->instance->module;
     for (i = 0; i < count; i++) {
 	dico_stream_t ostr;
+	dico_assoc_list_t hdr = NULL;
+	
 	stream_printf(stream, "151 \"%s\" %s \"%s\"\r\n",
 		      word, db->name, descr ? descr : "");
-	ostr = dicod_ostream_create(stream, db->mime_headers);
+	if (mp->dico_result_headers) {
+	    if (db->mime_headers)
+		hdr = dico_assoc_dup(db->mime_headers);
+	    else
+		dico_header_parse(&hdr, NULL);
+	    mp->dico_result_headers(res, hdr);
+	    ostr = dicod_ostream_create(stream, hdr);
+	} else
+	    ostr = dicod_ostream_create(stream, db->mime_headers);
 	mp->dico_output_result(res, i, ostr);
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);
 	dico_stream_write(stream, "\r\n.\r\n", 5);
+	dico_assoc_destroy(&hdr);
     }
     dicod_free_database_descr(db, descr);
 }

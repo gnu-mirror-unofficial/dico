@@ -143,6 +143,10 @@
 (define (result-count rh)
   (length (cdr rh)))
 
+(define (result-headers rh hdr)
+  (list (cons "Content-Type" "text/plain; charset=UTF-8")
+	(cons "Content-Transfer-Encoding" "quoted-printable")))
+
 (define-public (example-init arg)
   (list (cons "open" open-module)
         (cons "descr" descr)
@@ -151,8 +155,8 @@
         (cons "define" define-word)
         (cons "match" match-word)
         (cons "output" output)
-        (cons "result-count" result-count)))
-
+        (cons "result-count" result-count)
+	(cons "result-headers" result-headers)))
 ;;
 (dico-register-strat "suffix" "Match word suffixes")
 (dico-register-markup "html")

@@ -30,7 +30,9 @@ struct dico_assoc {
 #define DICO_ASSOC_MULT 0x02
 
 dico_assoc_list_t dico_assoc_create(int flags);
+dico_assoc_list_t dico_assoc_dup(dico_assoc_list_t src);
 void dico_assoc_destroy(dico_assoc_list_t *passoc);
+int dico_assoc_clear(dico_assoc_list_t assoc);
 int dico_assoc_add(dico_assoc_list_t assoc,
 		   const char *key, const char *value,
 		   size_t count, int replace);

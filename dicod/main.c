@@ -612,8 +612,9 @@ mime_headers_cb (enum cfg_callback_command cmd,
 		     strerror(errno));
 
     if (enc = dico_assoc_find(*pasc, CONTENT_TRANSFER_ENCODING_HEADER)) {
-        if (!(strcmp (enc, "quoted-printable") == 0
-	      || strcmp (enc, "base64") == 0)) 
+        if (!(strcmp(enc, "quoted-printable") == 0
+	      || strcmp(enc, "base64") == 0
+	      || strcmp(enc, "8bit") == 0))
 	    config_error(locus, 0, _("unknown encoding type: %s"), enc);
     }
     

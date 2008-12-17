@@ -53,7 +53,8 @@ print_headers(struct ostream *ostr)
     
     if (rc == 0
 	&& (enc = dico_assoc_find(ostr->headers,
-				  CONTENT_TRANSFER_ENCODING_HEADER))) {
+				  CONTENT_TRANSFER_ENCODING_HEADER))
+	&& strcmp(enc, "8bit")) {
 	dico_stream_t str = dico_codec_stream_create(enc,
 						     FILTER_ENCODE,
 						     ostr->transport);

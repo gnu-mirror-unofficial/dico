@@ -581,10 +581,11 @@ enum guile_proc_ind {
     output_proc,
     result_count_proc,
     compare_count_proc,
-    free_result_proc
+    free_result_proc,
+    result_headers_proc,
 };
 
-#define MAX_PROC (free_result_proc+1)
+#define MAX_PROC (result_headers_proc+1)
 
 static char *guile_proc_name[] = {
     "open",
@@ -597,7 +598,8 @@ static char *guile_proc_name[] = {
     "output",
     "result-count",
     "compare-count",
-    "free-result"
+    "free-result",
+    "result-headers"
 };
 
 typedef SCM guile_vtab[MAX_PROC];
@@ -854,7 +856,48 @@ argv_to_scm(int argc, char **argv)
     }
     return scm_first;
 }
- 
+
+static SCM
+assoc_to_scm(dico_assoc_list_t assoc)
+{
+    SCM scm_first = SCM_EOL, scm_last;
+    dico_iterator_t itr;
+    struct dico_assoc *p;
+	
+    itr = dico_assoc_iterator(assoc);
+    for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) {
+	SCM new = scm_cons(scm_cons(SCM_IM_QUOTE,
+				    scm_cons(scm_makfrom0str(p->key),
+					     scm_makfrom0str(p->value))), 
+			   SCM_EOL);
+	if (scm_first == SCM_EOL) 
+	    scm_last = scm_first = new;
+	else {
+	    SCM_SETCDR(scm_last, new);
+	    scm_last = new;
+	}
+    }
+    dico_iterator_destroy(&itr);
+    return scm_first;
+}
+
+static void
+scm_to_assoc(dico_assoc_list_t assoc, SCM scm)
+{
+    dico_assoc_clear(assoc);
+
+    for (; scm != SCM_EOL && scm_is_pair(scm); scm = SCM_CDR(scm)) {
+	SCM elt = SCM_CAR(scm);
+
+	if (!scm_is_pair(elt)) {
+	    scm_misc_error(NULL, "Wrong element type: ~S", scm_list_1(elt));
+	}
+	dico_assoc_append(assoc, scm_to_locale_string(SCM_CAR(elt)),
+			  scm_to_locale_string(SCM_CDR(elt)));
+    }
+}
+
+
 static int
 mod_open(dico_handle_t dp)
 {
@@ -914,11 +957,9 @@ scm_to_langlist(SCM scm, SCM procsym)
 	list = dico_list_create();
 	dico_list_append(list, scm_to_locale_string(scm));
     } else if (scm_is_pair(scm)) {
-	SCM x;
 	list = dico_list_create();
-	for (x = SCM_CAR(scm); x != SCM_EOL && scm_is_pair(x);
-	     x = SCM_CDR(x)) 
-	    dico_list_append(list, scm_to_locale_string(SCM_CAR(x)));
+	for (; scm != SCM_EOL && scm_is_pair(scm); scm = SCM_CDR(scm))
+	    dico_list_append(list, scm_to_locale_string(SCM_CAR(scm)));
     } else 
 	rettype_error(procsym);
     return list;
@@ -1090,6 +1131,28 @@ mod_free_result(dico_result_t rp)
     free(gres);
 }
 
+static int
+mod_result_headers (dico_result_t rp, dico_assoc_list_t hdr)
+{
+    struct guile_result *gres = (struct guile_result *)rp;
+    SCM proc = gres->db->vtab[result_headers_proc];
+    
+    if (proc) {
+	SCM res;
+	
+	if (guile_call_proc(&res, proc,
+			    scm_list_2(scm_cons(SCM_IM_QUOTE, gres->result),
+				       scm_cons(SCM_IM_QUOTE,assoc_to_scm(hdr)))))
+	    return 1;
+	if (!scm_is_pair(res)) {
+	    rettype_error(proc);
+	    return 1;
+	}
+	scm_to_assoc(hdr, res);
+    }
+    return 0;
+}
+
 struct dico_database_module DICO_EXPORT(guile, module) = {
     DICO_MODULE_VERSION,
     DICO_CAPA_NONE,
@@ -1106,5 +1169,6 @@ struct dico_database_module DICO_EXPORT(guile, module) = {
     mod_output_result,
     mod_result_count,
     mod_compare_count,
-    mod_free_result
+    mod_free_result,
+    mod_result_headers
 };

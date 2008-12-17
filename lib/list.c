@@ -64,10 +64,33 @@ dico_list_create()
     return p;
 }
 
+int
+dico_list_clear(struct dico_list *list)
+{
+    struct list_entry *p;
+
+    if (!list) {
+	errno = EINVAL;
+	return 1;
+    }
+    
+    p = list->head;
+    list->head = list->tail = NULL;
+    list->count = 0;
+    
+    while (p) {
+	struct list_entry *next = p->next;
+	if (list->free_item)
+	    list->free_item(p->data, list->free_data);
+	free(p);
+	p = next;
+    }
+    return 0;
+}
+
 void
 dico_list_destroy(struct dico_list **plist)
 {
-    struct list_entry *p;
     struct dico_list *list;
     
     if (!plist || !*plist)
@@ -76,14 +99,7 @@ dico_list_destroy(struct dico_list **plist)
     list = *plist;
     *plist = NULL;
 
-    p = list->head;
-    while (p) {
-	struct list_entry *next = p->next;
-	if (list->free_item)
-	    list->free_item(p->data, list->free_data);
-	free(p);
-	p = next;
-    }
+    dico_list_clear(list);
     free(list);
 }
 
@@ -184,7 +200,7 @@ dico_iterator_next(dico_iterator_t ip)
 int
 dico_iterator_remove_current(dico_iterator_t ip, void **pptr)
 {
-    return dico_list_remove(ip->list, ip->cur->data, pptr);
+    return _dico_list_remove(ip->list, ip->cur->data, NULL, pptr);
 }
 
 void

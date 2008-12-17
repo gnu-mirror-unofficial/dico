@@ -118,17 +118,20 @@ collect_line(const char **ptext, dico_assoc_list_t asc, struct hdr_buf *hbuf)
 int
 dico_header_parse(dico_assoc_list_t *pasc, const char *text)
 {
-    int rc;
+    int rc = 0;
     struct hdr_buf hbuf = HDR_BUF_INIT;
     dico_assoc_list_t asc = dico_assoc_create(DICO_ASSOC_CI|DICO_ASSOC_MULT);
     
     if (!asc)
 	return 1;
 
-    while (*text && *text != '\n'
-	   && (rc = collect_line(&text, asc, &hbuf)) == 0)
-	;
-    hdr_buf_free(&hbuf);
+    if (text) {
+	while (*text && *text != '\n'
+	       && (rc = collect_line(&text, asc, &hbuf)) == 0)
+	    ;
+	hdr_buf_free(&hbuf);
+    }
+
     if (rc) {
 	int ec = errno;
 	dico_assoc_destroy(&asc);

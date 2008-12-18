@@ -848,6 +848,78 @@ mod_free_result (dico_result_t rp)
     free (gres);
 }
 
+static PyObject *
+_assoc_to_dict (dico_assoc_list_t assoc)
+{
+    PyObject *py_dict;
+    dico_iterator_t itr;
+    struct dico_assoc *p;
+
+    py_dict = PyDict_New ();
+    if (py_dict) {
+	itr = dico_assoc_iterator (assoc);
+	for (p = dico_iterator_first (itr); p; p = dico_iterator_next (itr)) {
+	    PyDict_SetItemString (py_dict, p->key,
+				  PyString_FromString (p->value));
+	}
+	dico_iterator_destroy (&itr);
+	return _ro (py_dict);
+    }
+    return NULL;
+}
+
+static void
+_dict_to_assoc (dico_assoc_list_t assoc, PyObject *py_dict)
+{
+    PyObject *py_key, *py_value;
+    Py_ssize_t py_pos = 0;
+
+    dico_assoc_clear (assoc);
+
+    while (PyDict_Next (py_dict, &py_pos, &py_key, &py_value)) {
+	char *key, *val;
+	key = strdup (PyString_AsString (py_key));
+	val = strdup (PyString_AsString (py_value));
+	dico_assoc_append (assoc, key, val);
+    }
+}
+
+static int
+mod_result_headers (dico_result_t rp, dico_assoc_list_t hdr)
+{
+    PyObject *py_dict, *py_args, *py_fnc, *py_res;
+    struct python_result *gres = (struct python_result *)rp;
+    struct _python_database *db = (struct _python_database *)gres->db;
+
+    PyThreadState_Swap (db->py_ths);
+    if (!PyObject_HasAttrString (db->py_instance, "result_headers"))
+	return 0;
+
+    py_dict = _assoc_to_dict (hdr);
+
+    py_args = PyTuple_New (2);
+    PyTuple_SetItem (py_args, 0, gres->result);
+    PyTuple_SetItem (py_args, 1, py_dict);
+    Py_INCREF (gres->result);
+
+    py_fnc = PyObject_GetAttrString (db->py_instance, "result_headers");
+    if (py_fnc && PyCallable_Check (py_fnc)) {
+	py_res = PyObject_CallObject (py_fnc, py_args);
+	Py_DECREF (py_args);
+	Py_DECREF (py_fnc);
+	if (py_res && PyDict_Check (py_res)) {
+	    _dict_to_assoc (hdr, py_res);
+	    Py_DECREF (py_res);
+	}
+	else if (PyErr_Occurred ()) {
+	    PyErr_Print ();
+	    return 1;
+	}
+    }
+    Py_DECREF (py_dict);
+    return 0;
+}
+
 struct dico_database_module DICO_EXPORT(python, module) = {
     DICO_MODULE_VERSION,
     DICO_CAPA_NONE,
@@ -864,5 +936,6 @@ struct dico_database_module DICO_EXPORT(python, module) = {
     mod_output_result,
     mod_result_count,
     mod_compare_count,
-    mod_free_result
+    mod_free_result,
+    mod_result_headers
 };

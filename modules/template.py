@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+#
 # This file is part of GNU Dico.
 # Copyright (C) 2008 Wojciech Polak
 # 
@@ -13,6 +15,8 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
+
+import dico # virtual module provided by Dicod.
 
 class DicoModule:
 
@@ -60,6 +64,10 @@ class DicoModule:
         """Return the number of comparisons performed
         when constructing the result set."""
         return 0
+
+    def result_headers (self, rh, hdr):
+        """Optional. Return a dictionary of MIME headers."""
+        return hdr
 
     def free_result (self, rh):
         """Free any resources used by the result set."""

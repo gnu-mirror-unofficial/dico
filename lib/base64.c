@@ -86,15 +86,26 @@ dico_base64_encode (const char *iptr, size_t isize,
     if (isize <= 3)
 	pad = 1;
     while ((consumed + 3 <= isize && nbytes + 4 <= osize) || pad) {
-	*optr++ = b64_table[ptr[0] >> 2];
-	*optr++ = b64_table[((ptr[0] << 4) +
-			     (--isize ? (ptr[1] >> 4): 0)) & 0x3f];
-	*optr++ = isize ?
-	             b64_table[((ptr[1] << 2)
-				+ (--isize ? (ptr[2] >> 6) : 0 )) & 0x3f] : '=';
-	*optr++ = isize ? b64_table[ptr[2] & 0x3f] : '=';
+	unsigned char c1 = 0, c2 = 0, x = '=', y = '=';
+	
+        *optr++ = b64_table[ptr[0] >> 2];
+	consumed++;
+	switch (isize - consumed) {
+	default:
+	    consumed++;
+	    y = b64_table[ptr[2] & 0x3f];
+	    c2 = ptr[2] >> 6;
+	case 1:
+	    consumed++;
+	    x = b64_table[((ptr[1] << 2) + c2) & 0x3f];
+	    c1 = (ptr[1] >> 4);
+	case 0:
+	    *optr++ = b64_table[((ptr[0] << 4) + c1) & 0x3f];
+	    *optr++ = x;
+	    *optr++ = y;
+	}
+	
 	ptr += 3;
-	consumed += 3;
 	nbytes += 4;
 	pad = 0;
     }

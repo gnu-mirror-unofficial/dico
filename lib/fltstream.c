@@ -165,7 +165,7 @@ filter_write(void *data, const char *buf, size_t size, size_t *pret)
 	}
 	buf += rest;
 	size -= rest;
-	
+
 	rc = filter_write0(fs, fs->inbuf, fs->inlevel, &wrs);
 	if (rc)
 	    return rc;

@@ -179,7 +179,7 @@ dico_qp_encode(const char *iptr, size_t isize, char *optr, size_t osize,
 dico_stream_t
 dico_qp_stream_create(dico_stream_t str, int mode)
 {
-    return filter_stream_create(str, 4, 76,
+    return filter_stream_create(str, 4, 0,
 				mode == FILTER_ENCODE ?
 				  dico_qp_encode : dico_qp_decode,
 				mode);

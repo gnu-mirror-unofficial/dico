@@ -30,6 +30,8 @@ struct filter_stream {
     size_t max_line_length;
     size_t line_length;
     filter_xcode_t xcode;
+    char *inbuf;
+    size_t inlevel;
 };
 
 static int
@@ -49,10 +51,8 @@ filter_read(void *data, char *buf, size_t size, size_t *pret)
     }
     
     if (fs->level) {
-	rc = fs->xcode(fs->buf, fs->level, buf, size, &rdsize,
-		       fs->max_line_length, &fs->line_length);
-	if (rc)
-	    return rc;
+	rc = fs->xcode(fs->buf, fs->level, buf, size, &rdsize);
+	/* FIXME */
 	memmove(fs->buf, fs->buf + rc, fs->level - rc);
 	fs->level = rc;
 	*pret = rdsize;
@@ -65,28 +65,130 @@ filter_read(void *data, char *buf, size_t size, size_t *pret)
 }
 
 static int
-filter_write(void *data, const char *buf, size_t size, size_t *pret)
+filter_flush(struct filter_stream *fs)
 {
-    struct filter_stream *fs = data;
+    if (fs->level == 0)
+	return 0;
+    else if (fs->max_line_length == 0) 
+	return dico_stream_write(fs->transport, fs->buf, fs->level);
+    else {
+	char *buf = fs->buf;
+	size_t level = fs->level;
+	while (level) {
+	    int rc;
+	    size_t rest = fs->max_line_length - fs->line_length;
+	    size_t len;
+	    int skip = 0;
+	    char *p = memchr(buf, '\n', level);
+
+	    if (rest > level)
+		rest = level;
+	    
+	    if (p) {
+		len = p - buf;
+		if (len > rest)
+		    len = rest;
+		else
+		    skip = 1;
+	    } else
+		len = rest;
+
+	    rc = dico_stream_write(fs->transport, buf, len);
+	    if (rc)
+		return 1;
+	    fs->line_length += len;
+	    if (fs->line_length == fs->max_line_length) {
+		fs->line_length = 0;
+		rc = dico_stream_write(fs->transport, "\r\n", 2);
+		if (rc)
+		    return 1;
+	    }
+
+	    if (skip)
+		len++;
+	    buf += len;
+	    level -= len;
+	}
+	fs->level = 0;
+    }
+    return 0;
+}
+
+static int
+filter_write0(struct filter_stream *fs, const char *buf, size_t size,
+	      size_t *pret)
+{
     size_t wrsize;
     int rc;
     
-    if (fs->level == sizeof(fs->buf)) {
-	rc = dico_stream_write(fs->transport, fs->buf, fs->level);
+    if (fs->level >= sizeof(fs->buf) - fs->min_level) {
+	rc = filter_flush(fs);
 	if (rc)
 	    return rc;
 	fs->level = 0;
     }
 
-    rc = fs->xcode(buf, size, fs->buf + fs->level,
-		   sizeof(fs->buf) - fs->level, &wrsize,
-		   fs->max_line_length, &fs->line_length);
+    for (;;) {
+	rc = fs->xcode(buf, size, fs->buf + fs->level,
+		       sizeof(fs->buf) - fs->level, &wrsize);
+	if (rc == 0) {
+	    rc = filter_flush(fs);
+	    if (rc)
+		return rc;
+	    fs->level = 0;
+	} else
+	    break;
+    }
     fs->level += wrsize;
-    if (rc > size) 
-	rc = size;
     *pret = rc;
     return 0;
 }
+
+static int
+filter_write(void *data, const char *buf, size_t size, size_t *pret)
+{
+    struct filter_stream *fs = data;
+    size_t ret = 0;
+    size_t wrs;
+    int rc;
+    
+    if (size < fs->min_level
+	|| (fs->inlevel && fs->inlevel < fs->min_level)) {
+	size_t rest = fs->min_level - fs->inlevel;
+	if (rest > size)
+	    rest = size;
+	memcpy(fs->inbuf + fs->inlevel, buf, rest);
+	fs->inlevel += rest;
+	if (fs->inlevel < fs->min_level) {
+	    *pret = rest;
+	    return 0;
+	}
+	buf += rest;
+	size -= rest;
+	
+	rc = filter_write0(fs, fs->inbuf, fs->inlevel, &wrs);
+	if (rc)
+	    return rc;
+	if (wrs != fs->inlevel) {
+	    /*FIXME: errno = EIO; */
+	    return 1;
+	}
+	fs->inlevel = 0;
+	ret = rest;
+    }
+    if (size) 
+	rc = filter_write0(fs, buf, size, &wrs);
+    else {
+	rc = 0;
+	wrs = 0;
+    }
+    if (rc == 0) {
+	ret += wrs;
+	*pret = ret;
+    }
+    return 0;
+}
+	
 
 static int
 filter_wr_flush(void *data)
@@ -95,14 +197,29 @@ filter_wr_flush(void *data)
     int rc = 0;
     
     if (fs->level) {
-	rc = dico_stream_write(fs->transport, fs->buf, fs->level);
+	int nl = fs->buf[fs->level-1] == '\n';
+	
+	rc = filter_flush(fs);
 	if (rc == 0) {
-	    if (fs->buf[fs->level-1] != '\n')
+	    if (fs->inlevel) {
+		size_t wrs;
+		filter_write0(fs, fs->inbuf, fs->inlevel, &wrs);
+		nl = fs->buf[fs->level-1] == '\n';
+		rc = filter_flush(fs);
+	    }
+	    if (!nl)
 		rc = dico_stream_write(fs->transport, "\r\n", 2);
 	}
-	fs->level = 0;
     }
     return rc;
+}
+
+static int
+filter_stream_destroy(void *data)
+{
+    struct filter_stream *fs = data;
+    free(fs->inbuf);
+    return 0;
 }
 
 dico_stream_t
@@ -129,8 +246,15 @@ filter_stream_create(dico_stream_t str,
     }
     
     if (mode == FILTER_ENCODE) {
+	fs->inbuf = malloc(min_level);
+	if (!fs->inbuf) {
+	    dico_stream_destroy(&stream);
+	    return NULL;
+	}
+	fs->inlevel = 0;
 	dico_stream_set_write(stream, filter_write);
 	dico_stream_set_flush(stream, filter_wr_flush);
+	dico_stream_set_destroy(stream, filter_stream_destroy);
     } else {
 	dico_stream_set_read(stream, filter_read);
     }

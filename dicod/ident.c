@@ -179,8 +179,7 @@ decode64_buf(const char *name, unsigned char **pbuf, size_t *psize)
     
     dico_base64_decode(name, namelen,
 		       buf, bufsize,
-		       &size,
-		       0, NULL);
+		       &size);
     buf[size] = 0;
     *pbuf = realloc(buf, size + 1);
     *psize = size;

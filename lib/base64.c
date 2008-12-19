@@ -37,9 +37,7 @@ dico_base64_input(char c)
 
 int
 dico_base64_decode(const char *iptr, size_t isize, char *optr, size_t osize,
-		   size_t *pnbytes,
-		   size_t line_max DICO_ARG_UNUSED,
-		   size_t *pline_len DICO_ARG_UNUSED)
+		   size_t *pnbytes)
 {
     int i = 0, tmp = 0, pad = 0;
     size_t consumed = 0;
@@ -78,24 +76,16 @@ dico_base64_decode(const char *iptr, size_t isize, char *optr, size_t osize,
 int
 dico_base64_encode (const char *iptr, size_t isize,
 		    char *optr, size_t osize,
-		    size_t *pnbytes, size_t line_max, size_t *pline_len)
+		    size_t *pnbytes)
 {
     size_t consumed = 0;
     int pad = 0;
     const unsigned char* ptr = (const unsigned char*) iptr;
     size_t nbytes = 0;
-    size_t line_len = *pline_len;
   
     if (isize <= 3)
 	pad = 1;
     while ((consumed + 3 <= isize && nbytes + 4 <= osize) || pad) {
-	if (line_max && line_len == line_max) {
-	    *optr++ = '\n';
-	    nbytes++;
-	    line_len = 0;
-	    if (nbytes + 4 > osize)
-		break;
-	}
 	*optr++ = b64_table[ptr[0] >> 2];
 	*optr++ = b64_table[((ptr[0] << 4) +
 			     (--isize ? (ptr[1] >> 4): 0)) & 0x3f];
@@ -106,11 +96,9 @@ dico_base64_encode (const char *iptr, size_t isize,
 	ptr += 3;
 	consumed += 3;
 	nbytes += 4;
-	line_len +=4;
 	pad = 0;
     }
 
-    *pline_len = line_len;
     *pnbytes = nbytes;
     return consumed;
 }
@@ -118,7 +106,7 @@ dico_base64_encode (const char *iptr, size_t isize,
 dico_stream_t
 dico_base64_stream_create(dico_stream_t str, int mode)
 {
-    return filter_stream_create(str, 4, 76,
+    return filter_stream_create(str, 3, 76,
 				mode == FILTER_ENCODE ?
 				  dico_base64_encode : dico_base64_decode,
 				mode);

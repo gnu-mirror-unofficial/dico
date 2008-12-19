@@ -22,8 +22,7 @@
 #define FILTER_ENCODE 0
 #define FILTER_DECODE 1
 
-typedef int (*filter_xcode_t) (const char *, size_t,
-			       char *, size_t, size_t *, size_t, size_t *);
+typedef int (*filter_xcode_t) (const char *, size_t, char *, size_t, size_t *);
 
 dico_stream_t filter_stream_create(dico_stream_t str,
 				   size_t min_level,
@@ -40,18 +39,16 @@ int dico_base64_input(char c);
 
 int dico_base64_decode(const char *iptr, size_t isize,
 		       char *optr, size_t osize,
-		       size_t *pnbytes,
-		       size_t line_max, size_t *pline_len);
+		       size_t *pnbytes);
 int dico_base64_encode(const char *iptr, size_t isize,
 		       char *optr, size_t osize,
-		       size_t *pnbytes, size_t line_max, size_t *pline_len);
+		       size_t *pnbytes);
 int dico_qp_decode(const char *iptr, size_t isize,
 		   char *optr, size_t osize,
-		   size_t *pnbytes,
-		   size_t line_max, size_t *pline_len);
+		   size_t *pnbytes);
 int dico_qp_encode(const char *iptr, size_t isize,
 		   char *optr, size_t osize,
-		   size_t *pnbytes, size_t line_max, size_t *pline_len);
+		   size_t *pnbytes);
 
 
 #endif

@@ -25,9 +25,7 @@
 
 int
 dico_qp_decode(const char *iptr, size_t isize, char *optr, size_t osize,
-	       size_t *pnbytes,
-	       size_t line_max DICO_ARG_UNUSED,
-	       size_t *pline_len DICO_ARG_UNUSED)
+	       size_t *pnbytes)
 {
     char c;
     int last_char = 0;
@@ -122,14 +120,11 @@ dico_qp_decode(const char *iptr, size_t isize, char *optr, size_t osize,
 
 int
 dico_qp_encode(const char *iptr, size_t isize, char *optr, size_t osize,
-	       size_t *pnbytes, 
-	       size_t line_max,
-	       size_t *pline_len)
+	       size_t *pnbytes)
 {
     unsigned int c;
     size_t consumed = 0;
     size_t nbytes = 0;
-    size_t line_len = *pline_len;
     static const char _hexdigits[] = "0123456789ABCDEF";
 
     nbytes = 0;
@@ -149,20 +144,6 @@ dico_qp_encode(const char *iptr, size_t isize, char *optr, size_t osize,
 	               || c == '\t'
 	               || c == '\n';
 
-	if (line_max &&
-	    (line_len == line_max
-	     || (c == '\n' && consumed && ISWS(optr[-1]))
-	     || (!simple_char && line_len >= line_max - 3))) {
-	    /* cutting a qp line requires two bytes */
-	    if (nbytes + 2 > osize) 
-		break;
-	    
-	    *optr++ = '=';
-	    *optr++ = '\n';
-	    nbytes += 2;
-	    line_len = 0;
-	}
-	  
 	if (simple_char) {
 	    /* a non-quoted character uses up one byte */
 	    if (nbytes + 1 > osize) 
@@ -170,13 +151,10 @@ dico_qp_encode(const char *iptr, size_t isize, char *optr, size_t osize,
 
 	    *optr++ = c;
 	    nbytes++;
-	    line_len++;
 	    
 	    iptr++;
 	    consumed++;
 
-	    if (c == '\n')
-		line_len = 0;
 	} else {
 	    /* a quoted character uses up three bytes */
 	    if (nbytes + 3 > osize) 
@@ -187,7 +165,6 @@ dico_qp_encode(const char *iptr, size_t isize, char *optr, size_t osize,
 	    *optr++ = _hexdigits[c & 0xf];
 
 	    nbytes += 3;
-	    line_len += 3;
 
 	    /* we've actuall used up one byte of input */
 	    iptr++;
@@ -195,7 +172,6 @@ dico_qp_encode(const char *iptr, size_t isize, char *optr, size_t osize,
 	}
     }
     *pnbytes = nbytes;
-    *pline_len = line_len;
     return consumed;
 }
 

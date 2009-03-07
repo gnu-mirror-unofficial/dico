@@ -1,0 +1,7 @@
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+  <ShortName>GNU Dico WebSearch</ShortName>
+  <Description>GNU Dico WebSearch Interface</Description>
+  <Url type="text/html" method="get" template="http://dicoweb.gnu.org.ua/?q={searchTerms}"/>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Image width="16" height="16">http://dicoweb.gnu.org.ua/favicon.ico</Image>
+</OpenSearchDescription>

@@ -1,5 +1,5 @@
 /* This file is part of GNU Dico.
-   Copyright (C) 2008 Sergey Poznyakoff
+   Copyright (C) 2008, 2009 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -863,7 +863,7 @@ printdef(dico_stream_t str, struct dictdb *db, const struct index_entry *ep)
     int rc;
     
     if (dico_stream_seek(db->stream, ep->offset, SEEK_SET) < 0) {
-	dico_log(L_ERR, 0, _("%s: seak error: %s"), db->basename,
+	dico_log(L_ERR, 0, _("%s: seek error: %s"), db->basename,
 		 dico_stream_strerror(db->stream,
 				      dico_stream_last_error(db->stream)));
 	return;

@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 1998-2000, 2008 Sergey Poznyakoff
+# Copyright (C) 1998-2000, 2008, 2009 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,10 +19,10 @@ inputdictpath=@inputdictpath@
 
 ACLOCAL_AMFLAGS = -I m4 -I am
 
-SUBDIRS=include utils gnu lib libltdl dicod modules dico makedict tests doc po
-#FIXME: add these when ready: client fonts
+SUBDIRS=include utils gnu lib libltdl dicod modules dico tests doc po
+#FIXME: add these when ready: makedict client fonts
 
-EXTRA_DIST = ChangeLog.2008
+EXTRA_DIST = ChangeLog.2008 app dicoweb
 
 gen_start_date = 2008-05-05
 .PHONY: make-ChangeLog

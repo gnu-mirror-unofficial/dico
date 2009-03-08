@@ -1,5 +1,5 @@
 /* This file is part of GNU Dico.
-   Copyright (C) 2008 Sergey Poznyakoff
+   Copyright (C) 2008, 2009 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -407,6 +407,8 @@ _acl_check_cb(void *item, void *data)
     if (debug_level > 10) {
 	dico_log(L_DEBUG, 0, "%s:%d: %s",
 		 ent->locus.file, ent->locus.line,
+		 /* TRANSLATIONS: `MATCHES' is the verb `match' in 2nd person.
+		    E.g., in French: CONCORD AVEC */
 		 result ? _("MATCHES") : _("does not match"));
     }
     if (result) {

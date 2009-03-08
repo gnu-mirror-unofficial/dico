@@ -1,6 +1,6 @@
 dnl Process this file with -*- autoconf -*- to produce a configure script. 
 # This file is part of GNU Dico
-# Copyright (C) 1998-2000, 2008 Sergey Poznyakoff
+# Copyright (C) 1998-2000, 2008, 2009 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@ dnl Process this file with -*- autoconf -*- to produce a configure script.
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-AC_INIT([GNU Dico], 1.99.96, [bug-dico@gnu.org.ua])
+AC_INIT([GNU dico], 1.99.97, [bug-dico@gnu.org.ua])
 AC_CONFIG_SRCDIR([dicod/main.c])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
@@ -431,7 +431,6 @@ AC_CONFIG_FILES([Makefile
 		 modules/guile/Makefile
 		 modules/python/Makefile
 		 dico/Makefile
-                 makedict/Makefile
 		 tests/Makefile
 		 doc/Makefile
 		 po/Makefile.in])

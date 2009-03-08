@@ -1,0 +1,3 @@
+[submodule "app/python/wit"]
+	path = app/python/wit
+	url = ssh://git.gnu.org.ua/gitroot/wit.git

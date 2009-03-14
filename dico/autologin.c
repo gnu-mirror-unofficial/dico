@@ -157,7 +157,7 @@ parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
     fp = fopen (filename, "r");
     if (!fp) {
 	if (errno != ENOENT) {
-	    dico_log(L_ERR, errno, _("Cannot open netrc file %s"),
+	    dico_log(L_ERR, errno, _("Cannot open autologin file %s"),
 		     filename);
 	}
 	return 1;

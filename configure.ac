@@ -353,7 +353,7 @@ if test "$status_readline" != "no"; then
     if test "$status_readline" = "yes"; then
       AC_MSG_WARN(readline requested but does not seem to be installed)
     fi
-    status_readline = "no"
+    status_readline="no"
   fi
 fi
 

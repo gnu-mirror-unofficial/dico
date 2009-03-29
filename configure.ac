@@ -15,7 +15,7 @@ dnl Process this file with -*- autoconf -*- to produce a configure script.
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-AC_INIT([GNU dico], 1.99.97, [bug-dico@gnu.org.ua])
+AC_INIT([GNU dico], 2.0, [bug-dico@gnu.org])
 AC_CONFIG_SRCDIR([dicod/main.c])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR([build-aux])

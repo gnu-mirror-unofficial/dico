@@ -307,6 +307,7 @@ options are specific for Dico.  We will describe them in this chapter.
 
 @menu
 * Default Preprocessor::
+* Default Server::
 * Guile Support::
 * Python Support::
 * Other Settings::
@@ -343,6 +344,24 @@ recommend to always use it in @env{DEFAULT_PREPROCESSOR} value.
 Finally, if you do not wish to use preprocessor at all, you can
 disable it using @option{--without-preprocessor} option to
 @command{configure}.
+
+@node Default Server
+@section Default Server
+@cindex dict server, default
+@vrindex DEFAULT_DICT_SERVER
+
+Unless given an explicit dictionary server, the client program @command{dico}
+attempts to connect the server @indicateurl{dict://dico.gnu.org.ua}.  You may
+change this default by defining the @env{DEFAULT_DICT_SERVER} variable.  For
+example, the following command line selects @samp{dict.org} as the default
+server:
+
+     $ ./configure DEFAULT_DICT_SERVER=dict.org
+
+The value of the @env{DEFAULT_DICT_SERVER} variable can be either a
+hostname or IP address of the server.  It can also be followed by a
+colon and a port specification, either as a decimal number or as
+a service name from @file{/etc/services}.
 
 @node Guile Support
 @section Guile Support
@@ -2274,6 +2293,24 @@ means that the daemon is able to serve only one client at a time.  The
 @option{--single-process} option is provided for debugging purposes
 only.  Never use it in production environment.
 
+@opsummary{transcript}
+@item -T
+@itemx --transcript
+Enable session transcript.  This instructs @command{dicod} to log
+all commands it receives and all responses it sends during the
+session.  Transcript is logged via the default logging channel
+(@pxref{Logging and Debugging}).  If logging via syslog, the
+@samp{debug} priority is used.
+
+See also @ref{Session Transcript}, for a description of the similar
+mode in @command{dico}, the client program.
+
+@opsummary{no-transcript}
+@item --no-transcript
+Disable transcript mode.  This is the default.  Use this option if you
+wish to temporarly disable transcript mode, enabled in the
+configuration file (@pxref{Logging and Debugging, transcript}).
+
 @opsummary{inetd}
 @item -i
 @itemx --inetd
@@ -2336,7 +2373,7 @@ handler} basis.
 
   GNU Dico version @value{VERSION} is shipped with the following modules:
 @samp{Outline}, @samp{Dictorg}, @samp{Guile}, and @samp{Python}.  The
-@samp{Outpline} module handles databases written in Emacs Outline
+@samp{Outline} module handles databases written in Emacs Outline
 format.  It is useful for small databases.  The @samp{Dictorg} module
 handles databases in format designed by @cite{@acronym{DICT} development
 group}.  The most existing free databases are written in this format.
@@ -2582,8 +2619,16 @@ should be searched for Scheme modules and libraries.  The @var{path}
 must be a list of directory names, separated by colons.
 
   This option modifies the value of Guile's @code{%load-path}
-variable.  @xref{Build Config, %load-path, {Configuration\, Build and
-Installation}, guile, The Guile Reference Manual}.
+variable.
+@c FIXME: Texi2html is unable to handle \, in the section title. This
+@c conditional overrides this bug.
+@ifnothtml
+@xref{Build Config, %load-path,
+{Configuration\, Build and Installation}, guile, The Guile Reference Manual}.
+@end ifnothtml
+@ifhtml
+See the section @uref{http://www.gnu.org/software/guile/manual/html_node/Build-Config.html, Configuration and Installation} in the Guile Reference Manual.
+@end ifhtml
 
 @end table
 
@@ -2709,7 +2754,7 @@ load-module @var{mod-name} @{
 @kwindex init-fun
   Upon module initialization stage, the module attempts to load the
 file named @file{@var{script}}.  The file is loaded using
-@code{primitive-load} call (@pxref{Load, primitive-load, Loading,
+@code{primitive-load} call (@pxref{Loading, primitive-load, Loading,
 guile, The Guile Reference Manual}, i.e. the load paths are not
 searched, so @var{script} must be an absolute path name.  The
 @code{init-fun} parameter supplies the name of an @dfn{initialization
@@ -2900,11 +2945,6 @@ Virtual Table: @code{(cons "result-count" result-count)}@*
 
 Return the number of elements in the result set @var{resh}.
 @end deffn
-
-@node Python
-@section The @command{python} module.
-@cindex Python
-@UNREVISED
 
 @node Dico Scheme Primitives
 @subsection Dico Scheme Primitives
@@ -3205,6 +3245,11 @@ module initialization function:
   Notice, that in this implementation @samp{close-db} callback was not
 needed. 
 
+@node Python
+@section The @command{python} module.
+@cindex Python
+@UNREVISED
+
 @node Interface
 @chapter Dico Module Interface
 @UNREVISED
@@ -3431,7 +3476,7 @@ $ dico entdeckung
 word @samp{entdeckung} using its default server name and database.  The
 default server name is read from the initialization file
 (@pxref{Initialization File}).  If it is not present, a predefined
-value specified at configuration time (@FIXME-pxref{Building}) is
+value specified at configuration time (@pxref{Default Server}) is
 used.  The default database is @samp{!}, which means ``search in all
 available databases until a match is found, and then display all
 matches in that database''. 
@@ -3700,9 +3745,9 @@ dico> .open gnu.org.ua
   If any or both of its arguments are absent, the @code{open} command
 reuses the value supplied with its previous invocation, or, if it is
 issued for the first time, the default values.  The default for server
-name is @samp{gnu.org.ua}.  It can be changed at configuration time,
-see @FIXME-ref{Building, DEFAULT_DICT_SERVER}.  The default port
-number is 2628.
+name is @samp{gnu.org.ua} and the default port number is 2628.  Both
+values can be changed at configuration time, see @ref{Default Server}
+for a detailed instruction.
 
   Note that you are not required to issue this command.  If it is not
 given, @command{dico} will attempt to connect using its default
@@ -4585,11 +4630,11 @@ Print program version.
 @node Reporting Bugs
 @chapter How to Report a Bug
 
-  Email bug reports to @email{bug-dico@@gnu.org.ua}.  Please include a
-detailed description of the bug and information about the conditions
-under which it occurs, so we can reproduce it.  To facilitate the
-task, the following list shows the basic set of information that is
-needed in order to find the bug:
+  Email bug reports to @email{bug-dico@@gnu.org} or
+@email{bug-dico@@gnu.org.ua}.  Please include a detailed description
+of the bug and information about the conditions under which it occurs,
+so we can reproduce it.  To facilitate the task, the following list
+shows the basic set of information that is needed in order to find the bug:
 
 @itemize
 @item Package version you use.  The output of @command{dicod

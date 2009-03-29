@@ -14,34 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-dicodir=@dicodir@
-inputdictpath=@inputdictpath@
-
 ACLOCAL_AMFLAGS = -I m4 -I am
 
 SUBDIRS=include utils gnu lib libltdl dicod modules dico tests doc po
 #FIXME: add these when ready: makedict client fonts
 
-EXTRA_DIST = ChangeLog.2008 app dicoweb
+EXTRA_DIST = ChangeLog.2008
+
+dist-hook:
+	tar -C $(srcdir) -c -f - --exclude-vcs app dicoweb | \
+	      tar -C $(distdir) -x -f -
 
 gen_start_date = 2008-05-05
-.PHONY: make-ChangeLog
-make-ChangeLog: 
-	if test -d .git; then                                           \
-	  $(top_srcdir)/build-aux/gitlog-to-changelog                   \
-	    --since=$(gen_start_date) |                                 \
-            sed '/<unknown>$$/d' | fmt -s > $(distdir)/cl-t;            \
-	  echo "" >> $(distdir)/cl-t;                                 \
-	  echo "Local Variables:" >> $(distdir)/cl-t;                   \
-	  echo "mode: change-log" >> $(distdir)/cl-t;                   \
-	  echo "version-control: never"  >> $(distdir)/cl-t;            \
-	  echo "buffer-read-only: t" >> $(distdir)/cl-t;                \
-	  echo "End:" >> $(distdir)/cl-t;                               \
-	  rm -f $(distdir)/ChangeLog;                                   \
-	  mv $(distdir)/cl-t $(distdir)/ChangeLog;                      \
-	fi
-
-dist-hook: make-ChangeLog
 
 .PHONY: ChangeLog
 ChangeLog: 

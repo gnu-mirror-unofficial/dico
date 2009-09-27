@@ -25,19 +25,34 @@ dist-hook:
 	tar -C $(srcdir) -c -f - --exclude-vcs app dicoweb | \
 	      tar -C $(distdir) -x -f -
 
-gen_start_date = 2008-05-05
+# Define the following variables in order to use the ChangeLog rule below:
+#  prev_change_log  [optional]  Name of the previous ChangeLog file.
+#  gen_start_date   [optional]  Start ChangeLog from this date.
+#  changelog_dir    [mandatory] Directory where to create ChangeLog
+gen_start_date =
+prev_change_log =
+changelog_dir = .
 
 .PHONY: ChangeLog
 ChangeLog: 
-	if test -d .git; then                                           \
-	  $(top_srcdir)/build-aux/gitlog-to-changelog                   \
-	    --since=$(gen_start_date) |                                 \
-            sed '/<unknown>$$/d' | fmt -s > ChangeLog;                  \
-	  echo "" >> ChangeLog;                                       \
-	  echo "Local Variables:" >> ChangeLog;                         \
-	  echo "mode: change-log" >> ChangeLog;                         \
-	  echo "version-control: never"  >> ChangeLog;                  \
-	  echo "buffer-read-only: t" >> ChangeLog;                      \
-	  echo "End:" >> ChangeLog;                                     \
-        fi
-
+	$(AM_V_GEN)if test -d .git; then                                   \
+	  cmd=$(top_srcdir)/build-aux/gitlog-to-changelog;                 \
+	  if test -n "$(gen_start_date)"; then                             \
+	    cmd="$$cmd --since=\"$(gen_start_date)\"";                     \
+	  fi;                                                              \
+	  $$cmd --format='%s%n%n%b%n' |                                    \
+            sed '/<unknown>$$/d' | fmt -s > $(changelog_dir)/cl-t;         \
+          if test -n "$(prev_change_log)" && test -f "$(prev_change_log)"; \
+	  then                                                             \
+	    echo "" >> $(changelog_dir)/cl-t;                              \
+	    cat "$(prev_change_log)" |                                     \
+	      sed '/^Local Variables:/,/^End:/d' >> $(changelog_dir)/cl-t; \
+	  fi;                                                              \
+	  echo "Local Variables:" >> $(changelog_dir)/cl-t;                \
+	  echo "mode: change-log" >> $(changelog_dir)/cl-t;                \
+	  echo "version-control: never"  >> $(changelog_dir)/cl-t;         \
+	  echo "buffer-read-only: t" >> $(changelog_dir)/cl-t;             \
+	  echo "End:" >> $(changelog_dir)/cl-t;                            \
+	  rm -f $(changelog_dir)/ChangeLog;                                \
+	  mv $(changelog_dir)/cl-t $(changelog_dir)/ChangeLog;             \
+	fi

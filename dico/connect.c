@@ -459,7 +459,7 @@ dict_match(struct dict_connection *conn, char *database, char *strategy,
 	XDICO_DEBUG(1, _("Setting Levenshtein threshold\n"));
 	stream_printf(conn->str, "XLEV %u\n", levenshtein_threshold);
 	dict_read_reply(conn);
-	if (!dict_status_p(conn, "250"))
+	if (dict_status_p(conn, "250"))
 	    conn->levdist = levenshtein_threshold;
 	else {
 	    dico_log(L_WARN, 0, _("Server rejected XLEV command"));

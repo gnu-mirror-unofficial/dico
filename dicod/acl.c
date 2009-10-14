@@ -150,7 +150,6 @@ _parse_sockaddr(struct acl_entry *entry, config_value_t *value)
 		else {
 		    sptr->netmask = 0xfffffffful >> (32 - netlen);
 		    sptr->netmask <<= (32 - netlen);
-		    sptr->netmask = htonl(sptr->netmask);
 		}
 	    } else if (*q == '.') {
 		struct in_addr addr;
@@ -344,8 +343,8 @@ _check_sockaddr(void *item, void *data)
 	    struct sockaddr_in *sin_clt = (struct sockaddr_in *)&client_addr;
 	    struct sockaddr_in *sin_item = (struct sockaddr_in *)&sptr->sa;
 	    
-	    if (ntohl (sin_clt->sin_addr.s_addr) ==
-		(sin_item->sin_addr.s_addr & sptr->netmask)) {
+	    if (sin_item->sin_addr.s_addr ==
+		(ntohl (sin_clt->sin_addr.s_addr) & sptr->netmask)) {
 		*pres = 1;
 		return 1;
 	    }

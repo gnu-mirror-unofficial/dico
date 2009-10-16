@@ -16,6 +16,9 @@
 #  You should have received a copy of the GNU General Public License
 #  along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+SITE_ROOT = os.path.dirname (os.path.realpath (__file__))
+
 DEBUG = True
 TEMPLATE_DEBUG = True
 
@@ -43,7 +46,8 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.file'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Absolute path to the directory that holds media/static files.
-MEDIA_ROOT = '/PATH/TO/dicoweb/static'
+MEDIA_ROOT = os.path.join (SITE_ROOT, 'static')
+
 # URL that handles the media served from MEDIA_ROOT.
 MEDIA_URL = 'static'
 
@@ -66,7 +70,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'dicoweb.urls'
 
 TEMPLATE_DIRS = (
-    '/PATH/TO/dicoweb/templates',
+    os.path.join (SITE_ROOT, 'templates'),
 )
 
 INSTALLED_APPS = (

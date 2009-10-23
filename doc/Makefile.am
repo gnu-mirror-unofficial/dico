@@ -111,6 +111,7 @@ GENDOCS=gendocs.sh
 
 TEXI2DVI=texi2dvi -t '@set $(RENDITION)' -E
 
+.PHONY: manual man-tar
 # Make sure you set TEXINPUTS.
 # TEXINPUTS=/usr/share/texmf/pdftex/plain/misc/ is ok for most distributions
 manual:
@@ -119,3 +120,7 @@ manual:
 	 TEXI2DVI="$(TEXI2DVI) -t @finalout" \
 	 $(GENDOCS) --texi2html $(PACKAGE) '$(PACKAGE_NAME) manual'
 
+manual.tar.bz2: manual
+	tar cfj manual.tar.bz2 manual
+
+man-tar: manual.tar.bz2

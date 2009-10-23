@@ -2,7 +2,7 @@
 @smallbook
 @c %**start of header
 @setfilename dico.info
-@settitle GNU Dico
+@settitle GNU Dico Manual
 @c %**end of header
 @setchapternewpage odd
 
@@ -28,9 +28,9 @@
 @ifinfo
 @dircategory Dictionary
 @direntry
-* Dico: (dico).         A modular dictionary server package.
-* dicod: (dico) Dicod.  Dictionary server program.
-* dico: (dico) dico.    Dictionary client program.
+* Dico: (dico).              A modular dictionary server package.
+* dicod: (dico) Dicod.       Dictionary server program.
+* dico: (dico) dico client.  Dictionary client program.
 @end direntry
 @end ifinfo
 
@@ -54,7 +54,7 @@ Software Foundation raise funds for GNU development.''
 @end copying
 
 @titlepage
-@title Dico
+@title GNU Dico Manual
 @subtitle version @value{VERSION}, @value{UPDATED}
 @author Sergey Poznyakoff.
 @page
@@ -63,9 +63,11 @@ Software Foundation raise funds for GNU development.''
 @end titlepage
 
 @headings off
+@ifnothtml
 @page
 @w{ }
 @sp 9
+@end ifnothtml
 @quotation
 @i{D@'edi@'e @`a la m@'emoire de Jacques Brel.}
 @end quotation
@@ -75,14 +77,17 @@ Software Foundation raise funds for GNU development.''
 @page
 @headings on
 
+@ifnothtml
 @page
 @summarycontents
+@end ifnothtml
+
 @page
 @contents
 
 @ifnottex
 @node Top
-@top Dico
+@top Dico Manual
 
 This edition of the @cite{GNU Dico Manual}, last updated @value{UPDATED},
 documents Dico Version @value{VERSION}.
@@ -96,7 +101,7 @@ documents Dico Version @value{VERSION}.
 * Dicod::                The dicod daemon.
 * Modules::              Dicod modules shipped with Dico.
 * Interface::            How to write your own Dico module.
-* dico::                 The client program.
+* dico client::          The client program.
 * Reporting Bugs::       How to Report a Bug.
 
 Appendices
@@ -3440,7 +3445,7 @@ handle, obtained from a previous call to @code{dico_match} or
 @section Error Reporting
 @UNREVISED
 
-@node dico
+@node dico client
 @chapter Dico --- a client program.
 @UNREVISED
 @cindex dico, a program

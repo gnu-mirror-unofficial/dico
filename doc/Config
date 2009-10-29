@@ -351,7 +351,11 @@ sub gray_print_section
     my $previous_is_top = shift;
     my $buttons = \@SECTION_BUTTONS;
 
-    &$print_head_navigation($fh, $buttons) if ($first_in_page);
+    if ($first_in_page) {
+	&$print_head_navigation($fh, $buttons)
+    } else {
+	main::print_lines($fh, $Texi2HTML::THIS_HEADER);
+    }
     my $nw = main::print_lines($fh);
     if (defined $SPLIT
 	and ($SPLIT eq 'node')) {

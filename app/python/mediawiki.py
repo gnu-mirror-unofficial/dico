@@ -20,20 +20,23 @@ import sys
 import re
 import socket
 import urllib2
-import simplejson
 from htmlentitydefs import name2codepoint
 from xml.dom import minidom
 from wit import wiki2text
 
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import dico
 
-__version__ = '1.0'
+__version__ = '1.01'
 
 class DicoModule:
     user_agent = 'Mozilla/1.0'
     endpoint_match  = '/w/api.php?action=opensearch&format=json&search='
     endpoint_define = '/wiki/Special:Export/'
-    ns_mediawiki = 'http://www.mediawiki.org/xml/export-0.3/';
 
     def __init__ (self, *argv):
         self.wikihost = argv[0]
@@ -63,7 +66,7 @@ class DicoModule:
         except urllib2.URLError:
             return False
         dom = minidom.parseString (xml)
-        el = dom.getElementsByTagNameNS (self.ns_mediawiki, 'text')
+        el = dom.getElementsByTagName ('text')
         if len (el):
             data = el[0].firstChild.data
             if dico.current_markup () != 'wiki':
@@ -81,7 +84,7 @@ class DicoModule:
         req = urllib2.Request (url)
         req.add_header ('User-Agent', self.user_agent)
         try:
-            return simplejson.load (urllib2.urlopen (req))
+            return json.load (urllib2.urlopen (req))
         except urllib2.URLError:
             return False
 

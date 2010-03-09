@@ -22,6 +22,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define crc32 dicod_crc32
+#define crc32_update dicod_crc32_update
+#define crc32_no_xor dicod_crc32_no_xor
+#define crc32_update_no_xor dicod_crc32_update_no_xor
+
 /* Compute CRC-32 value of LEN bytes long BUF, and return it. */
 extern uint32_t crc32 (const char *buf, size_t len);
 

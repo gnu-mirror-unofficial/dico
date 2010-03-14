@@ -1,5 +1,5 @@
 dnl This file is part of GNU mailutils.
-dnl Copyright (C) 2001, 2006, 2007 Free Software Foundation, Inc.
+dnl Copyright (C) 2001, 2006, 2007, 2010 Free Software Foundation, Inc.
 dnl
 dnl This program is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@ dnl
 AC_DEFUN([MU_RESULT_ACTIONS], [
 [if test "$$1" != "" -a "$$1" != no; then
   ]ifelse([$3], ,
-          [AC_DEFINE(HAVE_]translit($2, [a-z ./<>], [A-Z___])[,1,[FIXME])],
-          [$3])[
+	  [AC_DEFINE(HAVE_]translit($2, [a-z ./<>], [A-Z___])[,1,[FIXME])],
+	  [$3])[
 else
   ]ifelse([$4], , [:], [$4])[
 fi]])dnl
@@ -50,25 +50,25 @@ AC_DEFUN([MU_CHECK_GUILE],
      case "x$GUILE_VERSION" in
      x[[0-9]]*)
        if test $GUILE_VERSION -lt 18; then
-         AC_MSG_RESULT([Nope. Version number too low.])
-         mu_cv_lib_guile=no
+	 AC_MSG_RESULT([Nope. Version number too low.])
+	 mu_cv_lib_guile=no
        else
-         AC_DEFINE_UNQUOTED(GUILE_VERSION, $GUILE_VERSION,
-                            [Guile version number: MAX*10 + MIN])
-         AC_MSG_RESULT(OK)
-         save_LIBS=$LIBS
-         save_CFLAGS=$CFLAGS
-         LIBS="$LIBS $GUILE_LIBS"
-         CFLAGS="$CFLAGS $GUILE_INCLUDES"
-         AC_TRY_LINK([#include <libguile.h>],
-                     ifelse([$1], , scm_shell(0, NULL);, [$1]),
-                     [mu_cv_lib_guile=yes],
-                     [mu_cv_lib_guile=no])
-         LIBS=$save_LIBS
-         CFLAGS=$save_CFLAGS
+	 AC_DEFINE_UNQUOTED(GUILE_VERSION, $GUILE_VERSION,
+			    [Guile version number: MAX*10 + MIN])
+	 AC_MSG_RESULT(OK)
+	 save_LIBS=$LIBS
+	 save_CFLAGS=$CFLAGS
+	 LIBS="$LIBS $GUILE_LIBS"
+	 CFLAGS="$CFLAGS $GUILE_INCLUDES"
+	 AC_TRY_LINK([#include <libguile.h>],
+		     ifelse([$1], , scm_shell(0, NULL);, [$1]),
+		     [mu_cv_lib_guile=yes],
+		     [mu_cv_lib_guile=no])
+	 LIBS=$save_LIBS
+	 CFLAGS=$save_CFLAGS
        fi ;;
      *) AC_MSG_RESULT(Nope. Unknown version number)
-        mu_cv_lib_guile=no;;
+	mu_cv_lib_guile=no;;
      esac
    fi
  else
@@ -80,46 +80,38 @@ AC_DEFUN([MU_CHECK_GUILE],
  MU_RESULT_ACTIONS([mu_cv_lib_guile],[LIBGUILE],[$2],[$3])
  AC_MSG_RESULT(${cached}$mu_cv_lib_guile)
  if test $mu_cv_lib_guile = yes; then
-    if test $GUILE_VERSION -gt 14; then
-      LIBS="$LIBS $GUILE_LIBS"
-      CFLAGS="$CFLAGS $GUILE_INCLUDES"
-      AC_CHECK_FUNCS(scm_long2num scm_cell scm_list_1 scm_list_n scm_c_define\
-                     scm_c_lookup)
-      if test $ac_cv_func_scm_cell = no; then
-         AC_MSG_CHECKING(for inline scm_cell)
-         AC_TRY_LINK([#include <libguile.h>],
-                     [scm_cell(SCM_EOL, SCM_EOL)],
-                     [ac_cv_func_scm_cell=yes
-                     AC_DEFINE(HAVE_SCM_CELL,1,
-                               Define if you have scm_cell function)])
-         AC_MSG_RESULT($ac_cv_func_scm_cell)
-      fi
-      CFLAGS=$save_CFLAGS
-      LIBS=$save_LIBS
-    fi
+   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <libguile.h>]],
+			[SCM_DEVAL_P = 1;
+			 SCM_BACKTRACE_P = 1;
+			 SCM_RECORD_POSITIONS_P = 1;
+			 SCM_RESET_DEBUG_MODE;])],
+			[mu_cv_guile_debug=yes],
+			[mu_cv_guile_debug=no])
+   if test $mu_cv_guile_debug = yes; then
+     AC_DEFINE_UNQUOTED(GUILE_DEBUG_MACROS, 1,
+			[Define to 1 if SCM_DEVAL_P, SCM_BACKTRACE_P, SCM_RECORD_POSITIONS_P and SCM_RESET_DEBUG_MODE are defined])
+   fi
+   AC_CHECK_TYPES([scm_t_off],[],[],[#include <libguile.h>])
    AC_ARG_WITH([guiledir],
-               AC_HELP_STRING([--with-guiledir=DIR],
-                              [Specify the directory to install guile modules to]),
-               [case $withval in
-                /*) GUILE_SITE=$withval;;
-                yes) GUILE_SITE=`$GUILE_CONFIG info pkgdatadir`/site;;
-                *)  AC_MSG_ERROR([Argument to --with-guiledir must be an absolute directory name]);;
-                esac],
-               [GUILE_SITE=`$GUILE_CONFIG info pkgdatadir`/site
-                pfx=$prefix 
-                test "x$pfx" = xNONE && pfx=$ac_default_prefix
-                case $GUILE_SITE in
-                $pfx/*) ;; # OK
-	        *) AC_MSG_WARN([guile site directory "$GUILE_SITE" lies outside your current prefix ($pfx).])
-                   GUILE_SITE='$(pkgdatadir)/$(VERSION)/guile'
-                   AC_MSG_WARN([Falling back to ${GUILE_SITE} instead. Use --with-guiledir to force using site directory.])
-                   ;;
-                esac])
+	       AC_HELP_STRING([--with-guiledir=DIR],
+			      [Specify the directory to install guile modules to]),
+	       [case $withval in
+		/*) GUILE_SITE=$withval;;
+		yes) GUILE_SITE=`$GUILE_CONFIG info pkgdatadir`/site;;
+		*)  AC_MSG_ERROR([Argument to --with-guiledir must be an absolute directory name]);;
+		esac],
+	       [GUILE_SITE=`$GUILE_CONFIG info pkgdatadir`/site
+		pfx=$prefix
+		test "x$pfx" = xNONE && pfx=$ac_default_prefix
+		case $GUILE_SITE in
+		$pfx/*) ;; # OK
+		*) AC_MSG_WARN([guile site directory "$GUILE_SITE" lies outside your current prefix ($pfx).])
+		   GUILE_SITE='$(pkgdatadir)/$(VERSION)/guile'
+		   AC_MSG_WARN([Falling back to ${GUILE_SITE} instead. Use --with-guiledir to force using site directory.])
+		   ;;
+		esac])
  fi
- AC_SUBST(GUILE_SITE) 
+ AC_SUBST(GUILE_SITE)
  AC_SUBST(GUILE_INCLUDES)
  AC_SUBST(GUILE_LIBS)
 ])
- 
-	
-

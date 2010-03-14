@@ -26,13 +26,23 @@
 #include <libguile.h>
 #include <appi18n.h>
 
+#ifndef HAVE_SCM_T_OFF
+typedef off_t scm_t_off;
+#endif
+
 
 /* General-purpose eval handlers */
 
-static SCM
-eval_catch_body(void *list)
+struct apply_data {
+	SCM proc;
+	SCM arg;
+};
+
+SCM
+apply_catch_body(void *data)
 {
-    return scm_primitive_eval((SCM)list);
+    struct apply_data *xp = data;
+    return scm_apply_0(xp->proc, xp->arg);
 }
 
 static SCM
@@ -61,7 +71,7 @@ guile_safe_exec(SCM (*handler) (void *data), void *data, SCM *result)
 {
     jmp_buf jmp_env;
     struct scheme_exec_data ed;
-	
+
     if (setjmp(jmp_env))
 	return 1;
     ed.handler = handler;
@@ -84,9 +94,9 @@ static SCM
 load_path_handler(void *data)
 {
     struct load_closure *lp = data;
-    
+
     scm_set_program_arguments(lp->argc, lp->argv, lp->filename);
-    scm_primitive_load_path(scm_makfrom0str(lp->filename));
+    scm_primitive_load_path(scm_from_locale_string(lp->filename));
     return SCM_UNDEFINED;
 }
 
@@ -113,7 +123,7 @@ _add_load_path(char *path)
 {
     SCM scm, path_scm;
     SCM *pscm;
-    
+
     path_scm = SCM_VARIABLE_REF(scm_c_lookup("%load-path"));
     for (scm = path_scm; scm != SCM_EOL; scm = SCM_CDR(scm)) {
 	SCM val = SCM_CAR(scm);
@@ -128,7 +138,7 @@ _add_load_path(char *path)
 
     pscm = SCM_VARIABLE_LOC(scm_c_lookup("%load-path"));
     *pscm = scm_append(scm_list_3(path_scm,
-				  scm_list_1(scm_makfrom0str(path)),
+				  scm_list_1(scm_from_locale_string(path)),
 				  SCM_EOL));
 }
 
@@ -142,7 +152,7 @@ static char *
 proc_name(SCM proc)
 {
     return scm_to_locale_string(
-	          scm_symbol_to_string(scm_procedure_name(proc)));
+		  scm_symbol_to_string(scm_procedure_name(proc)));
 }
 
 static void
@@ -164,7 +174,8 @@ guile_call_proc(SCM *result, SCM proc, SCM arglist)
 {
     jmp_buf jmp_env;
     SCM cell;
-    
+    struct apply_data adata;
+
     if (setjmp(jmp_env)) {
 	char *name = proc_name(proc);
 	dico_log(L_NOTICE, 0,
@@ -173,9 +184,10 @@ guile_call_proc(SCM *result, SCM proc, SCM arglist)
 	free(name);
 	return 1;
     }
-    cell = scm_cons(proc, arglist);
+    adata.proc = proc;
+    adata.arg = arglist;
     *result = scm_internal_lazy_catch(SCM_BOOL_T,
-				      eval_catch_body, cell,
+				      apply_catch_body, &adata,
 				      eval_catch_handler, &jmp_env);
     return 0;
 }
@@ -238,7 +250,7 @@ SCM_DEFINE(scm_dico_strat_selector_p, "dico-strat-selector?", 1, 0, 0,
 #define FUNC_NAME s_scm_dico_strat_selector_p
 {
     struct _guile_strategy *sp;
-    
+
     SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
     sp = (struct _guile_strategy *) SCM_CDR(STRAT);
     return sp->strat->sel ? SCM_BOOL_T : SCM_BOOL_F;
@@ -253,7 +265,7 @@ SCM_DEFINE(scm_dico_strat_select_p, "dico-strat-select?", 3, 0, 0,
     struct _guile_strategy *sp;
     char *key, *word;
     int rc;
-    
+
     SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
     SCM_ASSERT(scm_is_string(WORD), WORD, SCM_ARG2, FUNC_NAME);
     SCM_ASSERT(scm_is_string(KEY), KEY, SCM_ARG3, FUNC_NAME);
@@ -273,10 +285,10 @@ SCM_DEFINE(scm_dico_strat_name, "dico-strat-name", 1, 0, 0,
 #define FUNC_NAME s_scm_dico_strat_name
 {
     struct _guile_strategy *sp;
-    
+
     SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
     sp = (struct _guile_strategy *) SCM_CDR(STRAT);
-    return scm_makfrom0str(sp->strat->name);
+    return scm_from_locale_string(sp->strat->name);
 }
 #undef FUNC_NAME
 
@@ -286,10 +298,10 @@ SCM_DEFINE(scm_dico_strat_description, "dico-strat-description", 1, 0, 0,
 #define FUNC_NAME s_scm_dico_strat_description
 {
     struct _guile_strategy *sp;
-    
+
     SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
     sp = (struct _guile_strategy *) SCM_CDR(STRAT);
-    return scm_makfrom0str(sp->strat->descr);
+    return scm_from_locale_string(sp->strat->descr);
 }
 #undef FUNC_NAME
 
@@ -299,7 +311,7 @@ SCM_DEFINE(scm_dico_strat_default_p, "dico-strat-default?", 1, 0, 0,
 #define FUNC_NAME s_scm_dico_strat_default_p
 {
     struct _guile_strategy *sp;
-    
+
     SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
     sp = (struct _guile_strategy *) SCM_CDR(STRAT);
     return dico_strategy_is_default_p(sp->strat) ? SCM_BOOL_T : SCM_BOOL_F;
@@ -319,10 +331,10 @@ _guile_selector(int cmd, const char *word, const char *dict_word,
 {
     SCM result;
     SCM list = scm_list_4((SCM)closure,
-			  scm_cons(SCM_IM_QUOTE, scm_from_int (cmd)),
-			  scm_cons(SCM_IM_QUOTE, scm_makfrom0str(word)),
-			  scm_cons(SCM_IM_QUOTE, scm_makfrom0str(dict_word)));
-    if (guile_safe_exec(_scm_guile_sel, list, &result))
+			  scm_from_int (cmd),
+			  scm_from_locale_string(word),
+			  scm_from_locale_string(dict_word));
+    if (guile_safe_exec(apply_catch_body, list, &result))
 	return 0;
     return result != SCM_BOOL_F;
 }
@@ -333,7 +345,7 @@ SCM_DEFINE(scm_dico_register_strat, "dico-register-strat", 2, 1, 0,
 #define FUNC_NAME s_scm_dico_register_strat
 {
     struct dico_strategy strat;
-	
+
     SCM_ASSERT(scm_is_string(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
     SCM_ASSERT(scm_is_string(DESCR), DESCR, SCM_ARG2, FUNC_NAME);
 
@@ -394,10 +406,10 @@ SCM_DEFINE(scm_dico_current_markup, "dico-current-markup", 0, 0, 0,
 	   "Return current dico markup type.")
 #define FUNC_NAME s_scm_dico_current_markup
 {
-    return scm_makfrom0str(dico_markup_type);
+    return scm_from_locale_string(dico_markup_type);
 }
 #undef FUNC_NAME
-    
+
 
 static long scm_tc16_dico_port;
 struct _guile_dico_port {
@@ -413,9 +425,9 @@ _make_dico_port(dico_stream_t str)
 
     dp = scm_gc_malloc (sizeof (struct _guile_dico_port), "dico-port");
     dp->str = str;
-    port = scm_cell(scm_tc16_dico_port, 0);
-    pt = scm_add_to_port_table(port);
-    SCM_SETPTAB_ENTRY(port, pt);
+
+    port = scm_new_port_table_entry(scm_tc16_dico_port);
+    pt = SCM_PTAB_ENTRY(port);
     pt->rw_random = 0;
     SCM_SET_CELL_TYPE(port,
 		      (scm_tc16_dico_port | SCM_OPN | SCM_WRTNG | SCM_BUF0));
@@ -472,11 +484,11 @@ _dico_port_write(SCM port, const void *data, size_t size)
     dico_stream_write(dp->str, data, size);
 }
 
-static off_t
-_dico_port_seek (SCM port, off_t offset, int whence)
+static scm_t_off
+_dico_port_seek (SCM port, scm_t_off offset, int whence)
 {
     struct _guile_dico_port *dp = DICO_PORT(port);
-    return dico_stream_seek(dp->str, offset, whence);
+    return (scm_t_off) dico_stream_seek(dp->str, (off_t) offset, whence);
 }
 
 static int
@@ -498,7 +510,7 @@ _guile_init_dico_port()
     scm_set_port_flush (scm_tc16_dico_port, _dico_port_flush);
     scm_set_port_close (scm_tc16_dico_port, _dico_port_close);
     scm_set_port_seek (scm_tc16_dico_port, _dico_port_seek);
-}    
+}
 
 
 
@@ -530,7 +542,7 @@ _guile_init_dico_log_port()
     scm_set_port_flush (scm_tc16_dico_log_port, _dico_port_flush);
     scm_set_port_close (scm_tc16_dico_log_port, _dico_port_close);
     scm_set_port_seek (scm_tc16_dico_log_port, _dico_port_seek);
-}    
+}
 
 
 static void
@@ -552,11 +564,11 @@ _guile_init_funcs (void)
 		       scm_dico_register_markup);
     scm_c_define_gsubr(s_scm_dico_current_markup, 0, 0, 0,
 		       scm_dico_current_markup);
-    scm_c_export("dico-strat-selector?", 
+    scm_c_export("dico-strat-selector?",
 		 "dico-strat-select?",
 		 "dico-strat-name",
 		 "dico-strat-description",
-	         "dico-strat-default?",
+		 "dico-strat-default?",
 		 "dico-register-strat",
 		 "dico-register-markup",
 		 "dico-current-markup",
@@ -636,11 +648,10 @@ call_init_handler(void *data)
     SCM procsym = SCM_VARIABLE_REF(scm_c_lookup(p->init_fun));
     SCM arg;
     if (p->db_name)
-	arg = scm_makfrom0str(p->db_name);
+	arg = scm_from_locale_string(p->db_name);
     else
 	arg = SCM_BOOL_F;
-    return scm_primitive_eval(scm_list_2(procsym,
-					 scm_cons(SCM_IM_QUOTE, arg)));
+    return scm_apply_0(procsym, scm_list_1(arg));
 }
 
 static int
@@ -653,7 +664,7 @@ init_vtab(const char *init_fun, const char *dbname, guile_vtab vtab)
     istr.db_name = dbname;
     if (guile_safe_exec(call_init_handler, &istr, &res))
 	return 1;
-    
+
     if (!scm_is_pair(res) && res != SCM_EOL) {
 	str_rettype_error(init_fun);
 	return 1;
@@ -690,7 +701,7 @@ set_load_path(struct dico_option *opt, const char *val)
     char *tmp = strdup(val);
     if (!tmp)
 	return 1;
-    for (p = strtok(tmp, ":"); p; p = strtok(NULL, ":")) 
+    for (p = strtok(tmp, ":"); p; p = strtok(NULL, ":"))
 	_add_load_path(p);
     free(tmp);
     return 0;
@@ -709,7 +720,7 @@ static int
 mod_init(int argc, char **argv)
 {
     SCM port;
-    
+
     scm_init_guile();
     scm_load_goops();
 
@@ -720,13 +731,14 @@ mod_init(int argc, char **argv)
     _guile_init_dico_port();
     _guile_init_dico_log_port();
     _guile_init_funcs();
+#ifdef GUILE_DEBUG_MACROS
     if (guile_debug) {
 	SCM_DEVAL_P = 1;
 	SCM_BACKTRACE_P = 1;
 	SCM_RECORD_POSITIONS_P = 1;
 	SCM_RESET_DEBUG_MODE;
     }
-
+#endif
     port = _make_dico_log_port(L_ERR);
     if (port == SCM_BOOL_F) {
 	dico_log(L_ERR, 0, _("mod_init: cannot initialize error port"));
@@ -734,17 +746,17 @@ mod_init(int argc, char **argv)
     }
     scm_set_current_output_port(port);
     scm_set_current_error_port(port);
-    
+
     if (guile_init_script
 	&& guile_load(guile_init_script, guile_init_args)) {
-	dico_log(L_ERR, 0, _("mod_init: cannot load init script %s"), 
+	dico_log(L_ERR, 0, _("mod_init: cannot load init script %s"),
 		 guile_init_script);
 	return 1;
     }
 
     if (guile_init_fun && init_vtab(guile_init_fun, NULL, global_vtab))
 	return 1;
-    
+
     return 0;
 }
 
@@ -757,7 +769,7 @@ mod_init_db(const char *dbname, int argc, char **argv)
     char *init_script = NULL;
     char *init_args = NULL;
     char *init_fun = guile_init_fun;
-    
+
     struct dico_option db_option[] = {
 	{ DICO_OPTSTR(init-script), dico_opt_string, &init_script },
 	{ DICO_OPTSTR(init-args), dico_opt_string, &init_args },
@@ -769,13 +781,13 @@ mod_init_db(const char *dbname, int argc, char **argv)
 	return NULL;
     argc -= i;
     argv += i;
-    
+
     if (init_script && guile_load(init_script, init_args)) {
-	dico_log(L_ERR, 0, _("mod_init: cannot load init script %s"), 
+	dico_log(L_ERR, 0, _("mod_init: cannot load init script %s"),
 		 init_script);
 	return NULL;
     }
-    
+
     db = malloc(sizeof(*db));
     if (!db) {
 	memerr("mod_init_db");
@@ -805,12 +817,12 @@ mod_init_db(const char *dbname, int argc, char **argv)
 	    }
 	}
     }
-    
+
     if (err) {
 	free(db);
 	return NULL;
     }
-    
+
     db->argc = argc;
     db->argv = argv;
     return (dico_handle_t)db;
@@ -832,7 +844,7 @@ mod_close(dico_handle_t hp)
 
     if (db->vtab[close_proc])
 	if (guile_call_proc(&res, db->vtab[close_proc],
-			    scm_list_1(scm_cons(SCM_IM_QUOTE, db->handle))))
+			    scm_list_1(db->handle)))
 	    return 1;
     scm_gc_unprotect_object(db->handle);
 
@@ -845,9 +857,8 @@ argv_to_scm(int argc, char **argv)
     SCM scm_first = SCM_EOL, scm_last;
 
     for (; argc; argc--, argv++) {
-	SCM new = scm_cons(scm_cons(SCM_IM_QUOTE, scm_makfrom0str(*argv)), 
-                           SCM_EOL);
-	if (scm_first == SCM_EOL) 
+	SCM new = scm_cons(scm_from_locale_string(*argv), SCM_EOL);
+	if (scm_first == SCM_EOL)
 	    scm_last = scm_first = new;
 	else {
 	    SCM_SETCDR(scm_last, new);
@@ -863,14 +874,13 @@ assoc_to_scm(dico_assoc_list_t assoc)
     SCM scm_first = SCM_EOL, scm_last;
     dico_iterator_t itr;
     struct dico_assoc *p;
-	
+
     itr = dico_assoc_iterator(assoc);
     for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) {
-	SCM new = scm_cons(scm_cons(SCM_IM_QUOTE,
-				    scm_cons(scm_makfrom0str(p->key),
-					     scm_makfrom0str(p->value))), 
+	SCM new = scm_cons(scm_cons(scm_from_locale_string(p->key),
+				    scm_from_locale_string(p->value)),
 			   SCM_EOL);
-	if (scm_first == SCM_EOL) 
+	if (scm_first == SCM_EOL)
 	    scm_last = scm_first = new;
 	else {
 	    SCM_SETCDR(scm_last, new);
@@ -903,9 +913,8 @@ mod_open(dico_handle_t dp)
 {
     struct _guile_database *db = (struct _guile_database *)dp;
     if (guile_call_proc(&db->handle, db->vtab[open_proc],
-			scm_cons(scm_cons(SCM_IM_QUOTE,
-					  scm_makfrom0str(db->dbname)),
-				 argv_to_scm(db->argc, db->argv)))) 
+			scm_cons(scm_from_locale_string(db->dbname),
+				 argv_to_scm(db->argc, db->argv))))
 	return 1;
     if (db->handle == SCM_EOL || db->handle == SCM_BOOL_F)
 	return 1;
@@ -918,11 +927,10 @@ mod_get_text(struct _guile_database *db, int n)
 {
     if (db->vtab[n]) {
 	SCM res;
-	
-	if (guile_call_proc(&res, db->vtab[n],
-			    scm_list_1(scm_cons(SCM_IM_QUOTE, db->handle))))
+
+	if (guile_call_proc(&res, db->vtab[n], scm_list_1(db->handle)))
 	    return NULL;
-	if (scm_is_string(res)) 
+	if (scm_is_string(res))
 	    return scm_to_locale_string(res);
 	else {
 	    rettype_error(db->vtab[n]);
@@ -930,7 +938,7 @@ mod_get_text(struct _guile_database *db, int n)
 	}
     }
     return NULL;
-}    
+}
 
 static char *
 mod_info(dico_handle_t hp)
@@ -960,7 +968,7 @@ scm_to_langlist(SCM scm, SCM procsym)
 	list = dico_list_create();
 	for (; scm != SCM_EOL && scm_is_pair(scm); scm = SCM_CDR(scm))
 	    dico_list_append(list, scm_to_locale_string(SCM_CAR(scm)));
-    } else 
+    } else
 	rettype_error(procsym);
     return list;
 }
@@ -973,9 +981,8 @@ mod_lang(dico_handle_t hp, dico_list_t list[2])
     list[0] = list[1] = NULL;
     if (proc) {
 	SCM res;
-	
-	if (guile_call_proc(&res, proc,
-			    scm_list_1(scm_cons(SCM_IM_QUOTE, db->handle))))
+
+	if (guile_call_proc(&res, proc, scm_list_1(db->handle)))
 	    return 1;
 	if (res == SCM_EOL)
 	    /* ok, nothing */;
@@ -1024,12 +1031,11 @@ mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 	dico_log(L_ERR, 0, _("mod_match: initial select failed"));
 	return NULL;
     }
-    
+
     if (guile_call_proc(&res, db->vtab[match_proc],
-			scm_list_3(scm_cons(SCM_IM_QUOTE, db->handle),
-				   scm_cons(SCM_IM_QUOTE, scm_strat),
-				   scm_cons(SCM_IM_QUOTE,
-					    scm_makfrom0str(word)))))
+			scm_list_3(db->handle,
+				   scm_strat,
+				   scm_from_locale_string(word))))
 	return NULL;
 
     if (strat->sel)
@@ -1046,11 +1052,10 @@ mod_define(dico_handle_t hp, const char *word)
 {
     struct _guile_database *db = (struct _guile_database *)hp;
     SCM res;
-	
+
     if (guile_call_proc(&res, db->vtab[define_proc],
-			scm_list_2(scm_cons(SCM_IM_QUOTE, db->handle),
-				   scm_cons(SCM_IM_QUOTE,
-					    scm_makfrom0str(word)))))
+			scm_list_2(db->handle,
+				   scm_from_locale_string(word))))
 	return NULL;
 
     if (res == SCM_BOOL_F || res == SCM_EOL)
@@ -1067,13 +1072,11 @@ mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
     SCM res;
     SCM oport = scm_current_output_port();
     SCM port = _make_dico_port(str);
-    
+
     scm_set_current_output_port(port);
-    
+
     rc = guile_call_proc(&res, gres->db->vtab[output_proc],
-			 scm_list_2(scm_cons(SCM_IM_QUOTE, gres->result),
-				    scm_cons(SCM_IM_QUOTE,
-					     scm_from_int(n))));
+			 scm_list_2(gres->result, scm_from_int(n)));
     scm_set_current_output_port(oport);
     _dico_port_close(port);
     if (rc)
@@ -1086,11 +1089,11 @@ mod_result_count (dico_result_t rp)
 {
     struct guile_result *gres = (struct guile_result *)rp;
     SCM res;
-    
+
     if (guile_call_proc(&res, gres->db->vtab[result_count_proc],
-			scm_list_1(scm_cons(SCM_IM_QUOTE, gres->result))))
+			scm_list_1(gres->result)))
 	return 0;
-    if (scm_is_integer(res)) 
+    if (scm_is_integer(res))
 	return scm_to_int32(res);
     else
 	rettype_error(gres->db->vtab[result_count_proc]);
@@ -1104,13 +1107,13 @@ mod_compare_count (dico_result_t rp)
 
     if (gres->db->vtab[compare_count_proc]) {
 	SCM res;
-	
+
 	if (guile_call_proc(&res, gres->db->vtab[compare_count_proc],
-			    scm_list_1(scm_cons(SCM_IM_QUOTE, gres->result))))
+			    scm_list_1(gres->result)))
 	    return 0;
-	if (scm_is_integer(res)) 
+	if (scm_is_integer(res))
 	    return scm_to_int32(res);
-	else 
+	else
 	    rettype_error(gres->db->vtab[compare_count_proc]);
     }
     return 0;
@@ -1123,9 +1126,9 @@ mod_free_result(dico_result_t rp)
 
     if (gres->db->vtab[free_result_proc]) {
 	SCM res;
-	
+
 	guile_call_proc(&res, gres->db->vtab[free_result_proc],
-			scm_list_1(scm_cons(SCM_IM_QUOTE, gres->result)));
+			scm_list_1(gres->result));
     }
     scm_gc_unprotect_object(gres->result);
     free(gres);
@@ -1136,13 +1139,12 @@ mod_result_headers (dico_result_t rp, dico_assoc_list_t hdr)
 {
     struct guile_result *gres = (struct guile_result *)rp;
     SCM proc = gres->db->vtab[result_headers_proc];
-    
+
     if (proc) {
 	SCM res;
-	
+
 	if (guile_call_proc(&res, proc,
-			    scm_list_2(scm_cons(SCM_IM_QUOTE, gres->result),
-				       scm_cons(SCM_IM_QUOTE,assoc_to_scm(hdr)))))
+			    scm_list_2(gres->result, assoc_to_scm(hdr))))
 	    return 1;
 	if (!scm_is_pair(res)) {
 	    rettype_error(proc);

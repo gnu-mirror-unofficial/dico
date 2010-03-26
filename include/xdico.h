@@ -80,7 +80,7 @@ dico_stream_t xdico_transcript_stream_create(dico_stream_t transport,
 					     const char *prefix[]);
 
 /* xstream.c */
-int stream_writez(dico_stream_t str, char *buf);
+int stream_writez(dico_stream_t str, const char *buf);
 int stream_printf(dico_stream_t str, const char *fmt, ...);
 void stream_write_multiline(dico_stream_t str, const char *text);
 

@@ -18,7 +18,7 @@
 #include <hash.h>
 
 struct alias {
-    char *kw;     /* Keyword */
+    const char *kw;     /* Keyword */
     int argc;
     char **argv;
     dicod_locus_t locus;

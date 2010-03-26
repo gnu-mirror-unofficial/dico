@@ -23,7 +23,7 @@
 #include <libi18n.h>
 
 int
-stream_writez(dico_stream_t str, char *buf)
+stream_writez(dico_stream_t str, const char *buf)
 {
     return dico_stream_write(str, buf, strlen(buf));
 }

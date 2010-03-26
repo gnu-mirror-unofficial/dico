@@ -33,7 +33,7 @@ static int
 print_headers(struct ostream *ostr)
 {
     int rc = 0;
-    char *enc;
+    const char *enc;
     
     if (ostr->headers) {
 	dico_iterator_t itr;

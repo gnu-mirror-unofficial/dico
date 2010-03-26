@@ -1,4 +1,4 @@
-%{
+%top {
 /* This file is part of GNU Dico.
    Copyright (C) 2008, 2010 Sergey Poznyakoff
 
@@ -22,7 +22,11 @@
 #include <obstack.h>
 #include <unistd.h>
 #include <fcntl.h>
-    
+
+#define YY_EXIT_FAILURE EX_SOFTWARE
+}
+
+%{
 static char *multiline_delimiter;
 static size_t multiline_delimiter_len;
 static int multiline_unescape;         /* Unescape here-document contents */

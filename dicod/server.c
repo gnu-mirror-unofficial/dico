@@ -146,7 +146,7 @@ open_sockets()
     srvcount = i;
 
     if (srvcount == 0)
-	dico_die(1, L_ERR, 0, _("No sockets opened"));
+	dico_die(EX_UNAVAILABLE, L_ERR, 0, _("No sockets opened"));
 }
 
 void
@@ -187,15 +187,22 @@ static void
 print_status(pid_t pid, int status, int expect_term)
 {
     if (WIFEXITED(status)) {
-	if (WEXITSTATUS(status) == 0)
-	    dico_log(L_DEBUG, 0,
-		   _("%lu exited successfully"),
-		   (unsigned long) pid);
-	else
-	    dico_log(L_ERR, 0,
-		   _("%lu failed with status %d"),
-		   (unsigned long) pid,
-		   WEXITSTATUS(status));
+	switch (WEXITSTATUS(status)) {
+	case EX_OK:
+	    dico_log(L_DEBUG, 0, _("%lu exited successfully"),
+		     (unsigned long) pid);
+	    break;
+
+	case EXIT_TIMEOUT:
+	    dico_log(L_INFO, 0, _("%lu timed out"),
+		     (unsigned long) pid);
+	    break;
+
+	default:
+	    dico_log(L_ERR, 0, _("%lu failed with status %d"),
+		     (unsigned long) pid,
+		     WEXITSTATUS(status));
+	}
     } else if (WIFSIGNALED(status)) {
 	int prio;
 	
@@ -203,20 +210,18 @@ print_status(pid_t pid, int status, int expect_term)
 	    prio = L_DEBUG;
 	else
 	    prio = L_ERR;
-	dico_log(prio, 0,
-	       _("%lu terminated on signal %d"),
-	       (unsigned long) pid, WTERMSIG(status));
+	dico_log(prio, 0, _("%lu terminated on signal %d"),
+		 (unsigned long) pid, WTERMSIG(status));
     } else if (WIFSTOPPED(status))
-	dico_log(L_ERR, 0,
-	       _("%lu stopped on signal %d"),
-	       (unsigned long) pid, WSTOPSIG(status));
+	dico_log(L_ERR, 0, _("%lu stopped on signal %d"),
+		 (unsigned long) pid, WSTOPSIG(status));
 #ifdef WCOREDUMP
     else if (WCOREDUMP(status))
 	dico_log(L_ERR, 0, _("%lu dumped core"), (unsigned long) pid);
 #endif
     else
 	dico_log(L_ERR, 0, _("%lu terminated with unrecognized status"),
-	       (unsigned long) pid);
+		 (unsigned long) pid);
 }
 
 
@@ -282,23 +287,27 @@ check_pidfile(char *name)
     if (!fp) {
 	if (errno == ENOENT)
 	    return;
-	dico_die(1, L_ERR, errno, _("Cannot open pidfile `%s'"), name);
+	dico_die(EX_NOINPUT, L_ERR, errno,
+		 _("Cannot open pidfile `%s'"), name);
     }
     if (fscanf(fp, "%lu", &pid) != 1) {
 	dico_log(L_ERR, 0, _("Cannot get pid from pidfile `%s'"), name);
     } else {
 	if (kill(pid, 0) == 0) {
-	    dico_die(1, L_ERR, 0,
-		_("%s appears to run with pid %lu. "
-		  "If it does not, remove `%s' and retry."),
-		dico_program_name,
-		pid,
-		name);
+	    dico_die(EX_UNAVAILABLE,
+		     L_ERR,
+		     0,
+		     _("%s appears to run with pid %lu. "
+		       "If it does not, remove `%s' and retry."),
+		     dico_program_name,
+		     pid,
+		     name);
 	}
     }
     fclose(fp);
     if (unlink(name)) 
-	dico_die(1, L_ERR, errno, _("Cannot unlink pidfile `%s'"), name);
+	dico_die(EX_OSERR, L_ERR, errno,
+		 _("Cannot unlink pidfile `%s'"), name);
 }
 
 void
@@ -307,7 +316,8 @@ create_pidfile(char *name)
     FILE *fp = fopen(name, "w");
 
     if (!fp) 
-	dico_die(1, L_ERR, errno, _("Cannot create pidfile `%s'"), name);
+	dico_die(EX_CANTCREAT, L_ERR, errno,
+		 _("Cannot create pidfile `%s'"), name);
     fprintf(fp, "%lu", (unsigned long)getpid());
     fclose(fp);
 }
@@ -529,7 +539,7 @@ server_loop()
 	    continue;
 	} else if (rc < 0) {
 	    dico_log(L_CRIT, errno, _("select error"));
-	    return 1;
+	    return EX_OSERR;
 	}
 
 	for (i = 0; i < srvcount; i++)
@@ -547,7 +557,7 @@ dicod_server(int argc, char **argv)
     dico_log(L_INFO, 0, _("%s started"), program_version);
 
     if (user_id && switch_to_privs(user_id, group_id, group_list))
-	dico_die(1, L_CRIT, 0, "exiting");
+	dico_die(EX_NOUSER, L_CRIT, 0, "exiting");
 
     if (!foreground)
 	check_pidfile(pidfile_name);
@@ -569,7 +579,7 @@ dicod_server(int argc, char **argv)
 
     if (!foreground) {
 	if (daemon(0, 0) == -1) 
-	    dico_die(1, L_CRIT, errno, _("Cannot become a daemon"));
+	    dico_die(EX_OSERR, L_CRIT, errno, _("Cannot become a daemon"));
 
 	create_pidfile(pidfile_name);
     }
@@ -597,7 +607,7 @@ dicod_server(int argc, char **argv)
 	for (i = getmaxfd(); i > 2; i--)
 	    close(i);
 	execv(argv[0], argv);
-	dico_die(127, L_ERR|L_CONS, errno, _("Cannot restart"));
+	dico_die(EX_UNAVAILABLE, L_ERR|L_CONS, errno, _("Cannot restart"));
     } else 
 	dico_log(L_INFO, 0, _("%s terminating"), program_version);
     exit(rc);

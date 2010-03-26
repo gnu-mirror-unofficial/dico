@@ -264,7 +264,7 @@ dict_word(char *word)
 
 void
 dict_run_single_command(struct dict_connection *conn,
-			char *cmd, char *arg, char *code)
+			const char *cmd, const char *arg, const char *code)
 {
     if (arg)
 	stream_printf(conn->str, "%s \"%s\"\r\n", cmd, arg);

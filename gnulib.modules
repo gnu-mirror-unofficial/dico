@@ -25,6 +25,7 @@ snprintf
 strerror
 strtoimax
 strtoumax
+sysexits
 vasprintf
 xalloc
 xgetdomainname

@@ -141,5 +141,5 @@ OPTIONS_END
 void
 get_options (int argc, char *argv[], struct dicod_conf_override *conf)
 {
-    GETOPT(argc, argv)
+    GETOPT(argc, argv,, exit(EX_USAGE))
 }

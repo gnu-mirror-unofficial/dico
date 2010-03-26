@@ -38,6 +38,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <signal.h>
+#include <sysexits.h>
 #include <ltdl.h>
 
 #include <xdico.h>
@@ -46,6 +47,7 @@
 #include <quotearg.h>
 #include <appi18n.h>
 
+#define EXIT_TIMEOUT 2
 #define UINTMAX_STRSIZE_BOUND INT_BUFSIZE_BOUND(uintmax_t)
 
 #if defined HAVE_SYSCONF && defined _SC_OPEN_MAX
@@ -324,7 +326,7 @@ int dicod_any_lang_list_p(dico_list_t list);
 typedef void (*dicod_cmd_fn) (dico_stream_t str, int argc, char **argv);
 
 struct dicod_command {
-    char *keyword;
+    const char *keyword;
     int minparam;
     int maxparam;
     char *param;

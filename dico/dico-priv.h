@@ -152,7 +152,7 @@ void dict_transcript(struct dict_connection *conn, int state);
 int dict_connect(struct dict_connection **pconn, dico_url_t url);
 void dict_conn_close(struct dict_connection *conn);
 int dict_read_reply(struct dict_connection *conn);
-int dict_status_p(struct dict_connection *conn, char *status);
+int dict_status_p(struct dict_connection *conn, const char *status);
 int dict_capa(struct dict_connection *conn, char *capa);
 int dict_multiline_reply(struct dict_connection *conn);
 struct dict_result *dict_result_create(struct dict_connection *conn,
@@ -180,7 +180,8 @@ int dict_word(char *word);
 int dict_lookup(struct dict_connection *conn, dico_url_t url);
 int dict_single_command(char *cmd, char *arg, char *code);
 void dict_run_single_command(struct dict_connection *conn,
-			     char *cmd, char *arg, char *code);
+			     const char *cmd, const char *arg,
+			     const char *code);
 void print_result(struct dict_result *res);
 void print_match_result(struct dict_result *res);
 void print_reply(struct dict_connection *conn);

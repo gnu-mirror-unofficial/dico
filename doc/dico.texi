@@ -493,6 +493,7 @@ There are two @dfn{operation modes}: @samp{daemon} and @samp{inetd}.
 * Daemon Mode::
 * Inetd Mode::
 * Configuration::
+* Exit Codes::
 * Dicod Invocation::
 @end menu
 
@@ -2241,6 +2242,54 @@ defdb(eng-afr, English-Afrikaans Dictionary)
 @end group
 @end smallexample
 
+@node Exit Codes
+@section Dicod Exit Codes
+
+  Apart from issuing a descriptive error message, @command{dicod}
+attempts to indicate the reason of its termination by its error code.
+As usual, zero exit code indicates normal termination.  The table
+below summarizes all possible error codes.   For each error code, it
+indicates its decimal value and its symbolic name from
+@file{include/sysexits.h} (if available).
+
+@table @asis
+@item 0
+@itemx EX_OK
+Program terminated correctly.
+
+@item 2
+Only child instances of @command{dicod} exit with this code.  It
+indicates that the child did not receive any @samp{DICT} command
+within a time out interval (@pxref{inactivity-timeout}).
+
+@item 64
+@itemx EX_USAGE
+The program was invoked incorrectly, e.g. an invalid option was given,
+or an option was supplied erroneous argument.
+
+@item 67
+@item EX_NOUSER
+@command{Dicod} cannot switch to the privileges of the user it is
+configured to run as (@pxref{user statement}).
+
+@item 69
+@itemx EX_UNAVAILABLE
+Server exited due to some error not otherwise described in this table.
+
+@item 70
+@item EX_SOFTWARE
+Some internal software error occured.
+
+@item 71
+@itemx EX_OSERR
+Some system error occurred, e.g. the program ran out of memory or file
+descriptors, @samp{fork} failed, etc.
+
+@item 78
+@itemx EX_CONFIG
+An error in the configuration file was detected.
+@end table
+
 @node Dicod Invocation
 @section Dicod Invocation
 @cindex invocation
@@ -2350,7 +2399,7 @@ Show configuration file summary.  @xref{Configuration}.
 @item -t
 @itemx --lint
 Check configuration file syntax and exit with code @samp{0} if it is
-OK, or with @samp{1} if there are errors.  @xref{Configuration}.
+OK, or with @samp{78} if there are errors.  @xref{Configuration}.
 
 @opsummary{help}
 @item -h

@@ -735,7 +735,7 @@ alias_cb(enum cfg_callback_command cmd,
 	    config_error(locus, 0, _("argument %d has wrong type"), i+1);
 	    return 1;
 	}
-	argv[i] = value->v.arg.v[i+1].v.string;
+	argv[i] = (char*) value->v.arg.v[i+1].v.string;
     }
     argv[i] = NULL;
     return alias_install(value->v.arg.v[0].v.string, argc, argv, locus);
@@ -1382,21 +1382,21 @@ main(int argc, char **argv)
     init_conf_override(&ovr);
     get_options(argc, argv, &ovr);
 
-    if (mode == MODE_PREPROC)
-	return preprocess_config(preprocessor);
+    if (mode == MODE_PREPROC && preprocess_config(preprocessor))
+	exit(EX_UNAVAILABLE);
 
     config_set_keywords(keywords);
     if (config_parse(config_file))
-	exit(1);
+	exit(EX_CONFIG);
 
     apply_conf_override(&ovr);
     
     register_sasl();
     if (dicod_capa_flush())
-	exit(1);
+	exit(EX_SOFTWARE);
     compile_access_log();
     if (config_lint_option)
-	exit(0);
+	exit(EX_OK);
     
     dicod_log_setup();
     
@@ -1412,7 +1412,8 @@ main(int argc, char **argv)
 	break;
 	
     case MODE_INETD:
-	rc = dicod_inetd();
+	if (dicod_inetd())
+	    rc = EX_UNAVAILABLE;
 	dicod_server_cleanup();
 	break;
     }

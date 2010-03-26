@@ -18,9 +18,10 @@
 #endif
 
 #include <xdico.h>
+#include <sysexits.h>
 
 void
 xalloc_die()
 {
-    dico_die(1, L_CRIT, 0, "Not enough memory");
+    dico_die(EX_OSERR, L_CRIT, 0, "Not enough memory");
 }

@@ -366,7 +366,7 @@ dict_read_reply(struct dict_connection *conn)
 }
 
 int
-dict_status_p(struct dict_connection *conn, char *status)
+dict_status_p(struct dict_connection *conn, const char *status)
 {
     return conn->level > 3
 	&& memcmp(conn->buf, status, 3) == 0

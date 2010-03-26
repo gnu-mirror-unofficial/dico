@@ -89,7 +89,7 @@ get_input_line(dico_stream_t str, char **buf, size_t *size, size_t *rdbytes)
 RETSIGTYPE
 sig_alarm(int sig)
 {
-    exit(1);
+    exit(EXIT_TIMEOUT);
 }
 
 static void

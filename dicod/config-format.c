@@ -116,7 +116,7 @@ format_docstring(FILE *stream, const char *docstring, int level)
 static void
 format_simple_statement(FILE *stream, struct config_keyword *kwp, int level)
 {
-    char *argstr;
+    const char *argstr;
     
     if (kwp->docstring)
 	format_docstring(stream, kwp->docstring, level);

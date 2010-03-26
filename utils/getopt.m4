@@ -167,7 +167,8 @@ dnl
 dnl  argc        Name of the 1st argument to getopt_long.
 dnl  argv        Name of the 2nd argument to getopt_long.
 dnl  long_index  5th argument to getopt_long.  If not given,
-dnl              NULL will be passed
+dnl              NULL will be passed.
+dnl  onerr       Action to take if parsing fails.
 dnl
 define([<GETOPT>],[<
  {
@@ -179,11 +180,12 @@ define([<GETOPT>],[<
       switch (c)
         {
         default:
+	   ifelse([<$4>],,,[<$4;>])dnl
 	   exit(1);
 	undivert(4)
         }
     }
-  ifelse([<$#>],3,[<$3 = optind;>])
+  ifelse([<$3>],,,[<$3 = optind;>])
  }   
 >])
 

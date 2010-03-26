@@ -533,7 +533,7 @@ preprocess_config(const char *extpp)
 	if (try_file("pp-setup", 1, 0, &setup_file)) 
 	    asprintf(&cmd, "%s %s -", extpp, setup_file);
 	else
-	    cmd = extpp;
+	    cmd = (char*) extpp;
 	XDICO_DEBUG_F1(2, "Running preprocessor: `%s'", cmd);
 	outfile = popen(cmd, "w");
 	if (!outfile) {
@@ -642,13 +642,13 @@ pp_extrn_start(int argc, const char **argv, pid_t *ppid)
 		close(p[0]);
 		
 		execvp(argv[0], (char**)argv);
-		exit(127);
+		exit(EX_UNAVAILABLE);
 		
 	    case -1:
 		/*  Fork failed */
 		dicod_log_setup();
 		dico_log(L_ERR, errno, _("Cannot run `%s'"), ppcmd);
-		exit(127);
+		exit(EX_OSERR);
 
 	    default:
 		/* Sub-master */
@@ -657,17 +657,17 @@ pp_extrn_start(int argc, const char **argv, pid_t *ppid)
 		dicod_log_setup();
 		while (getline(&buf, &size, fp) > 0)
 		    dico_log(L_ERR, 0, "%s", buf);
-		exit(0);
+		exit(EX_OK);
 	    }
 	} else {
 	    execvp(argv[0], (char**)argv);
 	    dicod_log_setup();
 	    dico_log(L_ERR, 0, _("Cannot run `%s'"), ppcmd);
-	    exit(127);
+	    exit(EX_UNAVAILABLE);
 	}
 	
     case -1:
-	/*  Fork failed */
+	/* Fork failed */
 	dico_log(L_ERR, 0, _("Cannot run `%s'"), ppcmd);
 	break;
 		

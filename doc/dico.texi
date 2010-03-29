@@ -324,7 +324,7 @@ options are specific for Dico.  We will describe them in this chapter.
 @cindex preprocessor, default
 @vrindex DEFAULT_PREPROCESSOR     
   The runtime configuration system uses @command{m4} to preprocess
-the configuration file (@pxref{Preprocessor}, which makes the
+the configuration file (@pxref{Preprocessor}), which makes the
 configuration extremely flexible.  We recommend to use GNU m4 as a
 preprocessor@footnote{@uref{http://www.gnu.org/software/m4}}.
 However, any other implementation of @command{m4} may be used.  The
@@ -502,7 +502,7 @@ There are two @dfn{operation modes}: @samp{daemon} and @samp{inetd}.
 @cindex operation modes of @command{dicod}
 @cindex daemon operation mode
   The @samp{daemon} mode is enabled by @code{mode daemon} statement in
-the configuration file (@pxref{mode statement})).  It is also the
+the configuration file (@pxref{mode statement}).  It is also the
 default mode.  In daemon mode @command{dicod} listens for incoming 
 requests on one or several interfaces.  Unless the
 @command{--foreground} option is specified, it disconnects from the 
@@ -1489,7 +1489,7 @@ Size of response in bytes in @acronym{CLF} format, i.e. a @samp{-} rather
 than a @samp{0} when no bytes are sent.
 
 @item %C
-Remote client (from @code{CLIENT} command (@pxref{CLIENT})). 
+Remote client (from @code{CLIENT} command (@pxref{CLIENT}).
 
 @item %D
 The time taken to serve the request, in microseconds.
@@ -2423,7 +2423,7 @@ database formats and for extending its functionality.  Modules
 are binary loadable files, installed in
 @file{@var{$prefix}/lib/dico}.  Modules are configurable on per-module
 (@pxref{Handlers, command}) and per-database (@pxref{Databases,
-handler} basis.
+handler}) basis.
 
   GNU Dico version @value{VERSION} is shipped with the following modules:
 @samp{Outline}, @samp{Dictorg}, @samp{Guile}, and @samp{Python}.  The
@@ -2809,7 +2809,7 @@ load-module @var{mod-name} @{
   Upon module initialization stage, the module attempts to load the
 file named @file{@var{script}}.  The file is loaded using
 @code{primitive-load} call (@pxref{Loading, primitive-load, Loading,
-guile, The Guile Reference Manual}, i.e. the load paths are not
+guile, The Guile Reference Manual}), i.e. the load paths are not
 searched, so @var{script} must be an absolute path name.  The
 @code{init-fun} parameter supplies the name of an @dfn{initialization
 function}.  This Scheme function is used to construct virtual 
@@ -3240,7 +3240,7 @@ therefore be registered:
 
   The @code{match-selector} function is pretty similar to its
 siblings, except that it uses @code{dico-strat-select?}
-(@pxref{Dico Scheme Primitives, dico-strat-select?} to select the
+(@pxref{Dico Scheme Primitives, dico-strat-select?}) to select the
 matching elements:
 
 @smalllisp
@@ -3602,7 +3602,7 @@ $ dico --levdist 2 --match entdeckung
 unnecessary strain on the server. 
 
   To get a list of available matching strategies, with
-descriptions, use the @option{--strats} (@option{-S}) option.
+descriptions, use the @option{--strategies} (@option{-S}) option.
 
 @node urls
 @subsection DICT URL
@@ -4357,7 +4357,7 @@ autologin files.
   If, after consulting the above data source, the user name is
 established, while the password is not, the resulting action
 depends on whether the standard input is connected to a terminal.
-If it is, @command{dictd} will ask the user to supply a password.
+If it is, @command{dico} will ask the user to supply a password.
 If it is not, authentication is aborted and connection with the server
 is closed.
 
@@ -4506,12 +4506,12 @@ the @var{url}.
 @item dico [@var{options}] @var{opmode}
   Connect to the dictionary and query the information required by
 @var{opmode} option, which is one of @option{--dbs},
-@option{--strats}, @option{--serverhelp}, @option{--info}, or
+@option{--strategies}, @option{--serverhelp}, @option{--info}, or
 @option{--serverinfo}.  See below (@pxref{dico-opmode, Operation
 modes}) for a description. 
   
 @item dico [@var{options}]
-Start interactive shell.  @pxref{Interactive Mode}.
+Start interactive shell.  @xref{Interactive Mode}.
 @end table
 
 @subheading Server selection options:
@@ -4554,7 +4554,7 @@ Match instead of define.
 @itemx -s @var{name}
 Select a strategy for matching.  The argument is either a name of one
 of the matching strategies supported by server (as displayed by
-@option{--strats} option) or a dot (@samp{.}) meaning a
+@option{--strategies} option) or a dot (@samp{.}) meaning a
 server-dependent default strategy.
 
 This option implies @option{--match}.
@@ -4588,12 +4588,11 @@ Show available databases.
 
 @xref{dico options, --dbs}.
 
-@item --strats
 @itemx --strategies
 @itemx -S
 Show available search strategies.
 
-@xref{dico options, --strats}.
+@xref{dico options, --strategies}.
 
 @item --serverhelp
 @itemx -H

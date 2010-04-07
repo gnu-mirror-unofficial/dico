@@ -1,5 +1,5 @@
 #  This file is part of GNU Dico.
-#  Copyright (C) 2008, 2009 Wojciech Polak
+#  Copyright (C) 2008, 2009, 2010 Wojciech Polak
 #
 #  GNU Dico is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -89,8 +89,8 @@ def index (request):
         except (socket.timeout, socket.error, dicoclient.DicoNotConnectedError):
             return render_to_response ('index.html', { 'selects': selects })
 
-        mc.set (key_databases, databases, time = 86400)
-        mc.set (key_strategies, strategies, time = 86400)
+        mc.set (key_databases, databases, time=86400)
+        mc.set (key_strategies, strategies, time=86400)
 
     for s in strategies:
         s[1] = _(s[1])
@@ -121,7 +121,7 @@ def index (request):
                 dc.option ('MIME')
 
                 if database == '*' and 'lang' in dc.server_capas:
-                    dc.option ('LANG', ': ' + ', '.join (accept_lang))
+                    dc.option ('LANG', ': ' + ' '.join (accept_lang))
                 if 'markup-wiki' in dc.server_capas:
                     if dc.option ('MARKUP', 'wiki'):
                         markup_style = 'wiki'
@@ -135,7 +135,7 @@ def index (request):
                 dc.close ()
 
                 result['markup_style'] = markup_style
-                mc.set ("dicoweb/" + key, result, time = 3600)
+                mc.set ("dicoweb/" + key, result, time=3600)
 
             except (socket.timeout, socket.error,
                     dicoclient.DicoNotConnectedError):
@@ -144,7 +144,7 @@ def index (request):
 
         # get last match results
         if sid and type == 'search':
-            mc.set ("dicoweb/%s/last_match" % sid, key, time = 3600)
+            mc.set ("dicoweb/%s/last_match" % sid, key, time=3600)
         else:
             key = mc.get ("dicoweb/%s/last_match" % sid)
         if key != None: mtc = mc.get ("dicoweb/" + key)
@@ -187,7 +187,7 @@ def __subs1 (match):
         % (s.replace ('\n', ''), s.replace ('\n', ''), s)
 
 class HtmlOptions:
-    def __init__ (self, lst = [], value = ''):
+    def __init__ (self, lst=[], value=''):
         self.lst = lst
         self.value = value
     def html (self):

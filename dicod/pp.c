@@ -534,7 +534,7 @@ preprocess_config(const char *extpp)
 	    asprintf(&cmd, "%s %s -", extpp, setup_file);
 	else
 	    cmd = (char*) extpp;
-	XDICO_DEBUG_F1(2, "Running preprocessor: `%s'", cmd);
+	XDICO_DEBUG_F1(2, "Running preprocessor: `%s'\n", cmd);
 	outfile = popen(cmd, "w");
 	if (!outfile) {
 	    dico_log(L_ERR, errno,
@@ -609,7 +609,7 @@ pp_extrn_start(int argc, const char **argv, pid_t *ppid)
     FILE *fp = NULL;
     
     dico_argcv_string(argc, argv, &ppcmd);
-    XDICO_DEBUG_F1(2, "Running preprocessor: `%s'", ppcmd);
+    XDICO_DEBUG_F1(2, "Running preprocessor: `%s'\n", ppcmd);
 	
     pipe(pout);
     switch (pid = fork()) {

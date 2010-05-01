@@ -1382,8 +1382,8 @@ main(int argc, char **argv)
     init_conf_override(&ovr);
     get_options(argc, argv, &ovr);
 
-    if (mode == MODE_PREPROC && preprocess_config(preprocessor))
-	exit(EX_UNAVAILABLE);
+    if (mode == MODE_PREPROC)
+	exit(preprocess_config(preprocessor) ? EX_UNAVAILABLE : 0);
 
     config_set_keywords(keywords);
     if (config_parse(config_file))

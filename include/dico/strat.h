@@ -41,7 +41,7 @@ void dico_strategy_iterate(dico_list_iterator_t itr, void *data);
 size_t dico_strategy_count(void);
 
 int dico_set_default_strategy(const char *name);
-const dico_strategy_t dico_get_default_strategy(void);
+dico_strategy_t dico_get_default_strategy(void);
 #define dico_strategy_is_default_p(s) ((s)->is_default)
 
 #endif

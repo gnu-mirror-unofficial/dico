@@ -133,7 +133,7 @@ dico_set_default_strategy(const char *name)
     return 0;
 }
 
-const dico_strategy_t
+dico_strategy_t
 dico_get_default_strategy()
 {
     return default_strategy;

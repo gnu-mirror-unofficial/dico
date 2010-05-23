@@ -63,7 +63,7 @@ fd_seek (void *data, off_t off, int whence, off_t *presult)
 {
     struct _stream *p = data;
     off = lseek(p->fd, off, whence);
-    if (off <= 0)
+    if (off < 0)
 	return errno;
     *presult = off;
     return 0;

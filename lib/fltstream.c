@@ -150,7 +150,7 @@ filter_write(void *data, const char *buf, size_t size, size_t *pret)
     struct filter_stream *fs = data;
     size_t ret = 0;
     size_t wrs;
-    int rc;
+    int rc = 0;
     
     if (size < fs->min_level
 	|| (fs->inlevel && fs->inlevel < fs->min_level)) {
@@ -186,7 +186,7 @@ filter_write(void *data, const char *buf, size_t size, size_t *pret)
 	ret += wrs;
 	*pret = ret;
     }
-    return 0;
+    return rc;
 }
 	
 

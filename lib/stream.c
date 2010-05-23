@@ -269,7 +269,7 @@ int
 dico_stream_read_unbuffered(dico_stream_t stream, void *buf, size_t size,
 			    size_t *pread)
 {
-    int rc;
+    int rc = 0;
 
     if (!stream->read) 
 	return _stream_seterror(stream, ENOSYS, 0);

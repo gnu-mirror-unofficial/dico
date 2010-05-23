@@ -107,7 +107,7 @@ des_cbc_cksum(gl_des_ctx *ctx, unsigned char *buf, size_t bufsize,
 	    }
 	    bufsize = 0;
 	}
-	gl_des_ecb_crypt(ctx, key, key, 0);
+	gl_des_ecb_crypt(ctx, (const char *)key, (char*)key, 0);
     }
 }
 
@@ -157,8 +157,8 @@ des_string_to_key(char *buf, size_t bufsize, unsigned char key[8])
     }
 
     des_fixup_key_parity(key);
-    gl_des_setkey(&context, key);
-    des_cbc_cksum(&context, buf, bufsize, key, key);
+    gl_des_setkey(&context, (const char *)key);
+    des_cbc_cksum(&context, (unsigned char*) buf, bufsize, key, key);
     memset(&context, 0, sizeof context);
     des_fixup_key_parity(key);
 }
@@ -178,7 +178,7 @@ decode64_buf(const char *name, unsigned char **pbuf, size_t *psize)
     buf = xmalloc(bufsize);
     
     dico_base64_decode(name, namelen,
-		       buf, bufsize,
+		       (char*) buf, bufsize,
 		       &size);
     buf[size] = 0;
     *pbuf = realloc(buf, size + 1);
@@ -236,7 +236,7 @@ ident_decrypt(const char *file, const char *name, struct ident_info *info)
 	gl_des_ctx ctx;
       
 	des_string_to_key(keybuf, sizeof(keybuf), key);
-	gl_des_setkey(&ctx, key);
+	gl_des_setkey(&ctx, (const char*) key);
       
 	memcpy(id.chars, buf, size);
       
@@ -354,7 +354,7 @@ socket_io(int fd, int conflag, long timeout,
 	if (outb && FD_ISSET(fd, &wr)) {
 	    if (!conflag) {
 		int val;
-		int len = sizeof(val);
+		socklen_t len = sizeof(val);
 		if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &val, &len)) 
 		    return socket_io_failure;
 		if (val) {

@@ -187,9 +187,9 @@ cache_get(struct _dict_stream *str, int chunk_num,
 			 str->chunk[chunk_num].length, &rdbytes) < 0)
 	return str->transport_error = dico_stream_last_error(str->transport);
     
-    str->zstream.next_in   = str->buffer;
+    str->zstream.next_in   = (unsigned char*) str->buffer;
     str->zstream.avail_in  = rdbytes;
-    str->zstream.next_out  = cp->buffer;
+    str->zstream.next_out  = (unsigned char*) cp->buffer;
     str->zstream.avail_out = str->chunk_size;
 
     if (inflate(&str->zstream, Z_PARTIAL_FLUSH) != Z_OK) {

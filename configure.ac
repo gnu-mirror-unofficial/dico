@@ -16,7 +16,7 @@ dnl Process this file with -*- autoconf -*- to produce a configure script.
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
 AC_PREREQ(2.63)
-AC_INIT([GNU dico], 2.0, [bug-dico@gnu.org])
+AC_INIT([GNU dico], 2.0.90, [bug-dico@gnu.org])
 AC_CONFIG_SRCDIR([dicod/main.c])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
@@ -57,12 +57,27 @@ AC_CHECK_HEADERS(fcntl.h limits.h strings.h sys/time.h syslog.h unistd.h \
                  readline/readline.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
+gl_INIT
+
 AC_C_CONST
 AC_C_INLINE
 AC_TYPE_PID_T
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_HEADER_TIME
+AC_CHECK_TYPE([socklen_t],,
+  AC_DEFINE(socklen_t, int, [Define to int if <sys/types.h> does not define]),
+[
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#ifdef HAVE_SOCKET_H
+# include <socket.h>
+#endif
+])
 
 dnl Checks for library functions.
 AC_FUNC_SETVBUF_REVERSED
@@ -70,8 +85,6 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS(gethostname select socket strdup strerror strtol \
                setegid setregid setresgid seteuid setreuid \
 	       sysconf getdtablesize)
-
-gl_INIT
 
 # Gettext.
 AM_ICONV

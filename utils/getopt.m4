@@ -248,7 +248,7 @@ print_help(void)
   
   printf ("%s %s [%s]... %s\n", _("Usage:"), [<$2>], _("[<OPTION>]"),
 	  gettext (args_doc)); 
-  if (doc && doc[0])
+  if (doc[0])
     print_option_descr(gettext (doc), 0, RMARGIN);
   putchar ('\n');
 

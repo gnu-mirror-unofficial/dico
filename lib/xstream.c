@@ -54,7 +54,7 @@ stream_write_multiline(dico_stream_t str, const char *text)
     struct utf8_iterator itr;
     size_t len = 0;
     
-    for (utf8_iter_first(&itr, (unsigned char *)text);
+    for (utf8_iter_first(&itr, (char*)text);
 	 !utf8_iter_end_p(&itr);
 	 utf8_iter_next(&itr)) {
 	if (utf8_iter_isascii(itr) && *itr.curptr == '\n') {

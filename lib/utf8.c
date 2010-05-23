@@ -1509,8 +1509,9 @@ MY_UNICASE_INFO *uni_plane[256] = {
 
 
 size_t
-utf8_char_width(const unsigned char *p)
+utf8_char_width(const char *ch)
 {
+    const unsigned char *p = (const unsigned char *)ch;
     if (*p <= 0x7f)
 	return 1;
     if (0xc2 <= *p && *p <= 0xdf)
@@ -1553,7 +1554,7 @@ utf8_iter_end_p(struct utf8_iterator *itr)
 }
 
 int
-utf8_iter_first(struct utf8_iterator *itr, unsigned char *ptr)
+utf8_iter_first(struct utf8_iterator *itr, char *ptr)
 {
     itr->string = ptr;
     itr->curptr = ptr;
@@ -1573,7 +1574,7 @@ utf8_iter_next(struct utf8_iterator *itr)
 /* Stores the UTF-8 representation of the Unicode character wc in r[0..5].
    Returns the number of bytes stored, or -1 if wc is out of range.  */
 int
-utf8_wctomb(unsigned char *r, unsigned int wc)
+utf8_wctomb(char *r, unsigned int wc)
 {
     int count;
 
@@ -1689,7 +1690,7 @@ utf8_mbtowc_internal(void *data, int (*read) (void *), unsigned int *pwc)
 
 
 struct tstring {
-    unsigned char *ptr;
+    const unsigned char *ptr;
     size_t len;
 };
 
@@ -1704,17 +1705,17 @@ _next_char_from_string(void *data)
 }
 
 int
-utf8_mbtowc(unsigned int *pwc, unsigned char *r, size_t len)
+utf8_mbtowc(unsigned int *pwc, const char *r, size_t len)
 {
     struct tstring ts;
-    ts.ptr = r;
+    ts.ptr = (const unsigned char*)r;
     ts.len = len ? len : utf8_char_width(r);
     return utf8_mbtowc_internal(&ts, _next_char_from_string, pwc);
 }
 
 
 int
-utf8_symcmp(unsigned char *a, unsigned char *b)
+utf8_symcmp(char *a, char *b)
 {
     unsigned int wa, wb;
 
@@ -1728,7 +1729,7 @@ utf8_symcmp(unsigned char *a, unsigned char *b)
 }
 
 int
-urf8_symcasecmp(unsigned char *a, unsigned char *b)
+urf8_symcasecmp(char *a, char *b)
 {
     unsigned int wa, wb;
 
@@ -1744,7 +1745,7 @@ urf8_symcasecmp(unsigned char *a, unsigned char *b)
 }
 
 int
-utf8_strcasecmp(unsigned char *a, unsigned char *b)
+utf8_strcasecmp(char *a, char *b)
 {
     int alen, blen;
 
@@ -1772,10 +1773,10 @@ utf8_strcasecmp(unsigned char *a, unsigned char *b)
 }
 
 int
-utf8_strncasecmp(unsigned char *a, unsigned char *b, size_t maxlen)
+utf8_strncasecmp(char *a, char *b, size_t maxlen)
 {
     int alen, blen;
-    unsigned char *aend = a + maxlen, *bend = b + maxlen;
+    char *aend = a + maxlen, *bend = b + maxlen;
 
     for (; a < aend; a += alen, b += blen) {
 	unsigned wa, wb;
@@ -1814,7 +1815,7 @@ utf8_toupper(char *s, size_t len)
 {
     while (len > 0) {
 	unsigned wc;
-	int rc = utf8_mbtowc(&wc, (unsigned char *) s, len);
+	int rc = utf8_mbtowc(&wc, s, len);
 	if (rc <= 0)
 	    return 1;
 	if (rc != utf8_wctomb(s, utf8_wc_toupper(wc)))
@@ -1837,7 +1838,7 @@ utf8_tolower(char *s, size_t len)
 {
     while (len > 0) {
 	unsigned wc;
-	int rc = utf8_mbtowc(&wc, (unsigned char *) s, len);
+	int rc = utf8_mbtowc(&wc, s, len);
 	if (rc <= 0)
 	    return 1;
 	if (rc != utf8_wctomb(s, utf8_wc_tolower(wc)))
@@ -1989,7 +1990,7 @@ utf8_mbstr_to_wc(const char *str, unsigned **wptr, size_t * plen)
     if (!w)
 	return -1;
     for (i = 0, len = strlen(str); len; i++) {
-	int rc = utf8_mbtowc(w + i, (unsigned char *) str, len);
+	int rc = utf8_mbtowc(w + i, str, len);
 	if (rc <= 0) {
 	    free(w);
 	    return -1;
@@ -2018,7 +2019,7 @@ utf8_mbstr_to_norm_wc(const char *str, unsigned **nptr, size_t * plen)
 
     while (len > 0) {
 	unsigned wc;
-	int rc = utf8_mbtowc(&wc, (unsigned char *) str, len);
+	int rc = utf8_mbtowc(&wc, str, len);
 	if (rc <= 0)
 	    return -1;
 	str += rc;

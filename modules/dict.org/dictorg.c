@@ -140,11 +140,11 @@ parse_index_entry(const char *filename, size_t line,
     
     memset(&itr, 0, sizeof(itr));
     
-    utf8_iter_first(&itr, (unsigned char *)buf);
+    utf8_iter_first(&itr, buf);
 
     rc = 0;
     for (nfield = 0; nfield < 3; nfield++) {
-	unsigned char *start, *end;
+	char *start, *end;
 	size_t len;
 	
 	/* Skip whitespace */
@@ -453,7 +453,7 @@ revert_word(char *dst, const char *src, size_t len)
     char *p = dst + len;
 
     *p = 0;
-    for (utf8_iter_first(&itr, (unsigned char *)src);
+    for (utf8_iter_first(&itr, (char *)src);
 	 !utf8_iter_end_p(&itr);
 	 utf8_iter_next(&itr)) {
 	p -= itr.curwidth;

@@ -85,7 +85,7 @@ xdico_tokenize_input(xdico_input_t in, char *str, int *pargc, char ***pargv)
     else
 	obstack_free(&in->stk, in->rootptr);
 
-    utf8_iter_first(&itr, (unsigned char *)str);
+    utf8_iter_first(&itr, str);
 
     while (1) {
 	int quote;

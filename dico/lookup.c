@@ -30,7 +30,7 @@ utf8_count_newlines(char *str)
 {
     size_t count = 0;
     struct utf8_iterator itr;
-    for (utf8_iter_first(&itr, (unsigned char *)str);
+    for (utf8_iter_first(&itr, (char *)str);
 	 !utf8_iter_end_p(&itr); utf8_iter_next(&itr)) {
 	if (utf8_iter_isascii(itr) && *itr.curptr == '\n')
 	    count++;

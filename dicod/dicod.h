@@ -98,9 +98,9 @@ extern char *ident_keyfile;
 extern long ident_timeout;
 
 extern struct sockaddr server_addr;
-extern int server_addrlen;
+extern socklen_t server_addrlen;
 extern struct sockaddr client_addr;
-extern int client_addrlen;
+extern socklen_t client_addrlen;
 
 struct dico_stat {
     unsigned long defines;

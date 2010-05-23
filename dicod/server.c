@@ -21,7 +21,7 @@
 struct dicod_server {
     int fd;               /* Socket descriptor */
     struct sockaddr *addr;
-    int addrlen;
+    socklen_t addrlen;
 };
 
 struct dicod_server *srvtab;
@@ -33,7 +33,7 @@ unsigned long num_children;
 unsigned long total_forks;
 
 struct sockaddr server_addr;
-int server_addrlen;
+socklen_t server_addrlen;
 
 static int
 address_family_to_domain (int family)
@@ -353,7 +353,7 @@ sig_child(int sig)
 }
 
 struct sockaddr client_addr;
-int client_addrlen;
+socklen_t client_addrlen;
 
 #define ACCESS_DENIED_MSG "530 Access denied\r\n"
 #define TEMP_FAIL_MSG "420 Server temporarily unavailable\r\n"

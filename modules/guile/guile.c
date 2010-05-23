@@ -173,7 +173,6 @@ static int
 guile_call_proc(SCM *result, SCM proc, SCM arglist)
 {
     jmp_buf jmp_env;
-    SCM cell;
     struct apply_data adata;
 
     if (setjmp(jmp_env)) {
@@ -319,12 +318,6 @@ SCM_DEFINE(scm_dico_strat_default_p, "dico-strat-default?", 1, 0, 0,
 #undef FUNC_NAME
 
 
-static SCM
-_scm_guile_sel(void *data)
-{
-    return scm_primitive_eval((SCM)data);
-}
-
 static int
 _guile_selector(int cmd, const char *word, const char *dict_word,
 		void *closure)

@@ -241,3 +241,7 @@ dico_stream_t create_pager_stream(size_t nlines);
 int saslauth(struct dict_connection *conn, dico_url_t url);
 void sasl_enable(int val);
 int sasl_enabled_p(void);
+
+/* cmdline.c */
+void print_version(const char *program_version, FILE *stream);
+void print_version_only(const char *program_version, FILE *stream);

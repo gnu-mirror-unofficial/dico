@@ -125,8 +125,9 @@ dict_auth(struct dict_connection *conn, dico_url_t url)
 	return 0;
 	
     case AUTH_FAIL:
-	return 1;
+	break;
     }
+    return 1;
 }
 
 char *

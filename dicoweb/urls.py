@@ -1,5 +1,5 @@
 #  This file is part of GNU Dico.
-#  Copyright (C) 2008, 2009 Wojciech Polak
+#  Copyright (C) 2008, 2009, 2010 Wojciech Polak
 #
 #  GNU Dico is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -20,7 +20,8 @@ import views
 
 urlpatterns = patterns (
     '',
-    (r'^/?$', views.index),
+    (r'^/?$', views.index, {}, 'index'),
+    (r'^opensearch\.xml$', views.opensearch, {}, 'opensearch'),
     (r'^static/(?P<path>.*)$', 'django.views.static.serve',
      {'document_root': settings.MEDIA_ROOT}),
 )

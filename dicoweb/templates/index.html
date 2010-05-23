@@ -76,7 +76,7 @@
     </h3>
     {% for df in result.definitions %}
     <pre>
-      {% trans "From" %} <a href="?q={{ df.db|urlencode }}&amp;db=dbinfo">{{ df.db_fullname }}</a>:
+      {% trans "From" %} <a href="?q={{ df.db|urlencode }}&amp;db=dbinfo">{% firstof df.db_fullname df.db %}</a>:
       <br /><br />
       {% if df.format_html %}
 {{ df.desc|safe }}

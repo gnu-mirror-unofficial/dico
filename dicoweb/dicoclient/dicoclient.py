@@ -303,7 +303,7 @@ class DicoClient:
         if int (code) < 500:
             defs_res = res[1:-1]
             defs = []
-            rx = re.compile ('^\d+ ("[^"]+"|\w+) ([a-zA-Z0-9_\-]+) ("[^"]+"|\w+)')
+            rx = re.compile ('^\d+ ("[^"]+"|\w+) ([a-zA-Z0-9_\-]+) ("[^"]*"|\w+)')
             for i in defs_res:
                 term, db, db_fullname = rx.search (i[0]).groups ()
                 df = {"term": self.__unquote (term),

@@ -15,6 +15,7 @@
 #  along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf import settings
+from django.core import urlresolvers
 from django.shortcuts import render_to_response
 from django.utils.translation import ugettext as _
 
@@ -181,6 +182,13 @@ def index (request):
                                                'mtc': mtc, 'result': result,
                                                'selects': selects })
 
+def opensearch (request):
+    url_query = request.build_absolute_uri (urlresolvers.reverse ('index'))
+    url_media = request.build_absolute_uri (settings.MEDIA_URL)
+    return render_to_response ('opensearch.xml', {'url_query': url_query,
+                                                  'url_media': url_media},
+                               mimetype='application/xml')
+
 def __subs1 (match):
     s = re.sub (r' +', ' ', match.group (1))
     return '<a href="?q=%s" title="Search for %s">%s</a>' \
@@ -194,6 +202,8 @@ class HtmlOptions:
         buf = []
         for opt in self.lst:
             if len (opt) == 2:
+                if not opt[1]:
+                    opt[1] = opt[0]
                 if opt[0] == self.value:
                     buf.append ('<option value="%s" selected="selected">%s</option>' % (opt[0], opt[1]))
                 else:

@@ -54,8 +54,8 @@ size_t utf8_wc_hash_string (const unsigned *ws, size_t n_buckets);
 int utf8_wc_strcmp (const unsigned *a, const unsigned *b);
 int utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char **sptr);
 
-int utf8_mbstr_to_wc(const char *str, unsigned **wptr);
-int utf8_mbstr_to_norm_wc(const char *str, unsigned **nptr);
+int utf8_mbstr_to_wc(const char *str, unsigned **wptr, size_t *plen);
+int utf8_mbstr_to_norm_wc(const char *str, unsigned **nptr, size_t *plen);
 
 int utf8_quote (const char *str, char **sptr);
 unsigned *utf8_wc_quote (const unsigned *s);

@@ -1992,33 +1992,33 @@ utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char **sptr)
 }
 
 int
-utf8_mbstr_to_wc(const char *str, unsigned **wptr)
+utf8_mbstr_to_wc(const char *str, unsigned **wptr, size_t *plen)
 {
-  size_t sc = strlen(str);
-  size_t len, i;
-  unsigned *w = calloc(sizeof(w[0]), sc+1);
+    ssize_t sc = strlen(str);
+    size_t len, i;
+    unsigned *w = calloc(sizeof(w[0]), sc+1);
 
-  if (!w)
-    return -1;
-  for (i = 0, len = strlen(str); len; i++)
-    {
-      int rc = utf8_mbtowc (w + i, (unsigned char *)str, len);
-      if (rc <= 0)
-	{
-	  free(w);
-	  return -1;
+    if (!w)
+	return -1;
+    for (i = 0, len = strlen(str); len; i++) {
+	int rc = utf8_mbtowc (w + i, (unsigned char *)str, len);
+	if (rc <= 0) {
+	    free(w);
+	    return -1;
 	}
-      str += rc;
-      len -= rc;
+	str += rc;
+	len -= rc;
     }
-  *wptr = w;
-  return sc;
+    *wptr = w;
+    if (plen)
+	*plen = sc;
+    return 0;
 }
 
 #define ISWS(c) ((c)==' '||(c)=='\t'||(c)=='\n')
 
 int
-utf8_mbstr_to_norm_wc(const char *str, unsigned **nptr)
+utf8_mbstr_to_norm_wc(const char *str, unsigned **nptr, size_t *plen)
 {
     int inws = 0;
     size_t len = strlen(str);
@@ -2032,7 +2032,7 @@ utf8_mbstr_to_norm_wc(const char *str, unsigned **nptr)
 	unsigned wc;
 	int rc = utf8_mbtowc(&wc, (unsigned char *)str, len);
 	if (rc <= 0)
-	    return 1;
+	    return -1;
 	str += rc;
 	len -= rc;
 	if (rc == 1 && ISWS(wc)) {
@@ -2047,6 +2047,8 @@ utf8_mbstr_to_norm_wc(const char *str, unsigned **nptr)
     }
     base[i++] = 0;
     *nptr = realloc(base, i * sizeof(base[0]));
+    if (plen)
+      *plen = i;
     return 0;
 }
     
@@ -2056,8 +2058,8 @@ utf8_quote (const char *str, char **sptr)
   int rc;
   unsigned *ws, *ret;
   
-  rc = utf8_mbstr_to_wc (str, &ws);
-  if (rc < 0)
+  rc = utf8_mbstr_to_wc (str, &ws, NULL);
+  if (rc)
     return rc;
   ret = utf8_wc_quote (ws);
   if (ret)

@@ -42,12 +42,12 @@ dico_levenshtein_distance(const char *astr, const char *bstr, int flags)
     unsigned *row[3];
     int i, j, idx, nrows;
     int dist;
-    int (*conv) (const char *, unsigned **) =
+    int (*conv) (const char *, unsigned **, size_t *) =
 	(flags & DICO_LEV_NORM) ? utf8_mbstr_to_norm_wc : utf8_mbstr_to_wc;
     
-    if (conv(astr, &a) < 0) 
+    if (conv(astr, &a, NULL))
 	return -1;
-    if (conv(bstr, &b) < 0) {
+    if (conv(bstr, &b, NULL)) {
 	free(a);
 	return -1;
     }

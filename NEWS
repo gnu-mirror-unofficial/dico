@@ -11,6 +11,28 @@ Version 2.0.90 (GIT)
 
 The dicod server uses exit codes from sysexits.h.
 
+* Replies to MATCH command.
+
+The dictorg backend filters out any duplicate entries in replies
+to MATCH commands. Only the first one from a sequence of such
+duplicates is retained.
+
+* Dicoweb
+
+Improved handling of databases without a descriptive name (previous
+version would throw exception for such cases).
+
+The file settings.py renamed to settings-sample.py.
+
+The file static/opensearch.xml has been moved to the templates.  If
+you are upgrading from an earlier version, you may remove it.
+
+* Bugfixes:
+** Fixed improper handling of conversion errors in levenshtein.c
+(debian #582692)
+** Removed the use of fixed-size buffer in dictorg.c (fixes debian
+#582708)
+
 
 Version 2.0, 2009-03-29
 

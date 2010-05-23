@@ -1,6 +1,6 @@
 /*
   This file is part of GNU Dico.
-  Copyright (C) 2008, 2009 Wojciech Polak
+  Copyright (C) 2008, 2009, 2010 Wojciech Polak
 
   GNU Dico is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -22,10 +22,10 @@
 }
 
 body {
+  font-family: arial, sans-serif;
+  font-size: 95%;
   background-color: white;
   color: #585858;
-  font-family: "Nimbus Sans L", Arial, sans-serif;
-  font-size: 10pt;
 }
 
 h1, h2, h3 {
@@ -52,6 +52,10 @@ a:hover {
   text-decoration: underline;
 }
 
+input {
+  padding: 1px;
+}
+
 ul {
   margin-bottom: 1em;
 }
@@ -64,9 +68,10 @@ p {
   margin-bottom: 0.2em;
 }
 pre {
-  padding: 1em;
-  font-size: 9pt;
+  font-size: 95%;
   white-space: normal;
+  line-height: 140%;
+  padding: 1em;
 }
 table {
   border-spacing: 2px;
@@ -89,6 +94,9 @@ tr, th, td {
 }
 #logo a {
   text-decoration: none;
+}
+#logo img {
+  padding-left: 15px;
 }
 #searchform {
   width: 600px;
@@ -116,7 +124,7 @@ a.link-lmr {
 }
 
 #footer {
-  font-size: 9pt;
+  font-size: 80%;
   width: 700px;
   text-align: center;
   border-top: dotted 1px #e1e1e1;

@@ -53,13 +53,15 @@ window.onload = function () {
     return true;
   };
 
-  document.forms[0].server.onchange = function () {
-    var q = GID ('q');
-    var u = '?server=' + this.value;
-    if (q && q.value != '')
-      u += '&q=' + encodeURIComponent (q.value);
-    window.location.replace (u);
-  };
+  if (document.forms[0].server) {
+    document.forms[0].server.onchange = function () {
+      var q = GID ('q');
+      var u = '?server=' + this.value;
+      if (q && q.value != '')
+	u += '&q=' + encodeURIComponent (q.value);
+      window.location.replace (u);
+    };
+  }
 
   var q = GID ('q');
   if (q) {

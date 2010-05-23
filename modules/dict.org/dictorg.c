@@ -536,8 +536,26 @@ register_strategies(void)
 }
 
 static int
+compare_entry(const void *a, const void *b)
+{
+    const struct index_entry *epa = a;
+    const struct index_entry *epb = b;
+    compare_count++;
+    return utf8_strcasecmp(epa->word, epb->word);
+}
+
+static int
+compare_entry_ptr(const void *a, const void *b)
+{
+    const struct index_entry *epa = *(const struct index_entry **)a;
+    const struct index_entry *epb = *(const struct index_entry **)b;
+    return compare_entry(epa, epb);
+}
+
+static int
 common_match(struct dictdb *db, const char *word,
-	     int (*compare) (const void *, const void *), struct result *res)
+	     int (*compare) (const void *, const void *),
+	     int unique, struct result *res)
 {
     struct index_entry x, *ep;
     
@@ -561,6 +579,12 @@ common_match(struct dictdb *db, const char *word,
 	    memerr("common_match");
 	    return 0;
 	}
+	if (unique) {
+	    dico_list_set_comparator(res->list,
+				     (int (*)(const void *, void *))
+				          compare_entry);
+	    dico_list_set_flags(res->list, DICO_LIST_COMPARE_TAIL);
+	}
 	for (p++; p < ep; p++) 
 	    if (!RESERVED_WORD(db, p->word))
 		dico_list_append(res->list, p);
@@ -572,26 +596,9 @@ common_match(struct dictdb *db, const char *word,
 
 
 static int
-compare_entry(const void *a, const void *b)
-{
-    const struct index_entry *epa = a;
-    const struct index_entry *epb = b;
-    compare_count++;
-    return utf8_strcasecmp(epa->word, epb->word);
-}
-
-static int
-compare_entry_ptr(const void *a, const void *b)
-{
-    const struct index_entry *epa = *(const struct index_entry **)a;
-    const struct index_entry *epb = *(const struct index_entry **)b;
-    return compare_entry(epa, epb);
-}
-
-static int
 exact_match(struct dictdb *db, const char *word, struct result *res)
 {
-    return common_match(db, word, compare_entry, res);
+    return common_match(db, word, compare_entry, 1, res);
 }
 
 static int
@@ -609,7 +616,7 @@ compare_prefix(const void *a, const void *b)
 static int
 prefix_match(struct dictdb *db, const char *word, struct result *res)
 {
-    return common_match(db, word, compare_prefix, res);
+    return common_match(db, word, compare_prefix, 1, res);
 }
 
 static int
@@ -688,10 +695,12 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
 	    free(tmp);
 	    return 1;
 	}
-
+	dico_list_set_comparator(list,
+				 (int (*)(const void *, void *))
+				   compare_entry);
+	dico_list_set_flags(list, DICO_LIST_COMPARE_TAIL);
 	for (i = 0; i < count; i++) 
-	    if (i == 0 || compare_entry(tmp[i-1], tmp[i])) 
-		dico_list_append(list, tmp[i]);
+	    dico_list_append(list, tmp[i]);
      
 	free(tmp);
 	res->type = result_match;
@@ -803,6 +812,11 @@ _match_all(struct dictdb *db, const char *word,
 	return NULL;
     }
 
+    dico_list_set_comparator(list,
+			     (int (*)(const void *, void *))
+			       compare_entry);
+    dico_list_set_flags(list, DICO_LIST_COMPARE_TAIL);
+
     if (sel(DICO_SELECT_BEGIN, word, NULL, closure)) {
 	dico_log(L_ERR, 0, _("_match_all: initial select failed"));
 	return NULL;
@@ -855,7 +869,7 @@ mod_define(dico_handle_t hp, const char *word)
 
     if (RESERVED_WORD(db, word))
 	return NULL;
-    rc = exact_match(db, word, &res);
+    rc = common_match(db, word, compare_entry, 0, &res);
     if (rc)
 	return NULL;
     rp = malloc(sizeof(*rp));

@@ -22,12 +22,18 @@
 
 /* Lists */
 
+#define DICO_LIST_COMPARE_HEAD 0x01
+#define DICO_LIST_COMPARE_TAIL 0x02
+
 typedef int (*dico_list_iterator_t)(void *item, void *data);
 typedef int (*dico_list_comp_t)(const void *, void *);
 
 dico_list_t dico_list_create(void);
 void dico_list_destroy(dico_list_t *list);
 int dico_list_clear(struct dico_list *list);
+int dico_list_set_flags(struct dico_list *list, int flags);
+int dico_list_get_flags(struct dico_list *list);
+
 int dico_list_set_free_item(struct dico_list *list,
 			    dico_list_iterator_t free_item, void *data);
 dico_list_comp_t dico_list_set_comparator(dico_list_t list,

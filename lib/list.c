@@ -30,6 +30,7 @@ struct list_entry {
 struct dico_list {
     size_t count;
     struct list_entry *head, *tail;
+    int flags;
     struct iterator *itr;
     dico_list_comp_t comp;
     dico_list_iterator_t free_item;
@@ -56,6 +57,7 @@ dico_list_create()
     if (p) {
 	p->count = 0;
 	p->head = p->tail = NULL;
+	p->flags = 0;
 	p->itr = NULL;
 	p->comp = cmp_ptr;
 	p->free_item = NULL;
@@ -266,6 +268,26 @@ dico_list_set_comparator(struct dico_list *list, dico_list_comp_t comp)
     return prev;
 }
 
+int
+dico_list_set_flags(struct dico_list *list, int flags)
+{
+   if (!list) {
+       errno = EINVAL;
+       return 1;
+   }
+   list->flags = flags;
+   return 0;
+}
+
+int
+dico_list_get_flags(struct dico_list *list)
+{
+   if (list)
+       return list->flags;
+   return 0;
+}
+
+
 dico_list_comp_t
 dico_list_get_comparator(struct dico_list *list)
 {
@@ -277,15 +299,9 @@ dico_list_get_comparator(struct dico_list *list)
 }
 
 int
-dico_list_append(struct dico_list *list, void *data)
+_dico_list_append(struct dico_list *list, void *data)
 {
-    struct list_entry *ep;
-    
-    if (!list) {
-	errno = EINVAL;    
-	return 1;
-    }
-    ep = malloc(sizeof(*ep));
+    struct list_entry *ep = malloc(sizeof(*ep));
     if (!ep)
 	return 1;
     ep->next = NULL;
@@ -300,15 +316,9 @@ dico_list_append(struct dico_list *list, void *data)
 }
 
 int
-dico_list_prepend(struct dico_list *list, void *data)
+_dico_list_prepend(struct dico_list *list, void *data)
 {
-    struct list_entry *ep;
-    
-    if (!list) {
-	errno = EINVAL;
-	return 1;
-    }
-    ep = malloc(sizeof(*ep));
+    struct list_entry *ep = malloc(sizeof(*ep));
     if (!ep)
 	return 1;
     ep->data = data;
@@ -318,6 +328,36 @@ dico_list_prepend(struct dico_list *list, void *data)
 	list->tail = list->head;
     list->count++;
     return 0;
+}
+
+int
+dico_list_append(struct dico_list *list, void *data)
+{
+    if (!list) {
+	errno = EINVAL;
+	return 1;
+    }
+    if ((list->flags & DICO_LIST_COMPARE_TAIL) && list->comp
+	&& list->tail && list->comp(list->tail->data, data) == 0) {
+	errno = EEXIST;
+	return 1;
+    }
+    return _dico_list_append(list, data);
+}
+
+int
+dico_list_prepend(struct dico_list *list, void *data)
+{
+    if (!list) {
+	errno = EINVAL;
+	return 1;
+    }
+    if ((list->flags & DICO_LIST_COMPARE_HEAD) && list->comp
+	&& list->head && list->comp(list->head->data, data) == 0) {
+	errno = EEXIST;
+	return 1;
+    }
+    return _dico_list_prepend(list, data);
 }
 
 int
@@ -442,9 +482,9 @@ _dico_list_insert_sorted(struct dico_list *list, void *data,
 	    break;
     
     if (!prev) {
-	rc = dico_list_prepend(list, data);
+	rc = _dico_list_prepend(list, data);
     } else if (!cur) {
-	rc = dico_list_append(list, data);
+	rc = _dico_list_append(list, data);
     } else {
 	struct list_entry *ep = malloc(sizeof(*ep));
 	if (ep) {
@@ -487,7 +527,7 @@ dico_list_intersect(dico_list_t a, dico_list_t b, dico_list_comp_t cmp)
 	return NULL;
     for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) {
 	if (_dico_list_locate(b, p, cmp))
-	    dico_list_append(res, p); /* FIXME: check return, and? */
+	    _dico_list_append(res, p); /* FIXME: check return, and? */
     }
     dico_iterator_destroy (&itr);
     return res;

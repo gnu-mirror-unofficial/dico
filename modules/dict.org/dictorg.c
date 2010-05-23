@@ -232,10 +232,9 @@ static int
 read_index(struct dictdb *db, const char *idxname, int tws)
 {
     struct stat st;
-    FILE *fp;
-    char buf[512]; /* FIXME: fixed size */
     int rc;
     dico_list_t list;
+    dico_stream_t stream;
     
     if (stat(idxname, &st)) {
 	dico_log(L_ERR, errno, _("open_index: cannot stat `%s'"), idxname);
@@ -246,10 +245,20 @@ read_index(struct dictdb *db, const char *idxname, int tws)
 		 idxname);
 	return 1;
     }
-    fp = fopen(idxname, "r");
-    if (!fp) {
-	dico_log(L_ERR, errno, _("open_index: cannot open `%s'"), idxname);
+
+
+    stream = dico_mapfile_stream_create(idxname, DICO_STREAM_READ);
+    if (!stream) {
+	dico_log(L_ERR, errno,
+		 _("cannot create stream `%s'"), idxname);
 	return 1;
+    }
+    rc = dico_stream_open(stream);
+    if (rc) {
+	dico_log(L_ERR, 0,
+		 _("cannot open stream `%s': %s"),
+		 idxname, dico_stream_strerror(stream, rc));
+	dico_stream_destroy(&stream);
     }
 
     list = dico_list_create();
@@ -260,17 +269,21 @@ read_index(struct dictdb *db, const char *idxname, int tws)
 	dico_iterator_t itr;
 	size_t i;
 	struct index_entry *ep;
+	char *buf = NULL;
+	size_t bufsize = 0;
+	size_t rdsize;
 
 	rc = 0;
 
 	i = 0;
-	while (fgets(buf, sizeof(buf), fp)) {
+	while (!dico_stream_getline(stream, &buf, &bufsize, &rdsize)) {
 	    i++;
 	    dico_trim_nl(buf);
 	    rc = parse_index_entry(idxname, i, list, buf, tws);
 	    if (rc)
 		break;
 	}
+	free(buf);
 	if (rc) {
 	    dico_list_set_free_item(list, free_index_entry, NULL);
 	} else {
@@ -288,7 +301,8 @@ read_index(struct dictdb *db, const char *idxname, int tws)
 	dico_list_destroy(&list);
     }
 
-    fclose(fp);
+    dico_stream_close(stream);
+    dico_stream_destroy(&stream);
     return rc;
 }
 

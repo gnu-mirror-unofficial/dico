@@ -140,6 +140,7 @@ struct result {
     enum result_type type;
     size_t compare_count;
     dico_list_t list;
+    dico_iterator_t itr;
 };
 
 typedef int (*entry_match_t) (struct dictdb *,

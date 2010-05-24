@@ -23,7 +23,7 @@
 #include <errno.h>
 
 struct list_entry {
-    struct list_entry *next;
+    struct list_entry *next, *prev;
     void *data;
 };
 
@@ -42,6 +42,7 @@ struct iterator {
     dico_list_t list;
     struct list_entry *cur;
     int advanced;
+    size_t pos;
 };
 
 static int
@@ -120,13 +121,22 @@ dico_iterator_current(dico_iterator_t ip)
     return ip->cur ? ip->cur->data : NULL;
 }
 
+size_t
+dico_iterator_position(dico_iterator_t ip)
+{
+    if (!ip)
+	return 0;
+    return ip->pos;
+}
+
 static void
 dico_iterator_attach(dico_iterator_t itr, dico_list_t list)
 {
     itr->list = list;
-    itr->cur = NULL;
+    itr->cur = list->head;
     itr->next = list->itr;
     itr->advanced = 0;
+    itr->pos = 0;
     list->itr = itr;	
 }
 
@@ -178,37 +188,13 @@ dico_iterator_destroy(dico_iterator_t *ip)
     *ip = NULL;
 }
 		
-void *
-dico_iterator_first(dico_iterator_t ip)
+static void
+_iterator_increase_pos(dico_iterator_t ip, size_t after)
 {
-    if (!ip)
-	return NULL;
-    ip->cur = ip->list->head;
-    ip->advanced = 0;
-    return dico_iterator_current(ip);
-}
-
-void *
-dico_iterator_next(dico_iterator_t ip)
-{
-    if (!ip || !ip->cur)
-	return NULL;
-    if (!ip->advanced)
-	ip->cur = ip->cur->next;
-    ip->advanced = 0;
-    return dico_iterator_current(ip);
-}	
-
-int
-dico_iterator_remove_current(dico_iterator_t ip, void **pptr)
-{
-    return _dico_list_remove(ip->list, ip->cur->data, NULL, pptr);
-}
-
-void
-dico_iterator_set_data(dico_iterator_t ip, void *data)
-{
-    ip->cur->data = data;
+    for (; ip; ip = ip->next) {
+	if (ip->pos > after)
+	    ip->pos++;
+    }
 }
 
 static void
@@ -220,6 +206,81 @@ _iterator_advance(dico_iterator_t ip, struct list_entry *e)
 	    ip->advanced++;
 	}
     }
+}
+
+void *
+dico_iterator_first(dico_iterator_t ip)
+{
+    if (!ip)
+	return NULL;
+    ip->cur = ip->list->head;
+    ip->advanced = 0;
+    ip->pos = 0;
+    return dico_iterator_current(ip);
+}
+
+void *
+dico_iterator_next(dico_iterator_t ip)
+{
+    if (!ip || !ip->cur)
+	return NULL;
+    if (!ip->advanced) {
+	ip->cur = ip->cur->next;
+	ip->pos++;
+    }
+    ip->advanced = 0;
+    return dico_iterator_current(ip);
+}	
+
+void *
+dico_iterator_prev(dico_iterator_t ip)
+{
+    if (!ip || !ip->cur)
+	return NULL;
+    ip->cur = ip->cur->prev;
+    if (!ip->advanced)
+	ip->pos--;
+    ip->advanced = 0;
+    return dico_iterator_current(ip);
+}	
+
+void *
+dico_iterator_item(dico_iterator_t ip, size_t n)
+{
+    if (n > ip->pos) {
+	if (!ip->advanced) {
+	    ip->cur = ip->cur->next;
+	    ip->pos++;
+	}
+	ip->advanced = 0;
+	
+	while (ip->cur && ip->pos < n) {
+	    ip->cur = ip->cur->next;
+	    ip->pos++;
+	}
+    } else if (n < ip->pos) {
+	if (!ip->advanced)
+	    ip->pos--;
+	ip->advanced = 0;
+
+	while (ip->cur && ip->pos > n) {
+	    ip->cur = ip->cur->prev;
+	    ip->pos--;
+	}
+    }
+    return dico_iterator_current(ip);
+}
+
+int
+dico_iterator_remove_current(dico_iterator_t ip, void **pptr)
+{
+    return _dico_list_remove(ip->list, ip->cur->data, NULL, pptr);
+}
+
+void
+dico_iterator_set_data(dico_iterator_t ip, void *data)
+{
+    ip->cur->data = data;
 }
 
 void *
@@ -305,6 +366,7 @@ _dico_list_append(struct dico_list *list, void *data)
     if (!ep)
 	return 1;
     ep->next = NULL;
+    ep->prev = list->tail;
     ep->data = data;
     if (list->tail)
 	list->tail->next = ep;
@@ -323,10 +385,12 @@ _dico_list_prepend(struct dico_list *list, void *data)
 	return 1;
     ep->data = data;
     ep->next = list->head;
+    ep->prev = NULL;
     list->head = ep;
     if (!list->tail)
 	list->tail = list->head;
     list->count++;
+    _iterator_increase_pos(list->itr, 0);
     return 0;
 }
 
@@ -373,7 +437,7 @@ _dico_list_remove(struct dico_list *list, void *data, dico_list_comp_t cmp,
 
     if (!cmp)
 	cmp = cmp_ptr;
-    for (p = list->head, prev = NULL; p; prev = p, p = p->next)
+    for (p = list->head; p; p = p->next)
 	if (cmp(p->data, data) == 0)
 	    break;
     
@@ -383,14 +447,16 @@ _dico_list_remove(struct dico_list *list, void *data, dico_list_comp_t cmp,
     }
     
     _iterator_advance(list->itr, p);
-    if (p == list->head) {
-	list->head = list->head->next;
-	if (!list->head)
-	    list->tail = NULL;
-    } else 
-	prev->next = p->next;
     
-    if (p == list->tail)
+    prev = p->prev;
+    if (prev)
+	prev->next = p->next;
+    else
+	list->head = list->head->next;
+
+    if (p->next)
+	p->next->prev = prev;
+    else
 	list->tail = prev;
     
     free(p);
@@ -467,7 +533,8 @@ _dico_list_insert_sorted(struct dico_list *list, void *data,
 			 dico_list_comp_t cmp)
 {
     int rc;
-    struct list_entry *cur, *prev;
+    struct list_entry *cur;
+    size_t i;
     
     if (!list) {
 	errno = EINVAL;
@@ -477,21 +544,30 @@ _dico_list_insert_sorted(struct dico_list *list, void *data,
     if (!cmp)
 	cmp = cmp_ptr;
     
-    for (cur = list->head, prev = NULL; cur; prev = cur, cur = cur->next)
+    for (cur = list->head, i = 0; cur; cur = cur->next, i++)
 	if (cmp(cur->data, data) > 0)
 	    break;
     
-    if (!prev) {
+    if (!cur->prev) {
 	rc = _dico_list_prepend(list, data);
     } else if (!cur) {
 	rc = _dico_list_append(list, data);
     } else {
 	struct list_entry *ep = malloc(sizeof(*ep));
 	if (ep) {
+	    struct list_entry *prev = cur->prev;
+	    
 	    rc = 0;
 	    ep->data = data;
+
 	    ep->next = cur;
+	    cur->prev = ep;
+	    
+	    ep->prev = prev;
 	    prev->next = ep;
+
+	    _iterator_increase_pos(list->itr, i - 1);
+	    
 	    list->count++;
 	} else
 	    rc = 1;

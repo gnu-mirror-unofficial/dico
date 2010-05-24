@@ -1756,8 +1756,12 @@ utf8_strcasecmp(char *a, char *b)
 	    return 1;
 
 	alen = utf8_char_width(a);
+	if (alen == 0)
+	    return -1;
 	utf8_mbtowc(&wa, a, alen);
 	blen = utf8_char_width(b);
+	if (blen == 0)
+	    return 1;
 	utf8_mbtowc(&wb, b, blen);
 	wa = utf8_wc_toupper(wa);
 	wb = utf8_wc_toupper(wb);
@@ -1788,8 +1792,12 @@ utf8_strncasecmp(char *a, char *b, size_t maxlen)
 	    return 1;
 
 	alen = utf8_char_width(a);
+	if (alen == 0)
+	    return -1;
 	utf8_mbtowc(&wa, a, alen);
 	blen = utf8_char_width(b);
+	if (blen == 0)
+	    return 1;
 	utf8_mbtowc(&wb, b, blen);
 	wa = utf8_wc_toupper(wa);
 	wb = utf8_wc_toupper(wb);

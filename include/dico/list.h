@@ -64,6 +64,9 @@ dico_iterator_t dico_list_iterator(dico_list_t list);
 void dico_iterator_destroy(dico_iterator_t *ip);
 void *dico_iterator_first(dico_iterator_t ip);
 void *dico_iterator_next(dico_iterator_t ip);
+void *dico_iterator_prev(dico_iterator_t ip);
+void *dico_iterator_item(dico_iterator_t ip, size_t n);
+size_t dico_iterator_position(dico_iterator_t ip);
 
 int dico_iterator_remove_current(dico_iterator_t ip, void **pptr);
 void dico_iterator_set_data(dico_iterator_t ip, void *data);

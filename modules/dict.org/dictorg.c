@@ -579,6 +579,7 @@ common_match(struct dictdb *db, const char *word,
 	    memerr("common_match");
 	    return 0;
 	}
+	res->itr = NULL;
 	if (unique) {
 	    dico_list_set_comparator(res->list,
 				     (int (*)(const void *, void *))
@@ -705,6 +706,7 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
 	free(tmp);
 	res->type = result_match;
 	res->list = list;
+	res->itr = NULL;
 	res->compare_count = compare_count;
 	rc = 0;
     } else 
@@ -842,6 +844,7 @@ _match_all(struct dictdb *db, const char *word,
     res->db = db;
     res->type = result_match;
     res->list = list;
+    res->itr = NULL;
     res->compare_count = compare_count;
     return (dico_result_t) res;
 }
@@ -914,7 +917,15 @@ static int
 mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 {
     struct result *res = (struct result *) rp;
-    const struct index_entry *ep = dico_list_item(res->list, n);
+    const struct index_entry *ep;
+
+    if (!res->itr) {
+	res->itr = dico_list_iterator(res->list);
+	if (!res->itr)
+	    return 1;
+    }
+    ep = dico_iterator_item(res->itr, n);
+    
     
     switch (res->type) {
     case result_match:
@@ -945,6 +956,7 @@ static void
 mod_free_result(dico_result_t rp)
 {
     struct result *res = (struct result *) rp;
+    dico_iterator_destroy(&res->itr);
     dico_list_destroy(&res->list);
     free(rp);
 }

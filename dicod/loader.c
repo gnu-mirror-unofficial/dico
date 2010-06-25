@@ -84,6 +84,7 @@ dicod_load_module0(dicod_module_instance_t *inst, int argc, char **argv)
 	return 1;
     }
 
+    inst->handle = handle;
     inst->module = pmod;
     return 0;
 }

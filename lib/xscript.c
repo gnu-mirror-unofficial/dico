@@ -114,8 +114,9 @@ static int
 transcript_close(void *data)
 {
     struct transcript_stream *p = data;
-    return dico_stream_close(p->logstr);
-    return dico_stream_close(p->transport);
+    dico_stream_close(p->logstr);
+    dico_stream_close(p->transport);
+    return 0;
 }
     
 

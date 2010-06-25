@@ -189,6 +189,8 @@ dico_stream_seek(dico_stream_t stream, off_t offset, int whence)
     off_t res;
     size_t bpos;
     
+    if (stream->flags & _STR_ERR)
+	return -1;
     if (!stream->seek) {
 	_stream_seterror(stream, ENOSYS, 0);
 	return -1;
@@ -482,6 +484,10 @@ dico_stream_read(dico_stream_t stream, void *buf, size_t size, size_t *pread)
     else {
 	char *bufp = buf;
 	size_t nbytes = 0;
+
+	if (stream->flags & _STR_ERR)
+	    return stream->last_err;
+	
 	while (size) {
 	    size_t n;
 	    
@@ -614,6 +620,9 @@ dico_stream_write(dico_stream_t stream, const void *buf, size_t size)
     else {
 	size_t nbytes = 0;
 	const char *bufp = buf;
+	
+	if (stream->flags & _STR_ERR)
+	    return stream->last_err;
 	
 	while (1) {
 	    size_t n;

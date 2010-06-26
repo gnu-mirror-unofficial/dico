@@ -60,9 +60,10 @@ int utf8_mbstr_to_norm_wc(const char *str, unsigned **nptr, size_t *plen);
 int utf8_quote (const char *str, char **sptr);
 unsigned *utf8_wc_quote (const unsigned *s);
 
-unsigned *utf8_wc_strchr(const unsigned *str, unsigned chr);
-unsigned *utf8_wc_strchr_ci(const unsigned *str, unsigned chr);
-int utf8_wc_strstr(const unsigned *haystack, const unsigned *needle);
+const unsigned *utf8_wc_strchr(const unsigned *str, unsigned chr);
+const unsigned *utf8_wc_strchr_ci(const unsigned *str, unsigned chr);
+const unsigned *utf8_wc_strstr(const unsigned *haystack,
+			       const unsigned *needle);
 
 void utf8_wc_strupper(unsigned *str);
 void utf8_wc_strlower(unsigned *str);

@@ -1929,7 +1929,7 @@ utf8_wc_strcasecmp(const unsigned *a, const unsigned *b)
     return 0;
 }
 
-unsigned *
+const unsigned *
 utf8_wc_strchr(const unsigned *str, unsigned chr)
 {
     for (; *str; str++)
@@ -1938,7 +1938,7 @@ utf8_wc_strchr(const unsigned *str, unsigned chr)
     return NULL;
 }
 
-unsigned *
+const unsigned *
 utf8_wc_strchr_ci(const unsigned *str, unsigned chr)
 {
     unsigned u = utf8_wc_toupper(chr);
@@ -1948,7 +1948,7 @@ utf8_wc_strchr_ci(const unsigned *str, unsigned chr)
     return NULL;
 }
     
-int
+const unsigned *
 utf8_wc_strstr(const unsigned *haystack, const unsigned *needle)
 {
     unsigned first = needle[0];
@@ -1971,7 +1971,7 @@ utf8_wc_strstr(const unsigned *haystack, const unsigned *needle)
 		hptr++;
 		nptr++;
 		if (*nptr == 0)
-		    return  haystack;
+		    return haystack;
 	    }
 	}
     return NULL;

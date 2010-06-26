@@ -5,9 +5,9 @@ timing yes;
 access-log-file "<BUILDDIR>/tests/access_log";
 access-log-format "%h %l %u %t \"%r\" %>s %b \"\" \"%C\"";
 
-module-load-path ("<BUILDDIR>/modules/outline",
-                  "<BUILDDIR>/modules/guile",
-		  "<BUILDDIR>/modules/python");
+prepend-load-path ("<BUILDDIR>/modules/outline",
+                   "<BUILDDIR>/modules/guile",
+		   "<BUILDDIR>/modules/python");
 
 load-module outline {
 	command "outline";

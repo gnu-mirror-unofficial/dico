@@ -1,11 +1,11 @@
-GNU Dico NEWS -- history of user-visible changes. 2010-06-26
+GNU Dico NEWS -- history of user-visible changes. 2010-06-27
 Copyright (C) 2008, 2009, 2010 Sergey Poznyakoff
 See the end of file for copying conditions.
 
 Please send Dico bug reports to <bug-dico@gnu.org.ua>
 
 
-Version 2.0.90 (GIT)
+Version 2.0.91 (GIT)
 
 * Normalize exit codes.
 
@@ -23,6 +23,26 @@ duplicates is retained.
 
 Acts much the same as module-load-path, but adds directories at front
 of the default Dico module directory.
+
+* Strategies
+
+** All
+
+The `all' strategy has been re-implemented as a loadable module.  To
+enable this strategy in daemon, load the `stratall' module:
+
+load-module stratall {
+	command "stratall";
+}
+
+** Substr
+
+New strategy `substr' matches a substring anywhere in the headword.
+To enable this strategy, load the `substr' module:
+
+load-module substr {
+	command "substr";
+}
 
 * Dicoweb
 

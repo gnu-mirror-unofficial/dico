@@ -1930,6 +1930,54 @@ utf8_wc_strcasecmp(const unsigned *a, const unsigned *b)
 }
 
 unsigned *
+utf8_wc_strchr(const unsigned *str, unsigned chr)
+{
+    for (; *str; str++)
+	if (*str == chr)
+	    return str;
+    return NULL;
+}
+
+unsigned *
+utf8_wc_strchr_ci(const unsigned *str, unsigned chr)
+{
+    unsigned u = utf8_wc_toupper(chr);
+    for (; *str; str++)
+	if (utf8_wc_toupper(*str) == u)
+	    return str;
+    return NULL;
+}
+    
+int
+utf8_wc_strstr(const unsigned *haystack, const unsigned *needle)
+{
+    unsigned first = needle[0];
+
+    /* Is needle empty?  */
+    if (first == 0)
+	return haystack;
+
+    /* Is needle nearly empty?  */
+    if (needle[1] == 0)
+	return utf8_wc_strchr(haystack, first);
+    for (; *haystack; haystack++)
+	if (*haystack == first) {
+	    /* Compare with needle's remaining units.  */
+	    const unsigned *hptr = haystack + 1;
+	    const unsigned *nptr = needle + 1;
+	    for (;;) {
+		if (*hptr != *nptr)
+		    break;
+		hptr++;
+		nptr++;
+		if (*nptr == 0)
+		    return  haystack;
+	    }
+	}
+    return NULL;
+}
+    
+unsigned *
 utf8_wc_quote(const unsigned *s)
 {
     size_t len = utf8_wc_strlen(s);
@@ -1986,6 +2034,20 @@ utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char **sptr)
     s[wbc] = 0;
     *sptr = s;
     return 0;
+}
+
+void
+utf8_wc_strupper(unsigned *str)
+{
+    for (; *str; str++)
+	*str = utf8_wc_toupper(*str);
+}
+    
+void
+utf8_wc_strlower(unsigned *str)
+{
+    for (; *str; str++)
+	*str = utf8_wc_tolower(*str);
 }
 
 int

@@ -174,22 +174,6 @@ soundex_sel(int cmd, const char *word, const char *dict_word, void *closure)
     return 0;
 }
 	    
-int
-all_sel(int cmd, const char *word, const char *dict_word, void *closure)
-{
-    switch (cmd) {
-    case DICO_SELECT_BEGIN:
-	break;
-	
-    case DICO_SELECT_RUN:
-	return 1;
-
-    case DICO_SELECT_END:
-	break;
-    }
-    return 0;
-}
-
 void
 dicod_init_strategies()
 {
@@ -198,7 +182,6 @@ dicod_init_strategies()
 	{ "exact", "Match words exactly" },
 	{ "prefix", "Match word prefixes" },
 	{ "soundex", "Match using SOUNDEX algorithm", soundex_sel, code },
-	{ "all", "Match everything (experimental)", all_sel },
     };
     int i;
     for (i = 0; i < DICO_ARRAY_SIZE(defstrat); i++)

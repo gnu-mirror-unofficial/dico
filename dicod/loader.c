@@ -68,16 +68,20 @@ dicod_load_module0(dicod_module_instance_t *inst, int argc, char **argv)
     pmod = (struct dico_database_module *) lt_dlsym(handle, "module");
     MODULE_ASSERT(pmod);
     MODULE_ASSERT(pmod->dico_version <= DICO_MODULE_VERSION);
-    MODULE_ASSERT(pmod->dico_init_db);
-    MODULE_ASSERT(pmod->dico_free_db);
-    MODULE_ASSERT(pmod->dico_match);
-    MODULE_ASSERT(pmod->dico_define);
-    MODULE_ASSERT(pmod->dico_output_result);
-    MODULE_ASSERT(pmod->dico_result_count);
-    MODULE_ASSERT(pmod->dico_free_result);
-
-    if (pmod->dico_open || pmod->dico_close)
-	MODULE_ASSERT(pmod->dico_open && pmod->dico_close);
+    if (pmod->dico_capabilities & DICO_CAPA_NODB) {
+	MODULE_ASSERT(pmod->dico_init);
+    } else {
+	MODULE_ASSERT(pmod->dico_init_db);
+	MODULE_ASSERT(pmod->dico_free_db);
+	MODULE_ASSERT(pmod->dico_match);
+	MODULE_ASSERT(pmod->dico_define);
+	MODULE_ASSERT(pmod->dico_output_result);
+	MODULE_ASSERT(pmod->dico_result_count);
+	MODULE_ASSERT(pmod->dico_free_result);
+	
+	if (pmod->dico_open || pmod->dico_close)
+	    MODULE_ASSERT(pmod->dico_open && pmod->dico_close);
+    }
     
     if (pmod->dico_init && pmod->dico_init(argc, argv)) {
 	lt_dlclose(handle);
@@ -115,6 +119,13 @@ dicod_init_database(dicod_database_t *dp)
 {
     dicod_module_instance_t *inst = dp->instance;
 
+    if (inst->module->dico_capabilities & DICO_CAPA_NODB) {
+	dico_log(L_ERR, 0, _("cannot initialize database `%s': "
+			     "module `%s' does not support databases"),
+		 dp->command, inst->ident);
+	return 1;
+    }
+    
     if (inst->module->dico_init_db) {
 	dp->mod_handle = inst->module->dico_init_db(dp->name,
 						    dp->argc, dp->argv);

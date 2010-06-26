@@ -56,6 +56,7 @@ typedef struct dico_strategy *dico_strategy_t;
 #define DICO_MODULE_VERSION 1
 
 #define DICO_CAPA_NONE 0
+#define DICO_CAPA_NODB 0x0001
 #define DICO_CAPA_DEFAULT DICO_CAPA_NONE
 
 struct dico_database_module {

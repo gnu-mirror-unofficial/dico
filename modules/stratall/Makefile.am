@@ -14,5 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-SUBDIRS = outline dict.org guile python stratall substr
-EXTRA_DIST = template.c template.py template.scm
+moddir=@DICO_MODDIR@
+
+mod_LTLIBRARIES=stratall.la
+
+stratall_la_SOURCES = stratall.c
+stratall_la_LIBADD = ../../lib/libdico.la
+AM_LDFLAGS = -module -avoid-version -no-undefined
+INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include

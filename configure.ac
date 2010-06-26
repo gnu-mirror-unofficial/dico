@@ -268,21 +268,9 @@ if test -z "$DEFAULT_DICT_SERVER" ; then
 fi
 
 # Check for Guile
-AC_ARG_WITH([guile],
-            AC_HELP_STRING([--without-guile],
-                           [do not build guile interface]),
-            [
-case "${withval}" in
-  yes) status_guile=yes ;;
-  no)  status_guile=no ;;
-  *)   AC_MSG_ERROR(bad value ${withval} for --without-guile) ;;
-esac],[status_guile=yes])
-
-AC_SUBST(GUILE_LIBS)
-AC_SUBST(GUILE_INCLUDES)
-if test "$status_guile" = yes; then
-  MU_CHECK_GUILE(,:,[status_guile=no])
-fi
+GINT_INIT([gint],[1.8 with-guile nodoc],
+	  [status_guile=yes],
+	  [status_guile=no])
 AM_CONDITIONAL([GUILE_COND],[test $status_guile = yes])
 
 # Check for Python
@@ -438,6 +426,7 @@ AC_CONFIG_FILES([Makefile
                  include/Makefile
                  include/dico/Makefile
                  utils/Makefile
+		 gint/Makefile
 		 gnu/Makefile
                  lib/Makefile
                  dicod/Makefile

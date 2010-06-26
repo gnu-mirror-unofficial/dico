@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-ACLOCAL_AMFLAGS = -I m4 -I am
+ACLOCAL_AMFLAGS = -I m4 -I am -I gint
 
-SUBDIRS=include utils gnu lib libltdl dicod modules dico tests doc po
+SUBDIRS=include utils gint gnu lib libltdl dicod modules dico tests doc po
 #FIXME: add these when ready: makedict client fonts
 
 EXTRA_DIST = ChangeLog.2008

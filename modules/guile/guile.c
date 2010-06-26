@@ -243,76 +243,76 @@ _guile_init_strategy()
 #define CELL_IS_STRAT(s) \
     (!SCM_IMP(s) && SCM_CELL_TYPE(s) == _guile_strategy_tag)
 
-SCM_DEFINE(scm_dico_strat_selector_p, "dico-strat-selector?", 1, 0, 0,
-	   (SCM STRAT),
-	   "Return true if STRAT has a selector.")
+SCM_DEFINE_PUBLIC(scm_dico_strat_selector_p, "dico-strat-selector?", 1, 0, 0,
+		  (SCM strat),
+		  "Return true if @var{strat} has a selector.")
 #define FUNC_NAME s_scm_dico_strat_selector_p
 {
     struct _guile_strategy *sp;
 
-    SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
-    sp = (struct _guile_strategy *) SCM_CDR(STRAT);
+    SCM_ASSERT(CELL_IS_STRAT(strat), strat, SCM_ARG1, FUNC_NAME);
+    sp = (struct _guile_strategy *) SCM_CDR(strat);
     return sp->strat->sel ? SCM_BOOL_T : SCM_BOOL_F;
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(scm_dico_strat_select_p, "dico-strat-select?", 3, 0, 0,
-	   (SCM STRAT, SCM WORD, SCM KEY),
-	   "Return true if KEY matches WORD as per strategy selector STRAT.")
+SCM_DEFINE_PUBLIC(scm_dico_strat_select_p, "dico-strat-select?", 3, 0, 0,
+		  (SCM strat, SCM word, SCM key),
+		  "Return true if @var{key} matches @var{word} as per strategy selector @var{strat}.")
 #define FUNC_NAME s_scm_dico_strat_select_p
 {
     struct _guile_strategy *sp;
-    char *key, *word;
+    char *keystr, *wordstr;
     int rc;
 
-    SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
-    SCM_ASSERT(scm_is_string(WORD), WORD, SCM_ARG2, FUNC_NAME);
-    SCM_ASSERT(scm_is_string(KEY), KEY, SCM_ARG3, FUNC_NAME);
-    sp = (struct _guile_strategy *) SCM_CDR(STRAT);
-    key = scm_to_locale_string(KEY);
-    word = scm_to_locale_string(WORD);
-    rc = sp->strat->sel(DICO_SELECT_RUN, word, key, sp->strat->closure);
-    free(key);
-    free(word);
+    SCM_ASSERT(CELL_IS_STRAT(strat), strat, SCM_ARG1, FUNC_NAME);
+    SCM_ASSERT(scm_is_string(word), word, SCM_ARG2, FUNC_NAME);
+    SCM_ASSERT(scm_is_string(key), key, SCM_ARG3, FUNC_NAME);
+    sp = (struct _guile_strategy *) SCM_CDR(strat);
+    keystr = scm_to_locale_string(key);
+    wordstr = scm_to_locale_string(word);
+    rc = sp->strat->sel(DICO_SELECT_RUN, wordstr, keystr, sp->strat->closure);
+    free(keystr);
+    free(wordstr);
     return rc ? SCM_BOOL_T : SCM_BOOL_F;
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(scm_dico_strat_name, "dico-strat-name", 1, 0, 0,
-	   (SCM STRAT),
-	   "Return the name of the strategy STRAT.")
+SCM_DEFINE_PUBLIC(scm_dico_strat_name, "dico-strat-name", 1, 0, 0,
+		  (SCM strat),
+		  "Return the name of the strategy @var{strat}.")
 #define FUNC_NAME s_scm_dico_strat_name
 {
     struct _guile_strategy *sp;
 
-    SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
-    sp = (struct _guile_strategy *) SCM_CDR(STRAT);
+    SCM_ASSERT(CELL_IS_STRAT(strat), strat, SCM_ARG1, FUNC_NAME);
+    sp = (struct _guile_strategy *) SCM_CDR(strat);
     return scm_from_locale_string(sp->strat->name);
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(scm_dico_strat_description, "dico-strat-description", 1, 0, 0,
-	   (SCM STRAT),
-	   "Return a textual description of the strategy STRAT.")
+SCM_DEFINE_PUBLIC(scm_dico_strat_description, "dico-strat-description", 1, 0, 0,
+		  (SCM strat),
+		  "Return a textual description of the strategy @var{strat}.")
 #define FUNC_NAME s_scm_dico_strat_description
 {
     struct _guile_strategy *sp;
 
-    SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
-    sp = (struct _guile_strategy *) SCM_CDR(STRAT);
+    SCM_ASSERT(CELL_IS_STRAT(strat), strat, SCM_ARG1, FUNC_NAME);
+    sp = (struct _guile_strategy *) SCM_CDR(strat);
     return scm_from_locale_string(sp->strat->descr);
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(scm_dico_strat_default_p, "dico-strat-default?", 1, 0, 0,
-	   (SCM STRAT),
-	   "Return true if STRAT is a default strategy.")
+SCM_DEFINE_PUBLIC(scm_dico_strat_default_p, "dico-strat-default?", 1, 0, 0,
+		  (SCM strat),
+		  "Return true if @var{strat} is a default strategy.")
 #define FUNC_NAME s_scm_dico_strat_default_p
 {
     struct _guile_strategy *sp;
 
-    SCM_ASSERT(CELL_IS_STRAT(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
-    sp = (struct _guile_strategy *) SCM_CDR(STRAT);
+    SCM_ASSERT(CELL_IS_STRAT(strat), strat, SCM_ARG1, FUNC_NAME);
+    sp = (struct _guile_strategy *) SCM_CDR(strat);
     return dico_strategy_is_default_p(sp->strat) ? SCM_BOOL_T : SCM_BOOL_F;
 }
 #undef FUNC_NAME
@@ -332,45 +332,45 @@ _guile_selector(int cmd, const char *word, const char *dict_word,
     return result != SCM_BOOL_F;
 }
 
-SCM_DEFINE(scm_dico_register_strat, "dico-register-strat", 2, 1, 0,
-	   (SCM STRAT, SCM DESCR, SCM FUN),
-	   "Register a new strategy.")
+SCM_DEFINE_PUBLIC(scm_dico_register_strat, "dico-register-strat", 2, 1, 0,
+		  (SCM strat, SCM descr, SCM fun),
+		  "Register a new strategy.")
 #define FUNC_NAME s_scm_dico_register_strat
 {
-    struct dico_strategy strat;
+    struct dico_strategy strategy;
 
-    SCM_ASSERT(scm_is_string(STRAT), STRAT, SCM_ARG1, FUNC_NAME);
-    SCM_ASSERT(scm_is_string(DESCR), DESCR, SCM_ARG2, FUNC_NAME);
+    SCM_ASSERT(scm_is_string(strat), strat, SCM_ARG1, FUNC_NAME);
+    SCM_ASSERT(scm_is_string(descr), descr, SCM_ARG2, FUNC_NAME);
 
-    if (!SCM_UNBNDP(FUN))
-	SCM_ASSERT(scm_procedure_p(FUN), FUN, SCM_ARG3, FUNC_NAME);
+    if (!SCM_UNBNDP(fun))
+	SCM_ASSERT(scm_procedure_p(fun), fun, SCM_ARG3, FUNC_NAME);
 
-    strat.name = scm_to_locale_string(STRAT);
-    strat.descr = scm_to_locale_string(DESCR);
-    if (SCM_UNBNDP(FUN)) {
-	strat.sel = NULL;
-	strat.closure = NULL;
+    strategy.name = scm_to_locale_string(strat);
+    strategy.descr = scm_to_locale_string(descr);
+    if (SCM_UNBNDP(fun)) {
+	strategy.sel = NULL;
+	strategy.closure = NULL;
     } else {
-	strat.sel = _guile_selector;
-	strat.closure = FUN;
+	strategy.sel = _guile_selector;
+	strategy.closure = fun;
     }
-    dico_strategy_add(&strat);
-    free(strat.name);
-    free(strat.descr);
+    dico_strategy_add(&strategy);
+    free(strategy.name);
+    free(strategy.descr);
     return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
 
 
-SCM_DEFINE(scm_dico_register_markup, "dico-register-markup", 1, 0, 0,
-	   (SCM TYPE),
-	   "Register new markup type.")
+SCM_DEFINE_PUBLIC(scm_dico_register_markup, "dico-register-markup", 1, 0, 0,
+		  (SCM type),
+		  "Register new markup type.")
 #define FUNC_NAME s_scm_dico_register_markup
 {
     int rc;
     char *str;
-    SCM_ASSERT(scm_is_string(TYPE), TYPE, SCM_ARG1, FUNC_NAME);
-    str = scm_to_locale_string(TYPE);
+    SCM_ASSERT(scm_is_string(type), type, SCM_ARG1, FUNC_NAME);
+    str = scm_to_locale_string(type);
     rc = dico_markup_register(str);
     free(str);
     switch (rc) {
@@ -383,7 +383,7 @@ SCM_DEFINE(scm_dico_register_markup, "dico-register-markup", 1, 0, 0,
     case EINVAL:
 	scm_misc_error(FUNC_NAME,
 		       "Invalid markup name: ~S",
-		       scm_list_1(TYPE));
+		       scm_list_1(type));
 
     default:
 	scm_misc_error(FUNC_NAME,
@@ -394,9 +394,9 @@ SCM_DEFINE(scm_dico_register_markup, "dico-register-markup", 1, 0, 0,
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(scm_dico_current_markup, "dico-current-markup", 0, 0, 0,
-	   (),
-	   "Return current dico markup type.")
+SCM_DEFINE_PUBLIC(scm_dico_current_markup, "dico-current-markup", 0, 0, 0,
+		  (),
+		  "Return current dico markup type.")
 #define FUNC_NAME s_scm_dico_current_markup
 {
     return scm_from_locale_string(dico_markup_type);
@@ -541,31 +541,7 @@ _guile_init_dico_log_port()
 static void
 _guile_init_funcs (void)
 {
-    scm_c_define_gsubr(s_scm_dico_strat_selector_p, 1, 0, 0,
-		       scm_dico_strat_selector_p);
-    scm_c_define_gsubr(s_scm_dico_strat_select_p, 3, 0, 0,
-		       scm_dico_strat_select_p);
-    scm_c_define_gsubr(s_scm_dico_strat_name, 1, 0, 0,
-		       scm_dico_strat_name);
-    scm_c_define_gsubr(s_scm_dico_strat_description, 1, 0, 0,
-		       scm_dico_strat_description);
-    scm_c_define_gsubr(s_scm_dico_strat_default_p, 1, 0, 0,
-		       scm_dico_strat_default_p);
-    scm_c_define_gsubr(s_scm_dico_register_strat, 2, 1, 0,
-		       scm_dico_register_strat);
-    scm_c_define_gsubr(s_scm_dico_register_markup, 1, 0, 0,
-		       scm_dico_register_markup);
-    scm_c_define_gsubr(s_scm_dico_current_markup, 0, 0, 0,
-		       scm_dico_current_markup);
-    scm_c_export("dico-strat-selector?",
-		 "dico-strat-select?",
-		 "dico-strat-name",
-		 "dico-strat-description",
-		 "dico-strat-default?",
-		 "dico-register-strat",
-		 "dico-register-markup",
-		 "dico-current-markup",
-		 NULL);
+#include <guile.x>
 }
 
 

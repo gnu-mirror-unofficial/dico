@@ -22,3 +22,14 @@ guile_la_SOURCES = guile.c
 guile_la_LIBADD = ../../lib/libdico.la @GUILE_LIBS@
 AM_LDFLAGS = -module -avoid-version -no-undefined -rpath $(moddir)
 INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include @GUILE_INCLUDES@
+
+SUFFIXES =
+BUILT_SOURCES =
+EXTRA_DIST = guile.x
+DOT_X_FILES = guile.x
+CLEANFILES=
+DISTCLEANFILES=
+sitedir = @GUILE_SITE@/$(PACKAGE)
+site_DATA=
+
+include ../../gint/gint.mk

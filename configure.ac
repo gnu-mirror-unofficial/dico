@@ -278,13 +278,12 @@ case "${withval}" in
   *)   AC_MSG_ERROR(bad value ${withval} for --without-guile) ;;
 esac],[status_guile=yes])
 
+AC_SUBST(GUILE_LIBS)
+AC_SUBST(GUILE_INCLUDES)
 if test "$status_guile" = yes; then
-  MU_CHECK_GUILE(,[
-            AC_SUBST(GUILE_LIBS)
-	    AC_SUBST(GUILE_INCLUDES)
-            AC_SUBST([BUILD_DICO_GUILE_MODULES],['$(DICO_GUILE_MODULES)'])],
-	         [status_guile=no])
+  MU_CHECK_GUILE(,:,[status_guile=no])
 fi
+AM_CONDITIONAL([GUILE_COND],[test $status_guile = yes])
 
 # Check for Python
 AC_ARG_WITH([python],
@@ -303,11 +302,11 @@ if test "$status_python" = yes; then
   if test -n "$PYTHON_CONFIG"; then
     AC_SUBST(PYTHON_LIBS,`python-config --libs`)
     AC_SUBST(PYTHON_INCLUDES,`python-config --includes`)
-    AC_SUBST([BUILD_DICO_PYTHON_MODULES],['$(DICO_PYTHON_MODULES)'])
   else
     status_python=no     
   fi	
 fi
+AM_CONDITIONAL([PYTHON_COND],[test $status_python = yes])
 
 #
 AC_ARG_WITH(autologin-file,

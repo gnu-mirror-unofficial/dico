@@ -14,5 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-SUBDIRS = outline dict.org guile python stratall substr
+if GUILE_COND
+  GUILE_DIR=guile
+endif
+if PYTHON_COND
+  PYTHON_DIR=python
+endif
+
+SUBDIRS = outline dict.org $(GUILE_DIR) $(PYTHON_DIR) stratall substr
 EXTRA_DIST = template.c template.py template.scm

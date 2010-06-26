@@ -16,9 +16,7 @@
 
 moddir=@DICO_MODDIR@
 
-DICO_PYTHON_MODULES=python.la
-mod_LTLIBRARIES=@BUILD_DICO_PYTHON_MODULES@
-EXTRA_LTLIBRARIES=$(DICO_PYTHON_MODULES)
+mod_LTLIBRARIES=python.la
 
 python_la_SOURCES = python.c
 python_la_LIBADD = ../../lib/libdico.la @PYTHON_LIBS@

@@ -16,9 +16,7 @@
 
 moddir=@DICO_MODDIR@
 
-DICO_GUILE_MODULES=guile.la
-mod_LTLIBRARIES=@BUILD_DICO_GUILE_MODULES@
-EXTRA_LTLIBRARIES=$(DICO_GUILE_MODULES)
+mod_LTLIBRARIES=guile.la
 
 guile_la_SOURCES = guile.c
 guile_la_LIBADD = ../../lib/libdico.la @GUILE_LIBS@

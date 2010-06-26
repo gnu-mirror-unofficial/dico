@@ -28,6 +28,7 @@ void
 dicod_loader_init()
 {
     lt_dlinit();
+    dico_list_iterate(prepend_load_path, _add_load_dir, NULL);
     lt_dladdsearchdir(DICO_MODDIR);
     dico_list_iterate(module_load_path, _add_load_dir, NULL);
 }

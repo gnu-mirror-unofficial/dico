@@ -77,6 +77,7 @@ dico_list_t /* of gid_t */ group_list;
 
 /* List of directories to search for handler modules. */
 dico_list_t /* of char * */ module_load_path;
+dico_list_t /* of char * */ prepend_load_path;
 
 /* List of configured database module instances */
 dico_list_t /* of dicod_module_instance_t */ modinst_list;
@@ -1101,6 +1102,10 @@ struct config_keyword keywords[] = {
     { "module-load-path", N_("path"),
       N_("List of directories searched for database modules."),
       cfg_string|CFG_LIST, &module_load_path },
+    { "prepend-load-path", N_("path"),
+      N_("List of directories searched for database modules prior to "
+	 "the default module directory"),
+      cfg_string|CFG_LIST, &prepend_load_path },
     { "default-strategy", N_("name"),
       N_("Set the name of the default matching strategy."),
       cfg_string, NULL, 0, set_defstrat },

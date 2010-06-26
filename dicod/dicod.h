@@ -80,6 +80,7 @@ extern char *help_text;
 extern const char *server_info;
 extern char *msg_id;
 extern dico_list_t module_load_path;
+extern dico_list_t prepend_load_path;
 extern dico_list_t modinst_list;
 extern dico_list_t database_list;
 extern int timing_option;

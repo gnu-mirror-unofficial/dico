@@ -1797,10 +1797,14 @@ order of search is as follows:
 
 @enumerate 1
 @item
+Optional @dfn{prefix} search directories specified by the
+@code{prepend-load-path} directive (see below).
+
+@item
 GNU Dico module directory: @file{$prefix/lib/dico}.
 
 @item
-Additional search directories specified with the
+Additional search directories specified by the
 @code{module-load-path} directive (see below).
 
 @item
@@ -1839,6 +1843,11 @@ module load path.  Example:
 @smallexample
 module-load-path (/usr/lib/dico,/usr/local/dico/lib);
 @end smallexample
+@end deffn
+
+@deffn {Configuration} prepend-load-path @var{list}
+Same @code{module-load-path}, but adds directories to the beginning
+of the module load path.  Example:
 @end deffn
 
 @node Databases

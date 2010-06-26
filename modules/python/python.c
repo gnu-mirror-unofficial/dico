@@ -65,7 +65,7 @@ strat_select_method (PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple (args, "ss", &word, &key))
 	return _ro (Py_False);
 
-    return _ro (py_strat->strat->sel (DICO_SELECT_RUN, key, word,
+    return _ro (py_strat->strat->sel (DICO_SELECT_RUN, word, key, 
 				      py_strat->strat->closure)
 		? Py_True : Py_False);
 }

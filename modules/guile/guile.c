@@ -271,7 +271,7 @@ SCM_DEFINE(scm_dico_strat_select_p, "dico-strat-select?", 3, 0, 0,
     sp = (struct _guile_strategy *) SCM_CDR(STRAT);
     key = scm_to_locale_string(KEY);
     word = scm_to_locale_string(WORD);
-    rc = sp->strat->sel(DICO_SELECT_RUN, key, word, sp->strat->closure);
+    rc = sp->strat->sel(DICO_SELECT_RUN, word, key, sp->strat->closure);
     free(key);
     free(word);
     return rc ? SCM_BOOL_T : SCM_BOOL_F;

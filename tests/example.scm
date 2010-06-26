@@ -17,7 +17,8 @@
 (define-module (example)
   #:use-module (guile-user)
   #:use-module (ice-9 syncase)
-  #:use-module (ice-9 format))
+  #:use-module (ice-9 format)
+  #:use-module (srfi srfi-1))
 
 (define-syntax db:get
   (syntax-rules (info descr name lang corpus)
@@ -31,19 +32,6 @@
      (list-ref dbh 3))
     ((db:get dbh corpus)
      (list-tail dbh 4))))
-
-(define (mapcan fun list)
-  (apply (lambda ( . slist)
-           (let loop ((elt '())
-                      (slist slist))
-             (cond
-              ((null? slist)
-               (reverse elt))
-              ((not (car slist))
-               (loop elt (cdr slist)))
-              (else
-               (loop (cons (car slist) elt) (cdr slist))))))
-         (map fun list)))
 
 (define (open-module name . rest)
   (let ((args rest))
@@ -75,34 +63,34 @@
   (db:get dbh lang))
 
 (define (define-word dbh word)
-  (let ((res (mapcan (lambda (elt)
-		       (and (string-ci=? word (car elt))
-			    elt))
-		     (db:get dbh corpus))))
+  (let ((res (filter-map (lambda (elt)
+			   (and (string-ci=? word (car elt))
+				elt))
+			 (db:get dbh corpus))))
     (and res (cons #t res))))
 
 (define (match-exact dbh strat word)
-  (mapcan (lambda (elt)
-	    (and (string-ci=? word (car elt))
-		 (car elt)))
-	  (db:get dbh corpus)))
+  (filter-map (lambda (elt)
+		(and (string-ci=? word (car elt))
+		     (car elt)))
+	      (db:get dbh corpus)))
 
 (define (match-prefix dbh strat word)
-  (mapcan (lambda (elt)
-	    (and (string-prefix-ci? word (car elt))
-		 (car elt)))
-	  (db:get dbh corpus)))
+  (filter-map (lambda (elt)
+		(and (string-prefix-ci? word (car elt))
+		     (car elt)))
+	      (db:get dbh corpus)))
 
 (define (match-suffix dbh strat word)
-  (mapcan (lambda (elt)
-	    (and (string-suffix-ci? word (car elt))
-		 (car elt)))
-	  (db:get dbh corpus)))
+  (filter-map (lambda (elt)
+		(and (string-suffix-ci? word (car elt))
+		     (car elt)))
+	      (db:get dbh corpus)))
 
 (define (match-selector dbh strat word)
-  (mapcan (lambda (elt)
-	    (and (dico-strat-select? strat (car elt) word)
-		 (car elt)))
+  (filter-map (lambda (elt)
+		(and (dico-strat-select? strat word (car elt))
+		     (car elt)))
 	  (db:get dbh corpus)))
 
 (define strategy-list

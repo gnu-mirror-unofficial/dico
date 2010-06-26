@@ -202,6 +202,35 @@ _gsasl_close(void *data)
     return dico_stream_close(s->transport);
 }
 
+static int
+_gsasl_ioctl(void *data, int code, void *call_data)
+{
+    struct _gsasl_str *s = data;
+    
+    switch (code) {
+    case DICO_IOCTL_GET_TRANSPORT:
+	*(dico_stream_t*)call_data = s->transport;
+	break;
+
+    case DICO_IOCTL_SET_TRANSPORT:
+	s->transport = call_data;
+	break;
+
+    case DICO_IOCTL_BYTES_IN:
+	*(off_t*)call_data = dico_stream_bytes_in(s->transport);
+	break;
+
+    case DICO_IOCTL_BYTES_OUT:
+	*(off_t*)call_data = dico_stream_bytes_out(s->transport);
+	break;
+	
+    default:
+	errno = EINVAL;
+	return -1;
+    }
+    return 0;
+}
+
 dico_stream_t
 dico_gsasl_stream(Gsasl_session *sess, dico_stream_t transport)
 {
@@ -225,6 +254,7 @@ dico_gsasl_stream(Gsasl_session *sess, dico_stream_t transport)
     dico_stream_set_flush(str, _gsasl_flush);
     dico_stream_set_close(str, _gsasl_close);
     dico_stream_set_destroy(str, _gsasl_destroy);
+    dico_stream_set_ioctl(str, _gsasl_ioctl);
     dico_stream_set_buffer(str, dico_buffer_line, 1024);
     return str;
 }

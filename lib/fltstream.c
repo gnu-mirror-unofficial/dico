@@ -17,6 +17,7 @@
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
+#include <errno.h>
 #include <dico.h>
 #include <string.h>
 
@@ -69,9 +70,12 @@ filter_flush(struct filter_stream *fs)
 {
     if (fs->level == 0)
 	return 0;
-    else if (fs->max_line_length == 0) 
-	return dico_stream_write(fs->transport, fs->buf, fs->level);
-    else {
+    else if (fs->max_line_length == 0) {
+	int rc = dico_stream_write(fs->transport, fs->buf, fs->level);
+	if (rc == 0)
+	    fs->level = 0;
+	return rc;
+    } else {
 	char *buf = fs->buf;
 	size_t level = fs->level;
 	while (level) {
@@ -222,6 +226,28 @@ filter_stream_destroy(void *data)
     return 0;
 }
 
+static int
+filter_ioctl(void *data, int code, void *call_data)
+{
+    struct filter_stream *fs = data;
+
+    switch (code) {
+    case DICO_IOCTL_BYTES_IN:
+	*(off_t*)call_data = dico_stream_bytes_in(fs->transport);
+	break;
+
+    case DICO_IOCTL_BYTES_OUT:
+	*(off_t*)call_data = dico_stream_bytes_out(fs->transport);
+	break;
+	
+    default:
+	errno = EINVAL;
+	return -1;
+    }
+    return 0;
+}
+
+
 dico_stream_t
 filter_stream_create(dico_stream_t str,
 		     size_t min_level,
@@ -258,6 +284,7 @@ filter_stream_create(dico_stream_t str,
     } else {
 	dico_stream_set_read(stream, filter_read);
     }
+    dico_stream_set_ioctl(stream, filter_ioctl);
     
     fs->transport = str;
     fs->level = 0;

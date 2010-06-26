@@ -456,6 +456,7 @@ dicod_match_word_db(dicod_database_t *db, dico_stream_t stream,
 		      (unsigned long) count);
 	ostr = dicod_ostream_create(stream, NULL);
 	print_matches(db, res, word, stream, ostr, count);
+	total_bytes_out += dico_stream_bytes_out(ostr);
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);
 	dico_stream_write(stream, ".\r\n", 3);
@@ -477,6 +478,7 @@ dicod_match_word_first(dico_stream_t stream,
 		     "152 %lu matches found: list follows\r\n",
 		     ".\r\n250 Command complete",
 		     print_matches, ostr, "match");
+    total_bytes_out += dico_stream_bytes_out(ostr);
     dico_stream_close(ostr);
     dico_stream_destroy(&ostr);
 }
@@ -490,6 +492,7 @@ dicod_match_word_all(dico_stream_t stream,
 		   "152 %lu matches found: list follows\r\n",
 		   ".\r\n250 Command complete",
 		   print_matches, ostr, "match");
+    total_bytes_out += dico_stream_bytes_out(ostr);
     dico_stream_close(ostr);
     dico_stream_destroy(&ostr);
 }
@@ -520,6 +523,7 @@ print_definitions(dicod_database_t *db, dico_result_t res,
 	} else
 	    ostr = dicod_ostream_create(stream, db->mime_headers);
 	mp->dico_output_result(res, i, ostr);
+	total_bytes_out += dico_stream_bytes_out(ostr);
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);
 	dico_stream_write(stream, "\r\n.\r\n", 5);

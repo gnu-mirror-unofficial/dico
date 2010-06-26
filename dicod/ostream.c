@@ -25,6 +25,7 @@ off_t total_bytes_out;
 
 struct ostream {
     dico_stream_t transport;
+    off_t nout;
     int flags;
     dico_assoc_list_t headers;
 };
@@ -71,7 +72,6 @@ static int
 ostream_write(void *data, const char *buf, size_t size, size_t *pret)
 {
     struct ostream *ostr = data;
-    off_t nbytes = dico_stream_bytes_out(ostr->transport);
     int rc;
     
     if (!(ostr->flags & OSTREAM_INITIALIZED)) {
@@ -82,11 +82,7 @@ ostream_write(void *data, const char *buf, size_t size, size_t *pret)
     if (buf[0] == '.' && dico_stream_write(ostr->transport, ".", 1))
 	return dico_stream_last_error(ostr->transport);
     *pret = size;
-    rc = dico_stream_write(ostr->transport, buf, size);
-    if (rc == 0)
-	total_bytes_out += dico_stream_bytes_out(ostr->transport) -
-	                    nbytes;
-    return rc;
+    return dico_stream_write(ostr->transport, buf, size);
 }
 
 static int
@@ -106,6 +102,32 @@ ostream_destroy(void *data)
     return 0;
 }
 
+static int
+ostream_ioctl(void *data, int code, void *call_data)
+{
+    struct ostream *ostr = data;
+    switch (code) {
+    case DICO_IOCTL_GET_TRANSPORT:
+	*(dico_stream_t*)call_data = ostr->transport;
+	break;
+
+    case DICO_IOCTL_SET_TRANSPORT:
+	ostr->transport = call_data;
+	break;
+
+    case DICO_IOCTL_BYTES_OUT:
+	dico_stream_flush(ostr->transport);
+	*(off_t*)call_data = dico_stream_bytes_out(ostr->transport) -
+	                       ostr->nout;
+	break;
+	
+    default:
+	errno = EINVAL;
+	return -1;
+    }
+    return 0;
+}
+
 dico_stream_t
 dicod_ostream_create(dico_stream_t str, dico_assoc_list_t headers)
 {
@@ -116,11 +138,13 @@ dicod_ostream_create(dico_stream_t str, dico_assoc_list_t headers)
     if (rc)
 	xalloc_die();
     ostr->transport = str;
+    ostr->nout = dico_stream_bytes_out(str);
     ostr->flags = 0;
     ostr->headers = headers;
     dico_stream_set_write(stream, ostream_write);
     dico_stream_set_flush(stream, ostream_flush);
     dico_stream_set_destroy(stream, ostream_destroy);
+    dico_stream_set_ioctl(stream, ostream_ioctl);
     dico_stream_set_buffer(stream, dico_buffer_line, 1024);
     return stream;
 }

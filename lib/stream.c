@@ -707,12 +707,18 @@ dico_stream_destroy(dico_stream_t *stream)
 off_t
 dico_stream_bytes_in(dico_stream_t stream)
 {
+    off_t val;
+    if (dico_stream_ioctl(stream, DICO_IOCTL_BYTES_IN, &val) == 0)
+	return val;
     return stream->bytes_in;
 }
 
 off_t
 dico_stream_bytes_out(dico_stream_t stream)
 {
+    off_t val;
+    if (dico_stream_ioctl(stream, DICO_IOCTL_BYTES_OUT, &val) == 0)
+	return val;
     return stream->bytes_out;
 }
 

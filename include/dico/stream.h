@@ -101,6 +101,8 @@ int dico_stream_ioctl(dico_stream_t stream, int code, void *ptr);
 #define DICO_DBG_CTL_SET_FILE    2
 #define DICO_DBG_CTL_SET_LINE    3
 #define DICO_DBG_CTL_SET_TS      4
+#define DICO_IOCTL_BYTES_IN      5
+#define DICO_IOCTL_BYTES_OUT     6
 
 
 /* FD streams */

@@ -47,10 +47,17 @@ typedef struct iterator *dico_iterator_t;
 
 typedef struct dico_handle_struct *dico_handle_t;
 typedef struct dico_result_struct *dico_result_t;
+
+struct dico_select_key {
+    const char *word;
+    void *strat_data;
+    void *call_data;
+};
+
 #define DICO_SELECT_BEGIN 0
 #define DICO_SELECT_RUN   1
 #define DICO_SELECT_END   2
-typedef int (*dico_select_t) (int, const char *, const char *, void *);
+typedef int (*dico_select_t) (int, struct dico_select_key *, const char *);
 typedef struct dico_strategy *dico_strategy_t;
 
 #define DICO_MODULE_VERSION 1

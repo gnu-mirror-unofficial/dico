@@ -26,20 +26,22 @@
 #include <appi18n.h>
 
 static int
-substr_sel(int cmd, const char *word, const char *dict_word, void *closure)
+substr_sel(int cmd, struct dico_select_key *key, const char *dict_word)
 {
-    static unsigned *sample;
+    unsigned *sample;
     unsigned *tmp;
     int res;
     
     switch (cmd) {
     case DICO_SELECT_BEGIN:
-	if (utf8_mbstr_to_wc(word, &sample, NULL))
+	if (utf8_mbstr_to_wc(key->word, &sample, NULL))
 	    return 1;
 	utf8_wc_strupper(sample);
+	key->call_data = sample;
 	break;
 	
     case DICO_SELECT_RUN:
+	sample = key->call_data;
 	if (utf8_mbstr_to_wc(dict_word, &tmp, NULL))
 	    return 0;
 	utf8_wc_strupper(tmp);
@@ -48,7 +50,7 @@ substr_sel(int cmd, const char *word, const char *dict_word, void *closure)
 	return res;
 
     case DICO_SELECT_END:
-	free(sample);
+	free(key->call_data);
 	break;
     }
     return 0;

@@ -192,7 +192,77 @@ guile_call_proc(SCM *result, SCM proc, SCM arglist)
 }
 
 
-long _guile_strategy_tag;
+scm_t_bits _guile_select_key_tag;
+
+static SCM
+dico_scm_from_select_key(struct dico_select_key *clos)
+{
+    struct dico_select_key *cp;
+
+    cp = scm_gc_malloc (sizeof (*cp), "select key");
+    *cp = *clos;
+    SCM_RETURN_NEWSMOB(_guile_select_key_tag, cp);
+}
+
+static scm_sizet
+_guile_select_key_free(SCM message_smob)
+{
+    struct dico_select_key *cp =
+	(struct dico_select_key *) SCM_CDR (message_smob);
+    free(cp);
+    return 0;
+}
+
+static int
+_guile_select_key_print(SCM message_smob, SCM port,
+			    scm_print_state *pstate)
+{
+    struct dico_select_key *cp =
+	(struct dico_select_key *) SCM_CDR (message_smob);
+    scm_puts("#<key ", port);
+    scm_puts(cp->word, port);
+    scm_puts(">", port);
+    return 1;
+}
+
+static void
+_guile_init_select_key()
+{
+    _guile_select_key_tag =
+	scm_make_smob_type("select key",
+			   sizeof (struct dico_select_key));
+    scm_set_smob_free(_guile_select_key_tag, _guile_select_key_free);
+    scm_set_smob_print(_guile_select_key_tag, _guile_select_key_print);
+}
+
+#define CELL_IS_SELKEY(s) \
+    (!SCM_IMP(s) && SCM_CELL_TYPE(s) == _guile_select_key_tag)
+
+SCM_DEFINE_PUBLIC(scm_dico_select_key_p, "dico-select-key?",
+		  1, 0, 0,
+		  (SCM obj),
+		  "Return @samp{#t} if @var{obj} is a selection key.")
+#define FUNC_NAME s_scm_dico_select_key_p
+{
+    return CELL_IS_SELKEY(obj) ? SCM_BOOL_T : SCM_BOOL_F;
+}
+#undef FUNC_NAME
+
+SCM_DEFINE_PUBLIC(scm_dico_select_key_word, "dico-select-key-word",
+		  1, 0, 0,
+		  (SCM key),
+		  "Return search word from the @var{key}.")
+#define FUNC_NAME s_scm_dico_select_key_word
+{
+    struct dico_select_key *cp;
+    SCM_ASSERT(CELL_IS_SELKEY(key), key, SCM_ARG1, FUNC_NAME);
+    cp = (struct dico_select_key *) SCM_CDR(key);
+    return scm_from_locale_string(cp->word);
+}
+#undef FUNC_NAME
+
+
+scm_t_bits _guile_strategy_tag;
 
 struct _guile_strategy
 {
@@ -212,10 +282,10 @@ _make_strategy(const dico_strategy_t strat)
 static scm_sizet
 _guile_strategy_free(SCM message_smob)
 {
-  struct _guile_strategy *sp =
-      (struct _guile_strategy *) SCM_CDR (message_smob);
-  free(sp);
-  return 0;
+    struct _guile_strategy *sp =
+	(struct _guile_strategy *) SCM_CDR (message_smob);
+    free(sp);
+    return 0;
 }
 
 static int
@@ -262,18 +332,49 @@ SCM_DEFINE_PUBLIC(scm_dico_strat_select_p, "dico-strat-select?", 3, 0, 0,
 #define FUNC_NAME s_scm_dico_strat_select_p
 {
     struct _guile_strategy *sp;
-    char *keystr, *wordstr;
+    struct dico_strategy *stratp;
+    char *wordstr;
     int rc;
 
     SCM_ASSERT(CELL_IS_STRAT(strat), strat, SCM_ARG1, FUNC_NAME);
     SCM_ASSERT(scm_is_string(word), word, SCM_ARG2, FUNC_NAME);
-    SCM_ASSERT(scm_is_string(key), key, SCM_ARG3, FUNC_NAME);
+
     sp = (struct _guile_strategy *) SCM_CDR(strat);
-    keystr = scm_to_locale_string(key);
-    wordstr = scm_to_locale_string(word);
-    rc = sp->strat->sel(DICO_SELECT_RUN, wordstr, keystr, sp->strat->closure);
-    free(keystr);
-    free(wordstr);
+    stratp = sp->strat;
+    
+    if (scm_is_string(key)) {
+	char *keystr = scm_to_locale_string(key);
+	struct dico_select_key skey;
+
+	skey.word = keystr;
+	skey.strat_data = stratp->closure;
+	skey.call_data = NULL;
+
+	wordstr = scm_to_locale_string(word);
+
+	rc = stratp->sel(DICO_SELECT_BEGIN, &skey, keystr);
+	if (rc) {
+	    free(wordstr);
+	    free(keystr);
+	    scm_misc_error(FUNC_NAME,
+			   "initial select failed: ~S, ~S",
+			   scm_list_2(scm_from_locale_string(stratp->name),
+				      key));
+	}
+	rc = stratp->sel(DICO_SELECT_RUN, &skey, wordstr);
+	stratp->sel(DICO_SELECT_END, &skey, keystr);
+	free(wordstr);
+	free(keystr);
+    } else {
+	struct dico_select_key *kptr;
+
+	SCM_ASSERT(CELL_IS_SELKEY(key), key, SCM_ARG3, FUNC_NAME);
+    
+	kptr = (struct dico_select_key *) SCM_CDR(key);
+	wordstr = scm_to_locale_string(word);
+	rc = stratp->sel(DICO_SELECT_RUN, kptr, wordstr);
+	free(wordstr);
+    }
     return rc ? SCM_BOOL_T : SCM_BOOL_F;
 }
 #undef FUNC_NAME
@@ -319,13 +420,13 @@ SCM_DEFINE_PUBLIC(scm_dico_strat_default_p, "dico-strat-default?", 1, 0, 0,
 
 
 static int
-_guile_selector(int cmd, const char *word, const char *dict_word,
-		void *closure)
+_guile_selector(int cmd, struct dico_select_key *clos,
+		const char *dict_word)
 {
     SCM result;
-    SCM list = scm_list_4((SCM)closure,
+    SCM list = scm_list_4((SCM)clos->strat_data,
 			  scm_from_int (cmd),
-			  scm_from_locale_string(word),
+			  scm_from_locale_string(clos->word),
 			  scm_from_locale_string(dict_word));
     if (guile_safe_exec(apply_catch_body, list, &result))
 	return 0;
@@ -404,7 +505,7 @@ SCM_DEFINE_PUBLIC(scm_dico_current_markup, "dico-current-markup", 0, 0, 0,
 #undef FUNC_NAME
 
 
-static long scm_tc16_dico_port;
+static scm_t_bits scm_tc16_dico_port;
 struct _guile_dico_port {
     dico_stream_t str;
 };
@@ -507,7 +608,7 @@ _guile_init_dico_port()
 
 
 
-static long scm_tc16_dico_log_port;
+static scm_t_bits scm_tc16_dico_log_port;
 
 static SCM
 _make_dico_log_port(int level)
@@ -697,6 +798,7 @@ mod_init(int argc, char **argv)
 	return 1;
 
     _guile_init_strategy();
+    _guile_init_select_key();
     _guile_init_dico_port();
     _guile_init_dico_log_port();
     _guile_init_funcs();
@@ -994,9 +1096,14 @@ mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
     struct _guile_database *db = (struct _guile_database *)hp;
     SCM scm_strat = _make_strategy(strat);
     SCM res;
+    struct dico_select_key key;
 
+    key.word = word;
+    key.strat_data = strat->closure;
+    key.call_data = NULL;
+    
     if (strat->sel
-	&& strat->sel(DICO_SELECT_BEGIN, word, NULL, strat->closure)) {
+	&& strat->sel(DICO_SELECT_BEGIN, &key, word)) {
 	dico_log(L_ERR, 0, _("mod_match: initial select failed"));
 	return NULL;
     }
@@ -1004,11 +1111,11 @@ mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
     if (guile_call_proc(&res, db->vtab[match_proc],
 			scm_list_3(db->handle,
 				   scm_strat,
-				   scm_from_locale_string(word))))
+				   dico_scm_from_select_key(&key))))
 	return NULL;
 
     if (strat->sel)
-	strat->sel(DICO_SELECT_END, word, NULL, strat->closure);
+	strat->sel(DICO_SELECT_END, &key, word);
 
     if (res == SCM_BOOL_F || res == SCM_EOL)
 	return NULL;

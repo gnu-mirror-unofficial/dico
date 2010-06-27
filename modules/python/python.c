@@ -42,11 +42,73 @@ struct _python_database {
     PyObject *py_instance;
 };
 
+
+typedef struct {
+    PyObject_HEAD;
+    struct dico_select_key *key;
+} PySelectionKey;
+
+static void 
+_PySelectionKey_dealloc (PyObject *self)
+{
+}
+
+static PyMethodDef selection_key_methods[] = {
+    /* None so far */
+    { NULL, NULL, 0, NULL }
+};
+    
+static PyObject *
+_PySelectionKey_getattr (PyObject *self, char *name)
+{
+    PySelectionKey *py_key = (PySelectionKey *)self;
+
+    if (strcmp (name, "word") == 0)
+	return PyString_FromString (py_key->key->word);
+    return Py_FindMethod (selection_key_methods, self, name);
+}
+
+static PyObject *
+_PySelectionKey_repr (PyObject *self)
+{
+    PySelectionKey *py_key = (PySelectionKey *)self;
+    char buf[80];
+    snprintf (buf, sizeof buf, "<DicoSelectionKey %s>", py_key->key->word);
+    return PyString_FromString (buf);
+}
+
+static PyObject *
+_PySelectionKey_str (PyObject *self)
+{
+    PySelectionKey *py_key = (PySelectionKey *)self;
+    return PyString_FromString (py_key->key->word);
+}
+
+static PyTypeObject PySelectionKeyType = {
+    PyObject_HEAD_INIT(&PyType_Type)
+    0,
+    "DicoSelectionKey",      /* tp_name */
+    sizeof (PySelectionKey), /* tp_basicsize */
+    0,                   /* tp_itemsize; */
+    _PySelectionKey_dealloc, /* tp_dealloc; */
+    NULL,                /* tp_print; */
+    _PySelectionKey_getattr, /* tp_getattr; __getattr__ */
+    NULL,                /* tp_setattr; __setattr__ */
+    NULL,                /* tp_compare; __cmp__ */
+    _PySelectionKey_repr,    /* tp_repr; __repr__ */
+    NULL,                /* tp_as_number */
+    NULL,                /* tp_as_sequence */
+    NULL,                /* tp_as_mapping */
+    NULL,                /* tp_hash; __hash__ */
+    NULL,                /* tp_call; __call__ */
+    _PySelectionKey_str,     /* tp_str; __str__ */
+};
+
+
 typedef struct {
     PyObject_HEAD;
     dico_strategy_t strat;
 } PyStrategy;
-
 
 static inline PyObject *
 _ro (PyObject *obj)
@@ -59,14 +121,13 @@ static PyObject *
 strat_select_method (PyObject *self, PyObject *args)
 {
     PyStrategy *py_strat = (PyStrategy *)self;
-    char *key = NULL;
+    PySelectionKey *py_key;
     char *word = NULL;
 
-    if (!PyArg_ParseTuple (args, "ss", &word, &key))
+    if (!PyArg_ParseTuple (args, "sO!", &word, &PySelectionKeyType, &py_key))
 	return _ro (Py_False);
 
-    return _ro (py_strat->strat->sel (DICO_SELECT_RUN, word, key, 
-				      py_strat->strat->closure)
+    return _ro (py_strat->strat->sel (DICO_SELECT_RUN, py_key->key, word)
 		? Py_True : Py_False);
 }
 
@@ -142,6 +203,7 @@ static PyTypeObject PyStrategyType = {
     _PyStrategy_str,     /* tp_str; __str__ */
 };
 
+
 static dico_stream_t dico_stream_output;
 static dico_stream_t dico_stream_log_err;
 static dico_stream_t dico_stream_log_info;
@@ -196,14 +258,17 @@ static PyMethodDef capture_stderr_method[] =
 };
 
 static int
-_python_selector (int cmd, const char *word, const char *dict_word,
-		  void *closure)
+_python_selector (int cmd, struct dico_select_key *key, const char *dict_word)
 {
     PyObject *py_args, *py_res;
-
+    PySelectionKey *py_key;
+    void *closure = key->strat_data;
+    
     py_args = PyTuple_New (3);
     PyTuple_SetItem (py_args, 0, PyInt_FromLong (cmd));
-    PyTuple_SetItem (py_args, 1, PyString_FromString (word));
+    py_key = PyObject_NEW (PySelectionKey, &PySelectionKeyType);
+    py_key->key = key;
+    PyTuple_SetItem (py_args, 1, (PyObject*)py_key);
     PyTuple_SetItem (py_args, 2, PyString_FromString (dict_word));
 
     if (closure && PyCallable_Check (closure)) {
@@ -234,8 +299,7 @@ dico_register_strat (PyObject *self, PyObject *args)
     if (fnc) {
 	strat.sel = NULL;
 	strat.closure = NULL;
-    }
-    else {
+    } else {
 	strat.sel = _python_selector;
 	strat.closure = fnc;
     }
@@ -651,24 +715,35 @@ static dico_result_t
 mod_match (dico_handle_t hp, const dico_strategy_t strat, const char *word)
 {
     PyStrategy *py_strat;
+    PySelectionKey *py_key;
     PyObject *py_args, *py_fnc, *py_res;
     struct _python_database *db = (struct _python_database *)hp;
+    struct dico_select_key key;
+
+    key.word = word;
+    key.strat_data = strat->closure;
+    key.call_data = NULL;
 
     PyThreadState_Swap (db->py_ths);
 
     if (strat->sel
-	&& strat->sel (DICO_SELECT_BEGIN, word, NULL, strat->closure)) {
-      dico_log (L_ERR, 0, _("mod_match: initial select failed"));
-      return NULL;
+	&& strat->sel (DICO_SELECT_BEGIN, &key, word)) {
+	dico_log (L_ERR, 0, _("mod_match: initial select failed"));
+	return NULL;
     }
+
+    py_key = PyObject_NEW (PySelectionKey, &PySelectionKeyType);
+    if (!py_key)
+	return NULL;
+    py_key->key = &key;
     
     py_strat = PyObject_NEW (PyStrategy, &PyStrategyType);
     if (py_strat) {
 	py_strat->strat = strat;
-
+	
 	py_args = PyTuple_New (2);
 	PyTuple_SetItem (py_args, 0, (PyObject *)py_strat);
-	PyTuple_SetItem (py_args, 1, PyString_FromString (word));
+	PyTuple_SetItem (py_args, 1, (PyObject *)py_key);
 	py_fnc = PyObject_GetAttrString (db->py_instance, "match_word");
 	if (py_fnc && PyCallable_Check (py_fnc)) {
 	    py_res = PyObject_CallObject (py_fnc, py_args);
@@ -679,8 +754,7 @@ mod_match (dico_handle_t hp, const dico_strategy_t strat, const char *word)
 		    return NULL;
 		else {
 		    if (strat->sel) {
-			strat->sel (DICO_SELECT_END, word, NULL,
-				    strat->closure);
+			strat->sel (DICO_SELECT_END, &key, word);
 		    }
 		    return _make_python_result (db, py_res);
 		}

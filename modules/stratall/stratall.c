@@ -26,7 +26,7 @@
 #include <appi18n.h>
 
 static int
-all_sel(int cmd, const char *word, const char *dict_word, void *closure)
+all_sel(int cmd, struct dico_select_key *key, const char *dict_word)
 {
     switch (cmd) {
     case DICO_SELECT_BEGIN:

@@ -17,20 +17,29 @@
 #include <dicod.h>
 #include <regex.h>
 
-struct regex_closure {
+struct regex_flags {
     int flags;
+};
+    
+struct regex_data {
     regex_t reg;
 };
 
 static int
-regex_sel(int cmd, const char *word, const char *dict_word, void *closure)
+regex_sel(int cmd, struct dico_select_key *key, const char *dict_word)
 {
-    struct regex_closure *rp = closure;
+    char const *word = key->word;
+    struct regex_flags *fp = key->strat_data;
+    struct regex_data *rp = key->call_data;
     int rc;
 
     switch (cmd) {
     case DICO_SELECT_BEGIN:
-	rc = regcomp(&rp->reg, word, rp->flags);
+	rp = malloc(sizeof(*rp));
+	if (!rp)
+	    return 1;
+	key->call_data = rp;
+	rc = regcomp(&rp->reg, word, fp->flags);
 	if (rc) {
 	    char errbuf[512];
 	    regerror(rc, &rp->reg, errbuf, sizeof(errbuf));
@@ -45,16 +54,17 @@ regex_sel(int cmd, const char *word, const char *dict_word, void *closure)
     case DICO_SELECT_END:
 	rc = 0;
 	regfree(&rp->reg);
+	free(rp);
 	break;
     }
     return rc;
 }
 
-static struct regex_closure ext_closure = {
+static struct regex_flags ext_flags = {
     REG_EXTENDED|REG_ICASE
 };
 
-static struct regex_closure basic_closure = {
+static struct regex_flags basic_flags = {
     REG_EXTENDED|REG_ICASE
 };
 
@@ -62,14 +72,14 @@ static struct dico_strategy re_strat = {
     "re",
     "POSIX 1003.2 (modern) regular expressions",
     regex_sel,
-    &ext_closure
+    &ext_flags
 };
 
 static struct dico_strategy regex_strat = {
     "regexp",
     "Old (basic) regular expressions",
     regex_sel,
-    &basic_closure
+    &basic_flags
 };
 
 void

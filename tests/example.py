@@ -103,21 +103,21 @@ class DicoModule:
             return DicoDefineResult ([self.adict[word]])
         return False
     
-    def match_word (self, strat, word):
+    def match_word (self, strat, key):
         if strat.name == "exact":
-            if self.adict.has_key (word.lower ()):
-                return DicoMatchResult ([self.adict[word.lower()]])
+            if self.adict.has_key (key.word.lower ()):
+                return DicoMatchResult ([self.adict[key.word.lower()]])
         elif strat.name == "prefix":
             res = []
             for w in self.adict:
-                if w.startswith (word):
+                if w.startswith (key.word):
                     res.append (w)
             if len (res):
                 return DicoMatchResult (res, len (self.adict))
         elif strat.has_selector:
             res = DicoMatchResult ([], len (self.adict))
             for k in self.adict:
-                if strat.select (word, k):
+                if strat.select (k, key):
                     res.append (k)
             if res.count > 0:
                 return res

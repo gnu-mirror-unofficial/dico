@@ -87,9 +87,9 @@
 		     (car elt)))
 	      (db:get dbh corpus)))
 
-(define (match-selector dbh strat word)
+(define (match-selector dbh strat key)
   (filter-map (lambda (elt)
-		(and (dico-strat-select? strat word (car elt))
+		(and (dico-strat-select? strat (car elt) key)
 		     (car elt)))
 	  (db:get dbh corpus)))
 
@@ -100,15 +100,15 @@
 
 (define match-default match-prefix)
 
-(define (match-word dbh strat word)
+(define (match-word dbh strat key)
   (let ((sp (assoc (dico-strat-name strat) strategy-list)))
     (let ((res (cond
 		(sp
-		 ((cdr sp) dbh strat word))
+		 ((cdr sp) dbh strat (dico-select-key-word key)))
 		((dico-strat-selector? strat)
-		 (match-selector dbh strat word))
+		 (match-selector dbh strat key))
 		(else
-		 (match-default dbh strat word)))))
+		 (match-default dbh strat (dico-select-key-word key))))))
       (if res
 	  (cons #f res)
 	  #f))))

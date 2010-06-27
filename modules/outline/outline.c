@@ -654,14 +654,13 @@ outline_match0(dico_handle_t hp, const char *strat,
 }
 
 dico_result_t
-outline_match_all(dico_handle_t hp, const char *word,
-		  dico_select_t sel, void *strat_data)
+outline_match_all(dico_handle_t hp, dico_strategy_t strat, const char *word)
 {
     struct outline_file *file = (struct outline_file *) hp;
     dico_list_t list;
     size_t count, i;
     struct result *res;
-    struct dico_select_key key;
+    struct dico_key key;
 
     list = dico_list_create();
 
@@ -670,22 +669,19 @@ outline_match_all(dico_handle_t hp, const char *word,
 	return NULL;
     }
 
-    key.word = word;
-    key.strat_data = strat_data;
-    key.call_data = NULL;
-    
-    if (sel(DICO_SELECT_BEGIN, &key, word)) {
-	dico_log(L_ERR, 0, _("outline_match_all: initial select failed"));
+    if (dico_key_init(&key, strat, word)) {
+	dico_log(L_ERR, 0, _("outline_match_all: key initialization failed"));
 	return NULL;
     }
     
     for (i = 0; i < file->count; i++) {
-	if (sel(DICO_SELECT_RUN, &key, file->index[i].word)) {
+	if (dico_key_match(&key, file->index[i].word))
 	    dico_list_append(list, &file->index[i]);
-	}
     }
+
+    dico_key_deinit(&key);
+    
     compare_count = file->count;
-    sel(DICO_SELECT_END, &key, word);
 	
     count = dico_list_count(list);
     if (count == 0) {
@@ -708,7 +704,7 @@ dico_result_t
 outline_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 {
     if (strat->sel) 
-	return outline_match_all(hp, word, strat->sel, strat->closure);
+	return outline_match_all(hp, strat, word);
     else
 	return outline_match0(hp, strat->name, word);
 }

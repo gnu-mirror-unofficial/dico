@@ -800,13 +800,12 @@ _match_simple(struct dictdb *db, const char *strat, const char *word)
 }
 
 static dico_result_t
-_match_all(struct dictdb *db, const char *word,
-	   dico_select_t sel, void *strat_data)
+_match_all(struct dictdb *db, dico_strategy_t strat, const char *word)
 {
     dico_list_t list;
     size_t count, i;
     struct result *res;
-    struct dico_select_key key;
+    struct dico_key key;
     
     list = dico_list_create();
 
@@ -820,22 +819,19 @@ _match_all(struct dictdb *db, const char *word,
 			       compare_entry);
     dico_list_set_flags(list, DICO_LIST_COMPARE_TAIL);
 
-    key.word = word;
-    key.strat_data = strat_data;
-    key.call_data = NULL;
-    
-    if (sel(DICO_SELECT_BEGIN, &key, word)) {
-	dico_log(L_ERR, 0, _("_match_all: initial select failed"));
+    if (dico_key_init(&key, strat, word)) {
+	dico_log(L_ERR, 0, _("_match_all: key initialization failed"));
 	return NULL;
     }
     
     for (i = 0; i < db->numwords; i++) 
 	if (!RESERVED_WORD(db, db->index[i].word)
-	    && sel(DICO_SELECT_RUN, &key, db->index[i].word)) 
+	    && dico_key_match(&key, db->index[i].word)) 
 	    dico_list_append(list, &db->index[i]);
-	
+
+    dico_key_deinit(&key);
+    
     compare_count = db->numwords;
-    sel(DICO_SELECT_END, &key, word);
 	
     count = dico_list_count(list);
     if (count == 0) {
@@ -863,7 +859,7 @@ mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 	return NULL;
     
     if (strat->sel) 
-	return _match_all(db, word, strat->sel, strat->closure);
+	return _match_all(db, strat, word);
     else
 	return _match_simple(db, strat->name, word);
 }

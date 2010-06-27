@@ -18,44 +18,42 @@
 # include <config.h>
 #endif
 #include <dico.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <ctype.h>
 #include <errno.h>
-#include <appi18n.h>
+#include <stdlib.h>
+#include <string.h>
 
-static int
-all_sel(int cmd, struct dico_key *key, const char *dict_word)
+#define _DKF_INIT 0x01
+
+void
+dico_key_deinit(struct dico_key *key)
 {
-    switch (cmd) {
-    case DICO_SELECT_BEGIN:
-	break;
-	
-    case DICO_SELECT_RUN:
-	return 1;
-
-    case DICO_SELECT_END:
-	break;
+    if (key->flags & _DKF_INIT) {
+	if (key->strat->sel)
+	    key->strat->sel(DICO_SELECT_END, key, NULL);
+	key->flags = 0;
+	free(key->word);
     }
-    return 0;
+    memset(key, 0, sizeof(key[0]));
 }
 
-static struct dico_strategy all_strat = {
-    "all",
-    "Match everything (experimental)",
-    all_sel
-};
-
-static int
-stratall_init(int argc, char **argv)
+int
+dico_key_init(struct dico_key *key, dico_strategy_t strat, const char *word)
 {
-    dico_strategy_add(&all_strat);
+    memset(key, 0, sizeof(key[0]));
+    key->word = strdup (word);
+    key->strat = strat;
+    if (strat->sel && strat->sel(DICO_SELECT_BEGIN, key, word))
+	return 1;
+    key->flags |= _DKF_INIT;
     return 0;
 }
 
-struct dico_database_module DICO_EXPORT(stratall, module) = {
-    DICO_MODULE_VERSION,
-    DICO_CAPA_NODB,
-    stratall_init,
-};
+int
+dico_key_match(struct dico_key *key, const char *word)
+{
+    if (!key || !(key->flags & _DKF_INIT) || !word) {
+	errno = EINVAL;
+	return -1;
+    }
+    return key->strat->sel(DICO_SELECT_RUN, key, word);
+}

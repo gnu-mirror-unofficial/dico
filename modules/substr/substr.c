@@ -26,7 +26,7 @@
 #include <appi18n.h>
 
 static int
-substr_sel(int cmd, struct dico_select_key *key, const char *dict_word)
+substr_sel(int cmd, struct dico_key *key, const char *dict_word)
 {
     unsigned *sample;
     unsigned *tmp;

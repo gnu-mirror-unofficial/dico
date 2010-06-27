@@ -29,6 +29,13 @@ struct dico_strategy {
     dico_list_t stratcl;    /* Strategy access control list */  
 };
 
+struct dico_key {
+    char *word;
+    void *call_data;
+    dico_strategy_t strat;
+    int flags;
+};
+
 int dico_strat_name_cmp(const void *item, void *data);
 int dico_strat_free(void *item, void *data);
 
@@ -43,5 +50,11 @@ size_t dico_strategy_count(void);
 int dico_set_default_strategy(const char *name);
 dico_strategy_t dico_get_default_strategy(void);
 #define dico_strategy_is_default_p(s) ((s)->is_default)
+
+void dico_key_deinit(struct dico_key *key);
+int dico_key_init(struct dico_key *key, dico_strategy_t strat,
+		  const char *word);
+int dico_key_match(struct dico_key *key, const char *word);
+
 
 #endif

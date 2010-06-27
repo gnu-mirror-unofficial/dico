@@ -19,11 +19,11 @@
 static int levenshtein_distance = 1;
 
 static int
-lev_sel(int cmd, struct dico_select_key *key, const char *dict_word)
+lev_sel(int cmd, dico_key_t key, const char *dict_word)
 {
     if (cmd == DICO_SELECT_RUN) {
 	int dist = dico_levenshtein_distance(key->word, dict_word,
-					     (int)key->strat_data);
+					     (int)key->strat->closure);
 	if (dist < 0)
 	    return 0;
 	return dist <= levenshtein_distance;

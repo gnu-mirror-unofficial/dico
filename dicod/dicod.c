@@ -154,7 +154,7 @@ close_databases()
 }
 
 int
-soundex_sel(int cmd, struct dico_select_key *key, const char *dict_word)
+soundex_sel(int cmd, dico_key_t key, const char *dict_word)
 {
     char dcode[DICO_SOUNDEX_SIZE];
 

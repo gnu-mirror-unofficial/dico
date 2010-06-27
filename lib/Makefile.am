@@ -32,6 +32,7 @@ libdico_la_SOURCES=\
  fltstream.c\
  header.c\
  iostr.c\
+ key.c\
  levenshtein.c\
  libi18n.c\
  list.c\

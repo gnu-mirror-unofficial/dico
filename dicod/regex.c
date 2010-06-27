@@ -26,10 +26,10 @@ struct regex_data {
 };
 
 static int
-regex_sel(int cmd, struct dico_select_key *key, const char *dict_word)
+regex_sel(int cmd, dico_key_t key, const char *dict_word)
 {
     char const *word = key->word;
-    struct regex_flags *fp = key->strat_data;
+    struct regex_flags *fp = key->strat->closure;
     struct regex_data *rp = key->call_data;
     int rc;
 
@@ -50,7 +50,7 @@ regex_sel(int cmd, struct dico_select_key *key, const char *dict_word)
     case DICO_SELECT_RUN:
 	rc = regexec(&rp->reg, dict_word, 0, NULL, 0) == 0;
 	break;
-
+	
     case DICO_SELECT_END:
 	rc = 0;
 	regfree(&rp->reg);

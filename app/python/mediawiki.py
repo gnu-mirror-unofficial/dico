@@ -78,9 +78,9 @@ class DicoModule:
         else:
             return False
 
-    def match_word (self, strat, word):
+    def match_word (self, strat, key):
         url = 'http://%s%s%s' % (self.wikihost, self.endpoint_match,
-                                 urllib2.quote (word))
+                                 urllib2.quote (key.word))
         req = urllib2.Request (url)
         req.add_header ('User-Agent', self.user_agent)
         try:

@@ -5,9 +5,19 @@ timing yes;
 access-log-file "<BUILDDIR>/tests/access_log";
 access-log-format "%h %l %u %t \"%r\" %>s %b \"\" \"%C\"";
 
-prepend-load-path ("<BUILDDIR>/modules/outline",
+prepend-load-path ("<BUILDDIR>/modules/stratall",
+                   "<BUILDDIR>/modules/substr",
+                   "<BUILDDIR>/modules/outline",
                    "<BUILDDIR>/modules/guile",
 		   "<BUILDDIR>/modules/python");
+
+load-module stratall {
+        command "stratall";
+}
+
+load-module substr {
+        command "substr";
+}
 
 load-module outline {
 	command "outline";

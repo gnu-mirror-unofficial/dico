@@ -104,11 +104,11 @@
   (let ((sp (assoc (dico-strat-name strat) strategy-list)))
     (let ((res (cond
 		(sp
-		 ((cdr sp) dbh strat (dico-select-key-word key)))
+		 ((cdr sp) dbh strat (dico-key->word key)))
 		((dico-strat-selector? strat)
 		 (match-selector dbh strat key))
 		(else
-		 (match-default dbh strat (dico-select-key-word key))))))
+		 (match-default dbh strat (dico-key->word key))))))
       (if res
 	  (cons #f res)
 	  #f))))

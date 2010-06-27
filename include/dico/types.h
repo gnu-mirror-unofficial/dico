@@ -48,17 +48,13 @@ typedef struct iterator *dico_iterator_t;
 typedef struct dico_handle_struct *dico_handle_t;
 typedef struct dico_result_struct *dico_result_t;
 
-struct dico_select_key {
-    const char *word;
-    void *strat_data;
-    void *call_data;
-};
+typedef struct dico_strategy *dico_strategy_t;
+typedef struct dico_key *dico_key_t;
 
 #define DICO_SELECT_BEGIN 0
 #define DICO_SELECT_RUN   1
 #define DICO_SELECT_END   2
-typedef int (*dico_select_t) (int, struct dico_select_key *, const char *);
-typedef struct dico_strategy *dico_strategy_t;
+typedef int (*dico_select_t) (int, dico_key_t, const char *);
 
 #define DICO_MODULE_VERSION 1
 

@@ -45,7 +45,7 @@ struct _python_database {
 
 typedef struct {
     PyObject_HEAD;
-    struct dico_select_key *key;
+    struct dico_key *key;
 } PySelectionKey;
 
 static void 
@@ -258,11 +258,11 @@ static PyMethodDef capture_stderr_method[] =
 };
 
 static int
-_python_selector (int cmd, struct dico_select_key *key, const char *dict_word)
+_python_selector (int cmd, struct dico_key *key, const char *dict_word)
 {
     PyObject *py_args, *py_res;
     PySelectionKey *py_key;
-    void *closure = key->strat_data;
+    void *closure = key->strat->closure;
     
     py_args = PyTuple_New (3);
     PyTuple_SetItem (py_args, 0, PyInt_FromLong (cmd));
@@ -718,17 +718,12 @@ mod_match (dico_handle_t hp, const dico_strategy_t strat, const char *word)
     PySelectionKey *py_key;
     PyObject *py_args, *py_fnc, *py_res;
     struct _python_database *db = (struct _python_database *)hp;
-    struct dico_select_key key;
-
-    key.word = word;
-    key.strat_data = strat->closure;
-    key.call_data = NULL;
+    struct dico_key key;
 
     PyThreadState_Swap (db->py_ths);
 
-    if (strat->sel
-	&& strat->sel (DICO_SELECT_BEGIN, &key, word)) {
-	dico_log (L_ERR, 0, _("mod_match: initial select failed"));
+    if (dico_key_init(&key, strat, word)) {
+	dico_log (L_ERR, 0, _("mod_match: key initialization failed"));
 	return NULL;
     }
 

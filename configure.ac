@@ -21,7 +21,7 @@ AC_CONFIG_SRCDIR([dicod/main.c])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR(m4)	
-AM_INIT_AUTOMAKE([1.11 gnits tar-ustar std-options])
+AM_INIT_AUTOMAKE([1.11 gnits tar-ustar dist-bzip2 dist-xz std-options])
 
 dnl Enable silent rules by default:
 AM_SILENT_RULES([yes])

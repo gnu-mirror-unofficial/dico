@@ -16,8 +16,7 @@ dnl with GNU Mailutils; if not, write to the Free Software Foundation,
 dnl Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 dnl
 AC_DEFUN([MU_CHECK_GSASL],
-[AC_CACHE_CHECK([whether to use GNU SASL library],
-                 [mu_cv_lib_gsasl],
+[AC_CACHE_VAL([mu_cv_lib_gsasl],
  [if test "x$mu_cv_lib_gsasl" = x; then
    cached=""
    mu_cv_lib_gsasl=no
@@ -37,9 +36,9 @@ AC_DEFUN([MU_CHECK_GSASL],
 
      if test $wantgsasl != no; then
        save_LIBS=$LIBS
-       AC_CHECK_LIB(gsasl, gsasl_init,
-                    [mu_cv_lib_gsasl=-lgsasl],
-                    [mu_cv_lib_gsasl=no])
+       AC_SEARCH_LIBS(gsasl_init, gsasl, 
+                      [mu_cv_lib_gsasl=-lgsasl],
+                      [mu_cv_lib_gsasl=no])
        if test $mu_cv_lib_gsasl != no; then
          LIBS="$LIBS $mu_cv_lib_gsasl"
          AC_TRY_RUN([

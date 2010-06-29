@@ -118,6 +118,7 @@ Appendices
 Building the Package
 
 * Default Preprocessor::
+* Default Server::
 * Guile Support::
 * Python Support::
 * Other Settings::
@@ -127,6 +128,7 @@ The @command{dicod} daemon.
 * Daemon Mode::
 * Inetd Mode::
 * Configuration::
+* Exit Codes::
 * Dicod Invocation::
 
 Configuration
@@ -167,6 +169,8 @@ Modules
 * Dictorg::
 * Guile::
 * Python::
+* Stratall::
+* Substr::
 
 The @command{guile} module.
 
@@ -2451,6 +2455,8 @@ languages, correspondingly.
 * Dictorg::
 * Guile::
 * Python::
+* Stratall::
+* Substr::
 @end menu
 
 @node Outline
@@ -2978,12 +2984,16 @@ The argument @var{dbh} is a database handle returned by @code{open-db}.
 @end deffn
 
 @anchor{match-word}
-@deffn {Guile Callback} match-word dbh strat word
+@deffn {Guile Callback} match-word dbh strat key
 Virtual Table: @code{(cons "match" match-word)}@*
 
-Find all matches of word @var{word} from the database @var{dbh}, using
+Find all matches of @var{key} from the database @var{dbh}, using
 matching strategy @var{strat}.  Return a result handle.  If nothing is
 found, return @code{#f} or @code{'()}. 
+
+The @var{key} is a @dfn{Dico Key} object, which contains information
+about the word being looked for.  To obtain the actual word, use
+the @code{dico-key->word} function (@pxref{dico-key->word}).
 
 The argument @var{dbh} is a database handle returned by
 @code{open-db}.  Matching strategy @var{strat} is a special Scheme
@@ -3013,18 +3023,33 @@ Return the number of elements in the result set @var{resh}.
 @subsection Dico Scheme Primitives
 @cindex strategy functions, Scheme
 @cindex strategy functions, Guile
-@cindex Scheme strategy functions
-@cindex Guile strategy functions
+@cindex key (a Scheme object) functions
+@cindex Scheme strategy and key functions
+@cindex Guile strategy and key functions
   GNU Dico provides the following Scheme primitives, that access various
-fields of the @code{strat} argument to @code{match} callback:
-  
+fields of the @code{strat} and @code{key} arguments to @code{match} callback:
+
+@defun dico-key? @var{obj}
+Return @samp{#t} if @var{obj} is a Dico key object.
+@end defun
+
+@anchor{dico-key->word}
+@defun dico-key->word @var{key}
+Extract the lookup word from the key object @var{key}.
+@end defun
+
+@defun dico-make-key @var{strat} @var{word}
+Create new key object from strategy @var{strat} and word @var{word}.
+@end defun
+
+
 @defun dico-strat-selector? @var{strat}
 Return true if @var{strat} has a selector. @FIXME-pxref{selector}.
 @end defun
 
 @defun dico-strat-select? @var{strat} @var{word} @var{key}
 Return true if @var{key} matches @var{word} as per strategy selector
-@var{strat}.
+@var{strat}.  The @var{key} is a @samp{Dico Key} object.
 @end defun
 
 @defun dico-strat-name @var{strat}
@@ -3181,11 +3206,11 @@ for definitions of particular @samp{match-} functions):
 that list and call its @code{cdr}, e.g.:
 
 @smalllisp
-(define (match-word dbh strat word)
+(define (match-word dbh strat key)
   (let ((sp (assoc (dico-strat-name strat) strategy-list)))
     (let ((res (cond
                 (sp
-                 ((cdr sp) dbh strat word))
+                 ((cdr sp) dbh strat (dico-key->word key)))
 @end smalllisp
 
   If the requested strategy is not in that list, the function will use
@@ -3194,30 +3219,33 @@ function otherwise:
 
 @smalllisp
                 ((dico-strat-selector? strat)
-                 (match-selector dbh strat word))
+                 (match-selector dbh strat key))
                 (else
-                 (match-default dbh strat word)))))
+                 (match-default dbh strat (dico-key->word key))))))
 @end smalllisp
+
+Notice the use of @code{dico-key->word} function to extract the actual
+lookup word from the key object.
 
   To summarize, the @samp{match-word} callback is:
 
 @smalllisp  
-(define (match-word dbh strat word)
+(define (match-word dbh strat key)
   (let ((sp (assoc (dico-strat-name strat) strategy-list)))
     (let ((res (cond
                 (sp
-                 ((cdr sp) dbh strat word))
+                 ((cdr sp) dbh strat (dico-key->word key)))
                 ((dico-strat-selector? strat)
-                 (match-selector dbh strat word))
+                 (match-selector dbh strat key))
                 (else
-                 (match-default dbh strat word)))))
+                 (match-default dbh strat (dico-key->word key))))))
       (if res
           (cons #f res)
           #f))))
 @end smalllisp
 
   Now, let's create the @samp{match-} functions used in it.  The
-@samp{exact} strategy is easiest to implement:
+@samp{exact} strategy is the easiest to implement:
 
 @smalllisp
 (define (match-exact dbh strat word)
@@ -3250,12 +3278,14 @@ therefore be registered:
   The @code{match-selector} function is pretty similar to its
 siblings, except that it uses @code{dico-strat-select?}
 (@pxref{Dico Scheme Primitives, dico-strat-select?}) to select the
-matching elements:
+matching elements.  This also leads to this function expecting
+a @dfn{key} as its third argument, in contrast to the previous
+matchers, which expect the actual lookup word there:
 
 @smalllisp
-(define (match-selector dbh strat word)
+(define (match-selector dbh strat key)
   (mapcan (lambda (elt)
-            (and (dico-strat-select? strat (car elt) word)
+            (and (dico-strat-select? strat (car elt) key)
                  (car elt)))
           (db:get dbh corpus)))
 @end smalllisp
@@ -3309,9 +3339,61 @@ module initialization function:
 needed. 
 
 @node Python
-@section The @command{python} module.
+@section The @command{python} module
 @cindex Python
 @UNREVISED
+
+@node Stratall
+@section The @command{stratall} module
+@cindex stratall
+@cindex all, strategy
+  The @command{stratall} module provides a new strategy, called @samp{all}.
+This strategy always returns a full list of headwords from the
+database, no matter what the actual search word is.
+ 
+  To load this strategy, use the following configuration statement:
+
+@smallexample
+load-module stratall @{
+        command "stratall";
+@}
+@end smallexample
+
+  Using this strategy on a full set of databases (@samp{MATCH * all
+""}) produces enormous amount of output, which may induce a
+considerable strain on the server, therefore it is advised to block
+such usage as suggested in @ref{Strategies and Default Searches}:
+
+@smallexample
+strategy all @{
+        deny-all yes;
+@}
+@end smallexample
+
+@node Substr
+@section The @command{substr} module
+@cindex substr, strategy
+  The @command{substr} module provides a @samp{substr} search
+strategy.  This strategy matches a substring anywhere in the
+keyword.  For example:
+
+@smallexample
+C: MATCH eng-deu substr orma
+S: 152 207 matches found: list follows
+S: eng-deu "abnormal"
+S: eng-deu "conformable"
+S: eng-deu "doorman"
+S: eng-deu "format"
+@dots{}
+@end smallexample
+
+  The loading procedure expects no arguments:
+
+@smallexample
+load-module substr @{
+        command "substr";
+@}
+@end smallexample
 
 @node Interface
 @chapter Dico Module Interface

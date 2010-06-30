@@ -107,6 +107,9 @@ long ident_timeout = 3; /* Timeout for AUTH I/O */
 /* Provide timing information */
 int timing_option;
 
+/* Name of the default strategy */
+const char *default_strategy_name;
+
 
 /* Configuration */
 
@@ -563,28 +566,6 @@ enable_capability(enum cfg_callback_command cmd,
 	dico_list_iterate(value->v.list, set_capability, locus);
     else if (dicod_capa_add(value->v.string)) 
 	config_error(locus, 0, _("unknown capability: %s"), value->v.string);
-    return 0;
-}
-
-int
-set_defstrat(enum cfg_callback_command cmd,
-	     dicod_locus_t *locus,
-	     void *varptr,
-	     config_value_t *value,
-	     void *cb_data)
-{
-    if (cmd != callback_set_value) {
-	config_error(locus, 0, _("Unexpected block statement"));
-	return 1;
-    }
-    if (value->type != TYPE_STRING) {
-	config_error(locus, 0, _("expected scalar value but found list"));
-	return 1;
-    }
-    if (dico_set_default_strategy(value->v.string)) {
-	config_error(locus, 0, _("unknown strategy"));
-	return 1;
-    }
     return 0;
 }
 
@@ -1108,7 +1089,7 @@ struct config_keyword keywords[] = {
       cfg_string|CFG_LIST, &prepend_load_path },
     { "default-strategy", N_("name"),
       N_("Set the name of the default matching strategy."),
-      cfg_string, NULL, 0, set_defstrat },
+      cfg_string, &default_strategy_name },
     { "timing", N_("arg"),
       N_("Provide timing information after successful completion of an "
 	 "operation."),
@@ -1410,7 +1391,13 @@ main(int argc, char **argv)
     begin_timing("server");
     dicod_server_init();
     flush_strat_forward();
+    if (default_strategy_name
+	&& dico_set_default_strategy(default_strategy_name)) {
+	dico_die(EX_UNAVAILABLE, L_ERR, 0, _("unknown strategy"));
+    }
+	
     markup_flush_capa();
+    
     switch (mode) {
     case MODE_DAEMON:
 	dicod_server(argc, argv);

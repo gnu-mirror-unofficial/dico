@@ -411,7 +411,7 @@ db_get_groups(void *handle, const char *qgr, const char *key,
 
     rc = 0;
     for (msg = ldap_first_entry(lp->ldap, res); msg;
-	 msg = ldap_next_entry(lp->ldap, res)) {
+	 msg = ldap_next_entry(lp->ldap, msg)) {
 	struct berval **values;
 	size_t i, count;
 	

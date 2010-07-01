@@ -480,3 +480,5 @@ void stratcl_add_cmp(dico_list_t list, enum cmp_op op, size_t len);
 void stratcl_add_disable(dico_list_t list);
 int stratcl_check_word(dico_list_t list, const char *word);
 
+/* ckpass.c */
+int dicod_check_password(const char *db_pass, const char *pass);

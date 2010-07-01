@@ -21,6 +21,7 @@ dicod_SOURCES=\
  alias.c\
  auth.c\
  capa.c\
+ ckpass.c\
  cmdline.c\
  commands.c\
  config-format.c\

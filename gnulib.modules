@@ -4,6 +4,7 @@
 c-strcase
 crypto/des
 crypto/md5
+crypto/sha1
 fprintftime
 inttostr
 inttypes

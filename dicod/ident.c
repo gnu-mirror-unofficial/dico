@@ -163,29 +163,6 @@ des_string_to_key(char *buf, size_t bufsize, unsigned char key[8])
     des_fixup_key_parity(key);
 }
 
-static int
-decode64_buf(const char *name, unsigned char **pbuf, size_t *psize)
-{
-    size_t namelen;
-    unsigned char *buf;
-    size_t bufsize;
-    size_t size;
-  
-    name++;
-    namelen = strlen(name) - 1;
-
-    bufsize = 3 * namelen + 1;
-    buf = xmalloc(bufsize);
-    
-    dico_base64_decode(name, namelen,
-		       (char*) buf, bufsize,
-		       &size);
-    buf[size] = 0;
-    *pbuf = realloc(buf, size + 1);
-    *psize = size;
-    return 0;
-}
-
 struct ident_info
 {
     uint32_t checksum;
@@ -214,7 +191,8 @@ ident_decrypt(const char *file, const char *name, struct ident_info *info)
     char keybuf[1024];
     union ident_data id;
 
-    if (decode64_buf(name, &buf, &size))
+    if (dico_base64_decode((const unsigned char *)(name + 1),
+			   strlen(name) - 1, &buf, &size))
 	return 1;
 
     if (size != 24) {

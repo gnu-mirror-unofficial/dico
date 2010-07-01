@@ -54,7 +54,7 @@ AC_HEADER_DIRENT dnl not needed ?
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(fcntl.h limits.h strings.h sys/time.h syslog.h unistd.h \
-                 readline/readline.h)
+                 crypt.h readline/readline.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 gl_INIT
@@ -85,6 +85,19 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS(gethostname select socket strdup strerror strtol \
                setegid setregid setresgid seteuid setreuid \
 	       sysconf getdtablesize)
+
+# Crypt
+AC_CHECK_DECLS(crypt,,,[
+#include <unistd.h>
+#ifdef HAVE_CRYPT_H
+# include <crypt.h>
+#endif])
+AH_BOTTOM([
+#if !HAVE_DECL_CRYPT
+char *crypt(const char *key, const char *salt);
+#endif])
+
+AC_CHECK_LIB(crypt, crypt)
 
 # Gettext.
 AM_ICONV

@@ -35,20 +35,12 @@ dico_stream_t dico_codec_stream_create(const char *encoding, int mode,
 dico_stream_t dico_base64_stream_create(dico_stream_t str, int mode);
 dico_stream_t dico_qp_stream_create(dico_stream_t str, int mode);
 
-int dico_base64_input(char c);
+int dico_base64_input(unsigned);
 
-int dico_base64_decode(const char *iptr, size_t isize,
-		       char *optr, size_t osize,
-		       size_t *pnbytes);
-int dico_base64_encode(const char *iptr, size_t isize,
-		       char *optr, size_t osize,
-		       size_t *pnbytes);
-int dico_qp_decode(const char *iptr, size_t isize,
-		   char *optr, size_t osize,
-		   size_t *pnbytes);
-int dico_qp_encode(const char *iptr, size_t isize,
-		   char *optr, size_t osize,
-		   size_t *pnbytes);
+int dico_base64_encode(const unsigned char *input, size_t input_len,
+		       unsigned char **output, size_t *output_len);
+int dico_base64_decode (const unsigned char *input, size_t input_len,
+			unsigned char **output, size_t *output_len);
 
 
 #endif

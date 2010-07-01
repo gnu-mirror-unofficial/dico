@@ -23,7 +23,7 @@
 
 #define ISWS(c) ((c)==' ' || (c)=='\t')
 
-int
+static int
 dico_qp_decode(const char *iptr, size_t isize, char *optr, size_t osize,
 	       size_t *pnbytes)
 {
@@ -118,7 +118,7 @@ dico_qp_decode(const char *iptr, size_t isize, char *optr, size_t osize,
     return consumed - wscount;
 }
 
-int
+static int
 dico_qp_encode(const char *iptr, size_t isize, char *optr, size_t osize,
 	       size_t *pnbytes)
 {

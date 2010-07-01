@@ -239,7 +239,7 @@ cb_validate(Gsasl *ctx, Gsasl_session *sctx)
 		 authid);
 	return GSASL_AUTHENTICATION_ERROR;
     }
-    rc = strcmp(dbpass, pass);
+    rc = dicod_check_password(dbpass, pass);
     free(dbpass);
     if (rc == 0) {
 	pdata->username = xstrdup(authid);

@@ -699,7 +699,8 @@ user_db_config(enum cfg_callback_command cmd,
 static void
 init_user_db()
 {
-    if (dico_udb_create(&user_db,
+    if (user_db_cfg.url &&
+	dico_udb_create(&user_db,
 			user_db_cfg.url, user_db_cfg.get_pw,
 			user_db_cfg.get_groups, user_db_cfg.options)) {
 	config_error(&user_db_cfg.locus, errno,

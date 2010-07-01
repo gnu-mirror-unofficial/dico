@@ -42,7 +42,6 @@ dicod_SOURCES=\
  server.c\
  stat.c\
  stratcl.c\
- udb.c\
  xidle.c\
  xversion.c
 

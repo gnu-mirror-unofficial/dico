@@ -42,14 +42,14 @@ auth(const char *username, const char *authstr)
     int rc = 1;
     char *password;
     
-    if (udb_open(user_db)) {
+    if (dico_udb_open(user_db)) {
 	dico_log(L_ERR, 0, _("failed to open user database"));
 	return 1;
     }
-    if (udb_get_password(user_db, username, &password)) {
+    if (dico_udb_get_password(user_db, username, &password)) {
 	dico_log(L_ERR, 0,
-	       _("failed to get password for `%s' from the database"),
-	       username);
+		 _("failed to get password for `%s' from the database"),
+		 username);
     } else {
 	if (!password) {
 	    dico_log(L_ERR, 0, _("no such user `%s'"), username);
@@ -58,15 +58,15 @@ auth(const char *username, const char *authstr)
 	    rc = verify_apop(password, authstr);
 	    if (rc) 
 		dico_log(L_ERR, 0,
-		       _("authentication failed for `%s'"), username);
+			 _("authentication failed for `%s'"), username);
 	    else {
 		user_name = xstrdup(username);
-		udb_get_groups(user_db, username, &user_groups);
+		dico_udb_get_groups(user_db, username, &user_groups);
 	    }
 	    free(password);
 	}
     }
-    udb_close(user_db);
+    dico_udb_close(user_db);
     return rc;
 }
 

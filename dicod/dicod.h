@@ -372,31 +372,9 @@ void register_lev(void);
 /* regex.c */
 void register_regex(void);
 
-/* user db */
-struct udb_def {
-    const char *proto;
-    int (*_db_open) (void **, dico_url_t);
-    int (*_db_close) (void *);
-    int (*_db_get_password) (void *, const char *, const char *, char **);
-    int (*_db_get_groups) (void *, const char *, const char *, dico_list_t *);
-};
-
-struct udb_def text_udb_def;
-
-typedef struct dicod_user_db *dicod_user_db_t;
-
-extern dicod_user_db_t user_db;
-
-void udb_init(void);
-int udb_create(dicod_user_db_t *pdb,
-	       const char *urlstr, const char *qpw, const char *qgrp,
-	       dicod_locus_t *locus);
-
-int udb_open(dicod_user_db_t db);
-int udb_close(dicod_user_db_t db);
-int udb_get_password(dicod_user_db_t db, const char *key, char **pass);
-int udb_get_groups(dicod_user_db_t db, const char *key, dico_list_t *groups);
-void udp_define(struct udb_def *dptr);
+/* dbtext.c */
+struct dico_udb_def text_udb_def;
+extern dico_udb_t user_db;
 
 /* auth.c */
 void register_auth(void);

@@ -44,10 +44,11 @@ libdico_la_SOURCES=\
  soundex.c\
  strat.c\
  stream.c\
- xlat.c\
+ udb.c\
  url.c\
  utf8.c\
- util.c
+ util.c\
+ xlat.c
 
 libdico_la_LDFLAGS = -version-info 0:0:0
 

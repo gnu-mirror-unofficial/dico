@@ -67,7 +67,7 @@ char *help_text;
 dico_list_t /* of struct sockaddr */ listen_addr;
 
 /* User database for AUTH */
-dicod_user_db_t user_db;
+dico_udb_t user_db;
 
 /* Run as this user */
 uid_t user_id;
@@ -639,9 +639,11 @@ struct config_keyword kwd_database[] = {
 
 
 struct user_db_conf {
+    dicod_locus_t locus;
     char *url;
     char *get_pw;
     char *get_groups;
+    char *options;
 };
 
 struct user_db_conf user_db_cfg;
@@ -652,6 +654,9 @@ struct config_keyword kwd_user_db[] = {
     { "group-resource", N_("arg"),
       N_("File containing user group information or a query to retrieve it."),
       cfg_string, NULL, offsetof(struct user_db_conf, get_groups) },
+    { "options", N_("args..."),
+      N_("Implementation-dependent options"),
+      cfg_string, NULL, offsetof(struct user_db_conf, options) },
     { NULL }
 };
 
@@ -667,6 +672,7 @@ user_db_config(enum cfg_callback_command cmd,
     
     switch (cmd) {
     case callback_section_begin:
+	cfg->locus = *locus;
 	if (value->type != TYPE_STRING) 
 	    config_error(locus, 0, _("URL must be a string"));
 	else if (!value->v.string)
@@ -677,17 +683,28 @@ user_db_config(enum cfg_callback_command cmd,
 	break;
 	
     case callback_section_end:
-	udb_create(&user_db, cfg->url, cfg->get_pw, cfg->get_groups, locus);
 	break;
 	
     case callback_set_value:
+	cfg->locus = *locus;
 	if (value->type != TYPE_STRING) 
 	    config_error(locus, 0, _("URL must be a string"));
 	else if (!value->v.string)
 	    config_error(locus, 0, _("empty URL"));
-	udb_create(&user_db, value->v.string, NULL, NULL, locus);
+	cfg->url = strdup(value->v.string);
     }
     return 0;
+}
+
+static void
+init_user_db()
+{
+    if (dico_udb_create(&user_db,
+			user_db_cfg.url, user_db_cfg.get_pw,
+			user_db_cfg.get_groups, user_db_cfg.options)) {
+	config_error(&user_db_cfg.locus, errno,
+		     _("cannot create user database"));
+    }
 }
 
 
@@ -1338,6 +1355,14 @@ apply_conf_override(struct dicod_conf_override *ovr)
 }
 
 
+static void
+udb_init()
+{
+    dico_udb_define(&text_udb_def);
+}
+
+
+
 int
 main(int argc, char **argv)
 {
@@ -1390,6 +1415,7 @@ main(int argc, char **argv)
     
     begin_timing("server");
     dicod_server_init();
+    init_user_db();
     flush_strat_forward();
     if (default_strategy_name
 	&& dico_set_default_strategy(default_strategy_name)) {
@@ -1397,7 +1423,7 @@ main(int argc, char **argv)
     }
 	
     markup_flush_capa();
-    
+
     switch (mode) {
     case MODE_DAEMON:
 	dicod_server(argc, argv);

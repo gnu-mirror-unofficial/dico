@@ -14,31 +14,40 @@
    You should have received a copy of the GNU General Public License
    along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include <dicod.h>
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+#include <dico.h>
+#include <dico/udb.h>
+#include <sys/types.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
 
-struct dicod_user_db {
+struct dico_udb {
     void *handle;
     dico_url_t url;
     const char *qpw;
     const char *qgrp;
-    int (*_db_open) (void **, dico_url_t url);
+    const char *options;
+    int (*_db_open) (void **, dico_url_t, const char *);
     int (*_db_close) (void *);
     int (*_db_get_password) (void *, const char *, const char *, char **);
     int (*_db_get_groups) (void *, const char *, const char *, dico_list_t *);
 };
 
 int
-udb_open(dicod_user_db_t db)
+dico_udb_open(dico_udb_t db)
 {
     if (!db)
 	return 1;
     if (!db->_db_open)
 	return 0;
-    return db->_db_open(&db->handle, db->url);
+    return db->_db_open(&db->handle, db->url, db->options);
 }
 
 int
-udb_close(dicod_user_db_t db)
+dico_udb_close(dico_udb_t db)
 {
     int rc;
 
@@ -51,65 +60,72 @@ udb_close(dicod_user_db_t db)
 }
 
 int
-udb_get_password(dicod_user_db_t db, const char *key, char **pass)
+dico_udb_get_password(dico_udb_t db, const char *key, char **pass)
 {
     return db->_db_get_password(db->handle, db->qpw, key, pass);
 }
 
 int
-udb_get_groups(dicod_user_db_t db, const char *key, dico_list_t *groups)
+dico_udb_get_groups(dico_udb_t db, const char *key, dico_list_t *groups)
 {
     return db->_db_get_groups(db->handle, db->qgrp, key, groups);
 }
 
-dico_list_t /* of struct udb_def */ udb_def_list;
+dico_list_t /* of struct dico_udb_def */ dico_udb_def_list;
 
 static int
 udb_def_cmp(const void *item, void *data)
 {
-    const struct udb_def *def = item;
+    const struct dico_udb_def *def = item;
     const char *proto = data;
     return strcmp(def->proto, proto);
 }
 
-void
-udp_define(struct udb_def *dptr)
+int
+dico_udb_define(struct dico_udb_def *dptr)
 {
-    if (!udb_def_list) {
-	udb_def_list = xdico_list_create();
-	dico_list_set_comparator(udb_def_list, udb_def_cmp);
+    if (!dico_udb_def_list) {
+	dico_udb_def_list = dico_list_create();
+	if (!dico_udb_def_list) {
+	    errno = ENOMEM;
+	    return 1;
+	}
+	dico_list_set_comparator(dico_udb_def_list, udb_def_cmp);
     }
-    xdico_list_append(udb_def_list, dptr);
+    return dico_list_append(dico_udb_def_list, dptr);
 }
 
 int
-udb_create(dicod_user_db_t *pdb,
-	   const char *urlstr, const char *qpw, const char *qgrp,
-	   dicod_locus_t *locus)
+dico_udb_create(dico_udb_t *pdb,
+		const char *urlstr, const char *qpw, const char *qgrp,
+		const char *options)
 {
     dico_url_t url;
     int rc;
-    struct udb_def *def;
-    struct dicod_user_db *uptr;
+    struct dico_udb_def *def;
+    struct dico_udb *uptr;
     
     rc = dico_url_parse(&url, urlstr);
     if (rc) {
-	config_error(locus, 0, _("%s: invalid URL"), urlstr);
+	errno = EINVAL;
 	return 1;
     }
 
-    def = dico_list_locate(udb_def_list, url->proto);
+    def = dico_list_locate(dico_udb_def_list, url->proto);
     if (!def) {
-	config_error(locus, 0, _("%s: invalid URL: unknown protocol"), urlstr);
+	errno = EINVAL;
 	dico_url_destroy(&url);
 	return 1;
     }
 
-    uptr = xzalloc(sizeof(*uptr));
+    uptr = calloc(1, sizeof(*uptr));
+    if (!uptr)
+	return 1;
     
     uptr->url = url;
     uptr->qpw = qpw;
     uptr->qgrp = qgrp;
+    uptr->options = options;
     uptr->_db_open = def->_db_open;
     uptr->_db_close = def->_db_close;
     uptr->_db_get_password = def->_db_get_password;
@@ -119,8 +135,3 @@ udb_create(dicod_user_db_t *pdb,
     return 0;
 }
 
-void
-udb_init()
-{
-    udp_define(&text_udb_def);
-}

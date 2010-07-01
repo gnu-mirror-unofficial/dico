@@ -34,6 +34,7 @@
 #include <dico/util.h>
 #include <dico/parseopt.h>
 #include <dico/markup.h>
+#include <dico/udb.h>
 
 #endif
     

@@ -101,7 +101,7 @@ dicod_load_module(dicod_module_instance_t *inst)
     char **argv;
     int rc;
 	
-    if (dico_argcv_get(inst->command, NULL, NULL, &argc, &argv)) {
+    if (rc = dico_argcv_get(inst->command, NULL, NULL, &argc, &argv)) {
 	dico_log(L_ERR, rc, _("cannot parse command line `%s'"),
 		 inst->command);
 	return 1;

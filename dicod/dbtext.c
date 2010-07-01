@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 static int
-dbtext_open(void **handle, dico_url_t url)
+dbtext_open(void **handle, dico_url_t url, const char *unused)
 {
     char *dirname = dico_url_full_path(url);
     struct stat st;
@@ -155,7 +155,7 @@ dbtext_get_groups(void *handle, const char *qgr, const char *key,
     return rc;
 }
 
-struct udb_def text_udb_def = {
+struct dico_udb_def text_udb_def = {
     "text",
     dbtext_open,
     NULL,

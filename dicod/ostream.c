@@ -72,7 +72,6 @@ static int
 ostream_write(void *data, const char *buf, size_t size, size_t *pret)
 {
     struct ostream *ostr = data;
-    int rc;
     
     if (!(ostr->flags & OSTREAM_INITIALIZED)) {
 	if (option_mime && print_headers(ostr))

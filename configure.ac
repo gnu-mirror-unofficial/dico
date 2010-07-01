@@ -375,6 +375,24 @@ MU_CHECK_GSASL(0.2.5, [
     AC_SUBST(BUILD_LIBDICOSASL,'libdicosasl.a')
     AC_SUBST(LIBDICOSASL,'../lib/libdicosasl.a')])
 
+# SASL
+
+AC_ARG_WITH(ldap,
+            [AC_HELP_STRING([--with-ldap],
+		            [Configure to work with OpenLDAP])],
+	    [status_ldap=$withval],
+            [status_ldap=maybe])
+
+if test $status_ldap != no; then
+  AC_CHECK_LIB(ldap, ldap_bind,
+               [status_ldap=yes],
+               [if test $status_ldap = yes; then
+	          AC_MSG_ERROR([required library ldap is not found])
+		fi
+ 	        status_ldap=no])
+fi
+AM_CONDITIONAL([LDAP_COND], [test $status_ldap = yes])
+    
 # Doc hints.
 # Select a rendition level:
 #  DISTRIB for stable releases (at most one dot in the version number)
@@ -401,6 +419,7 @@ Dico configured with the following settings:
 Guile ........................... $status_guile
 Python .......................... $status_python
 GSASL ........................... $status_gsasl
+LDAP ............................ $status_ldap
 Readline ........................ $status_readline
 Preprocessor .................... $dicopp
 
@@ -412,6 +431,7 @@ EOT
 [status_guile=$status_guile
 status_python=$status_python
 status_gsasl=$status_gsasl
+status_ldap=$status_ldap
 status_readline=$status_readline
 if test $use_ext_pp = no; then
   dicopp=no
@@ -437,6 +457,7 @@ AC_CONFIG_FILES([Makefile
 		 modules/python/Makefile
 		 modules/stratall/Makefile
 		 modules/substr/Makefile
+		 modules/ldap/Makefile
 		 dico/Makefile
 		 tests/Makefile
 		 doc/Makefile

@@ -172,7 +172,7 @@ sasl_auth(dico_stream_t str, char *mechanism, char *initresp,
 	    dico_list_iterate (sasl_anon_groups, _append_item, user_groups);
 	}
     } else
-	udb_get_groups(user_db, sdata.username, &user_groups);
+	dico_udb_get_groups(user_db, sdata.username, &user_groups);
     check_db_visibility();
 
     *psess = sess_ctx;
@@ -186,7 +186,7 @@ dicod_saslauth(dico_stream_t str, int argc, char **argv)
     char *resp;
     Gsasl_session *sess;
     
-    if (udb_open(user_db)) {
+    if (dico_udb_open(user_db)) {
 	dico_log(L_ERR, 0, _("failed to open user database"));
 	stream_writez(str,
 		      "531 Access denied, "
@@ -194,7 +194,7 @@ dicod_saslauth(dico_stream_t str, int argc, char **argv)
 	return;
     }
     rc = sasl_auth(str, argv[1], argv[2], &sess);
-    udb_close(user_db);
+    dico_udb_close(user_db);
     switch (rc) {
     case RC_SUCCESS:
 	resp = "230 Authentication successful";
@@ -233,7 +233,7 @@ cb_validate(Gsasl *ctx, Gsasl_session *sctx)
     if (!pass)
 	return GSASL_NO_PASSWORD;
     
-    if (udb_get_password(user_db, authid, &dbpass)) {
+    if (dico_udb_get_password(user_db, authid, &dbpass)) {
 	dico_log(L_ERR, 0,
 		 _("failed to get password for `%s' from the database"),
 		 authid);
@@ -268,7 +268,7 @@ callback(Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop)
 	    }
 	    pdata->username = user;
 	}
-	if (udb_get_password(user_db, user, &string)) {
+	if (dico_udb_get_password(user_db, user, &string)) {
 	    dico_log(L_ERR, 0,
 		     _("failed to get password for `%s' from the database"),
 		     user);

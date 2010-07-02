@@ -303,7 +303,7 @@ saslauth(struct dict_connection *conn, dico_url_t url)
 	break;
 
     case GETCRED_NOAUTH:
-	XDICO_DEBUG(1, _("Skipping authenitcation\n"));
+	XDICO_DEBUG(1, _("Skipping authentication\n"));
 	rc = AUTH_OK;
     }
     return rc;

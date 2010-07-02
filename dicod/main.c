@@ -654,7 +654,7 @@ struct config_keyword kwd_user_db[] = {
     { "group-resource", N_("arg"),
       N_("File containing user group information or a query to retrieve it."),
       cfg_string, NULL, offsetof(struct user_db_conf, get_groups) },
-    { "options", N_("args..."),
+    { "options", N_("arg"),
       N_("Implementation-dependent options"),
       cfg_string, NULL, offsetof(struct user_db_conf, options) },
     { NULL }

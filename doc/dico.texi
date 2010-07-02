@@ -1121,7 +1121,18 @@ form @code{@var{keyword}=@var{name}}, multiple parameters are separated
 with semicolons.
 @end table
 
-  An @acronym{URL} defines how the database is accessed.  Another
+  If the underlying mechanism requires some additional configuration
+data that cannot be supplied using @acronym{URL}, these are passed to
+it using the following statement:
+
+@cindex option, authentication
+@deffn {user-db conf} options string
+  The argument is treated as an opaque string and passed to the
+authentication @samp{open} procedure verbatim.  Its exact meaning
+depends on the type of the database.
+@end deffn
+
+  The @acronym{URL} defines how the database is accessed.  Another
 important point is where to get user data from.  This is specified by
 the following two sub-statements:
 
@@ -1149,6 +1160,9 @@ To summarize, the definition of an authentication database is:
 @group
 # @r{Define user database for authentication.}
 user-db @var{url} @{
+  # @r{Additional configuration options.}
+  options @var{string};
+  
   # @r{Name of a password resource.}
   password-resource @var{resource};
 
@@ -1160,6 +1174,7 @@ user-db @var{url} @{
 
 @menu
 * text::        Flat Text Databases.
+* ldap::        LDAP Databases.
 @end menu
 
 @node text
@@ -1196,11 +1211,11 @@ smith tester
 a member of three groups: @samp{user}, @samp{timing} and
 @samp{tester}.
 
-  An @acronym{URL} of a text database begins with @samp{text} and
+  A @acronym{URL} of a text database begins with @samp{text} and
 contains only @var{path} element, which gives the name of the
 directory where the database files reside.  The name of a password
-file is given by @code{password-resource} statement.  The name of a
-group file is given by @code{group-resource} statement.
+file is given by the @code{password-resource} statement.  The name of a
+group file is given by the @code{group-resource} statement.
 
   For example, if user passwords are kept in file @file{passwd} and user
 groups are kept in file @file{user}, and both files reside in
@@ -1215,6 +1230,107 @@ user-db text:///var/db/dico @{
 @}
 @end group
 @end smallexample
+
+@node ldap
+@subsubsection LDAP Databases.
+To configure @acronym{LDAP} user database, you need first to load
+the @samp{ldap} module (@pxref{Ldap, LDAP module}):
+
+@smallexample
+load-module ldap @{
+	command "ldap";
+@}
+@end smallexample
+
+The @acronym{URL} of the database is:
+@samp{ldap://@var{host}[:@var{port}]}, where @var{host} is the host
+name or IP address of the @acronym{LDAP} server, and option @var{port}
+specifies the port number it is listening on (by default, port 389 is
+assumed).
+
+The @code{password-resource} statement specifies the name of an
+attribute containing the password, and the @code{group-resource}
+supplies the name of the attribute with group name.
+
+Additional configuration data are supplied in the @code{options}
+statement, whose argument is a whitespace-separated list of
+assignments:
+
+@table @option
+@item base=@var{base}
+Sets base DN.
+
+@item binddn=@var{dn}
+Sets the DN to bind as.
+
+@item passwd=@var{string}
+Sets the password.
+
+@item tls=@var{bool}
+When set to @samp{yes}, enables the use of TLS encryption.
+
+@item debug=@var{number}
+Sets OpenLDAP debug level.
+
+@item user-filter=@var{filter}
+A LDAP filter to select the objects describing given user.  Any
+occurrence of @samp{$user} in @var{filter} is replaced with the actual
+user name obtaining during the authentication.  Variable expansion
+occurs much the same way as in the shell.  In particular, the variable
+is expanded only unless it is immediately followed by an alphanumeric
+character.  For example, it occurs in:
+
+@smallexample
+(uid=$user)
+@end smallexample
+
+@noindent
+and
+
+@smallexample
+(uid=$user.1)
+@end smallexample
+
+But it does not occur in
+
+@smallexample
+(uid=$users)
+@end smallexample
+
+If it is necessary to expand the variable in such a context, enclose
+its name in curly braces:
+
+@smallexample
+(uid=$@{user@}s)
+@end smallexample
+
+@item group-filter=@var{filter}
+A @acronym{LDAP} filter that selects the user groups.  The
+@var{filter} is expanded as in @code{user-filter}.
+@end table
+
+  The following example shows a @acronym{LDAP} user database
+configured for base DN @samp{example.com} which uses
+@samp{posixAccount} and @samp{posixGroup} objects from
+@samp{nis.schema}:
+
+@smallexample
+@group
+user-db "ldap://localhost" @{
+  password-resource userPassword;
+  group-resource cn;
+  options "user-filter=(uid=$user) "
+          "group-filter=(&(objectClass=posixGroup)(memberuid=$user)) "
+          "base=dc=example,dc=com";
+@}
+@end group
+@end smallexample
+
+  A note on password usage is in order here.  Most authentication methods
+require the passwords to be stored in the database in @emph{plain
+text} form.  The use of encrypted passwords (e.g. MD5 or SHA1) is
+possible only with @samp{LOGIN} and @samp{PLAIN} GSASL authentication
+methods.
 
 @node ACL
 @subsection Access Control Lists
@@ -2457,6 +2573,7 @@ languages, correspondingly.
 * Python::
 * Stratall::
 * Substr::
+* Ldap::
 @end menu
 
 @node Outline
@@ -3394,6 +3511,22 @@ load-module substr @{
         command "substr";
 @}
 @end smallexample
+
+@node Ldap
+@section The @command{ldap} module
+The @command{ldap} module loads the support for @acronym{LDAP} user
+databases.  It is available if Dico has been configured with
+@acronym{LDAP}.
+
+The module needs no additional configuration parameters:
+
+@smallexample
+load-module ldap @{
+	command "ldap";
+@}
+@end smallexample
+
+@xref{ldap}, for a description of its use.
 
 @node Interface
 @chapter Dico Module Interface

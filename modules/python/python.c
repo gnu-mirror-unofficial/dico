@@ -151,16 +151,13 @@ _PyStrategy_getattr (PyObject *self, char *name)
     if (strcmp (name, "name") == 0) {
 	/* Return the name of the strategy STRAT. */
 	return PyString_FromString (strat->name);
-    }
-    else if (strcmp (name, "descr") == 0) {
+    } else if (strcmp (name, "descr") == 0) {
 	/* Return a textual description of the strategy STRAT. */
 	return PyString_FromString (strat->descr);
-    }
-    else if (strcmp (name, "has_selector") == 0) {
+    } else if (strcmp (name, "has_selector") == 0) {
 	/* Return True if STRAT has a selector. */
 	return _ro (strat->sel ? Py_True : Py_False);
-    }
-    else if (strcmp (name, "is_default") == 0) {
+    } else if (strcmp (name, "is_default") == 0) {
 	/* Return True if STRAT is a default strategy. */
 	return _ro (dico_strategy_is_default_p (strat) ? Py_True : Py_False);
     }
@@ -215,7 +212,7 @@ _capture_stdout_result (PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple (args, "s", &buf))
 	return NULL;
     if (dico_stream_output)
-      dico_stream_write (dico_stream_output, buf, strlen (buf));
+	dico_stream_write (dico_stream_output, buf, strlen (buf));
     return _ro (Py_None);
 }
 
@@ -226,7 +223,7 @@ _capture_stdout_info (PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple (args, "s", &buf))
 	return NULL;
     if (dico_stream_log_info)
-      dico_stream_write (dico_stream_log_info, buf, strlen (buf));
+	dico_stream_write (dico_stream_log_info, buf, strlen (buf));
     return _ro (Py_None);
 }
 
@@ -237,7 +234,7 @@ _capture_stderr (PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple (args, "s", &buf))
 	return NULL;
     if (dico_stream_log_err)
-      dico_stream_write (dico_stream_log_err, buf, strlen (buf));
+	dico_stream_write (dico_stream_log_err, buf, strlen (buf));
     return _ro (Py_None);
 }
 
@@ -276,8 +273,7 @@ _python_selector (int cmd, struct dico_key *key, const char *dict_word)
 	if (py_res) {
 	    if (PyBool_Check (py_res))
 		return py_res == Py_True ? 1 : 0;
-	}
-	else if (PyErr_Occurred ())
+	} else if (PyErr_Occurred ())
 	    PyErr_Print ();
     }
     return 0;
@@ -472,8 +468,7 @@ mod_init_db (const char *dbname, int argc, char **argv)
 	    PyErr_Print ();
 	    return NULL;
 	}
-    }
-    else {
+    } else {
 	dico_log (L_ERR, 0, _("mod_init_db: cannot create class instance: %s"),
 		  root_class);
 	if (PyErr_Occurred ())
@@ -514,8 +509,7 @@ mod_open (dico_handle_t hp)
 	Py_DECREF (py_fnc);
 	if (py_res && PyBool_Check (py_res) && py_res == Py_False) {
 	    return 1;
-	}
-	else if (PyErr_Occurred ()) {
+	} else if (PyErr_Occurred ()) {
 	    PyErr_Print ();
 	    return 1;
 	}
@@ -564,8 +558,7 @@ _mod_get_text (PyObject *py_instance, const char *method)
 	    char *text = strdup (PyString_AsString (py_res));
 	    Py_DECREF (py_res);
 	    return text;
-	}
-	else if (PyErr_Occurred ())
+	} else if (PyErr_Occurred ())
 	    PyErr_Print ();
     }
     return NULL;
@@ -753,8 +746,7 @@ mod_match (dico_handle_t hp, const dico_strategy_t strat, const char *word)
 		    }
 		    return _make_python_result (db, py_res);
 		}
-	    }
-	    else if (PyErr_Occurred ())
+	    } else if (PyErr_Occurred ())
 		PyErr_Print ();
 	}
     }
@@ -782,8 +774,7 @@ mod_define (dico_handle_t hp, const char *word)
 		return NULL;
 	    else
 		return _make_python_result (db, py_res);
-	}
-	else if (PyErr_Occurred ())
+	} else if (PyErr_Occurred ())
 	    PyErr_Print ();
     }
     return NULL;
@@ -846,8 +837,7 @@ _mod_get_size_t (PyObject *py_instance, PyObject *py_args, const char *method)
 	    size_t s = (size_t)PyInt_AsSsize_t (py_res);
 	    Py_DECREF (py_res);
 	    return s;
-	}
-	else if (PyErr_Occurred ())
+	} else if (PyErr_Occurred ())
 	    PyErr_Print ();
     }
     return 0;
@@ -979,8 +969,7 @@ mod_result_headers (dico_result_t rp, dico_assoc_list_t hdr)
 	if (py_res && PyDict_Check (py_res)) {
 	    _dict_to_assoc (hdr, py_res);
 	    Py_DECREF (py_res);
-	}
-	else if (PyErr_Occurred ()) {
+	} else if (PyErr_Occurred ()) {
 	    PyErr_Print ();
 	    return 1;
 	}

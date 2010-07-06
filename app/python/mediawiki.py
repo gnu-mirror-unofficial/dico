@@ -84,7 +84,19 @@ class DicoModule:
         req = urllib2.Request (url)
         req.add_header ('User-Agent', self.user_agent)
         try:
-            return json.load (urllib2.urlopen (req))
+            result = json.load (urllib2.urlopen (req))
+            if result:
+                if strat.has_selector:
+                    fltres = []
+                    for k in result[1]:
+                        if strat.select (k, key):
+                            fltres.append (k)
+                    if fltres.count > 0:
+                        return ['match', sorted(fltres, key=unicode.lower)]
+                else:
+                    result[1].sort ()
+                    return ['match', sorted(result[1], key=unicode.lower)]
+            return False
         except urllib2.URLError:
             return False
 

@@ -25,6 +25,7 @@ lib/parseopt.c
 lib/userprivs.c
 lib/xstream.c
 lib/iostr.c
+lib/udb.c
 
 dico/shell.c
 dico/connect.c
@@ -39,7 +40,6 @@ dicod/pp.c
 dicod/regex.c
 dicod/dicod.c
 dicod/acl.c
-dicod/udb.c
 dicod/dbtext.c
 dicod/config-format.c
 dicod/config-lex.l
@@ -50,9 +50,11 @@ dicod/loader.c
 dicod/alias.c
 dicod/server.c
 dicod/ident.c
+
 dicod/config-gram.y
 dicod/accesslog.c
 dicod/gsasl.c
+dicod/ckpass.c
 
 modules/dict.org/dictorg.c
 modules/dict.org/dictstr.c
@@ -60,3 +62,5 @@ modules/dict.org/dictstr.c
 modules/guile/guile.c
 
 modules/outline/outline.c
+
+modules/ldap/ldap.c

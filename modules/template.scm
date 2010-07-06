@@ -35,7 +35,7 @@
 (define (define-word dbh word)
   #f)
 
-(define (match-word dbh strat word)
+(define (match-word dbh strat key)
   #f)
 
 (define (output rh n)

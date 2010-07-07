@@ -6,12 +6,12 @@ Copyright (C) 2008, 2009, 2010 Sergey Poznyakoff
 
 This file contains brief information about configuring, testing
 and running GNU Dico.  It is *not* intended as a replacement
-for the documentation, it is provided as a brief reference only.
+for the documentation, but is provided as a brief reference only.
 The (almost) complete documentation for Dico is available in
 doc/ subdirectory. To read it without installing the package
 run `info -f doc/dico.info'. After the package is installed
 the documentation can be accessed running `info Dico'.  Invoking
-`info dico' and `info dicod' (with lower-case `d') will show you a
+`info dico' and `info dicod' (with a lower-case `d') will show you a
 concise description of the command line syntax (similar to a man-page
 style) of `dico' and `dicod' programs, correspondingly.
 
@@ -21,17 +21,22 @@ at http://dico.man.gnu.org.ua.
 * Overview
 ==========
 
-Dico is an implementation of DICT server (RFC 2229).  It is fully
-modular: the daemon itself (dicod) provides only the server
-functionality, but it knows nothing about database formats.  Actual
+Dico is a flexible implementation of DICT server (RFC 2229).  The
+server is modular: the daemon itself (dicod) provides only the server
+functionality, and knows nothing about database formats.  Actual
 searches are performed by functions supplied in loadable modules.  A
-single module can serve one or more databases. 
+single module can handle any number of database instances. 
 
 The package includes several modules for searching in different
 dictionary databases, among them a module for dict.org databases and a
 module for databases in Emacs "outline" format.
 
-A console client program, `dico', is also included.
+The server can be configured to handle both anonymous and authorized
+access.  It supports a wide variety of authentication algorithms.
+Simpler configurations can keep the user database in plaintext files,
+while more complex ones can use LDAP.
+
+A console client program, `dico', is included.
 
 A module for lookups in Jim Breen's Kanjidic and Edict databases will
 be added in future.
@@ -42,29 +47,37 @@ be added in future.
 Dico is informal French for "Dictionary".  It is pronounced "Deekoh",
 with the stress on the last syllable.
 
-* Current state
-===============
+* Modules
+=========
 
-The dicod daemon is completely implemented. It provides all the
-functionality required by RFC 2229, including SASL authentication.
-
-The package comes with the following database modules:
+The package comes with the following modules:
 
 - dictorg
- This module handles databases in dict.org format.
+  This module handles databases in dict.org format.
 
 - guile
- An abstract layer for interfacing with database modules written in
- Guile.
+  An abstract layer for interfacing with database modules written in
+  Guile.
 
 - python
- An abstract layer for interfacing with database modules written in
- Python.
+  An abstract layer for interfacing with database modules written in
+  Python.
  
 - outline
- Support for databases in Emacs outline format. This module is
- designed mostly as an example and for testing purposes.
+  Support for databases in Emacs outline format. This module is
+  designed mostly as an example and for testing purposes.
 
+- substr
+  Defines the "substr" lookup strategy, which matches a supplied
+  substring anywhere in the headword.
+
+- stratall
+  Defines a special lookup strategy, named "all", which returns all
+  headwords from the database.
+
+- ldap
+  Brings support for LDAP user databases.
+  
 * Building
 ==========
 
@@ -82,34 +95,33 @@ Dico.
 ------------------------
 
 The runtime configuration system uses `m4' to preprocess the
-configuration file.  This makes the configuration extremely flexible.
-We recommend to use GNU m4 as a preprocessor.  However, any other
-implementation of `m4' may be used.  The `configure' script tries to
-determine full file name of the preprocessor binary and the necessary
+configuration file, which makes the configuration extremely flexible.
+We recommend to use GNU m4 as a preprocessor, although any other
+implementation of `m4' can be used as well.  The `configure' script tries to
+determine the full file name of the preprocessor binary and the necessary
 command line options.  In case it makes a wrong guess, you can instruct
-it to use a particular preprocessor by using `DEFAULT_PREPROCESSOR'
+it to use a particular preprocessor by defining the `DEFAULT_PREPROCESSOR'
 configuration variable.  For example, the following `configure'
 invocation instructs it to use `/usr/local/bin/gm4':
 
      $ ./configure DEFAULT_PREPROCESSOR="/usr/local/bin/gm4 -s"
 
-Note the use of `-s' preprocessor option.  It instructs `m4' to
+Note the use of the `-s' preprocessor option.  It tells `m4' to
 produce line directives which help `dicod' produce correct diagnostics
 about eventual configuration errors.  Unless your `m4' implementation
 does not have this feature, we recommend to always use it in
 `DEFAULT_PREPROCESSOR' value.
 
-   Finally, if you do not wish to use preprocessor at all, you can
-disable it using `--without-preprocessor' option to `configure'.
+   Finally, if you do not wish to use preprocessor at all, use
+the `--without-preprocessor' option.
 
 ** Default Server
 -----------------
 
 Unless given an explicit dictionary server, the client program `dico'
-attempts to connect the server `dict://dico.gnu.org.ua'.  You may
-change this default by defining the DEFAULT_DICT_SERVER variable.  For
-example, the following command line selects dict.org as the default
-server:
+attempts to connect the server `dict://dico.gnu.org.ua'.  You can
+change this default by setting the DEFAULT_DICT_SERVER environment
+variable to the desired server hostname.  For example:
 
      $ ./configure DEFAULT_DICT_SERVER=dict.org
 
@@ -129,10 +141,9 @@ If you do not wish to use Guile, use `--without-guile' to disable it.
 ----------------------------
 
 The `dicod' daemon uses syslog for diagnostics.  The default syslog
-facility can be set using `LOG_FACILITY' configuration variable.  Its
-allowed arguments are `user', `daemon', `auth', `authpriv', `mail',
-`cron', and `local0' through `local7'.  Case is not significant.  In
-addition, these words can be prefixed with `log_'.
+facility can be set using `LOG_FACILITY' configuration variable.  
+Allowed arguments are `user', `daemon', `auth', `authpriv', `mail',
+`cron', and `local0' through `local7' (case insensitive).
 
 By default, the `daemon' facility is used.
 
@@ -143,7 +154,7 @@ Send bug reports to <bug-dico@gnu.org>.
 
 * Copyright information:
 
-Copyright (C) 2008, 2009 Sergey Poznyakoff
+Copyright (C) 2008, 2009, 2010 Sergey Poznyakoff
 
    Permission is granted to anyone to make or distribute verbatim copies
    of this document as received, in any medium, provided that the

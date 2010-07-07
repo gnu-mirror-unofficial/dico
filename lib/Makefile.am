@@ -50,7 +50,7 @@ libdico_la_SOURCES=\
  util.c\
  xlat.c
 
-libdico_la_LDFLAGS = -version-info 0:0:0
+libdico_la_LDFLAGS = -version-info 1:0:0
 
 libxdico_a_SOURCES=\
  appi18n.c\

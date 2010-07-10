@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of GNU Dico.
-# Copyright (C) 2008, 2009 Wojciech Polak
+# Copyright (C) 2008, 2009, 2010 Wojciech Polak
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,6 +23,15 @@ import urllib2
 from htmlentitydefs import name2codepoint
 from xml.dom import minidom
 from wit import wiki2text
+
+# Set utf-8 as the default encoding. For some obscure reason,
+# Python chooses to delete the setdefaultencoding function from
+# the namespace after setting its Highly Cretinic (TM) default
+# encoding in site.py. That's why reload is needed. Do they *really*
+# think all Python apps on a given site must use the same default?
+# That's called a severe brain damage.
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 try:
     import json

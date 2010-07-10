@@ -24,15 +24,6 @@ from htmlentitydefs import name2codepoint
 from xml.dom import minidom
 from wit import wiki2text
 
-# Set utf-8 as the default encoding. For some obscure reason,
-# Python chooses to delete the setdefaultencoding function from
-# the namespace after setting its Highly Cretinic (TM) default
-# encoding in site.py. That's why reload is needed. Do they *really*
-# think all Python apps on a given site must use the same default?
-# That's called a severe brain damage.
-reload(sys)
-sys.setdefaultencoding('utf-8')
-
 try:
     import json
 except ImportError:
@@ -40,7 +31,7 @@ except ImportError:
 
 import dico
 
-__version__ = '1.01'
+__version__ = '1.02'
 
 class DicoModule:
     user_agent = 'Mozilla/1.0'
@@ -98,8 +89,8 @@ class DicoModule:
                 if strat.has_selector:
                     fltres = []
                     for k in result[1]:
-                        if strat.select (k, key):
-                            fltres.append (k)
+                        if strat.select (k.encode ('utf_8'), key):
+                            fltres.append (k.encode ('utf_8'))
                     if fltres.count > 0:
                         return ['match', sorted(fltres, key=unicode.lower)]
                 else:
@@ -136,9 +127,9 @@ class DicoModule:
     def result_headers (self, rh, hdr):
         if dico.current_markup () != 'wiki':
             hdr['Content-Type'] = 'text/plain';
-        elif self.wikihost.find ('.wikipedia.org') != -1:
+        elif '.wikipedia.org' in self.wikihost:
             hdr['Content-Type'] = 'text/x-wiki-wikipedia';
-        elif self.wikihost.find ('.wiktionary.org') != -1:
+        elif '.wiktionary.org' in self.wikihost:
             hdr['Content-Type'] = 'text/x-wiki-wiktionary';
         else:
             hdr['Content-Type'] = 'text/x-wiki';

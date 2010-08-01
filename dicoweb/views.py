@@ -27,7 +27,9 @@ import dicoclient
 from wit import wiki2html
 
 def index (request):
-    page = {}
+    page = {
+        'robots': 'index',
+    }
     selects = {}
     mtc = {}
     result = {}
@@ -159,7 +161,9 @@ def index (request):
                         break
 
         if database == 'dbinfo': q = ''
-        if q != '': page['title'] = q + ' - '
+        if q != '':
+            page['title'] = q + ' - '
+            page['robots'] = 'noindex,nofollow'
 
     if result.has_key ('definitions'):
         rx1 = re.compile ('{+(.*?)}+', re.DOTALL)

@@ -24,6 +24,17 @@ from htmlentitydefs import name2codepoint
 from xml.dom import minidom
 from wit import wiki2text
 
+# Set utf-8 as the default encoding. 
+# Trying to do so using encode('utf_8')/unicode, which is 
+# supposed to be the right way, does not work.
+# Simply calling sys.setdefaultencoding is not possible,
+# because, for some obscure reason, Python chooses to delete 
+# this symbol from the namespace after setting its default 
+# encoding in site.py. That's why reload is needed. 
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
 try:
     import json
 except ImportError:
@@ -31,7 +42,7 @@ except ImportError:
 
 import dico
 
-__version__ = '1.02'
+__version__ = '1.03'
 
 class DicoModule:
     user_agent = 'Mozilla/1.0'
@@ -89,8 +100,8 @@ class DicoModule:
                 if strat.has_selector:
                     fltres = []
                     for k in result[1]:
-                        if strat.select (k.encode ('utf_8'), key):
-                            fltres.append (k.encode ('utf_8'))
+                        if strat.select (k, key):
+                            fltres.append (k)
                     if fltres.count > 0:
                         return ['match', sorted(fltres, key=unicode.lower)]
                 else:

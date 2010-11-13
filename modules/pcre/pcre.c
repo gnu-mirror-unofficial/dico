@@ -71,26 +71,27 @@ compile_pattern(const char *pattern)
 	pattern++;
 	p = strrchr(pattern, '/');
 	if (!p) {
-	    dico_log(L_ERR, 0, _("PCRE missing terminating /: %s"), pattern - 1);
+	    dico_log(L_ERR, 0, _("PCRE missing terminating /: %s"),
+		     pattern - 1);
 	    return NULL;
 	}
 	len = p - pattern;
 
-	for (p++; *p; p++) {
+	while (*++p) {
 	    if (pcre_flag(*p, &cflags)) {
 		dico_log(L_ERR, 0, _("PCRE error: invalid flag %c"), *p);
 		return NULL;
 	    }
 	}
     
-	tmp = malloc (len + 1);
+	tmp = malloc(len + 1);
 	if (!tmp)
 	    return NULL;
 	memcpy(tmp, pattern, len);
 	tmp[len] = 0;
 	pattern = tmp;
     }
-    pre = pcre_compile (pattern, cflags, &error, &error_offset, 0);
+    pre = pcre_compile(pattern, cflags, &error, &error_offset, 0);
     if (!pre) {
 	dico_log(L_ERR, 0, 
 		 _("pcre_compile(\"%s\") failed at offset %d: %s"),
@@ -116,7 +117,8 @@ pcre_sel(int cmd, dico_key_t key, const char *dict_word)
 	break;
 
     case DICO_SELECT_RUN:
-	rc = pcre_exec (pre, 0, dict_word, strlen (dict_word), 0, 0, NULL, 0) >= 0;
+	rc = pcre_exec(pre, 0, dict_word, strlen(dict_word), 0, 0,
+		       NULL, 0) >= 0;
 	break;
 	
     case DICO_SELECT_END:

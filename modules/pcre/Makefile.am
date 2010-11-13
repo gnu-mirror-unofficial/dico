@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 1998, 1999, 2000, 2008, 2010 Sergey Poznyakoff
+# Copyright (C) 2010 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,25 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-if GUILE_COND
-  GUILE_DIR=guile
-endif
-if PYTHON_COND
-  PYTHON_DIR=python
-endif
-if LDAP_COND
-  LDAP_DIR=ldap
-endif
-if PCRE_COND
-  PCRE_DIR=pcre
-endif
-SUBDIRS = \
- outline\
- dict.org\
- $(GUILE_DIR)\
- $(PYTHON_DIR)\
- stratall\
- substr\
- $(LDAP_DIR)\
- $(PCRE_DIR)
-EXTRA_DIST = template.c template.py template.scm
+moddir=@DICO_MODDIR@
+
+mod_LTLIBRARIES=pcre.la
+
+pcre_la_SOURCES = pcre.c
+pcre_la_LIBADD = ../../lib/libdico.la -lpcre
+AM_LDFLAGS = -module -avoid-version -no-undefined
+INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include

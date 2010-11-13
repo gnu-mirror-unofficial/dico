@@ -309,6 +309,27 @@ if test "$status_python" = yes; then
 fi
 AM_CONDITIONAL([PYTHON_COND],[test $status_python = yes])
 
+# Check for libpcre
+AC_ARG_WITH([pcre],
+            AC_HELP_STRING([--with-pcre],
+                           [compile Perl-compatible regular expressions support]),
+            [
+case "${withval}" in
+  yes) status_pcre=yes ;;
+  no)  status_pcre=no ;;
+  *)   AC_MSG_ERROR(bad value ${withval} for --with-pcre) ;;
+esac],[status_pcre=yes])
+
+if test $status_pcre = yes; then
+  AC_CHECK_HEADER([pcre.h], [], [status_pcre=no])
+  if test $status_pcre = yes; then
+    DICO_CHECK_LIB(pcre, main, [],
+                   [],
+		   [status_pcre=no])
+  fi
+fi
+AM_CONDITIONAL([PCRE_COND],[test $status_pcre = yes])
+
 #
 AC_ARG_WITH(autologin-file,
             AC_HELP_STRING([--with-autologin-file@<:@=NAME@:>@],
@@ -436,6 +457,8 @@ LDAP ............................ $status_ldap
 Readline ........................ $status_readline
 Preprocessor .................... $dicopp
 
+Perl-compatible regexs .......... $status_pcre
+
 Default server .................. $defserver
 Autologin file .................. $autologin_file
 *******************************************************************
@@ -451,6 +474,7 @@ if test $use_ext_pp = no; then
 else
   dicopp="$DEFAULT_PREPROCESSOR"
 fi
+status_pcre=$status_pcre
 defserver="$DEFAULT_DICT_SERVER"
 autologin_file="$DEFAULT_AUTOLOGIN_FILE"
 ])
@@ -470,6 +494,7 @@ AC_CONFIG_FILES([Makefile
 		 modules/python/Makefile
 		 modules/stratall/Makefile
 		 modules/substr/Makefile
+		 modules/pcre/Makefile
 		 modules/ldap/Makefile
 		 dico/Makefile
 		 tests/Makefile

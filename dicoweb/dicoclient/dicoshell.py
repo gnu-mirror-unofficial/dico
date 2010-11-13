@@ -1,5 +1,5 @@
 #  This file is part of GNU Dico.
-#  Copyright (C) 2008, 2009 Wojciech Polak
+#  Copyright (C) 2008, 2009, 2010 Wojciech Polak
 #
 #  GNU Dico is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -14,10 +14,10 @@
 #  You should have received a copy of the GNU General Public License
 #  along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-import os
-import atexit
 import re
+import os
+import sys
+import atexit
 import getopt
 import readline
 import curses.ascii
@@ -53,7 +53,7 @@ class Shell:
             pass
         atexit.register (readline.write_history_file, histfile)
 
-        print "\nType ? for help summary\n"
+        print '\nType ? for help summary\n'
         while True:
             try:
                 input = raw_input (self.prompt).strip ()
@@ -88,29 +88,29 @@ class Shell:
             try:
                 match = self.last_matches[int (input)]
                 dict = self.dc.define (match[0], match[1])
-                if dict.has_key ('count'):
+                if 'count' in dict:
                     for d in dict['definitions']:
-                        print "From %s, %s:" % (d['db'], d['db_fullname'].
+                        print 'From %s, %s:' % (d['db'], d['db_fullname'].
                                                 encode ('utf_8'))
                         print d['desc']
-                elif dict.has_key ('error'):
+                elif 'error' in dict:
                     print dict['msg']
             except IndexError:
                 self.__error ('No previous match')
         elif input[0] == '/':
             if len (input) > 1:
                 dict = self.dc.match (self.database, self.strategy, input[1:])
-                if dict.has_key ('matches'):
+                if 'matches' in dict:
                     self.last_matches = []
                     lmi = 0
                     for db in dict['matches']:
-                        print "From %s, %s:" % (db, self.__lookup_db (db).
+                        print 'From %s, %s:' % (db, self.__lookup_db (db).
                                                 encode ('utf_8'))
                         for term in dict['matches'][db]:
                             print '%4d) "%s"' % (lmi, term.encode ('utf_8'))
                             self.last_matches.append ([db, term])
                             lmi = lmi + 1
-                elif dict.has_key ('error'):
+                elif 'error' in dict:
                     print dict['msg']
             else:
                 if len (self.last_matches) > 0:
@@ -120,7 +120,7 @@ class Shell:
                         if not db[0] in m: m[db[0]] = []
                         m[db[0]].append (self.last_matches[i][1])
                     for db in m:
-                        print "From %s, %s:" % (db, self.__lookup_db (db))
+                        print 'From %s, %s:' % (db, self.__lookup_db (db))
                         for term in m[db]:
                             print '%4d) "%s"' % (lmi, term)
                             lmi = lmi + 1
@@ -133,12 +133,12 @@ class Shell:
                 readline.redisplay ()
         else:
             dict = self.dc.define (self.database, input)
-            if dict.has_key ('count'):
+            if 'count' in dict:
                 for d in dict['definitions']:
-                    print "From %s, %s:" % (d['db'], d['db_fullname'].
+                    print 'From %s, %s:' % (d['db'], d['db_fullname'].
                                             encode ('utf_8'))
                     print d['desc']
-            elif dict.has_key ('error'):
+            elif 'error' in dict:
                 print dict['msg']
 
     def parse_command (self, input):
@@ -181,10 +181,10 @@ class Shell:
                 self.dc.levenshtein_distance = int (args)
             else:
                 if self.dc.levenshtein_distance:
-                    print "Configured Levenshtein distance: %u" \
-                    % (self.dc.levenshtein_distance)
+                    print 'Configured Levenshtein distance: %u' % \
+                        self.dc.levenshtein_distance
                 else:
-                    print "No distance configured"
+                    print 'No distance configured'
         elif cmd == 'ls':
             dict = self.dc.show_strategies ()
             self.last_strategies = dict['strategies']
@@ -201,36 +201,36 @@ class Shell:
             print self.dc.option ('MIME')
         elif cmd == 'server':
             dict = self.dc.show_server ()
-            if dict.has_key ('desc'):
+            if 'desc' in dict:
                 print dict['desc']
-            elif dict.has_key ('error'):
+            elif 'error' in dict:
                 self.__error (dict['error'] + ' ' + dict['msg'])
         elif cmd == 'info':
             if args != None:
                 dict = self.dc.show_info (args)
-                if dict.has_key ('desc'):
+                if 'desc' in dict:
                     print dict['desc']
-                elif dict.has_key ('error'):
+                elif 'error' in dict:
                     self.__error (dict['error'] + ' ' + dict['msg'])
         elif cmd == 'history':
             hl = int (readline.get_current_history_length ())
-            for i in range (0, hl):
-                print "%4d) %s" % (i, readline.get_history_item (i))
+            for i in xrange (0, hl):
+                print '%4d) %s' % (i, readline.get_history_item (i))
         elif cmd == 'help':
             self.print_help ()
         elif cmd == 'transcript':
             if args != None:
-                if args == 'yes' or args == 'on' or args == 'true':
+                if args in ('yes', 'on', 'true'):
                     self.dc.transcript = True
-                elif args == 'no' or args == 'off' or args == 'false':
+                elif args in ('no', 'off', 'false'):
                     self.dc.transcript = False
                 else:
                     self.__error ('Expected boolean value')
             else:
                 if self.dc.transcript:
-                    print "transcript is on"
+                    print 'transcript is on'
                 else:
-                    print "transcript is off"
+                    print 'transcript is off'
         elif cmd == 'verbose':
             if args != None:
                 self.dc.verbose = args
@@ -244,7 +244,7 @@ class Shell:
         elif cmd == 'prefix':
             if args != None:
                 if len (args) == 1 and args != '#' and \
-                       curses.ascii.ispunct (args):
+                        curses.ascii.ispunct (args):
                     self.prefix = args
                 else:
                     self.__error ('Expected a single punctuation character')
@@ -259,17 +259,17 @@ class Shell:
         for d in self.last_databases:
             if d[0] == db:
                 return d[1]
-        return ""
+        return ''
 
     def __error (self, msg):
-        print "dico: Error: %s" % msg
+        print 'dico: Error: %s' % msg
 
     def print_version (self):
-        print "GNU Dico (Python Edition) " + dicoclient.__version__
+        print 'GNU Dico (Python Edition) ' + dicoclient.__version__
 
     def print_warranty (self):
         self.print_version ()
-        print """Copyright (C) 2008, 2009 Wojciech Polak
+        print """Copyright (C) 2008, 2009, 2010 Wojciech Polak
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -313,7 +313,7 @@ if __name__ == '__main__':
     try:
         opts, args = getopt.getopt (sys.argv[1:], 'h:', ['host='])
     except getopt.GetoptError:
-        print "\nusage: %s [-h, --host=hostname]" % (sys.argv[0])
+        print '\nusage: %s [-h, --host=hostname]' % (sys.argv[0])
         sys.exit (0)
 
     shell = Shell (opts, args)

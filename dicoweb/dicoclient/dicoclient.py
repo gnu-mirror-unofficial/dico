@@ -1,5 +1,5 @@
 #  This file is part of GNU Dico.
-#  Copyright (C) 2008, 2009 Wojciech Polak
+#  Copyright (C) 2008, 2009, 2010 Wojciech Polak
 #
 #  GNU Dico is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -14,13 +14,12 @@
 #  You should have received a copy of the GNU General Public License
 #  along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-import socket
-import select
 import re
+import socket
 import base64
 import quopri
 
-__version__ = "1.0"
+__version__ = '1.0'
 
 class DicoClient:
     """GNU Dico client module written in Python
@@ -35,7 +34,7 @@ class DicoClient:
     transcript = False
     __connected = False
 
-    def __init__ (self, host = None):
+    def __init__ (self, host=None):
         if host != None:
             self.host = host;
 
@@ -43,14 +42,15 @@ class DicoClient:
         if self.__connected:
             self.socket.close ()
 
-    def open (self, host = None, port = 2628):
+    def open (self, host=None, port=2628):
         """Open the connection to the DICT server."""
         if host != None:
             self.host = host
         if self.verbose:
-            self.__debug ("Connecting to %s:%d" % (self.host, port))
+            self.__debug ('Connecting to %s:%d' % (self.host, port))
         socket.setdefaulttimeout (int (self.timeout))
         self.socket = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.setsockopt (socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.connect ((self.host, port))
         self.__connected = True
         self.fd = self.socket.makefile ();
@@ -136,7 +136,7 @@ class DicoClient:
                 while True:
                     rs = self.__readline ()
                     code, text = self.__get_rs (rs)
-                    if (code != 151):
+                    if code != 151:
                         buf.append (rs)
                         break
                     buf.append ([rs, self.__readblock ()])
@@ -148,7 +148,7 @@ class DicoClient:
     def __readline (self):
         line = self.fd.readline ().rstrip ()
         if self.transcript:
-            self.__debug ("S:%s" % line)
+            self.__debug ('S:%s' % line)
         return line
 
     def __readblock (self):
@@ -166,20 +166,20 @@ class DicoClient:
             raise DicoNotConnectedError ('Not connected')
         self.socket.send (command.encode ('utf_8') + "\r\n")
         if self.transcript:
-            self.__debug ("C:%s" % command)
+            self.__debug ('C:%s' % command)
 
     def __send_client (self):
         if self.verbose:
-            self.__debug ("Sending client information")
+            self.__debug ('Sending client information')
         self.__send ('CLIENT "%s %s"' % ("GNU Dico (Python Edition)",
                                          __version__))
 
     def __send_quit (self):
         if self.verbose:
-            self.__debug ("Quitting")
+            self.__debug ('Quitting')
         self.__send ('QUIT');
 
-    def __send_show (self, what, arg = None):
+    def __send_show (self, what, arg=None):
         if arg != None:
             self.__send ('SHOW %s "%s"' % (what, arg))
         else:
@@ -188,15 +188,15 @@ class DicoClient:
 
     def __send_define (self, database, word):
         if self.verbose:
-            self.__debug ('Sending query for word "%s" in database "%s"'
-                        % (word, database))
+            self.__debug ('Sending query for word "%s" in database "%s"' %
+                          (word, database))
         self.__send ('DEFINE "%s" "%s"' % (database, word))
         return self.__read ()
 
     def __send_match (self, database, strategy, word):
         if self.verbose:
             self.__debug ('Sending query to match word "%s" in database "%s", using "%s"'
-                        % (word, database, strategy))
+                          % (word, database, strategy))
         self.__send ('MATCH "%s" "%s" "%s"' % (database, strategy, word))
         return self.__read ()
 
@@ -207,9 +207,9 @@ class DicoClient:
     def show_databases (self):
         """List all accessible databases."""
         if self.verbose:
-            self.__debug ("Getting list of databases")
+            self.__debug ('Getting list of databases')
         res = self.__send_show ('DATABASES')
-        if (self.mime):
+        if self.mime:
             mimeinfo = self.__get_mime (res[1])
         dbs_res = res[1:-1][0]
         dbs = []
@@ -217,17 +217,17 @@ class DicoClient:
             short_name, full_name = d.split (' ', 1)
             dbs.append ([short_name, self.__unquote (full_name)])
         dct = {
-            "count": len (dbs),
-            "databases": dbs
+            'count': len (dbs),
+            'databases': dbs,
         }
         return dct
 
     def show_strategies (self):
         """List available matching strategies."""
         if self.verbose:
-            self.__debug ("Getting list of strategies")
+            self.__debug ('Getting list of strategies')
         res = self.__send_show ('STRATEGIES')
-        if (self.mime):
+        if self.mime:
             mimeinfo = self.__get_mime (res[1])
         sts_res = res[1:-1][0]
         sts = []
@@ -235,8 +235,8 @@ class DicoClient:
             short_name, full_name = s.split (' ', 1)
             sts.append ([short_name, self.__unquote (full_name)])
         dct = {
-            "count": len (sts),
-            "strategies": sts
+            'count': len (sts),
+            'strategies': sts,
         }
         return dct
 
@@ -245,19 +245,19 @@ class DicoClient:
         res = self.__send_show ("INFO", database)
         code, msg = res[0].split (' ', 1)
         if int (code) < 500:
-            if (self.mime):
+            if self.mime:
                 mimeinfo = self.__get_mime (res[1])
             dsc = res[1]
-            return { "desc": '\n'.join (dsc) }
+            return {'desc': '\n'.join (dsc)}
         else:
-            return { "error": code, "msg": msg }
+            return {'error': code, 'msg': msg}
 
     def show_lang_db (self):
         """Show databases with their language preferences."""
-        res = self.__send_show ("LANG DB")
+        res = self.__send_show ('LANG DB')
         code, msg = res[0].split (' ', 1)
         if int (code) < 500:
-            if (self.mime):
+            if self.mime:
                 mimeinfo = self.__get_mime (res[1])
             dsc = res[1]
             lang_src = {}
@@ -269,20 +269,22 @@ class DicoClient:
                     lang_src[src.strip()] = True
                 for j in dst:
                     lang_dst[dst.strip()] = True
-            return { "desc": '\n'.join (dsc),
-                     "lang_src": lang_src.keys (),
-                     "lang_dst": lang_dst.keys () }
+            return {
+                'desc': '\n'.join (dsc),
+                'lang_src': lang_src.keys (),
+                'lang_dst': lang_dst.keys (),
+            }
         else:
-            return { "error": code, "msg": msg }
+            return {'error': code, 'msg': msg}
 
     def show_lang_pref (self):
         """Show server language preferences."""
-        res = self.__send_show ("LANG PREF")
+        res = self.__send_show ('LANG PREF')
         code, msg = res[0].split (' ', 1)
         if int (code) < 500:
-            return { "msg": msg }
+            return {'msg': msg}
         else:
-            return { "error": code, "msg": msg }
+            return {'error': code, 'msg': msg}
 
     def show_server (self):
         """Provide site-specific information."""
@@ -290,9 +292,9 @@ class DicoClient:
         code, msg = res[0].split (' ', 1)
         if int (code) < 500:
             dsc = res[1]
-            return { "desc": '\n'.join (dsc) }
+            return {'desc': '\n'.join (dsc)}
         else:
-            return { "error": code, "msg": msg }
+            return {'error': code, 'msg': msg}
 
     def define (self, database, word):
         """Look up word in database."""
@@ -306,21 +308,23 @@ class DicoClient:
             rx = re.compile ('^\d+ ("[^"]+"|\w+) ([a-zA-Z0-9_\-]+) ("[^"]*"|\w+)')
             for i in defs_res:
                 term, db, db_fullname = rx.search (i[0]).groups ()
-                df = {"term": self.__unquote (term),
-                      "db": db,
-                      "db_fullname": self.__unquote (db_fullname)}
-                if (self.mime):
+                df = {
+                    'term': self.__unquote (term),
+                    'db': db,
+                    'db_fullname': self.__unquote (db_fullname),
+                }
+                if self.mime:
                     mimeinfo = self.__get_mime (i[1])
                     df.update (mimeinfo)
                 df['desc'] = '\n'.join (i[1])
                 defs.append (df)
             dct = {
-                "count": len (defs),
-                "definitions": defs
+                'count': len (defs),
+                'definitions': defs,
             }
             return dct
         else:
-            return { "error": code, "msg": msg }
+            return {'error': code, 'msg': msg}
 
     def match (self, database, strategy, word):
         """Match word in database using strategy."""
@@ -331,8 +335,8 @@ class DicoClient:
             res = self.__send_xlev (self.levenshtein_distance)
             code, msg = res[-1].split (' ', 1)
             if int (code) != 250 and self.verbose:
-                self.__debug ("Server rejected XLEV command")
-                self.__debug ("Server reply: %s" % msg)
+                self.__debug ('Server rejected XLEV command')
+                self.__debug ('Server reply: %s' % msg)
 
         database = database.replace ('"', "\\\"")
         strategy = strategy.replace ('"', "\\\"")
@@ -341,7 +345,7 @@ class DicoClient:
         res = self.__send_match (database, strategy, word)
         code, msg = res[-1].split (' ', 1)
         if int (code) < 500:
-            if (self.mime):
+            if self.mime:
                 mimeinfo = self.__get_mime (res[1])
             mts_refs = res[1:-1][0]
             mts = {}
@@ -352,11 +356,11 @@ class DicoClient:
                 else:
                     mts[db] = [self.__unquote (term)]
             dct = {
-                "matches": mts
+                'matches': mts,
             }
             return dct
         else:
-            return { "error": code, "msg": msg }
+            return {'error': code, 'msg': msg}
 
     def xlev (self, distance):
         """Set Levenshtein distance."""
@@ -383,7 +387,7 @@ class DicoClient:
         return unicode (encoded, 'utf_8')
 
     def __debug (self, msg):
-        print "dico: Debug: %s" % msg
+        print 'dico: Debug: %s' % msg
 
 class DicoNotConnectedError (Exception):
     def __init__ (self, value):

@@ -5,8 +5,6 @@ Copyright (C) 2008, 2009, 2010 Wojciech Polak
 ======================
 
 - Django 1.0+ -- a Python Web framework (http://www.djangoproject.com/)
-- Memcached -- a distributed memory object caching system
-  (http://www.danga.com/memcached/) alongside python-memcached module.
 - Wit -- a wiki translator distributed within GNU Dico.
   (http://puszcza.gnu.org.ua/projects/wit/)
 

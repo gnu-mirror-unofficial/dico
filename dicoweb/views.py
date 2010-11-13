@@ -14,15 +14,15 @@
 #  You should have received a copy of the GNU General Public License
 #  along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
+import hashlib
+import socket
 from django.conf import settings
 from django.core import urlresolvers
+from django.core.cache import cache
 from django.shortcuts import render_to_response
 from django.utils.translation import ugettext as _
 
-import re
-import hashlib
-import memcache
-import socket
 import dicoclient
 from wit import wiki2html
 
@@ -55,7 +55,7 @@ def index (request):
     if len (settings.DICT_SERVERS) > 1:
         selects['sv'] = HtmlOptions (settings.DICT_SERVERS, server)
 
-    key = hashlib.md5 ("%s/%s" % (sid, server.encode ('ascii',
+    key = hashlib.md5 ('%s/%s' % (sid, server.encode ('ascii',
                                                       'backslashreplace')))
     sid = key.hexdigest ()
 
@@ -68,13 +68,11 @@ def index (request):
     database = request.GET.get ('db', '*')
     strategy = request.GET.get ('strategy', '.')
 
-    mc = memcache.Client (settings.MEMCACHE_SERVERS)
-
     key_databases = str ('dicoweb/databases/' + server)
     key_strategies = str ('dicoweb/strategies/' + server)
 
-    databases = mc.get (key_databases)
-    strategies = mc.get (key_strategies)
+    databases = cache.get (key_databases)
+    strategies = cache.get (key_strategies)
 
     if server.find (':') != -1:
         s = server.split (':', 1)
@@ -90,10 +88,10 @@ def index (request):
             strategies = dc.show_strategies ()['strategies']
             dc.close ()
         except (socket.timeout, socket.error, dicoclient.DicoNotConnectedError):
-            return render_to_response ('index.html', { 'selects': selects })
+            return render_to_response ('index.html', {'selects': selects})
 
-        mc.set (key_databases, databases, time=86400)
-        mc.set (key_strategies, strategies, time=86400)
+        cache.set (key_databases, databases, timeout=86400)
+        cache.set (key_strategies, strategies, timeout=86400)
 
     for s in strategies:
         s[1] = _(s[1])
@@ -110,11 +108,11 @@ def index (request):
         langkey = '*';
         if database == '*': langkey = ','.join (accept_lang)
 
-        key = hashlib.md5 ("%s:%d/%s/%s/%s/%s/%s" %
+        key = hashlib.md5 ('%s:%d/%s/%s/%s/%s/%s' %
                            (server, port, langkey, type, database, strategy,
                             q.encode ('ascii', 'backslashreplace')))
         key = key.hexdigest ()
-        result = mc.get ("dicoweb/" + key)
+        result = cache.get ('dicoweb/' + key)
 
         if not result:
             try:
@@ -138,22 +136,23 @@ def index (request):
                 dc.close ()
 
                 result['markup_style'] = markup_style
-                mc.set ("dicoweb/" + key, result, time=3600)
+                cache.set ('dicoweb/' + key, result, timeout=3600)
 
             except (socket.timeout, socket.error,
                     dicoclient.DicoNotConnectedError):
                 return render_to_response ('index.html',
-                                           { 'selects': selects })
+                                           {'selects': selects})
 
         # get last match results
         if sid and type == 'search':
-            mc.set ("dicoweb/%s/last_match" % sid, key, time=3600)
+            cache.set ('dicoweb/%s/last_match' % sid, key, timeout=3600)
         else:
-            key = mc.get ("dicoweb/%s/last_match" % sid)
-        if key != None: mtc = mc.get ("dicoweb/" + key)
+            key = cache.get ('dicoweb/%s/last_match' % sid)
+        if key != None:
+            mtc = cache.get ('dicoweb/' + key)
 
         mtc['dbnames'] = {}
-        if mtc.has_key ('matches'):
+        if 'matches' in mtc:
             for m in mtc['matches']:
                 for d in databases:
                     if d[0] == m:
@@ -165,7 +164,7 @@ def index (request):
             page['title'] = q + ' - '
             page['robots'] = 'noindex,nofollow'
 
-    if result.has_key ('definitions'):
+    if 'definitions' in result:
         rx1 = re.compile ('{+(.*?)}+', re.DOTALL)
         for df in result['definitions']:
             if df.has_key ('content-type') \
@@ -182,9 +181,11 @@ def index (request):
                 df['desc'] = re.sub ('_(.*?)_', '<b>\\1</b>', df['desc'])
                 df['desc'] = re.sub (rx1, __subs1, df['desc'])
 
-    return render_to_response ('index.html', { 'page': page, 'q': q,
-                                               'mtc': mtc, 'result': result,
-                                               'selects': selects })
+    return render_to_response ('index.html', {'page': page,
+                                              'q': q,
+                                              'mtc': mtc,
+                                              'result': result,
+                                              'selects': selects,})
 
 def opensearch (request):
     url_query = request.build_absolute_uri (urlresolvers.reverse ('index'))
@@ -202,6 +203,7 @@ class HtmlOptions:
     def __init__ (self, lst=[], value=''):
         self.lst = lst
         self.value = value
+
     def html (self):
         buf = []
         for opt in self.lst:

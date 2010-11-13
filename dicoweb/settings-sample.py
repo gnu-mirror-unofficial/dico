@@ -1,7 +1,7 @@
 #  Django settings for Dicoweb project.
 #
 #  This file is part of GNU Dico.
-#  Copyright (C) 2008, 2009 Wojciech Polak
+#  Copyright (C) 2008, 2009, 2010 Wojciech Polak
 #
 #  GNU Dico is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -45,6 +45,9 @@ SESSION_COOKIE_NAME = 'dicoweb_sid'
 SESSION_ENGINE = 'django.contrib.sessions.backends.file'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
+# Caching, see http://docs.djangoproject.com/en/dev/topics/cache/#topics-cache
+CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
+
 # Absolute path to the directory that holds media/static files.
 MEDIA_ROOT = os.path.join (SITE_ROOT, 'static')
 
@@ -61,10 +64,12 @@ TEMPLATE_LOADERS = (
 )
 
 MIDDLEWARE_CLASSES = (
-    'django.middleware.common.CommonMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.gzip.GZipMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware',
 )
 
 ROOT_URLCONF = 'dicoweb.urls'
@@ -82,4 +87,3 @@ INSTALLED_APPS = (
 
 DICT_SERVERS = ('gnu.org.ua',)
 DICT_TIMEOUT = 10
-MEMCACHE_SERVERS = ('127.0.0.1:11211',)

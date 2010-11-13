@@ -65,7 +65,7 @@ static struct regex_flags ext_flags = {
 };
 
 static struct regex_flags basic_flags = {
-    REG_EXTENDED|REG_ICASE
+    REG_ICASE
 };
 
 static struct dico_strategy re_strat = {

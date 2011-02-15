@@ -21,7 +21,7 @@ noinst_DATA=dicod.conf
 CLEANFILES=dicod.conf
 
 .cfin.conf:
-	sed 's|<BUILDDIR>|'`cd $(top_builddir); pwd`'|g;s|<SRCDIR>|'`cd $(top_srcdir); pwd`'|g' \
+	$(AM_V_GEN)sed 's|<BUILDDIR>|'`cd $(top_builddir); pwd`'|g;s|<SRCDIR>|'`cd $(top_srcdir); pwd`'|g' \
 		$< > $@
 
 noinst_PROGRAMS=levtest

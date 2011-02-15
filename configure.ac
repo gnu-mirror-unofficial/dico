@@ -53,7 +53,8 @@ dnl Checks for header files.
 AC_HEADER_DIRENT dnl not needed ?
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(fcntl.h limits.h strings.h sys/time.h syslog.h unistd.h \
+AC_CHECK_HEADERS(fcntl.h limits.h strings.h sys/time.h \
+                 sys/socket.h socket.h syslog.h unistd.h \
                  crypt.h readline/readline.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.

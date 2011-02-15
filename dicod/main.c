@@ -1404,13 +1404,10 @@ main(int argc, char **argv)
     apply_conf_override(&ovr);
     
     register_sasl();
-    if (dicod_capa_flush())
-	exit(EX_SOFTWARE);
     compile_access_log();
-    if (config_lint_option)
-	exit(EX_OK);
-    
-    dicod_log_setup();
+
+    if (!config_lint_option)
+	dicod_log_setup();
     
     dicod_loader_init();
     
@@ -1422,6 +1419,10 @@ main(int argc, char **argv)
 	&& dico_set_default_strategy(default_strategy_name)) {
 	dico_die(EX_UNAVAILABLE, L_ERR, 0, _("unknown strategy"));
     }
+    if (dicod_capa_flush())
+	exit(EX_SOFTWARE);
+    if (config_lint_option)
+	exit(EX_OK);
 	
     markup_flush_capa();
 

@@ -81,7 +81,7 @@ config-gram.h: config-gram.c
 SUFFIXES=.opt .c
 
 .opt.c:
-	m4 -s $(top_srcdir)/utils/getopt.m4 $< | sed '1d' > $@
+	$(AM_V_GEN)m4 -s $(top_srcdir)/utils/getopt.m4 $< | sed '1d' > $@
 
 BUILT_SOURCES=cmdline.c 
 EXTRA_DIST=cmdline.opt pp-setup

@@ -158,6 +158,7 @@ Configuration File Syntax
 Authentication
 
 * text::        Flat Text Databases.
+* ldap::        LDAP Databases.
 
 Databases
 
@@ -171,6 +172,7 @@ Modules
 * Python::
 * Stratall::
 * Substr::
+* Ldap::
 
 The @command{guile} module.
 
@@ -436,7 +438,7 @@ to identify this particular database in a set of available databases.
 Two more pieces of textual data are associated with a database.  A
 @dfn{database information} string (or @dfn{info}, for short), supplies
 a short description of the database.  It is a sentence, tersely
-describing the database, e.g. @samp{English-German Dictionary}.  A
+describing the database, e.g.@: @samp{English-German Dictionary}.  A
 @dfn{database description} provides full description of the
 dictionary, with author credits and copyright information.  The length
 of this description is not limited.
@@ -631,7 +633,7 @@ directives any time by running @command{dicod --config-help}.
   A @command{dicod} configuration consists of statements and comments.
 
   There are three classes of lexical tokens: keywords, values, and
-separators. Blanks, tabs, newlines and comments, collectively called
+separators.  Blanks, tabs, newlines and comments, collectively called
 @dfn{white space} are ignored except as they serve to separate
 tokens.  Some white space is required to separate otherwise adjacent 
 keywords and values.
@@ -832,7 +834,7 @@ EOT
 
   Body of a here-document is interpreted the same way as
 double-quoted string, unless @var{word} is preceded by a backslash
-(e.g. @samp{<<\EOT}) or enclosed in double-quotes, in which case
+(e.g.@: @samp{<<\EOT}) or enclosed in double-quotes, in which case
 the text is read as is, without interpretation of escape sequences.
 
   If @var{word} is prefixed with @code{-} (a dash), then all leading
@@ -874,7 +876,7 @@ capability (mime,auth);
 
   In any case where a list is appropriate, a single value is allowed
 without being a member of a list: it is equivalent to a list with a
-single member.  This means that, e.g. @samp{capability mime;} is
+single member.  This means that, e.g.@: @samp{capability mime;} is
 equivalent to @samp{capability (mime);}.
 
 @end table
@@ -935,7 +937,7 @@ if @command{dicod} is running in inetd mode.  @xref{Inetd Mode}.
 
 @anchor{mode statement}
 @deffn {Configuration} mode @var{enum}
-Sets server operation mode. The argument is one of:
+Sets server operation mode.  The argument is one of:
 
 @table @asis
 @item daemon
@@ -946,7 +948,7 @@ Run in inetd mode.  @xref{Inetd Mode}, for a detailed description.
 @end table
 
 This statement is overridden by the @option{--inetd} command line
-option. @xref{--inetd}.
+option.  @xref{--inetd}.
 @end deffn
 
 @deffn {Configuration} listen @var{list};
@@ -1111,12 +1113,12 @@ User password necessary to access the database.
 Domain name or @acronym{IP} address of a machine running the database.
 
 @item path
-A @dfn{path} to the database. The exact meaning of this element
-depends on the database protocol. It is described in detail when
+A @dfn{path} to the database.  The exact meaning of this element
+depends on the database protocol.  It is described in detail when
 discussing particular database protocols.
 
 @item params
-A list of protocol-dependent parameters. Each parameter is of the
+A list of protocol-dependent parameters.  Each parameter is of the
 form @code{@var{keyword}=@var{name}}, multiple parameters are separated
 with semicolons.
 @end table
@@ -1238,7 +1240,7 @@ the @samp{ldap} module (@pxref{Ldap, LDAP module}):
 
 @smallexample
 load-module ldap @{
-	command "ldap";
+        command "ldap";
 @}
 @end smallexample
 
@@ -1328,7 +1330,7 @@ user-db "ldap://localhost" @{
 
   A note on password usage is in order here.  Most authentication methods
 require the passwords to be stored in the database in @emph{plain
-text} form.  The use of encrypted passwords (e.g. MD5 or SHA1) is
+text} form.  The use of encrypted passwords (e.g.@: MD5 or SHA1) is
 possible only with @samp{LOGIN} and @samp{PLAIN} GSASL authentication
 methods.
 
@@ -1420,7 +1422,7 @@ must be an integer number in the range from 0 to 32.  The address part,
 The specifier matches if the result of logical @acronym{AND} between
 the client @acronym{IP} address and @var{netmask} equals to
 @var{addr}.  The network mask must be specified in ``dotted quad''
-form, e.g. @samp{255.255.255.224}.
+form, e.g.@: @samp{255.255.255.224}.
 
 @item @var{filename}
 Matches if connection was received from a @acronym{UNIX} socket
@@ -1616,7 +1618,7 @@ The time taken to serve the request, in microseconds.
 
 @item %d
 Request command verb in abbreviated form, suitable for use in
-@acronym{URL}s, i.e. @samp{d} for @code{DEFINE}, and @samp{m} for
+@acronym{URL}s, i.e.@: @samp{d} for @code{DEFINE}, and @samp{m} for
 @code{MATCH}.  @xref{urls}.
 
 @item %h
@@ -1839,7 +1841,7 @@ following table:
 
 @table @asis
 @item auth
-The @code{AUTH} command is supported. @xref{Authentication}.
+The @code{AUTH} command is supported.  @xref{Authentication}.
 
 @item mime
 The @code{OPTION MIME} command is supported.  Notice that
@@ -1885,7 +1887,7 @@ sub-statement allowed within it is @code{command} statement:
 @deffn {load-module config} command @var{string}
 Set the command line for this handler.  It is similar to shell's
 command line: it consists of a name of database module, optionally
-followed by a whitespace-separated list of its arguments. Just as in
+followed by a whitespace-separated list of its arguments.  Just as in
 shell, the name of the module specifies the disk file which should be
 loaded.  Arguments are passed to the module @dfn{initialization function}
 (@pxref{dico_init}).
@@ -2753,7 +2755,7 @@ initializing the module instance.
 @cindex Guile
 @cindex Scheme
   @dfn{Guile} is an acronym for @dfn{GNU's Ubiquitous Intelligent
-Language for Extensions}. It provides a Scheme interpreter conforming
+Language for Extensions}.  It provides a Scheme interpreter conforming
 to the R5RS language specification and a number of convenience
 functions.  For information about the language, refer to
 @ref{Top,,,r5rs,Revised(5) Report on the Algorithmic Language Scheme}.
@@ -2806,7 +2808,7 @@ must be a list of directory names, separated by colons.
 
   This option modifies the value of Guile's @code{%load-path}
 variable.
-@c FIXME: Texi2html is unable to handle \, in the section title. This
+@c FIXME: Texi2html is unable to handle \, in the section title.  This
 @c conditional overrides this bug.
 @ifnothtml
 @xref{Build Config, %load-path,
@@ -3161,7 +3163,7 @@ Create new key object from strategy @var{strat} and word @var{word}.
 
 
 @defun dico-strat-selector? @var{strat}
-Return true if @var{strat} has a selector. @FIXME-pxref{selector}.
+Return true if @var{strat} has a selector.  @FIXME-pxref{selector}.
 @end defun
 
 @defun dico-strat-select? @var{strat} @var{word} @var{key}
@@ -3522,7 +3524,7 @@ The module needs no additional configuration parameters:
 
 @smallexample
 load-module ldap @{
-	command "ldap";
+        command "ldap";
 @}
 @end smallexample
 
@@ -4462,7 +4464,7 @@ Set or display session transcript mode.
 @xref{Session Transcript}.
 
 @item verbose [@var{number}]
-Set or display debugging verbosity level. @FIXME-xref{}.
+Set or display debugging verbosity level.  @FIXME{cross-reference, maybe?}.
 
 @item prompt @var{string}
 Change command line prompt.
@@ -4919,7 +4921,7 @@ shows the basic set of information that is needed in order to find the bug:
 @item A detailed description of the bug.
 @item Conditions under which the bug appears.
 @item It is often helpful to send the contents of @file{config.log}
-file along with your bug report. This file is created after running
+file along with your bug report.  This file is created after running
 @command{./configure} in the source root directory of GNU Dico.
 @end itemize
 

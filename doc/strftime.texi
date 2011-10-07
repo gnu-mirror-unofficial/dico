@@ -12,7 +12,7 @@ Essentially, it is a reproduction of the man page for GNU
 @code{strftime} function.
 
   Ordinary characters placed in the format string are reproduced without
-conversion. Conversion specifiers are introduced by a @samp{%}
+conversion.  Conversion specifiers are introduced by a @samp{%}
 character, and are replaced as follows:
 
 @multitable @columnfractions 0.2 0.7
@@ -78,13 +78,13 @@ to 366).
 (@pxref{conversion specs}).
 
 @item %p @tab Either @samp{AM} or @samp{PM} according to the given time
-value, or the corresponding strings for the current locale. Noon is
+value, or the corresponding strings for the current locale.  Noon is
 treated as @samp{pm} and midnight as @samp{am}.
 
 @item %P @tab Like @samp{%p} but in lowercase: @samp{am} or @samp{pm}
 or a corresponding string for the current locale. 
 
-@item %r @tab The time in @samp{a.m.} or @samp{p.m.} notation. In the POSIX
+@item %r @tab The time in @samp{a.m.} or @samp{p.m.} notation.  In the POSIX
 locale this is equivalent to @samp{%I:%M:%S %p}. 
 
 @item %R @tab The time in 24-hour notation (@samp{%H:%M}).  For a
@@ -127,7 +127,7 @@ without the date.
 
 @item %Y @tab The year as a decimal number including the century.
 
-@item %z @tab The time-zone as hour offset from @acronym{GMT}. Required to
+@item %z @tab The time-zone as hour offset from @acronym{GMT}.  Required to
 emit RFC822-conformant dates (using @samp{%a, %d %b %Y %H:%M:%S %z})
 
 @item %Z @tab The time zone or name or abbreviation.

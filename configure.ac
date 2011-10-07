@@ -428,22 +428,7 @@ if test $status_ldap != no; then
 fi
 AM_CONDITIONAL([LDAP_COND], [test $status_ldap = yes])
     
-# Doc hints.
-# Select a rendition level:
-#  DISTRIB for stable releases (at most one dot in the version number)
-#  and maintenance releases (two dots, patchlevel < 50)
-#  PROOF for alpha releases.
-#  PUBLISH can only be required manually when running make in doc/
-AC_SUBST(RENDITION)
-case `echo $VERSION|sed  's/[[^.]]//g'` in
-""|".")  RENDITION=DISTRIB;;
-"..")  if test `echo $VERSION | sed  's/.*\.//'` -lt 50; then
-	 RENDITION=DISTRIB
-       else
-         RENDITION=PROOF
-       fi;;
-*)     RENDITION=PROOF;;
-esac
+IMPRIMATUR_INIT
 
 AC_CONFIG_COMMANDS([status],[
 cat <<EOT

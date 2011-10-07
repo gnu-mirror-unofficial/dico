@@ -4,3 +4,6 @@
 [submodule "gint"]
 	path = gint
 	url = git://git.gnu.org.ua/gint.git
+[submodule "imprimatur"]
+	path = imprimatur
+	url = git://git.gnu.org.ua/imprimatur.git

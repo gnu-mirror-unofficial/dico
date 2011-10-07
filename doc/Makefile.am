@@ -24,88 +24,35 @@ dico_TEXINFOS=\
  strftime.texi
 
 EXTRA_DIST = \
- check-docs.sh\
- gendocs_template\
- mastermenu.el\
- untabify.el
+ gendocs_template
 
 clean-local:
 	rm -rf manual
 
-# Checking
-check-format:
-	@if test -n "`cat $(info_TEXINFOS) $(dico_TEXINFOS) | tr -d -c '\t'`"; then \
-		echo "Sources contain tabs; run make untabify"; \
-		false; \
-	fi
+AM_MAKEINFOFLAGS = @IMPRIMATUR_MAKEINFOFLAGS@
+imprimatur_INPUT=$(info_TEXINFOS) $(dico_TEXINFOS)
+include ../imprimatur/imprimatur.mk
+CHECK_DOCS=$(top_srcdir)/@IMPRIMATUR_MODULE_DIR@/check-docs.sh
 
+# Checking
 check-options:
-	@check-docs.sh options \
+	@$(CHECK_DOCS) options \
 	   '/OPTIONS_BEGIN/,/OPTIONS_END/s/OPTION( *\([^,][^,]*\),.*/\1/pg' \
 	   '/@c option --/{s///;s/^\(help\|version\|usage\)//;p}' \
 	   $(top_srcdir)/dicod/cmdline.opt -- \
 	   $(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I $(srcdir) -E - \
 		$(info_TEXINFOS) 
 
-check-refs:
-	@for file in $(info_TEXINFOS) $(dico_TEXINFOS); \
-	do \
-	  sed -e = $$file | \
-           sed -n 'N;/@FIXME-.*ref/{s/\(^[0-9][0-9]*\).*@FIXME-.*ref{\([^}]*\)}.*/'$$file':\1: \2/gp}'; \
-	done > $@-t; \
-	if [ -s $@-t ]; then \
-	  echo "Unresolved cross-references:"; \
-	  cat $@-t;\
-	  rm $@-t; \
-	else \
-	  rm -f $@-t; \
-	fi
-
-check-fixmes:
-	@for file in $(info_TEXINFOS); \
-	do \
-	  sed -e = $$file | \
-           sed -n 'N;/@FIXME{/{s/\(^[0-9][0-9]*\).*@FIXME{\([^}]*\).*/'$$file':\1: \2/gp}'; \
-	done > $@-t; \
-	if [ -s $@-t ]; then \
-	  echo "Unresolved FIXMEs:"; \
-	  cat $@-t; \
-	  rm $@-t; \
-	  false; \
-	else \
-          rm -f $@-t; \
-	fi
-
-check-unrevised:
-	@grep -Hn @UNREVISED $(info_TEXINFOS) $(dico_TEXINFOS) > $@-t; \
-	if [ -s $@-t ]; then \
-	  echo "Unrevised nodes:"; \
-	  cat $@-t; \
-	  rm $@-t; \
-	  false;\
-	else \
-          rm $@-t; \
-	fi
-
-all-check-docs: check-format check-options check-refs check-fixmes check-unrevised
+all-check-docs: imprimatur-basic-checks check-options
 
 check-docs: 
 	$(MAKE) -k all-check-docs
 
 #
 
-master-menu:
-	emacs -batch -l mastermenu.el -f make-master-menu $(info_TEXINFOS)
-
-untabify:
-	emacs -batch -l untabify.el $(info_TEXINFOS) $(dico_TEXINFOS)
-
-final: untabify master-menu
-
-# The rendering level is one of PUBLISH, DISTRIB or PROOF.
-# Just call `make RENDITION=PROOF [target]' if you want PROOF rendition.
-
-MAKEINFOFLAGS=-D$(RENDITION)
+master-menu: imprimatur-master-menu
+untabify: imprimatur-untabify
+final: imprimatur-final
 
 GENDOCS=gendocs.sh 
 
@@ -116,9 +63,10 @@ TEXI2DVI=texi2dvi -t '@set $(RENDITION)' -E
 # TEXINPUTS=/usr/share/texmf/pdftex/plain/misc/ is ok for most distributions
 manual:
 	TEXINPUTS=$(srcdir):$(top_srcdir)/build-aux:$(TEXINPUTS) \
-	 MAKEINFO="$(MAKEINFO) $(MAKEINFOFLAGS)" \
-	 TEXI2DVI="$(TEXI2DVI) -t @finalout" \
-	 $(GENDOCS) --texi2html $(PACKAGE) '$(PACKAGE_NAME) manual'
+	 MAKEINFO="$(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS)" \
+	 TEXI2DVI="$(TEXI2DVI)" \
+         TEXI2HTML="texi2html $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS)" \
+	$(GENDOCS) --texi2html $(PACKAGE) '$(PACKAGE_NAME) manual'
 
 manual.tar.bz2: manual
 	tar cfj manual.tar.bz2 manual

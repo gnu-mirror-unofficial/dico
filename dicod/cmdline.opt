@@ -22,9 +22,34 @@
 #include <getopt.h>
 #include <gettext.h>
 
-OPTIONS_BEGIN(gnu,"dicod",
-              [<A DICT daemon.>])
+OPTIONS_BEGIN("dicod",
+              [<GNU dictionary server>],
+	      [<>],
+	      [<gnu>],
+	      [<copyright_year=2005-2012>],
+	      [<copyright_holder=Free Software Foundation, Inc.>])
 
+GROUP(Select program mode)
+OPTION(,E,,
+       [<Preprocess configuration file and exit>])
+BEGIN
+   mode = MODE_PREPROC;
+END
+
+OPTION(lint,t,,
+       [<Check configuration file syntax and exit.>])
+BEGIN
+   config_lint_option = 1;
+END
+
+OPTION(inetd, i,,
+       [<Inetd mode.>])
+BEGIN
+   mode = MODE_INETD;
+END
+
+GROUP(Modifiers)
+    
 OPTION(config,,FILE,
        [<Read this configuration file.>])
 BEGIN
@@ -49,43 +74,14 @@ BEGIN
    log_to_stderr = 0;
 END
 
-OPTION(,E,,
-       [<Preprocess configuration file and exit>])
-BEGIN
-   mode = MODE_PREPROC;
-END
-
-OPTION(preprocessor,,PROG,
-       [<Use PROG as a preprocessor for config file.>])
-BEGIN
-   preprocessor = optarg;
-END
-
-OPTION(no-preprocessor,,,
-       [<Do not use external preprocessor.>])
-BEGIN
-   preprocessor = NULL;
-END
-
-OPTION(include-dir,I,DIR,
-       [<Add the directory DIR to the list of directories
-        to be searched for preprocessor include files>])
-BEGIN
-   add_include_dir(optarg); 
-END
-
 OPTION(single-process, s,,
        [<Single-process mode.>])
 BEGIN
    single_process = 1;
 END
 
-OPTION(inetd, i,,
-       [<Inetd mode.>])
-BEGIN
-   mode = MODE_INETD;
-END
-
+GROUP(Debugging)
+    
 OPTION(transcript, T,,
        [<Enable session transcript.>])
 BEGIN
@@ -114,14 +110,16 @@ END
 OPTION(trace-grammar,,,
        [<Trace parsing of configuration file.>])
 BEGIN
-   config_gram_trace(1);
+   grecs_gram_trace(1);
 END
 
 OPTION(trace-lex,,,
        [<Trace config file lexer.>])
 BEGIN
-   config_lex_trace(1);
+   grecs_lex_trace(1);
 END
+
+GROUP([<Additional help>])
 
 OPTION(config-help,,,
        [<Show configuration file summary.>])
@@ -130,16 +128,31 @@ BEGIN
    exit(0);
 END   
 
-OPTION(lint,t,,
-       [<Check configuration file syntax and exit.>])
+GROUP(Preprocessor control)
+    
+OPTION(preprocessor,,PROG,
+       [<Use PROG as a preprocessor for config file.>])
 BEGIN
-   config_lint_option = 1;
+   grecs_preprocessor = optarg;
+END
+
+OPTION(no-preprocessor,,,
+       [<Do not use external preprocessor.>])
+BEGIN
+   grecs_preprocessor = NULL;
+END
+
+OPTION(include-dir,I,DIR,
+       [<Add the directory DIR to the list of directories
+        to be searched for preprocessor include files>])
+BEGIN
+   grecs_preproc_add_include_dir(optarg); 
 END
 
 OPTIONS_END
 
 void
-get_options (int argc, char *argv[], struct dicod_conf_override *conf)
+get_options(int argc, char *argv[], struct dicod_conf_override *conf)
 {
     GETOPT(argc, argv,, exit(EX_USAGE))
 }

@@ -55,10 +55,9 @@ open_sockets()
 {
     size_t i;
     dico_iterator_t itr;
-    sockaddr_union_t *sp;
+    struct grecs_sockaddr *sp;
     struct stat st;
     int t;
-    int socklen;
     char *p;
     
     srvcount = dico_list_count(listen_addr);
@@ -79,48 +78,53 @@ open_sockets()
     itr = xdico_list_iterator(listen_addr);
     for (i = 0, sp = dico_iterator_first(itr); sp;
 	 sp = dico_iterator_next(itr)) {
-	int fd = socket(address_family_to_domain(sp->s.sa_family),
+	int fd = socket(address_family_to_domain(sp->sa->sa_family),
 			SOCK_STREAM, 0);
 	if (fd == -1) {
 	    dico_log(L_ERR, errno, "socket");
 	    continue;
 	}
 
-	switch (sp->s.sa_family) {
-	case AF_UNIX:
-	    if (stat(sp->s_un.sun_path, &st)) {
+	switch (sp->sa->sa_family) {
+	case AF_UNIX: {
+	    struct sockaddr_un *s_un = (struct sockaddr_un *)sp->sa;
+	    if (stat(s_un->sun_path, &st)) {
 		if (errno != ENOENT) {
 		    dico_log(L_ERR, errno,
 			   _("file %s exists but cannot be stat'd"),
-			   sp->s_un.sun_path);
+			   s_un->sun_path);
 		    close(fd);
 		    continue;
 		}
 	    } else if (!S_ISSOCK(st.st_mode)) {
 		dico_log(L_ERR, 0,
 		       _("file %s is not a socket"),
-		       sp->s_un.sun_path);
+		       s_un->sun_path);
 		close(fd);
 		continue;
-	    } else if (unlink(sp->s_un.sun_path)) {
+	    } else if (unlink(s_un->sun_path)) {
 		dico_log(L_ERR, errno,
-		       _("cannot unlink file %s"),
-		       sp->s_un.sun_path);
+			 _("cannot unlink file %s"),
+			 s_un->sun_path);
 		close(fd);
 		continue;
 	    }
-	    socklen = sizeof(sp->s_un);
 	    break;
-	
+	}
+	    
 	case AF_INET:
 	    t = 1;	 
 	    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &t, sizeof(t));
-	    socklen = sizeof(sp->s_in);
 	    break;
+
+	default:
+	    dico_log(L_ERR, 0, _("unsupported address family: %d"),
+		     sp->sa->sa_family);
+	    continue;
 	}
 
-	if (bind(fd, &sp->s, socklen) == -1) {
-	    p = sockaddr_to_astr(&sp->s, socklen);
+	if (bind(fd, sp->sa, sp->len) == -1) {
+	    p = sockaddr_to_astr(sp->sa, sp->len);
 	    dico_log(L_ERR, errno, ("cannot bind to %s"), p);
 	    free(p);
 	    close(fd);
@@ -128,15 +132,15 @@ open_sockets()
 	}
 
 	if (listen(fd, 8) == -1) {
-	    p = sockaddr_to_astr(&sp->s, socklen);
+	    p = sockaddr_to_astr(sp->sa, sp->len);
 	    dico_log(L_ERR, errno, "cannot listen on %s", p);
 	    free(p);
 	    close(fd);
 	    continue;
 	}
 
-	srvtab[i].addr = &sp->s;
-	srvtab[i].addrlen = socklen;
+	srvtab[i].addr = sp->sa;
+	srvtab[i].addrlen = sp->len;
 	srvtab[i].fd = fd;
 	i++;
 	if (fd > fdmax)

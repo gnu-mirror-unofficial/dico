@@ -17,6 +17,17 @@ latest stable version.
 - libtool <http://www.gnu.org/software/libtool/>
 - Texinfo <http://www.gnu.org/software/texinfo/>
 
+* Submodules
+
+Dico uses the following projects as Git submodules:
+
+- Grecs <http://puszcza.gnu.org.ua/projects/grecs>
+- Gint <http://www.gnu.org.ua/software/gint>
+- Imprimatur <http://www.gnu.org.ua/software/imprimatur>
+- Wit <http://puszcza.gnu.org.ua/projects/wit>
+
+This will be pulled automatically by the bootstrapping process.
+
 * Bootstrapping
 
 Obviously, if you are reading these notes, you did manage to check out

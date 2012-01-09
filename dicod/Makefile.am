@@ -24,21 +24,18 @@ dicod_SOURCES=\
  ckpass.c\
  cmdline.c\
  commands.c\
- config-format.c\
- config-gram.y\
- config-lex.l\
  dbtext.c\
  dicod.c\
  gsasl.c\
  ident.c\
  lang.c\
  lev.c\
+ lint.c\
  loader.c\
  main.c\
  markup.c\
  mime.c\
  ostream.c\
- pp.c\
  regex.c\
  server.c\
  stat.c\
@@ -46,7 +43,7 @@ dicod_SOURCES=\
  xidle.c\
  xversion.c
 
-noinst_HEADERS=dicod.h config-gram.h
+noinst_HEADERS=dicod.h
 
 incdir=$(pkgdatadir)/$(VERSION)/include
 inc_DATA = $(PP_SETUP_FILE)
@@ -67,21 +64,19 @@ LDADD=\
  ../gnu/libgnu.a\
  ../lib/libextra.a\
  ../lib/libdico.la\
+ @GRECS_LDADD@\
  @LIBINTL@ @LIBICONV@\
  @LIBDICOSASL@\
  @GSASL_LIBS@\
  @LIBLTDL@  
 
-INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu -I../gnu @LTDLINCL@
+INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu -I../gnu @GRECS_INCLUDES@ @LTDLINCL@
 # dicod_DEPENDENCIES=@LTDLDEPS@
-
-config-lex.c: config-gram.h
-config-gram.h: config-gram.c
 
 SUFFIXES=.opt .c
 
 .opt.c:
-	$(AM_V_GEN)m4 -s $(top_srcdir)/utils/getopt.m4 $< | sed '1d' > $@
+	$(AM_V_GEN)m4 -s $(top_srcdir)/@GRECS_SUBDIR@/build-aux/getopt.m4 $< > $@
 
 BUILT_SOURCES=cmdline.c 
 EXTRA_DIST=cmdline.opt pp-setup

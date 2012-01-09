@@ -15,6 +15,10 @@
    along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <gettext.h>
-#define _(String) gettext (String)
-#define N_(String) gettext_noop (String)
+#ifndef _
+# define _(String) gettext (String)
+#endif
+#ifndef N_
+# define N_(String) gettext_noop (String)
+#endif
 

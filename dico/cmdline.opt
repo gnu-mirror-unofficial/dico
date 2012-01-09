@@ -16,10 +16,14 @@
 
 #include <dico-priv.h>
 #include <getopt.h>
+#include <sysexits.h>
 
-OPTIONS_BEGIN(gnu,"dico",
-              [<A DICT client.>],
-	      [<[URL-or-WORD]>])
+OPTIONS_BEGIN("dico",
+              [<GNU dictionary client program>],
+	      [<[URL-or-WORD]>],
+	      [<gnu>],
+	      [<copyright_year=2005-2012>],
+	      [<copyright_holder=Free Software Foundation, Inc.>])
 
 GROUP([<Server selection>])
 	      

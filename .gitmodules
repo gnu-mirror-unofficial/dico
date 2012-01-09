@@ -7,3 +7,6 @@
 [submodule "imprimatur"]
 	path = imprimatur
 	url = git://git.gnu.org.ua/imprimatur.git
+[submodule "grecs"]
+	path = grecs
+	url = git://git.gnu.org.ua/grecs.git

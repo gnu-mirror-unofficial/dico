@@ -31,7 +31,7 @@ struct dicod_sockaddr {
 };    
 
 struct acl_entry {
-    dicod_locus_t locus;
+    grecs_locus_t locus;
     int allow;
     int authenticated;
     dicod_acl_t acl;
@@ -41,15 +41,34 @@ struct acl_entry {
 
 struct dicod_acl {
     char *name;
-    dicod_locus_t locus;
+    grecs_locus_t locus;
     dico_list_t list;
 };
+
+dico_list_t
+dicod_string_list_from_grecs(struct grecs_list *inlist)
+{
+    struct grecs_list_entry *ep;
+
+    dico_list_t list = xdico_list_create();
+    dico_list_set_free_item(list, dicod_free_item, NULL);
+
+    for (ep = inlist->head; ep; ep = ep->next) {
+	grecs_value_t *vp = ep->data;
+	if (vp->type != GRECS_TYPE_STRING) {
+	    grecs_error(&vp->locus, 0, _("expected string"));
+	    break;
+	}
+	xdico_list_append(list, xstrdup(vp->v.string));
+    }
+    return list;
+}
 
 
 /* ACL creation */
 
 dicod_acl_t
-dicod_acl_create(const char *name, dicod_locus_t *locus)
+dicod_acl_create(const char *name, grecs_locus_t *locus)
 {
     dicod_acl_t acl = xmalloc(sizeof(acl[0]));
     acl->name = xstrdup(name);
@@ -71,7 +90,7 @@ create_acl_sockaddr(int family, int len)
               [acl <name: string>] [from <addr: list>] */
 
 static int
-_parse_token (struct acl_entry *entry, config_value_t *value)
+_parse_token (struct acl_entry *entry, grecs_value_t *value)
 {
     if (strcmp(value->v.string, "all") == 0
 	|| strcmp(value->v.string, "any") == 0)
@@ -85,13 +104,13 @@ _parse_token (struct acl_entry *entry, config_value_t *value)
 }
 
 static int
-_parse_sockaddr(struct acl_entry *entry, config_value_t *value)
+_parse_sockaddr(struct acl_entry *entry, grecs_value_t *value)
 {
     struct dicod_sockaddr *sptr;
     const char *string;
 
-    if (value->type != TYPE_STRING) {
-	config_error(&entry->locus, 0, _("expected string but found list"));
+    if (value->type != GRECS_TYPE_STRING) {
+	grecs_error(&entry->locus, 0, _("expected string but found list"));
 	return 1;
     }
 
@@ -103,7 +122,7 @@ _parse_sockaddr(struct acl_entry *entry, config_value_t *value)
 	
 	len = strlen (string);
 	if (len >= sizeof(s_un->sun_path)) {
-	    config_error(&entry->locus, 0,
+	    grecs_error(&entry->locus, 0,
 			 _("socket name too long: `%s'"),
 			 string);
 	    return 1;
@@ -123,7 +142,7 @@ _parse_sockaddr(struct acl_entry *entry, config_value_t *value)
 	if (inet_aton(string, &addr) == 0) {
 	    struct hostent *hp = gethostbyname(string);
 	    if (!hp) {
-		config_error(&entry->locus, 0,
+		grecs_error(&entry->locus, 0,
 			     _("cannot resolve host name: `%s'"),
 			     string);
 		if (p)
@@ -155,14 +174,14 @@ _parse_sockaddr(struct acl_entry *entry, config_value_t *value)
 		struct in_addr addr;
 	      
 		if (inet_aton(p, &addr) == 0) {
-		    config_error(&entry->locus, 0,
+		    grecs_error(&entry->locus, 0,
 				 _("invalid netmask: `%s'"),
 				 p);
 		    return 1;
 		}
 		sptr->netmask = addr.s_addr;
 	    } else {
-		config_error(&entry->locus, 0,
+		grecs_error(&entry->locus, 0,
 			     _("invalid netmask: `%s'"),
 			     p);
 		return 1;
@@ -175,74 +194,75 @@ _parse_sockaddr(struct acl_entry *entry, config_value_t *value)
 }
 
 static int
-_parse_from(struct acl_entry *entry, size_t argc, config_value_t *argv)
+_parse_from(struct acl_entry *entry, size_t argc, grecs_value_t **argv)
 {
     if (argc == 0)
 	return 0;
-    else if (argv->type == TYPE_LIST) {
-	config_error(&entry->locus, 0, _("expected `from', but found list"));
+    else if (argv[0]->type == GRECS_TYPE_LIST) {
+	grecs_error(&argv[0]->locus, 0, _("expected `from', but found list"));
 	return 1;
-    } else if (strcmp (argv->v.string, "from")) {
-	config_error(&entry->locus, 0, _("expected `from', but found `%s'"),
-		     argv->v.string);
+    } else if (strcmp (argv[0]->v.string, "from")) {
+	grecs_error(&argv[0]->locus, 0, _("expected `from', but found `%s'"),
+		     argv[0]->v.string);
 	return 1;
     }
     argc--;
     argv++;
 
     if (argc == 0) {
-	config_error(&entry->locus, 0,
+	grecs_error(&entry->locus, 0,
 		     _("unexpected end of statement after `from'"));
 	return 1;
     }
 
     entry->sockaddrs = xdico_list_create();
-    if (argv->type == TYPE_STRING) {
-	if (_parse_sockaddr(entry, argv))
+    if (argv[0]->type == GRECS_TYPE_STRING) {
+	if (_parse_sockaddr(entry, argv[0]))
 	    return 1;
     } else {
-	dico_iterator_t itr = xdico_list_iterator(argv->v.list);
-	config_value_t *p;
 	int rc = 0;
-	for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) 
+	struct grecs_list_entry *ep;
+
+	for (ep = argv[0]->v.list->head; ep; ep = ep->next) {
+	    grecs_value_t *p = ep->data;
 	    rc += _parse_sockaddr(entry, p);
+	}
 	if (rc)
 	    return rc;
     }
 
     if (argc - 1) {
-	config_warning(&entry->locus, 0,
-		       _("junk after `from' list"));
+	grecs_warning(&entry->locus, 0, _("junk after `from' list"));
 	return 1;
     }
     return 0;
 }
 
 static int
-_parse_sub_acl(struct acl_entry *entry, size_t argc, config_value_t *argv)
+_parse_sub_acl(struct acl_entry *entry, size_t argc, grecs_value_t **argv)
 {
     if (argc == 0)
 	return 0;
-    if (strcmp (argv->v.string, "acl") == 0) {
+    if (strcmp (argv[0]->v.string, "acl") == 0) {
 	argc--;
 	argv++;
 	if (argc == 0) {
-	    config_error(&entry->locus, 0,
+	    grecs_error(&entry->locus, 0,
 			 _("expected ACL name, but found end of statement"));
 	    return 1;
 	}
 
-	if (argv->type != TYPE_STRING) {
-	    config_error(&entry->locus, 0,
+	if (argv[0]->type != GRECS_TYPE_STRING) {
+	    grecs_error(&argv[0]->locus, 0,
 			 _("expected string, but found list"));
 	    return 1;
 	}
 
-	entry->acl = dicod_acl_lookup(argv->v.string);
+	entry->acl = dicod_acl_lookup(argv[0]->v.string);
 
 	if (!entry->acl) {
-	    config_error(&entry->locus, 0, _("ACL not defined: `%s'"),
-			 argv->v.string);
+	    grecs_error(&entry->locus, 0, _("ACL not defined: `%s'"),
+			 argv[0]->v.string);
 	    return 1;
 	}
 	argc--;
@@ -252,21 +272,29 @@ _parse_sub_acl(struct acl_entry *entry, size_t argc, config_value_t *argv)
 }
     
 static int
-_parse_group(struct acl_entry *entry, size_t argc, config_value_t *argv)
+_parse_group(struct acl_entry *entry, size_t argc, grecs_value_t **argv)
 {
-    if (strcmp (argv->v.string, "group") == 0) {
+    if (strcmp (argv[0]->v.string, "group") == 0) {
 	argc--;
 	argv++;
 	if (argc == 0) {
-	    config_error(&entry->locus, 0,
+	    grecs_error(&entry->locus, 0,
 			 _("expected group list, but found end of statement"));
 	    return 1;
 	}
-	if (argv->type == TYPE_STRING) {
+	switch (argv[0]->type) {
+	case GRECS_TYPE_STRING:
 	    entry->groups = xdico_list_create();
-	    xdico_list_append(entry->groups, (void*)argv->v.string);
-	} else
-	    entry->groups = argv->v.list;
+	    xdico_list_append(entry->groups, xstrdup(argv[0]->v.string));
+	    break;
+	case GRECS_TYPE_LIST:
+	    entry->groups = dicod_string_list_from_grecs(argv[0]->v.list);
+	    break;
+	default:
+	    grecs_error(&argv[0]->locus, 0,
+			_("expected group list, but found array"));
+	    return 1;
+	}	    
 	argc--;
 	argv++;
     }  
@@ -274,20 +302,20 @@ _parse_group(struct acl_entry *entry, size_t argc, config_value_t *argv)
 }
 	
 static int
-_parse_acl(struct acl_entry *entry, size_t argc, config_value_t *argv)
+_parse_acl(struct acl_entry *entry, size_t argc, grecs_value_t **argv)
 {
-    if (argv[0].type != TYPE_STRING) {
-	config_error(&entry->locus, 0, _("expected string but found list"));
+    if (argv[0]->type != GRECS_TYPE_STRING) {
+	grecs_error(&argv[0]->locus, 0, _("expected string value"));
 	return 1;
-    } else if (_parse_token(entry, argv) == 0)
+    } else if (_parse_token(entry, argv[0]) == 0)
 	return _parse_sub_acl(entry, argc - 1, argv + 1);
     else
 	return _parse_group (entry, argc, argv);
 }
 
 int
-parse_acl_line(dicod_locus_t *locus, int allow, dicod_acl_t acl,
-	       config_value_t *value)
+parse_acl_line(grecs_locus_t *locus, int allow, dicod_acl_t acl,
+	       grecs_value_t *value)
 {
     struct acl_entry *entry = xzalloc(sizeof(*entry));
 
@@ -295,21 +323,21 @@ parse_acl_line(dicod_locus_t *locus, int allow, dicod_acl_t acl,
     entry->allow = allow;
 
     switch (value->type) {
-    case TYPE_STRING:
+    case GRECS_TYPE_STRING:
 	if (_parse_token (entry, value)) {
-	    config_error(&entry->locus, 0, _("unknown word `%s'"),
-			 value->v.string);
+	    grecs_error(&entry->locus, 0, _("unknown word `%s'"),
+			value->v.string);
 	    return 1;
 	}
 	break;
 	
-    case TYPE_ARRAY:
+    case GRECS_TYPE_ARRAY:
 	if (_parse_acl(entry, value->v.arg.c, value->v.arg.v))
 	    return 1;
 	break;
 	
-    case TYPE_LIST:
-	config_error(locus, 0, _("unexpected list"));
+    case GRECS_TYPE_LIST:
+	grecs_error(locus, 0, _("unexpected list"));
 	return 1;
     }
     xdico_list_append(acl->list, entry);
@@ -405,7 +433,8 @@ _acl_check_cb(void *item, void *data)
     int result = _acl_check(ent);
     if (debug_level > 10) {
 	dico_log(L_DEBUG, 0, "%s:%d: %s",
-		 ent->locus.file, ent->locus.line,
+		 /* FIXME: beg:end */
+		 ent->locus.beg.file, ent->locus.beg.line,
 		 /* TRANSLATIONS: `MATCHES' is the verb `match' in 2nd person.
 		    E.g., in French: CONCORD AVEC */
 		 result ? _("MATCHES") : _("does not match"));
@@ -448,7 +477,7 @@ acl_compare(void const *data1, void const *data2)
 }
 
 int
-dicod_acl_install(dicod_acl_t acl, dicod_locus_t *locus)
+dicod_acl_install(dicod_acl_t acl, grecs_locus_t *locus)
 {
     dicod_acl_t ret;
     if (! ((acl_table

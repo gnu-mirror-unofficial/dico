@@ -13,7 +13,6 @@ getopt
 getpass-gnu
 gettext-h
 gettimeofday
-gitlog-to-changelog
 hash
 malloc
 obstack

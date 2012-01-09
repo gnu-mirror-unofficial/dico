@@ -31,7 +31,7 @@ static Gsasl *ctx;
 static int
 cmp_names(const void *item, void *data)
 {
-    return c_strcasecmp(*(char**)item, data);
+    return c_strcasecmp(item, data);
 }
 
 static int

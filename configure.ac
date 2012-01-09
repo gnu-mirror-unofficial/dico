@@ -237,49 +237,15 @@ if test $status_dbm != no; then
   AC_SUBST(BUILD_JDICT_PROGS,'$(JDICT_PROGS)')
 fi
 
-AC_ARG_WITH([preprocessor],
-            AC_HELP_STRING([--without-preprocessor],
-                           [do not use external preprocessor]),
-            [
-case "${withval}" in
-yes) use_ext_pp=yes ;;
-no)  use_ext_pp=no ;;
-*)   AC_MSG_ERROR(bad value ${withval} for --with-preprocessor) ;;
-esac],[use_ext_pp=yes])
-
-if test $use_ext_pp != no; then
-  # Check for default preprocessor
-  AC_ARG_VAR([DEFAULT_PREPROCESSOR],
-             [Set default preprocessor name])
-  if test -z "$DEFAULT_PREPROCESSOR" ; then
-    DEFAULT_PREPROCESSOR="m4 -s"
-  fi
-  
-  save_PATH=$PATH
-  PREPROC_OPTIONS=`echo $DEFAULT_PREPROCESSOR | sed -n 's/[[^ ]][[^ ]]* //p'`
-  case "$DEFAULT_PREPROCESSOR" in
-  /*) PATH=`expr $DEFAULT_PREPROCESSOR : '\(.*\)/.*'`:$PATH
-      DEFAULT_PREPROCESSOR=`expr $DEFAULT_PREPROCESSOR : '.*/\(.*\)'`;;
-  esac
-  AC_PATH_PROG(PPBIN, $DEFAULT_PREPROCESSOR)
-  DEFAULT_PREPROCESSOR=$PPBIN
-  if test -n "$DEFAULT_PREPROCESSOR"; then
-    DEFAULT_PREPROCESSOR="$DEFAULT_PREPROCESSOR $PREPROC_OPTIONS"
-    case $PPBIN in
-    *m4) AC_SUBST(PP_SETUP_FILE,'pp-setup');; # Install default pp-setup
-    esac
-  fi
-  PATH=$save_PATH
-  DEFAULT_PREPROCESSOR="\\\"$DEFAULT_PREPROCESSOR\\\""
-else
-  DEFAULT_PREPROCESSOR=NULL
-fi
-
 AC_ARG_VAR([DEFAULT_DICT_SERVER],
            [Set the name of the default DICT server for dico utility])
 if test -z "$DEFAULT_DICT_SERVER" ; then
    DEFAULT_DICT_SERVER="gnu.org.ua"
 fi
+
+# Grecs configuration system
+GRECS_SETUP(grecs, [tests getopt git2chg])
+GRECS_HOST_PROJECT_INCLUDES='-I$(top_srcdir)/gnu -I$(top_builddir)/gnu'
 
 # Check for Guile
 GINT_INIT([gint],[1.8 with-guile nodoc],

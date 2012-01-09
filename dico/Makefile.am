@@ -33,6 +33,7 @@ LDADD=\
  ../lib/libextra.a\
  ../lib/libdico.la\
  $(READLINE_LIBS)\
+ @GRECS_LDADD@\
  @LIBINTL@ @LIBICONV@\
  @LIBDICOSASL@\
  @GSASL_LIBS@\
@@ -40,12 +41,12 @@ LDADD=\
 
 AM_CPPFLAGS=-DDEFAULT_DICT_SERVER="\"$(DEFAULT_DICT_SERVER)\""
 
-INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu -I../gnu @LTDLINCL@
+INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu -I../gnu @GRECS_INCLUDES@ @LTDLINCL@
 
 SUFFIXES=.opt .c
 
 .opt.c:
-	m4 -s $(top_srcdir)/utils/getopt.m4 $< | sed '1d' > $@
+	$(AM_V_GEN)m4 -s $(top_srcdir)/@GRECS_SUBDIR@/build-aux/getopt.m4 $< > $@
 
 BUILT_SOURCES=cmdline.c 
 EXTRA_DIST=cmdline.opt 

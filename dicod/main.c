@@ -111,19 +111,138 @@ int timing_option;
 const char *default_strategy_name;
 
 
+typedef int (*grecs_list_iterator_t)(grecs_value_t *, void *);
+
+void
+grecs_list_iterate(struct grecs_list *list, grecs_list_iterator_t fun,
+		   void *data)
+{
+    struct grecs_list_entry *ep;
+
+    for (ep = list->head; ep; ep = ep->next) {
+	grecs_value_t *vp = ep->data;
+	if (fun(vp, data))
+	    break;
+    }
+}
+	
+
+
 /* Configuration */
+int
+cb_dico_list(enum grecs_callback_command cmd,
+	     grecs_locus_t *locus,
+	     void *varptr,
+	     grecs_value_t *value,
+	     void *cb_data)
+{
+    dico_list_t *plist = varptr, list;
+
+    if (*plist)
+	list = *plist;
+    else {
+	list = xdico_list_create();
+	dico_list_set_free_item(list, dicod_free_item, NULL);
+	*plist = list;
+    }
+    switch (value->type) {
+    case GRECS_TYPE_STRING:
+	xdico_list_append(list, xstrdup(value->v.string));
+	break;
+
+    case GRECS_TYPE_LIST: {
+	struct grecs_list_entry *ep;
+
+	for (ep = value->v.list->head; ep; ep = ep->next) {
+	    const grecs_value_t *vp = ep->data;
+
+	    if (vp->type != GRECS_TYPE_STRING) {
+		grecs_error(&vp->locus, 0,
+			    _("list element must be a string"));
+		return 1;
+	    }
+	    xdico_list_append(list, xstrdup(vp->v.string));
+	}
+	break;
+    }
+
+    case GRECS_TYPE_ARRAY:
+	grecs_error(locus, 0, _("too many arguments"));
+	return 1;
+    }
+    return 0;
+}
 
 int
-allow_cb(enum cfg_callback_command cmd,
-	 dicod_locus_t *locus,
+cb_dico_sockaddr_list(enum grecs_callback_command cmd,
+		      grecs_locus_t *locus,
+		      void *varptr,
+		      grecs_value_t *value,
+		      void *cb_data)
+{
+    dico_list_t *plist = varptr, list;
+    struct grecs_sockaddr *sp;
+    
+    if (*plist)
+	list = *plist;
+    else {
+	list = xdico_list_create();
+//FIXME	dico_list_set_free_item(list, dicod_free_item, NULL);
+	*plist = list;
+    }
+    
+    switch (value->type) {
+    case GRECS_TYPE_STRING:
+	sp = xmalloc(sizeof(*sp));
+	if (grecs_string_convert(sp, grecs_type_sockaddr,
+				 value->v.string, locus)) {
+	    free(sp);
+	    return 1;
+	}
+	xdico_list_append(list, sp);
+	break;
+
+    case GRECS_TYPE_LIST: {
+	struct grecs_list_entry *ep;
+
+	for (ep = value->v.list->head; ep; ep = ep->next) {
+	    const grecs_value_t *vp = ep->data;
+
+	    if (vp->type != GRECS_TYPE_STRING) {
+		grecs_error(&vp->locus, 0,
+			    _("list element must be a socket specification"));
+		return 1;
+	    }
+	    sp = xmalloc(sizeof(*sp));
+	    if (grecs_string_convert(sp, grecs_type_sockaddr,
+				     vp->v.string, &vp->locus)) {
+		free(sp);
+		return 1;
+	    }
+	    xdico_list_append(list, sp);
+	}
+	break;
+    }
+
+    case GRECS_TYPE_ARRAY:
+	grecs_error(locus, 0, _("too many arguments"));
+	return 1;
+    }
+    return 0;
+}
+
+
+int
+allow_cb(enum grecs_callback_command cmd,
+	 grecs_locus_t *locus,
 	 void *varptr,
-	 config_value_t *value,
+	 grecs_value_t *value,
 	 void *cb_data)
 {
     dicod_acl_t acl = varptr;
 
-    if (cmd != callback_set_value) {
-	config_error(locus, 0, _("Unexpected block statement"));
+    if (cmd != grecs_callback_set_value) {
+	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
     }
     parse_acl_line(locus, 1, acl, value);
@@ -131,15 +250,15 @@ allow_cb(enum cfg_callback_command cmd,
 }
 
 int
-deny_cb(enum cfg_callback_command cmd,
-	dicod_locus_t *locus,
+deny_cb(enum grecs_callback_command cmd,
+	grecs_locus_t *locus,
 	void *varptr,
-	config_value_t *value,
+	grecs_value_t *value,
 	void *cb_data)
 {
     dicod_acl_t acl = varptr;
-    if (cmd != callback_set_value) {
-	config_error(locus, 0, _("Unexpected block statement"));
+    if (cmd != grecs_callback_set_value) {
+	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
     }
     parse_acl_line(locus, 0, acl, value);
@@ -147,29 +266,29 @@ deny_cb(enum cfg_callback_command cmd,
 }
 
 int
-acl_cb(enum cfg_callback_command cmd,
-       dicod_locus_t *locus,
+acl_cb(enum grecs_callback_command cmd,
+       grecs_locus_t *locus,
        void *varptr,
-       config_value_t *value,
+       grecs_value_t *value,
        void *cb_data)
 {
     void **pdata = cb_data;
     dicod_acl_t acl;
     
     switch (cmd) {
-    case callback_section_begin:
-	if (value->type != TYPE_STRING) 
-	    config_error(locus, 0, _("ACL name must be a string"));
+    case grecs_callback_section_begin:
+	if (value->type != GRECS_TYPE_STRING) 
+	    grecs_error(locus, 0, _("ACL name must be a string"));
 	else if (!value->v.string)
-	    config_error(locus, 0, _("missing ACL name"));
+	    grecs_error(locus, 0, _("missing ACL name"));
 	else {
-	    dicod_locus_t defn_loc;
+	    grecs_locus_t defn_loc;
 	    acl = dicod_acl_create(value->v.string, locus);
 	    if (dicod_acl_install(acl, &defn_loc)) {
-		config_error(locus, 0,
+		grecs_error(locus, 0,
 			     _("redefinition of ACL %s"),
 			     value->v.string);
-		config_error(&defn_loc, 0,
+		grecs_error(&defn_loc, 0,
 			     _("location of the previous definition"));
 		return 1;
 	    }
@@ -177,45 +296,45 @@ acl_cb(enum cfg_callback_command cmd,
 	}
 	break;
 
-    case callback_section_end:
-    case callback_set_value:
+    case grecs_callback_section_end:
+    case grecs_callback_set_value:
 	break;
     }	
     return 0;
 }
 
-struct config_keyword kwd_acl[] = {
-    { "allow", N_("[all|authenticated|group <grp: list>] [from <addr: list>]"),
+struct grecs_keyword kwd_acl[] = {
+    { "allow",
+      N_("[all|authenticated|group <grp: list>] [from <addr: list>]"),
       N_("Allow access"),
-      cfg_string, NULL, 0,
+      grecs_type_string, GRECS_DFLT, NULL, 0,
       allow_cb },
     { "deny", N_("[all|authenticated|group <grp: list>] [from <addr: list>]"),
       N_("Deny access"),
-      cfg_string, NULL, 0,
+      grecs_type_string, GRECS_DFLT, NULL, 0,
       deny_cb },
     { NULL }
 };
 
 int
-apply_acl_cb(enum cfg_callback_command cmd,
-	     dicod_locus_t *locus,
+apply_acl_cb(enum grecs_callback_command cmd,
+	     grecs_locus_t *locus,
 	     void *varptr,
-	     config_value_t *value,
+	     grecs_value_t *value,
 	     void *cb_data)
 {
     dicod_acl_t *pacl = varptr;
 
-    if (cmd != callback_set_value) {
-	config_error(locus, 0, _("Unexpected block statement"));
+    if (cmd != grecs_callback_set_value) {
+	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
     }
-    if (value->type != TYPE_STRING) {
-	config_error(locus, 0, _("expected scalar value"));
+    if (value->type != GRECS_TYPE_STRING) {
+	grecs_error(locus, 0, _("expected scalar value"));
 	return 1;
     }
     if ((*pacl =  dicod_acl_lookup(value->v.string)) == NULL) {
-	config_error(locus, 0, _("no such ACL: `%s'"),
-		     value->v.string);
+	grecs_error(locus, 0, _("no such ACL: `%s'"), value->v.string);
 	return 1;
     }
     return 0;
@@ -223,27 +342,27 @@ apply_acl_cb(enum cfg_callback_command cmd,
 
 
 int
-set_user(enum cfg_callback_command cmd,
-	 dicod_locus_t *locus,
+set_user(enum grecs_callback_command cmd,
+	 grecs_locus_t *locus,
 	 void *varptr,
-	 config_value_t *value,
+	 grecs_value_t *value,
 	 void *cb_data)
 {
     struct passwd *pw;
     
-    if (cmd != callback_set_value) {
-	config_error(locus, 0, _("Unexpected block statement"));
+    if (cmd != grecs_callback_set_value) {
+	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
     }
 
-    if (value->type != TYPE_STRING) {
-	config_error(locus, 0, _("expected scalar value but found list"));
+    if (value->type != GRECS_TYPE_STRING) {
+	grecs_error(locus, 0, _("expected scalar value but found list"));
 	return 1;
     }
     
     pw = getpwnam(value->v.string);
     if (!pw) {
-	config_error(locus, 0, _("%s: no such user"), value->v.string);
+	grecs_error(locus, 0, _("%s: no such user"), value->v.string);
 	return 1;
     }
     user_id = pw->pw_uid;
@@ -251,45 +370,42 @@ set_user(enum cfg_callback_command cmd,
     return 0;
 }
 
-static int set_supp_group(enum cfg_callback_command cmd,
-			  dicod_locus_t *locus,
+static int set_supp_group(enum grecs_callback_command cmd,
+			  grecs_locus_t *locus,
 			  void *varptr,
-			  config_value_t *value,
+			  grecs_value_t *value,
 			  void *cb_data);
 
 static int
-set_supp_group_iter(void *item, void *data)
+set_supp_group_iter(grecs_value_t *value, void *data)
 {
-    return set_supp_group(callback_set_value,
-			  (dicod_locus_t *)data,
-			  NULL,
-			  (config_value_t *)item,
-			  NULL);
+    return set_supp_group(grecs_callback_set_value,
+			  &value->locus, NULL, value, NULL);
 }
 	
 static int
-set_supp_group(enum cfg_callback_command cmd,
-	       dicod_locus_t *locus,
+set_supp_group(enum grecs_callback_command cmd,
+	       grecs_locus_t *locus,
 	       void *varptr,
-	       config_value_t *value,
+	       grecs_value_t *value,
 	       void *cb_data)
 {
-    if (cmd != callback_set_value) {
-	config_error(locus, 0, _("Unexpected block statement"));
+    if (cmd != grecs_callback_set_value) {
+	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
     }
 
     if (!group_list)
 	group_list = xdico_list_create();
     
-    if (value->type == TYPE_LIST)
-	dico_list_iterate(value->v.list, set_supp_group_iter, locus);
+    if (value->type == GRECS_TYPE_LIST)
+	grecs_list_iterate(value->v.list, set_supp_group_iter, NULL);
     else {
 	struct group *group = getgrnam(value->v.string);
 	if (group)
 	    xdico_list_append(group_list, (void*)group->gr_gid);
 	else {
-	    config_error(locus, 0, _("%s: unknown group"), value->v.string);
+	    grecs_error(locus, 0, _("%s: unknown group"), value->v.string);
 	    return 1;
 	}
     }
@@ -297,10 +413,10 @@ set_supp_group(enum cfg_callback_command cmd,
 }
 
 int
-set_mode(enum cfg_callback_command cmd,
-	 dicod_locus_t *locus,
+set_mode(enum grecs_callback_command cmd,
+	 grecs_locus_t *locus,
 	 void *varptr,
-	 config_value_t *value,
+	 grecs_value_t *value,
 	 void *cb_data)
 {
     static struct xlat_tab tab[] = {
@@ -309,17 +425,17 @@ set_mode(enum cfg_callback_command cmd,
 	{ NULL }
     };
 	
-    if (cmd != callback_set_value) {
-	config_error(locus, 0, _("Unexpected block statement"));
+    if (cmd != grecs_callback_set_value) {
+	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
     }
 
-    if (value->type != TYPE_STRING) {
-	config_error(locus, 0, _("expected scalar value but found list"));
+    if (value->type != GRECS_TYPE_STRING) {
+	grecs_error(locus, 0, _("expected scalar value but found list"));
 	return 1;
     }
     if (xlat_c_string(tab, value->v.string, 0, &mode)) {
-	config_error(locus, 0, _("unknown mode"));
+	grecs_error(locus, 0, _("unknown mode"));
 	return 1;
     }
     return 0;
@@ -344,27 +460,27 @@ static struct xlat_tab syslog_facility_tab[] = {
 };
 
 int
-set_log_facility(enum cfg_callback_command cmd,
-		 dicod_locus_t *locus,
+set_log_facility(enum grecs_callback_command cmd,
+		 grecs_locus_t *locus,
 		 void *varptr,
-		 config_value_t *value,
+		 grecs_value_t *value,
 		 void *cb_data)
 {
     const char *str;
 
-    if (cmd != callback_set_value) {
-	config_error(locus, 0, _("Unexpected block statement"));
+    if (cmd != grecs_callback_set_value) {
+	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
     }
-    if (value->type != TYPE_STRING) {
-	config_error(locus, 0, _("expected scalar value but found list"));
+    if (value->type != GRECS_TYPE_STRING) {
+	grecs_error(locus, 0, _("expected scalar value but found list"));
 	return 1;
     }
     str = value->v.string;
     if (strncasecmp (str, "LOG_", 4) == 0)
 	str += 4;
     if (xlat_c_string(syslog_facility_tab, str, XLAT_ICASE, &log_facility)) {
-	config_error(locus, 0, _("unknown syslog facility"));
+	grecs_error(locus, 0, _("unknown syslog facility"));
 	return 1;
     }
     return 0;
@@ -380,28 +496,28 @@ cmp_modinst_ident(const void *item, void *data)
 }
 
 int
-load_module_cb(enum cfg_callback_command cmd,
-	       dicod_locus_t *locus,
+load_module_cb(enum grecs_callback_command cmd,
+	       grecs_locus_t *locus,
 	       void *varptr,
-	       config_value_t *value,
+	       grecs_value_t *value,
 	       void *cb_data)
 {
     dicod_module_instance_t *inst;
     void **pdata = cb_data;
     
     switch (cmd) {
-    case callback_section_begin:
+    case grecs_callback_section_begin:
 	inst = xzalloc(sizeof(*inst));
-	if (value->type != TYPE_STRING) 
-	    config_error(locus, 0, _("tag must be a string"));
+	if (value->type != GRECS_TYPE_STRING) 
+	    grecs_error(locus, 0, _("tag must be a string"));
 	else if (value->v.string == NULL) 
-	    config_error(locus, 0, _("missing tag"));
+	    grecs_error(locus, 0, _("missing tag"));
 	else
-	    inst->ident = strdup(value->v.string);
+	    inst->ident = xstrdup(value->v.string);
 	*pdata = inst;
 	break;
 	
-    case callback_section_end:
+    case grecs_callback_section_end:
 	if (!modinst_list) {
 	    modinst_list = xdico_list_create();
 	    dico_list_set_comparator(modinst_list, cmp_modinst_ident);
@@ -411,35 +527,10 @@ load_module_cb(enum cfg_callback_command cmd,
 	*pdata = NULL;
 	break;
 	
-    case callback_set_value:
-	config_error(locus, 0, _("invalid use of block statement"));
+    case grecs_callback_set_value:
+	grecs_error(locus, 0, _("invalid use of block statement"));
     }
     return 0;
-}
-
-static int
-add_char_ptr(void *item, void *data)
-{
-    dico_list_t list = data;
-    xdico_list_append(list, xstrdup(*(char**)item));
-    return 0;
-}
-
-/* FIXME: Find a way to modify list items in place */
-static void
-fix_lang_list(dicod_database_t *db, int n)
-{
-    dico_list_t newlist;
-    if (!db->langlist[n])
-	return;
-    newlist = xdico_list_create();
-    dico_list_set_free_item(newlist, dicod_free_item, NULL);
-    dico_list_iterate(db->langlist[n], add_char_ptr, newlist);
-    dico_list_destroy(&db->langlist[n]);
-    if (dicod_any_lang_list_p(newlist)) 
-	dico_list_destroy(&newlist);
-    db->langlist[n] = newlist;
-    db->flags |= DICOD_DBF_LANG; /* Prevent dico_db_lang from being called */
 }
 
 static int
@@ -457,76 +548,79 @@ cmp_database_name(const void *item, void *data)
 }    
 
 static int
-set_database(enum cfg_callback_command cmd,
-	     dicod_locus_t *locus,
+set_database(enum grecs_callback_command cmd,
+	     grecs_locus_t *locus,
 	     void *varptr,
-	     config_value_t *value,
+	     grecs_value_t *value,
 	     void *cb_data)
 {
     dicod_database_t *dict;
     void **pdata = cb_data;
     
     switch (cmd) {
-    case callback_section_begin:
+    case grecs_callback_section_begin:
 	dict = xzalloc(sizeof(*dict));
-	if (value->type != TYPE_STRING) 
-	    config_error(locus, 0, _("tag must be a string"));
-	else if (value->v.string) 
-	    dict->name = strdup(value->v.string);
 	*pdata = dict;
 	break;
 	
-    case callback_section_end:
+    case grecs_callback_section_end:
+	dict = *pdata;
+	if (!dict->name) {
+	    grecs_error(locus, 0, _("database name not supplied"));
+	    break;
+	}
+
 	if (!database_list) {
 	    database_list = xdico_list_create();
 	    dico_list_set_comparator (database_list, cmp_database_name);
 	}
-	dict = *pdata;
-	fix_lang_list(dict, 0);
-	fix_lang_list(dict, 1);
+	if (dict->langlist[0] || dict->langlist[1])
+	     /* Prevent dico_db_lang from being called */
+	    dict->flags |= DICOD_DBF_LANG;
+	
 	xdico_list_append(database_list, dict);
 	*pdata = NULL;
 	break;
 	
-    case callback_set_value:
-	config_error(locus, 0, _("invalid use of block statement"));
+    case grecs_callback_set_value:
+	grecs_error(locus, 0, _("invalid use of block statement"));
     }
     return 0;
 }
 
 int
-set_dict_handler(enum cfg_callback_command cmd,
-		 dicod_locus_t *locus,
+set_dict_handler(enum grecs_callback_command cmd,
+		 grecs_locus_t *locus,
 		 void *varptr,
-		 config_value_t *value,
+		 grecs_value_t *value,
 		 void *cb_data)
 {
     dicod_module_instance_t *inst;
     dicod_database_t *db = varptr;
     int rc;
     
-    if (cmd != callback_set_value) {
-	config_error(locus, 0, _("Unexpected block statement"));
+    if (cmd != grecs_callback_set_value) {
+	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
     }
 
-    if (value->type != TYPE_STRING) {
-	config_error(locus, 0, _("expected scalar value but found list"));
+    if (value->type != GRECS_TYPE_STRING) {
+	grecs_error(locus, 0, _("expected scalar value but found list"));
 	return 1;
     }
 
-    db->command = (char *) value->v.string;
     if ((rc = dico_argcv_get(value->v.string, NULL, NULL,
 			     &db->argc, &db->argv))) {
-	config_error(locus, rc, _("cannot parse command line `%s'"),
+	grecs_error(locus, rc, _("cannot parse command line `%s'"),
 		     value->v.string);
 	dicod_database_free(db); 
 	return 1;
     } 
-
+    db->command = db->argv[0];
+    
     inst = dico_list_locate(modinst_list, db->argv[0]);
     if (!inst) {
-	config_error(locus, 0, _("%s: handler not declared"), db->argv[0]);
+	grecs_error(locus, 0, _("%s: handler not declared"), db->argv[0]);
 	/* FIXME: Free memory */
 	return 1;
     }
@@ -535,111 +629,117 @@ set_dict_handler(enum cfg_callback_command cmd,
     return 0;
 }
 
-int enable_capability(enum cfg_callback_command cmd,
-		      dicod_locus_t *locus,
+int enable_capability(enum grecs_callback_command cmd,
+		      grecs_locus_t *locus,
 		      void *varptr,
-		      config_value_t *value,
+		      grecs_value_t *value,
 		      void *cb_data);
 
 int
-set_capability(void *item, void *data)
+set_capability(grecs_value_t *value, void *data)
 {
-    return enable_capability(callback_set_value,
-			     (dicod_locus_t *) data,
-			     NULL,
-			     (config_value_t *) item,
-			     NULL);
+    return enable_capability(grecs_callback_set_value,
+			     &value->locus, NULL, value, NULL);
 }
 
 int
-enable_capability(enum cfg_callback_command cmd,
-		  dicod_locus_t *locus,
+enable_capability(enum grecs_callback_command cmd,
+		  grecs_locus_t *locus,
 		  void *varptr,
-		  config_value_t *value,
+		  grecs_value_t *value,
 		  void *cb_data)
 {
-    if (cmd != callback_set_value) {
-	config_error(locus, 0, _("Unexpected block statement"));
+    if (cmd != grecs_callback_set_value) {
+	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
     }
-    if (value->type == TYPE_LIST)
-	dico_list_iterate(value->v.list, set_capability, locus);
+    if (value->type == GRECS_TYPE_LIST)
+	grecs_list_iterate(value->v.list, set_capability, locus);
     else if (dicod_capa_add(value->v.string)) 
-	config_error(locus, 0, _("unknown capability: %s"), value->v.string);
+	grecs_error(locus, 0, _("unknown capability: %s"), value->v.string);
     return 0;
 }
 
 int
-mime_headers_cb (enum cfg_callback_command cmd,
-		 dicod_locus_t *locus,
+mime_headers_cb (enum grecs_callback_command cmd,
+		 grecs_locus_t *locus,
 		 void *varptr,
-		 config_value_t *value,
+		 grecs_value_t *value,
 		 void *cb_data)
 {
     dico_assoc_list_t *pasc = varptr;
     const char *enc;
     
-    if (cmd != callback_set_value) {
-	config_error(locus, 0, _("Unexpected block statement"));
+    if (cmd != grecs_callback_set_value) {
+	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
     }
 
-    if (value->type != TYPE_STRING) {
-	config_error(locus, 0, _("expected scalar value"));
+    if (value->type != GRECS_TYPE_STRING) {
+	grecs_error(locus, 0, _("expected scalar value"));
 	return 1;
     }
 
     if (dico_header_parse(pasc, value->v.string)) 
-	config_error(locus, 0, _("cannot parse headers: %s"),
+	grecs_error(locus, 0, _("cannot parse headers: %s"),
 		     strerror(errno));
 
     if (enc = dico_assoc_find(*pasc, CONTENT_TRANSFER_ENCODING_HEADER)) {
         if (!(strcmp(enc, "quoted-printable") == 0
 	      || strcmp(enc, "base64") == 0
 	      || strcmp(enc, "8bit") == 0))
-	    config_error(locus, 0, _("unknown encoding type: %s"), enc);
+	    grecs_error(locus, 0, _("unknown encoding type: %s"), enc);
     }
     
     return 0;
 }
 
-struct config_keyword kwd_load_module[] = {
+struct grecs_keyword kwd_load_module[] = {
     { "command", N_("arg"), N_("Command line."),
-      cfg_string, NULL, offsetof(dicod_module_instance_t, command) },
+      grecs_type_string, GRECS_DFLT,
+      NULL, offsetof(dicod_module_instance_t, command) },
     { NULL }
 };
 
-struct config_keyword kwd_database[] = {
+struct grecs_keyword kwd_database[] = {
     { "name", N_("word"), N_("Dictionary name (a single word)."),
-      cfg_string, NULL, offsetof(dicod_database_t, name) },
+      grecs_type_string, GRECS_DFLT,
+      NULL, offsetof(dicod_database_t, name) },
     { "description", N_("arg"),
       N_("Short description, to be shown in reply to SHOW DB command."),
-      cfg_string, NULL, offsetof(dicod_database_t, descr) },
+      grecs_type_string, GRECS_DFLT, NULL,
+      offsetof(dicod_database_t, descr) },
     { "info", N_("arg"),
       N_("Full description of the database, to be shown in reply to "
 	 "SHOW INFO command."),
-      cfg_string, NULL, offsetof(dicod_database_t, info) },
+      grecs_type_string, GRECS_DFLT,
+      NULL, offsetof(dicod_database_t, info) },
     { "languages-from", N_("arg"),
       N_("List of languages this database translates from."),
-      cfg_string|CFG_LIST, NULL, offsetof(dicod_database_t, langlist[0]) },
+      grecs_type_string, GRECS_LIST,
+      NULL, offsetof(dicod_database_t, langlist[0]), cb_dico_list },
     { "languages-to", N_("arg"),
       N_("List of languages this database translates to."),
-      cfg_string|CFG_LIST, NULL, offsetof(dicod_database_t, langlist[1]) },
+      grecs_type_string, GRECS_LIST,
+      NULL, offsetof(dicod_database_t, langlist[1]), cb_dico_list },
     { "handler", N_("name"), N_("Name of the handler for this database."),
-      cfg_string, NULL, 0, set_dict_handler },
+      grecs_type_string, GRECS_DFLT,
+      NULL, 0, set_dict_handler },
     { "visibility-acl", N_("arg: acl"),
       N_("ACL controlling visibility of this database"),
-      cfg_string, NULL, offsetof(dicod_database_t, acl), apply_acl_cb },
+      grecs_type_string, GRECS_DFLT,
+      NULL, offsetof(dicod_database_t, acl), apply_acl_cb },
     { "mime-headers", N_("text"),
       N_("Additional MIME headers"),
-      cfg_string, NULL, offsetof(dicod_database_t, mime_headers),
+      grecs_type_string, GRECS_DFLT,
+      NULL, offsetof(dicod_database_t, mime_headers),
       mime_headers_cb },
     { NULL }
 };
 
 
 struct user_db_conf {
-    dicod_locus_t locus;
+    grecs_locus_t locus;
     char *url;
     char *get_pw;
     char *get_groups;
@@ -648,50 +748,53 @@ struct user_db_conf {
 
 struct user_db_conf user_db_cfg;
 
-struct config_keyword kwd_user_db[] = {
+struct grecs_keyword kwd_user_db[] = {
     { "password-resource", N_("arg"), N_("Password file or query."),
-      cfg_string, NULL, offsetof(struct user_db_conf, get_pw) },
+      grecs_type_string, GRECS_DFLT,
+      NULL, offsetof(struct user_db_conf, get_pw) },
     { "group-resource", N_("arg"),
       N_("File containing user group information or a query to retrieve it."),
-      cfg_string, NULL, offsetof(struct user_db_conf, get_groups) },
+      grecs_type_string, GRECS_DFLT,
+      NULL, offsetof(struct user_db_conf, get_groups) },
     { "options", N_("arg"),
       N_("Implementation-dependent options"),
-      cfg_string, NULL, offsetof(struct user_db_conf, options) },
+      grecs_type_string, GRECS_DFLT,
+      NULL, offsetof(struct user_db_conf, options) },
     { NULL }
 };
 
 int
-user_db_config(enum cfg_callback_command cmd,
-	       dicod_locus_t *locus,
+user_db_config(enum grecs_callback_command cmd,
+	       grecs_locus_t *locus,
 	       void *varptr,
-	       config_value_t *value,
+	       grecs_value_t *value,
 	       void *cb_data)
 {
     struct user_db_conf *cfg = varptr;
     void **pdata = cb_data;
     
     switch (cmd) {
-    case callback_section_begin:
+    case grecs_callback_section_begin:
 	cfg->locus = *locus;
-	if (value->type != TYPE_STRING) 
-	    config_error(locus, 0, _("URL must be a string"));
+	if (value->type != GRECS_TYPE_STRING) 
+	    grecs_error(locus, 0, _("URL must be a string"));
 	else if (!value->v.string)
-	    config_error(locus, 0, _("empty URL"));
+	    grecs_error(locus, 0, _("empty URL"));
 	else
-	    cfg->url = strdup(value->v.string);
+	    cfg->url = xstrdup(value->v.string);
 	*pdata = cfg;
 	break;
 	
-    case callback_section_end:
+    case grecs_callback_section_end:
 	break;
 	
-    case callback_set_value:
+    case grecs_callback_set_value:
 	cfg->locus = *locus;
-	if (value->type != TYPE_STRING) 
-	    config_error(locus, 0, _("URL must be a string"));
+	if (value->type != GRECS_TYPE_STRING) 
+	    grecs_error(locus, 0, _("URL must be a string"));
 	else if (!value->v.string)
-	    config_error(locus, 0, _("empty URL"));
-	cfg->url = strdup(value->v.string);
+	    grecs_error(locus, 0, _("empty URL"));
+	cfg->url = xstrdup(value->v.string);
     }
     return 0;
 }
@@ -703,78 +806,79 @@ init_user_db()
 	dico_udb_create(&user_db,
 			user_db_cfg.url, user_db_cfg.get_pw,
 			user_db_cfg.get_groups, user_db_cfg.options)) {
-	config_error(&user_db_cfg.locus, errno,
+	grecs_error(&user_db_cfg.locus, errno,
 		     _("cannot create user database"));
     }
 }
 
 
 int
-alias_cb(enum cfg_callback_command cmd,
-	 dicod_locus_t *locus,
+alias_cb(enum grecs_callback_command cmd,
+	 grecs_locus_t *locus,
 	 void *varptr,
-	 config_value_t *value,
+	 grecs_value_t *value,
 	 void *cb_data)
 {
     char **argv;
     int argc;
     int i;
 
-    if (cmd != callback_set_value) {
-	config_error(locus, 0, _("Unexpected block statement"));
+    if (cmd != grecs_callback_set_value) {
+	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
     }
-    if (value->type != TYPE_ARRAY) {
-	config_error(locus, 0, _("Not enough arguments for alias"));
+    if (value->type != GRECS_TYPE_ARRAY) {
+	grecs_error(locus, 0, _("Not enough arguments for alias"));
 	return 1;
     }
     argc = value->v.arg.c - 1;
     argv = xcalloc(argc + 1, sizeof(argv[0]));
     for (i = 0; i < argc; i++) {
-	if (value->v.arg.v[i+1].type != TYPE_STRING) {
-	    config_error(locus, 0, _("argument %d has wrong type"), i+1);
+	if (value->v.arg.v[i+1]->type != GRECS_TYPE_STRING) {
+	    grecs_error(locus, 0, _("argument %d has wrong type"), i+1);
 	    return 1;
 	}
-	argv[i] = (char*) value->v.arg.v[i+1].v.string;
+	argv[i] = xstrdup(value->v.arg.v[i+1]->v.string);
     }
     argv[i] = NULL;
-    return alias_install(value->v.arg.v[0].v.string, argc, argv, locus);
+    return alias_install(value->v.arg.v[0]->v.string, argc, argv, locus);
 }
 
 
 #ifdef WITH_GSASL
 int
-sasl_cb(enum cfg_callback_command cmd,
-	dicod_locus_t *locus,
+sasl_cb(enum grecs_callback_command cmd,
+	grecs_locus_t *locus,
 	void *varptr,
-	config_value_t *value,
+	grecs_value_t *value,
 	void *cb_data)
 {
-    if (cmd == callback_set_value) {
-	if (value->type != TYPE_STRING) 
-	    config_error(locus, 0, _("expected boolean value but found list"));
+    if (cmd == grecs_callback_set_value) {
+	if (value->type != GRECS_TYPE_STRING) 
+	    grecs_error(locus, 0, _("expected boolean value but found list"));
 	else
-	    string_to_bool(value->v.string, &sasl_enable);
+	    grecs_string_convert(&sasl_enable, grecs_type_bool,
+				 value->v.string, locus);
     }
     return 0;
 }
 
-struct config_keyword kwd_sasl[] = {
+struct grecs_keyword kwd_sasl[] = {
     { "disable-mechanism", N_("mech: list"),
       N_("Disable SASL mechanisms listed in <mech>."),
-      cfg_string|CFG_LIST, &sasl_disabled_mech, },
+      grecs_type_string, GRECS_LIST, &sasl_disabled_mech, 0, cb_dico_list},
     { "enable-mechanism", N_("mech: list"),
       N_("Enable SASL mechanisms listed in <mech>."),
-      cfg_string|CFG_LIST, &sasl_enabled_mech, },
+      grecs_type_string, GRECS_LIST, &sasl_enabled_mech, 0, cb_dico_list},
     { "service", N_("name"),
       N_("Set service name for GSSAPI and Kerberos."),
-      cfg_string, &sasl_service },
+      grecs_type_string, GRECS_DFLT, &sasl_service },
     { "realm", N_("name"),
       N_("Set realm name for GSSAPI and Kerberos."),
-      cfg_string, &sasl_realm },
+      grecs_type_string, GRECS_DFLT, &sasl_realm },
     { "anon-group", N_("arg"),
       N_("Define groups for anonymous users."),
-      cfg_string|CFG_LIST, &sasl_anon_groups },
+      grecs_type_string, GRECS_LIST, &sasl_anon_groups, 0, cb_dico_list },
     { NULL }
 };
 #endif
@@ -801,20 +905,20 @@ flush_strat_forward()
 }
 
 int
-strategy_cb(enum cfg_callback_command cmd,
-	    dicod_locus_t *locus,
+strategy_cb(enum grecs_callback_command cmd,
+	    grecs_locus_t *locus,
 	    void *varptr,
-	    config_value_t *value,
+	    grecs_value_t *value,
 	    void *cb_data)
 {
     void **pdata = cb_data;
 
     switch (cmd) {
-    case callback_section_begin:
-	if (value->type != TYPE_STRING) 
-	    config_error(locus, 0, _("Section name must be a string"));
+    case grecs_callback_section_begin:
+	if (value->type != GRECS_TYPE_STRING) 
+	    grecs_error(locus, 0, _("Section name must be a string"));
 	else if (!value->v.string)
-	    config_error(locus, 0, _("missing section name"));
+	    grecs_error(locus, 0, _("missing section name"));
 	else {
 	    dico_strategy_t strat = dico_list_locate(strat_forward,
 						     (void*)value->v.string);
@@ -834,102 +938,105 @@ strategy_cb(enum cfg_callback_command cmd,
 	}
 	break;
 		
-    case callback_section_end:
+    case grecs_callback_section_end:
 	break;
 	
-    case callback_set_value:
-	config_error(locus, 0, _("Unexpected statement"));
+    case grecs_callback_set_value:
+	grecs_error(locus, 0, _("Unexpected statement"));
     }
     return 0;
 }
 
 int
-strategy_deny_all_cb(enum cfg_callback_command cmd,
-		     dicod_locus_t *locus,
+strategy_deny_all_cb(enum grecs_callback_command cmd,
+		     grecs_locus_t *locus,
 		     void *varptr,
-		     config_value_t *value,
+		     grecs_value_t *value,
 		     void *cb_data)
 {
     int bool;
     
-    if (cmd != callback_set_value) {
-	config_error(locus, 0, _("Unexpected block statement"));
+    if (cmd != grecs_callback_set_value) {
+	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
     }
-    if (value->type == TYPE_STRING
-	&& string_to_bool(value->v.string, &bool) == 0) {
+    if (value->type == GRECS_TYPE_STRING
+	&& grecs_string_convert(&bool, grecs_type_bool,
+				value->v.string, locus) == 0) {
 	if (bool)
 	    stratcl_add_disable(*(dico_list_t*) varptr);
     } else
-	config_error(locus, 0, _("Expected boolean value"));
+	grecs_error(locus, 0, _("Expected boolean value"));
     return 0;
 }
 
 struct compile_pattern_closure {
     dico_list_t list;
-    dicod_locus_t *locus;
 };
 
 static int
-add_deny_word(void *item, void *data)
+add_deny_word(grecs_value_t *val, void *data)
 {
-    char *word = item;
     struct compile_pattern_closure *cpc = data;
-    stratcl_add_word(cpc->list, word);
+    if (val->type != GRECS_TYPE_STRING) {
+	grecs_error(&val->locus, 0, _("Expected string value"));
+	return 1;
+    }
+    stratcl_add_word(cpc->list, val->v.string);
     return 0;
 }
 
 int
-strategy_deny_word_cb(enum cfg_callback_command cmd,
-		      dicod_locus_t *locus,
+strategy_deny_word_cb(enum grecs_callback_command cmd,
+		      grecs_locus_t *locus,
 		      void *varptr,
-		      config_value_t *value,
+		      grecs_value_t *value,
 		      void *cb_data)
 {
     struct compile_pattern_closure cpc;
 
-    if (cmd != callback_set_value) {
-	config_error(locus, 0, _("Unexpected block statement"));
+    if (cmd != grecs_callback_set_value) {
+	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
     }
     cpc.list = *(dico_list_t*) varptr;
-    cpc.locus = locus;
-    if (value->type == TYPE_LIST)
-	dico_list_iterate(value->v.list, add_deny_word, &cpc);
-    else if (value->type == TYPE_STRING)
-	add_deny_word((void*)value->v.string, &cpc);
+    if (value->type == GRECS_TYPE_LIST)
+	grecs_list_iterate(value->v.list, add_deny_word, &cpc);
+    else if (value->type == GRECS_TYPE_STRING)
+	add_deny_word(value, &cpc);
     else
-	config_error(locus, 0, _("expected list or string"));
+	grecs_error(locus, 0, _("expected list or string"));
     return 0;
 }
 
 int
-strategy_deny_length(enum cfg_callback_command cmd,
-		     dicod_locus_t *locus,
+strategy_deny_length(enum grecs_callback_command cmd,
+		     grecs_locus_t *locus,
 		     dico_list_t list,
-		     config_value_t *value,
+		     grecs_value_t *value,
 		     enum cmp_op op)
 {
-    if (cmd != callback_set_value) {
-	config_error(locus, 0, _("Unexpected block statement"));
+    if (cmd != grecs_callback_set_value) {
+	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 0;
     }
-    if (value->type == TYPE_STRING) {
-	uintmax_t val;
+    if (value->type == GRECS_TYPE_STRING) {
+	size_t val;
 	
-	if (string_to_unsigned(&val, value->v.string, (size_t)-1, locus))
+	if (grecs_string_convert(&val, grecs_type_size,
+				 value->v.string, locus))
 	    return 0;
 	stratcl_add_cmp(list, op, val);
     } else
-	config_error(locus, 0, _("Expected number"));
+	grecs_error(locus, 0, _("Expected number"));
     return 0;
 }
 
 int
-strategy_deny_length_lt_cb(enum cfg_callback_command cmd,
-			   dicod_locus_t *locus,
+strategy_deny_length_lt_cb(enum grecs_callback_command cmd,
+			   grecs_locus_t *locus,
 			   void *varptr,
-			   config_value_t *value,
+			   grecs_value_t *value,
 			   void *cb_data)
 {
     return strategy_deny_length(cmd, locus, *(dico_list_t*) varptr,
@@ -937,10 +1044,10 @@ strategy_deny_length_lt_cb(enum cfg_callback_command cmd,
 }
 
 int
-strategy_deny_length_le_cb(enum cfg_callback_command cmd,
-			   dicod_locus_t *locus,
+strategy_deny_length_le_cb(enum grecs_callback_command cmd,
+			   grecs_locus_t *locus,
 			   void *varptr,
-			   config_value_t *value,
+			   grecs_value_t *value,
 			   void *cb_data)
 {
     return strategy_deny_length(cmd, locus, *(dico_list_t*) varptr,
@@ -948,10 +1055,10 @@ strategy_deny_length_le_cb(enum cfg_callback_command cmd,
 }
 
 int
-strategy_deny_length_gt_cb(enum cfg_callback_command cmd,
-			   dicod_locus_t *locus,
+strategy_deny_length_gt_cb(enum grecs_callback_command cmd,
+			   grecs_locus_t *locus,
 			   void *varptr,
-			   config_value_t *value,
+			   grecs_value_t *value,
 			   void *cb_data)
 {
     return strategy_deny_length(cmd, locus, *(dico_list_t*) varptr,
@@ -959,10 +1066,10 @@ strategy_deny_length_gt_cb(enum cfg_callback_command cmd,
 }
 
 int
-strategy_deny_length_ge_cb(enum cfg_callback_command cmd,
-			   dicod_locus_t *locus,
+strategy_deny_length_ge_cb(enum grecs_callback_command cmd,
+			   grecs_locus_t *locus,
 			   void *varptr,
-			   config_value_t *value,
+			   grecs_value_t *value,
 			   void *cb_data)
 {
     return strategy_deny_length(cmd, locus, *(dico_list_t*) varptr,
@@ -970,10 +1077,10 @@ strategy_deny_length_ge_cb(enum cfg_callback_command cmd,
 }
 
 int
-strategy_deny_length_eq_cb(enum cfg_callback_command cmd,
-			   dicod_locus_t *locus,
+strategy_deny_length_eq_cb(enum grecs_callback_command cmd,
+			   grecs_locus_t *locus,
 			   void *varptr,
-			   config_value_t *value,
+			   grecs_value_t *value,
 			   void *cb_data)
 {
     return strategy_deny_length(cmd, locus, *(dico_list_t*) varptr,
@@ -981,167 +1088,205 @@ strategy_deny_length_eq_cb(enum cfg_callback_command cmd,
 }
 
 int
-strategy_deny_length_ne_cb(enum cfg_callback_command cmd,
-			   dicod_locus_t *locus,
+strategy_deny_length_ne_cb(enum grecs_callback_command cmd,
+			   grecs_locus_t *locus,
 			   void *varptr,
-			   config_value_t *value,
+			   grecs_value_t *value,
 			   void *cb_data)
 {
     return strategy_deny_length(cmd, locus, *(dico_list_t*) varptr,
 				value, cmp_ne);
 }
 
-struct config_keyword kwd_strategy[] = {
+struct grecs_keyword kwd_strategy[] = {
     { "deny-all", N_("arg: bool"), N_("Deny all * and ! look ups"),
-      cfg_string, NULL, offsetof(struct dico_strategy, stratcl),
+      grecs_type_string, GRECS_DFLT,
+      NULL, offsetof(struct dico_strategy, stratcl),
       strategy_deny_all_cb },
     { "deny-word", N_("cond"), N_("Deny * and ! look-ups on these words."),
-      cfg_string|CFG_LIST, NULL, offsetof(struct dico_strategy, stratcl),
+      grecs_type_string, GRECS_LIST,
+      NULL, offsetof(struct dico_strategy, stratcl),
       strategy_deny_word_cb, },
     { "deny-length-lt",
       N_("len: number"),
       N_("Deny * and ! look-ups on words with length < <len>."),
-      cfg_string, NULL, offsetof(struct dico_strategy, stratcl),
+      grecs_type_string, GRECS_DFLT,
+      NULL, offsetof(struct dico_strategy, stratcl),
       strategy_deny_length_lt_cb, },
     { "deny-length-le",
       N_("len: number"),
       N_("Deny * and ! look-ups on words with length <= <len>."),
-      cfg_string, NULL, offsetof(struct dico_strategy, stratcl),
+      grecs_type_string, GRECS_DFLT,
+      NULL, offsetof(struct dico_strategy, stratcl),
       strategy_deny_length_le_cb, },
     { "deny-length-gt",
       N_("len: number"),
       N_("Deny * and ! look-ups on words with length > <len>."),
-      cfg_string, NULL, offsetof(struct dico_strategy, stratcl),
+      grecs_type_string, GRECS_DFLT,
+      NULL, offsetof(struct dico_strategy, stratcl),
       strategy_deny_length_gt_cb, },
     { "deny-length-ge",
       N_("len: number"),
       N_("Deny * and ! look-ups on words with length >= <len>."),
-      cfg_string, NULL, offsetof(struct dico_strategy, stratcl),
+      grecs_type_string, GRECS_DFLT,
+      NULL, offsetof(struct dico_strategy, stratcl),
       strategy_deny_length_ge_cb, },
     { "deny-length-eq",
       N_("len: number"),
       N_("Deny * and ! look-ups on words with length == <len>."),
-      cfg_string, NULL, offsetof(struct dico_strategy, stratcl),
+      grecs_type_string, GRECS_DFLT,
+      NULL, offsetof(struct dico_strategy, stratcl),
       strategy_deny_length_eq_cb, },
     { "deny-length-ne",
       N_("len: number"),
       N_("Deny * and ! look-ups on words with length != <len>."),
-      cfg_string, NULL, offsetof(struct dico_strategy, stratcl),
+      grecs_type_string, GRECS_DFLT,
+      NULL, offsetof(struct dico_strategy, stratcl),
       strategy_deny_length_ne_cb, },
     { NULL }
 };
 
 
-struct config_keyword keywords[] = {
+struct grecs_keyword keywords[] = {
     { "user", N_("name"), N_("Run with these user privileges."),
-      cfg_string, NULL, 0, set_user  },
+      grecs_type_string, GRECS_DFLT,
+      NULL, 0, set_user  },
     { "group", N_("name"),
       N_("Supplementary group to retain with the user privileges."),
-      cfg_string, NULL, 0, set_supp_group },
+      grecs_type_string, GRECS_DFLT,
+      NULL, 0, set_supp_group },
     { "mode", N_("arg: [daemon|inetd]"), N_("Operation mode."),
-      cfg_string, NULL, 0, set_mode },
+      grecs_type_string, GRECS_DFLT,
+      NULL, 0, set_mode },
     { "server-info", N_("text"),
       N_("Server description to be shown in reply to SHOW SERVER command."),
-      cfg_string, &server_info,  },
+      grecs_type_string, GRECS_DFLT, &server_info,  },
     { "show-sys-info", N_("arg: acl"),
       N_("Show system information if arg matches."),
-      cfg_string, &show_sys_info, 0, apply_acl_cb },
+      grecs_type_string, GRECS_DFLT, &show_sys_info, 0, apply_acl_cb },
     { "identity-check", N_("arg"),
       N_("Enable identification check using AUTH protocol (RFC 1413)"),
-      cfg_bool, &identity_check },
+      grecs_type_bool, GRECS_DFLT, &identity_check },
     { "ident-timeout", N_("val"),
       N_("Set timeout for AUTH I/O operations."),
-      cfg_long, &ident_timeout },
+      grecs_type_long, GRECS_DFLT, &ident_timeout },
     { "ident-keyfile", N_("name"),
       N_("Name of the file containing the keys for decrypting AUTH replies."),
-      cfg_string, &ident_keyfile },
+      grecs_type_string, GRECS_DFLT, &ident_keyfile },
     { "max-children", N_("arg"),
       N_("Maximum number of children running simultaneously."),
-      cfg_uint, &max_children, 0 },
+      grecs_type_uint, GRECS_DFLT, &max_children, 0 },
     { "log-tag", N_("arg"),  N_("Tag syslog diagnostics with this tag."),
-      cfg_string, &log_tag, 0 },
+      grecs_type_string, GRECS_DFLT, &log_tag, 0 },
     { "log-facility", N_("arg"),
       N_("Set syslog facility. Arg is one of the following: user, daemon, "
 	 "auth, authpriv, mail, cron, local0 through local7 "
 	 "(case-insensitive), or a facility number."),
-      cfg_string, NULL, 0, set_log_facility },
+      grecs_type_string, GRECS_DFLT, NULL, 0, set_log_facility },
     { "log-print-severity", N_("arg"),
       N_("Prefix diagnostics messages with their severity."),
-      cfg_bool, &log_print_severity, 0 },
+      grecs_type_bool, GRECS_DFLT, &log_print_severity, 0 },
     { "access-log-format", N_("fmt"),
       N_("Set format string for access log file."),
-      cfg_string, &access_log_format, },
+      grecs_type_string, GRECS_DFLT, &access_log_format, },
     { "access-log-file", N_("name"),
       N_("Set access log file name."),
-      cfg_string, &access_log_file },
+      grecs_type_string, GRECS_DFLT, &access_log_file },
     { "transcript", N_("arg"), N_("Log session transcript."),
-      cfg_bool, &transcript },
+      grecs_type_bool, GRECS_DFLT, &transcript },
     { "pidfile", N_("name"),
       N_("Store PID of the master process in this file."),
-      cfg_string, &pidfile_name, },
+      grecs_type_string, GRECS_DFLT, &pidfile_name, },
     { "shutdown-timeout", N_("seconds"),
       N_("Wait this number of seconds for all children to terminate."),
-      cfg_uint, &shutdown_timeout },
+      grecs_type_uint, GRECS_DFLT, &shutdown_timeout },
     { "inactivity-timeout", N_("seconds"),
       N_("Set inactivity timeout."),
-      cfg_uint, &inactivity_timeout },
+      grecs_type_uint, GRECS_DFLT, &inactivity_timeout },
     { "listen", N_("addr"), N_("Listen on these addresses."),
-      cfg_sockaddr|CFG_LIST, &listen_addr,  },
+      grecs_type_sockaddr, GRECS_LIST, &listen_addr, 0, cb_dico_sockaddr_list },
     { "initial-banner-text", N_("text"),
       N_("Display this text in the initial 220 banner"),
-      cfg_string, &initial_banner_text },
+      grecs_type_string, GRECS_DFLT, &initial_banner_text },
     { "help-text", N_("text"),
       N_("Display this text in reply to the HELP command. If text "
 	 "begins with a +, usual command summary is displayed before it."),
-      cfg_string, &help_text },
+      grecs_type_string, GRECS_DFLT, &help_text },
     { "hostname", N_("name"), N_("Override the host name."),
-      cfg_string, &hostname },
+      grecs_type_string, GRECS_DFLT, &hostname },
     { "capability", N_("arg"), N_("Request additional capabilities."),
-      cfg_string|CFG_LIST, NULL, 0, enable_capability },
+      grecs_type_string, GRECS_LIST,
+      NULL, 0, enable_capability },
     { "module-load-path", N_("path"),
       N_("List of directories searched for database modules."),
-      cfg_string|CFG_LIST, &module_load_path },
+      grecs_type_string, GRECS_LIST,
+      &module_load_path, 0, cb_dico_list },
     { "prepend-load-path", N_("path"),
       N_("List of directories searched for database modules prior to "
 	 "the default module directory"),
-      cfg_string|CFG_LIST, &prepend_load_path },
+      grecs_type_string, GRECS_LIST,
+      &prepend_load_path, 0, cb_dico_list },
     { "default-strategy", N_("name"),
       N_("Set the name of the default matching strategy."),
-      cfg_string, &default_strategy_name },
+      grecs_type_string, GRECS_DFLT, &default_strategy_name },
     { "timing", N_("arg"),
       N_("Provide timing information after successful completion of an "
 	 "operation."),
-      cfg_bool, &timing_option },
+      grecs_type_bool, GRECS_DFLT, &timing_option },
     { "visibility-acl", N_("arg: acl"),
       N_("Set ACL to control visibility of all databases."),
-      cfg_string, &global_acl, 0, apply_acl_cb },
+      grecs_type_string, GRECS_DFLT, &global_acl, 0, apply_acl_cb },
     { "connection-acl", N_("arg: acl"),
       N_("Apply this ACL to incoming connections."),
-      cfg_string, &connect_acl, 0, apply_acl_cb },
+      grecs_type_string, GRECS_DFLT, &connect_acl, 0, apply_acl_cb },
     { "database", NULL, N_("Define a dictionary database."),
-      cfg_section, NULL, 0, set_database, NULL,
+      grecs_type_section, GRECS_DFLT, NULL, 0, set_database, NULL,
       kwd_database },
     { "load-module", N_("name: string"), N_("Load a module instance."),
-      cfg_section, NULL, 0, load_module_cb, NULL,
+      grecs_type_section, GRECS_DFLT, NULL, 0, load_module_cb, NULL,
       kwd_load_module },
     { "acl", N_("name: string"), N_("Define an ACL."),
-      cfg_section, NULL, 0, acl_cb, NULL, kwd_acl },
+      grecs_type_section, GRECS_DFLT, NULL, 0, acl_cb, NULL, kwd_acl },
     { "user-db", N_("url: string"),
       N_("Define user database for authentication."),
-      cfg_section, &user_db_cfg, 0, user_db_config, NULL,
+      grecs_type_section, GRECS_DFLT, &user_db_cfg, 0, user_db_config, NULL,
       kwd_user_db },
     { "alias", N_("name: string"), N_("Define a command alias."),
-      cfg_string, NULL, 0, alias_cb, },
+      grecs_type_string, GRECS_DFLT, NULL, 0, alias_cb, },
 #ifdef WITH_GSASL
     { "sasl", NULL,
       N_("Control SASL authentication."),
-      cfg_section, NULL, 0, sasl_cb, NULL, kwd_sasl },
+      grecs_type_section, GRECS_DFLT, NULL, 0, sasl_cb, NULL, kwd_sasl },
 #endif
     { "strategy", N_("name: string"),
       N_("Additional configuration for strategy <name>"),
-      cfg_section, NULL, 0, strategy_cb, NULL, kwd_strategy },
+      grecs_type_section, GRECS_DFLT,
+      NULL, 0, strategy_cb, NULL, kwd_strategy },
     { NULL }
 };
+
+void
+config_init()
+{
+    grecs_include_path_setup (DEFAULT_VERSION_INCLUDE_DIR,
+			      DEFAULT_INCLUDE_DIR, NULL);
+    grecs_preprocessor = DEFAULT_PREPROCESSOR;
+    grecs_log_to_stderr = 1;
+    grecs_default_port = htons(DICO_DICT_PORT);
+}
+
+void
+config_parse()
+{
+    struct grecs_node *tree;
+
+    tree = grecs_parse (config_file);
+    if (!tree)
+	exit (EX_CONFIG);
+    if (grecs_tree_process (tree, keywords))
+	exit (EX_CONFIG);
+    grecs_tree_free (tree);
+}
 
 void
 config_help()
@@ -1149,8 +1294,8 @@ config_help()
     static char docstring[] =
 	N_("Configuration file structure for dicod.\n"
 	   "For more information, use `info dico configuration'.");
-    format_docstring(stdout, docstring, 0);
-    format_statement_array(stdout, keywords, 1, 0);
+    grecs_print_docstring (docstring, 0, stdout);
+    grecs_print_statement_array (keywords, 1, 0, stdout);
 }
 
 
@@ -1258,6 +1403,8 @@ dicod_database_free(dicod_database_t *dp)
     dico_list_destroy(&dp->langlist[0]);
     dico_list_destroy(&dp->langlist[1]);
     dico_argcv_free(dp->argc, dp->argv);
+    /* FIXME: Command can point either to argv[0] or to an allocated
+       string. In the latter case it is not freed. */
     free(dp);
 }
 
@@ -1300,6 +1447,40 @@ syslog_log_printer(int lvl, int exitcode, int errcode,
 }
 
 
+static void
+_print_diag(grecs_locus_t const *locus, int err, int errcode, const char *msg)
+{
+    if (locus) {
+	char *locstr = NULL;
+	size_t size = 0;
+
+	if (locus->beg.col == 0)
+	    grecs_asprintf(&locstr, &size, "%s:%u",
+			   locus->beg.file,
+			   locus->beg.line);
+	else if (strcmp(locus->beg.file, locus->end.file))
+	    grecs_asprintf(&locstr, &size, "%s:%u.%u-%s:%u.%u",
+			   locus->beg.file,
+			   locus->beg.line, locus->beg.col,
+			   locus->end.file,
+			   locus->end.line, locus->end.col);
+	else if (locus->beg.line != locus->end.line)
+	    grecs_asprintf(&locstr, &size, "%s:%u.%u-%u.%u",
+			   locus->beg.file,
+			   locus->beg.line, locus->beg.col,
+			   locus->end.line, locus->end.col);
+	else
+	    grecs_asprintf(&locstr, &size, "%s:%u.%u-%u",
+			   locus->beg.file,
+			   locus->beg.line, locus->beg.col,
+			   locus->end.col);
+	dico_log (err ? L_ERR : L_WARN, errcode,
+		  "%s: %s", locstr, msg);
+	free (locstr);
+    } else
+	dico_log (err ? L_ERR : L_WARN, errcode, "%s", msg);
+}
+
 void
 dicod_log_setup()
 {
@@ -1307,6 +1488,7 @@ dicod_log_setup()
 	openlog(log_tag, LOG_PID, log_facility);
 	dico_set_log_printer(syslog_log_printer);
     }
+    grecs_print_diag_fun = _print_diag;
 }    
 
 /* When requested restart by a SIGHUP, the daemon first starts
@@ -1388,27 +1570,27 @@ main(int argc, char **argv)
     register_xversion();
     register_lev();
     register_regex();
-    include_path_setup();
-    config_lex_trace(0);
+
     dico_argcv_quoting_style = dico_argcv_quoting_hex;
+
+    config_init();
     init_conf_override(&ovr);
+
     get_options(argc, argv, &ovr);
-
+    if (!config_lint_option)
+	dicod_log_setup();
+    
     if (mode == MODE_PREPROC)
-	exit(preprocess_config(preprocessor) ? EX_UNAVAILABLE : 0);
+	exit(grecs_preproc_run(config_file, grecs_preprocessor) ?
+	      EX_CONFIG : 0);
 
-    config_set_keywords(keywords);
-    if (config_parse(config_file))
-	exit(EX_CONFIG);
+    config_parse();
 
     apply_conf_override(&ovr);
     
     register_sasl();
     compile_access_log();
 
-    if (!config_lint_option)
-	dicod_log_setup();
-    
     dicod_loader_init();
     
     begin_timing("server");

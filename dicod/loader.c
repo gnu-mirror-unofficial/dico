@@ -20,7 +20,7 @@
 static int
 _add_load_dir (void *item, void *unused)
 {
-    char *str = *(char**)item;
+    char *str = item;
     return lt_dladdsearchdir(str);
 }
 

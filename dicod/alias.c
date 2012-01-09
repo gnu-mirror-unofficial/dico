@@ -18,10 +18,10 @@
 #include <hash.h>
 
 struct alias {
-    const char *kw;     /* Keyword */
+    char *kw;     /* Keyword */
     int argc;
     char **argv;
-    dicod_locus_t locus;
+    grecs_locus_t locus;
 };
 
 static Hash_table *alias_table;
@@ -44,12 +44,12 @@ alias_compare(void const *data1, void const *data2)
 }
 
 int
-alias_install(const char *kw, int argc, char **argv, dicod_locus_t *ploc)
+alias_install(const char *kw, int argc, char **argv, grecs_locus_t *ploc)
 {
     struct alias *sample = xmalloc(sizeof(*sample)),
 	         *ap;
 
-    sample->kw = kw;
+    sample->kw = xstrdup(kw);
     sample->argc = argc;
     sample->argv = argv;
     sample->locus = *ploc;
@@ -63,10 +63,11 @@ alias_install(const char *kw, int argc, char **argv, dicod_locus_t *ploc)
 	xalloc_die();
     
     if (ap != sample) {
+	free(sample->kw);
 	free(sample);
-	config_error(ploc, 0, _("alias `%s' already defined"), sample->kw);
-	config_error(&ap->locus, 0,
-		     _("this is the location of the previous definition"));
+	grecs_error(ploc, 0, _("alias `%s' already defined"), kw);
+	grecs_error(&ap->locus, 0,
+		    _("this is the location of the previous definition"));
 	return 1; /* Found */
     }
     return 0;

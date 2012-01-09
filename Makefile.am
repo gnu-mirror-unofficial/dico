@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-ACLOCAL_AMFLAGS = -I m4 -I am -I gint -I imprimatur
+ACLOCAL_AMFLAGS = -I m4 -I am -I grecs/am -I gint -I imprimatur
 
-SUBDIRS=include utils gint gnu lib libltdl dicod modules dico tests imprimatur doc po
+SUBDIRS=include utils gint gnu grecs lib libltdl dicod modules dico tests imprimatur doc po
 #FIXME: add these when ready: makedict client fonts
 
 EXTRA_DIST = ChangeLog.2008
@@ -25,34 +25,13 @@ dist-hook:
 	tar -C $(srcdir) -c -f - --exclude-vcs app dicoweb | \
 	      tar -C $(distdir) -x -f -
 
-# Define the following variables in order to use the ChangeLog rule below:
-#  prev_change_log  [optional]  Name of the previous ChangeLog file.
-#  gen_start_date   [optional]  Start ChangeLog from this date.
-#  changelog_dir    [mandatory] Directory where to create ChangeLog
-gen_start_date =
-prev_change_log =
-changelog_dir = .
+#  Start Git ChangeLog from this date.
+gen_start_date = 2008-05-05
 
 .PHONY: ChangeLog
-ChangeLog: 
+ChangeLog:
 	$(AM_V_GEN)if test -d .git; then                                   \
-	  cmd=$(top_srcdir)/build-aux/gitlog-to-changelog;                 \
-	  if test -n "$(gen_start_date)"; then                             \
-	    cmd="$$cmd --since=\"$(gen_start_date)\"";                     \
-	  fi;                                                              \
-	  $$cmd --format='%s%n%n%b%n' |                                    \
-            sed '/<unknown>$$/d' | fmt -s > $(changelog_dir)/cl-t;         \
-          if test -n "$(prev_change_log)" && test -f "$(prev_change_log)"; \
-	  then                                                             \
-	    echo "" >> $(changelog_dir)/cl-t;                              \
-	    cat "$(prev_change_log)" |                                     \
-	      sed '/^Local Variables:/,/^End:/d' >> $(changelog_dir)/cl-t; \
-	  fi;                                                              \
-	  echo "Local Variables:" >> $(changelog_dir)/cl-t;                \
-	  echo "mode: change-log" >> $(changelog_dir)/cl-t;                \
-	  echo "version-control: never"  >> $(changelog_dir)/cl-t;         \
-	  echo "buffer-read-only: t" >> $(changelog_dir)/cl-t;             \
-	  echo "End:" >> $(changelog_dir)/cl-t;                            \
-	  rm -f $(changelog_dir)/ChangeLog;                                \
-	  mv $(changelog_dir)/cl-t $(changelog_dir)/ChangeLog;             \
-	fi
+	  git log --pretty='format:%ct  %an  <%ae>%n%n%s%n%n%b%n' |        \
+	  awk -f $(top_srcdir)/@GRECS_SUBDIR@/build-aux/git2chg.awk        \
+             -vsince=$(gen_start_date) > ChangeLog;                        \
+        fi

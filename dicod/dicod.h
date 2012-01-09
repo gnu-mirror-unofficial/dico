@@ -40,6 +40,7 @@
 #include <signal.h>
 #include <sysexits.h>
 #include <ltdl.h>
+#include "grecs.h"
 
 #include <xdico.h>
 #include <inttostr.h>
@@ -88,7 +89,7 @@ extern char *client_id;
 extern char *user_name;
 extern dico_list_t user_groups;
 extern int transcript;
-extern const char *preprocessor;
+
 extern char *debug_level_str;
 extern unsigned long total_forks;
 extern char *access_log_format;
@@ -129,133 +130,17 @@ struct dicod_conf_override {
 
 void get_options(int argc, char *argv[], struct dicod_conf_override *conf);
 
-typedef struct {
-    char *file;
-    int line;
-} dicod_locus_t;
-
-extern dicod_locus_t locus;
-
-
-/* Configuration file stuff */
-
-enum config_data_type {
-    cfg_void,
-    cfg_string,
-    cfg_short,
-    cfg_ushort,
-    cfg_int,
-    cfg_uint,
-    cfg_long,
-    cfg_ulong,
-    cfg_size,
-/*    cfg_off,*/
-    cfg_uintmax,
-    cfg_intmax,
-    cfg_time,
-    cfg_bool,
-    cfg_ipv4,
-    cfg_cidr,
-    cfg_host,
-    cfg_sockaddr,
-    cfg_section
-};
-
-#define CFG_LIST 0x8000
-#define CFG_TYPE_MASK 0x00ff
-#define CFG_TYPE(c) ((c) & CFG_TYPE_MASK)
-#define CFG_IS_LIST(c) ((c) & CFG_LIST)
-
-enum cfg_callback_command {
-    callback_section_begin,
-    callback_section_end,
-    callback_set_value
-};
-
-#define TYPE_STRING 0
-#define TYPE_LIST   1
-#define TYPE_ARRAY  2
-
-typedef struct config_value {
-    int type;
-    union {
-	dico_list_t list;
-	const char *string;
-	struct {
-	    size_t c;
-	    struct config_value *v;
-	} arg;
-    } v;
-} config_value_t;
-
-typedef int (*config_callback_fn) (
-    enum cfg_callback_command cmd,
-    dicod_locus_t *    /* locus */,
-    void *             /* varptr */,
-    config_value_t *   /* value */,
-    void *             /* cb_data */
-    );
-
-struct config_keyword {
-    const char *ident;
-    const char *argname;
-    const char *docstring;
-    enum config_data_type type;
-    void *varptr;
-    size_t offset;
-    config_callback_fn callback;
-    void *callback_data;
-    struct config_keyword *kwd;
-};
-
-config_value_t *config_value_dup(config_value_t *input);
-
-typedef union {
-    struct sockaddr s;
-    struct sockaddr_in s_in;
-    struct sockaddr_un s_un;
-} sockaddr_union_t;
-
-int yylex(void);
-int yyerror(char *); 
-
-void config_error(dicod_locus_t *locus, int errcode, const char *fmt, ...)
-    DICO_PRINTFLIKE(3,4);
-void config_warning(dicod_locus_t *locus, int errcode, const char *fmt, ...)
-    DICO_PRINTFLIKE(3,4);
-int config_lex_begin(const char *name);
-void config_lex_end(void);
-void config_set_keywords(struct config_keyword *kwd);
-int config_parse(const char *name);
-void config_gram_trace(int);
-void config_lex_trace(int);
-void line_begin(void);
-void line_add(char *text, size_t len);
-void line_add_unescape_last(char *text, size_t len);
-void line_finish(void);
-char *line_finish0(void);
-int quote_char(int c);
-int unquote_char(int c);
-int string_to_bool(const char *string, int *pval);
-int string_to_unsigned(uintmax_t *sval, const char *string, uintmax_t maxval,
-		       dicod_locus_t *loc);
-
-void format_docstring(FILE *stream, const char *docstring, int level);
-void format_statement_array(FILE *stream, struct config_keyword *kwp,
-			    int n, int level);
-void config_help(void);
-
 
 /* acl.c */
 typedef struct dicod_acl *dicod_acl_t;
 
-dicod_acl_t dicod_acl_create(const char *name, dicod_locus_t *locus);
+dicod_acl_t dicod_acl_create(const char *name, grecs_locus_t *locus);
 int dicod_acl_check(dicod_acl_t acl, int res);
 
-int parse_acl_line(dicod_locus_t *locus, int allow, dicod_acl_t acl,
-		   config_value_t *value);
+int parse_acl_line(grecs_locus_t *locus, int allow, dicod_acl_t acl,
+		   grecs_value_t *value);
 
-int dicod_acl_install(dicod_acl_t acl, dicod_locus_t *locus);
+int dicod_acl_install(dicod_acl_t acl, grecs_locus_t *locus);
 dicod_acl_t dicod_acl_lookup(const char *name);
 
 extern dicod_acl_t connect_acl;
@@ -452,7 +337,7 @@ char *query_ident_name(struct sockaddr_in *srv_addr,
 		       struct sockaddr_in *clt_addr);
 
 /* alias.c */
-int alias_install(const char *kw, int argc, char **argv, dicod_locus_t *ploc);
+int alias_install(const char *kw, int argc, char **argv, grecs_locus_t *ploc);
 int alias_expand(int argc, char **argv, int *pargc, char ***pargv);
 
 /* gsasl.c */
@@ -482,3 +367,7 @@ int stratcl_check_word(dico_list_t list, const char *word);
 
 /* ckpass.c */
 int dicod_check_password(const char *db_pass, const char *pass);
+
+/* main.c */
+void config_help(void);
+

@@ -278,13 +278,13 @@ void
 parse_script_file(const char *fname, script_getln_fn getln, void *data)
 {
     char *buf = NULL;
-    xdico_input_t input;
+    struct dico_tokbuf tb;
     int argc;
     char **argv;
-
+    
     filename = fname;
     line = 0;
-    input = xdico_tokenize_begin();
+    dico_tokenize_begin(&tb);
     while (getln(data, &buf)) {
 	char *p, *start;
 	char *xargv[3];
@@ -296,7 +296,9 @@ parse_script_file(const char *fname, script_getln_fn getln, void *data)
 	if (*start == 0 || *start == '#')
 	    continue;
 
-	xdico_tokenize_input(input, start, &argc, &argv);
+	xdico_tokenize_string(&tb, start);
+	argc = tb.tb_tokc;
+	argv = tb.tb_tokv;
 	if (argc == 0)
 	    continue;
 
@@ -367,7 +369,7 @@ parse_script_file(const char *fname, script_getln_fn getln, void *data)
 	    ds_define(2, xargv);
 	}
     }
-    xdico_tokenize_end(&input);
+    dico_tokenize_end(&tb);
 }
 	
 

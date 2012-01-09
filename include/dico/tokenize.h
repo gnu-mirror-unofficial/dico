@@ -1,5 +1,5 @@
 /* This file is part of GNU Dico.
-   Copyright (C) 1998-2000, 2008, 2010, 2012 Sergey Poznyakoff
+   Copyright (C) 2012 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,28 +14,27 @@
    You should have received a copy of the GNU General Public License
    along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef __dico_h
-#define __dico_h
-
-#include <stdlib.h>
-#include <stdarg.h>
+#ifndef __dico_tokenize_h
+#define __dico_tokenize_h
 
 #include <dico/types.h>
-#include <dico/argcv.h>
-#include <dico/list.h>
-#include <dico/assoc.h>
-#include <dico/stream.h>
-#include <dico/url.h>
-#include <dico/xlat.h>
-#include <dico/strat.h>
-#include <dico/utf8.h>
-#include <dico/filter.h>
-#include <dico/diag.h>
-#include <dico/util.h>
-#include <dico/parseopt.h>
-#include <dico/markup.h>
-#include <dico/udb.h>
-#include <dico/tokenize.h>
+
+struct dico_tokbuf {
+    char *tb_base;
+    size_t tb_size;
+    size_t tb_level;
+    char **tb_tokv;
+    int tb_tokm;
+    int tb_tokc;
+};
+
+#define TKNBLOCKSIZ 256
+
+int dico_unquote_char(int c);
+int dico_quote_char(int c);
+void dico_tokenize_begin(struct dico_tokbuf *bp);
+void dico_tokenize_end(struct dico_tokbuf *bp);
+void dico_tokenize_clear(struct dico_tokbuf *bp);
+int dico_tokenize_string(struct dico_tokbuf *bp, char *str);
 
 #endif
-    

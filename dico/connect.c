@@ -511,25 +511,24 @@ _result_parse_def(struct dict_result *res)
     char *p;
     size_t i;
     struct define_result *def = xcalloc(res->count, sizeof(*def));
-    xdico_input_t input = xdico_tokenize_begin();
+    struct dico_tokbuf tb;
+
+    dico_tokenize_begin(&tb);
     
     res->set.def = def;
     p = res->base;
     for (i = 0; i < res->count; i++, def++) {
-	int argc;
-	char **argv;
-
-	/* FIXME: Provide a destructive version of xdico_tokenize_input */
-	xdico_tokenize_input(input, p, &argc, &argv);
-	def->word = xstrdup(argv[1]);
-	def->database = xstrdup(argv[2]);
-	def->descr = xstrdup(argv[3]);
+	/* FIXME: Provide a destructive version of xdico_tokenize_string? */
+	xdico_tokenize_string(&tb, p);
+	def->word = xstrdup(tb.tb_tokv[1]);
+	def->database = xstrdup(tb.tb_tokv[2]);
+	def->descr = xstrdup(tb.tb_tokv[3]);
 	p += strlen(p) + 1;
 	def->defn = p;
 	def->nlines = count_lines(p);
 	p += strlen(p) + 1;
     }
-    xdico_tokenize_end(&input);
+    dico_tokenize_end(&tb);
 }
 
 static void

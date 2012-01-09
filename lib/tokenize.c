@@ -17,18 +17,10 @@
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
-#include <xdico.h>
-#include <xalloc.h>
-#define obstack_chunk_alloc malloc
-#define obstack_chunk_free free
-#include <obstack.h>
-
-struct xdico_input {
-    struct obstack stk;
-    char *rootptr;
-    int argc;
-    char **argv;
-};
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <dico.h>
 
 #define ISWS(c) ((c) == ' ' || (c) == '\t')
 #define ISQUOTE(c) ((c) == '"' || (c) == '\'')
@@ -36,7 +28,7 @@ struct xdico_input {
 static char quote_transtab[] = "\\\\\"\"a\ab\bf\fn\nr\rt\t";
 
 int
-xdico_unquote_char(int c)
+dico_unquote_char(int c)
 {
     char *p;
 
@@ -48,7 +40,7 @@ xdico_unquote_char(int c)
 }
 
 int
-xdico_quote_char(int c)
+dico_quote_char(int c)
 {
     char *p;
 
@@ -59,35 +51,64 @@ xdico_quote_char(int c)
     return 0;
 }
 
-xdico_input_t
-xdico_tokenize_begin()
+void
+dico_tokenize_begin(struct dico_tokbuf *tb)
 {
-    return xzalloc(sizeof(struct xdico_input));
+    memset(tb, 0, sizeof(*tb));
 }
 
 void
-xdico_tokenize_end(xdico_input_t *pin)
+dico_tokenize_end(struct dico_tokbuf *tb)
 {
-    xdico_input_t in = *pin;
-    obstack_free(&in->stk, NULL);
-    free(in);
-    *pin = NULL;
+    free (tb->tb_base);
+    free (tb->tb_tokv);
+}
+
+void
+dico_tokenize_clear(struct dico_tokbuf *tb)
+{
+    tb->tb_level = 0;
+    tb->tb_tokc = 0;
+}
+
+static int
+_dico_tkn_grow(struct dico_tokbuf *tb, char *str, size_t len)
+{
+    if (tb->tb_level + len > tb->tb_size) {
+	size_t newsize = ((tb->tb_level + len + TKNBLOCKSIZ - 1) /
+			  TKNBLOCKSIZ) * TKNBLOCKSIZ;
+	char *newbase = realloc(tb->tb_base, newsize);
+	if (!newbase)
+	    return ENOMEM;
+	tb->tb_base = newbase;
+	tb->tb_size = newsize;
+    }
+    memcpy(tb->tb_base + tb->tb_level, str, len);
+    tb->tb_level += len;
+    return 0;
+}
+
+static int
+_dico_tkn_1grow(struct dico_tokbuf *tb, int ch)
+{
+    char c = ch;
+    return _dico_tkn_grow(tb, &c, 1);
 }
 
 int
-xdico_tokenize_input(xdico_input_t in, char *str, int *pargc, char ***pargv)
+dico_tokenize_string(struct dico_tokbuf *tb, char *str)
 {
     struct utf8_iterator itr;
     int i, argc = 0;
-    
-    if (!in->rootptr) 
-	obstack_init(&in->stk);
-    else
-	obstack_free(&in->stk, in->rootptr);
+    int rc;
+    size_t start_level;
+    char *p;
 
     utf8_iter_first(&itr, str);
 
-    while (1) {
+    start_level = tb->tb_level;
+	
+    for (rc = 0; rc == 0;) {
 	int quote;
 	
 	for (; !utf8_iter_end_p(&itr)
@@ -114,31 +135,39 @@ xdico_tokenize_input(xdico_input_t in, char *str, int *pargc, char ***pargv)
 		} else if (*itr.curptr == '\\') {
 		    utf8_iter_next(&itr);
 		    if (utf8_iter_isascii(itr)) {
-			obstack_1grow(&in->stk, xdico_quote_char(*itr.curptr));
+			rc = _dico_tkn_1grow(tb, dico_quote_char(*itr.curptr));
 		    } else {
-			obstack_1grow(&in->stk, '\\');
-			obstack_grow(&in->stk, itr.curptr, itr.curwidth);
+			rc = _dico_tkn_1grow(tb, '\\');
+			if (rc == 0)
+			    rc = _dico_tkn_grow(tb, itr.curptr, itr.curwidth);
 		    }
 		    continue;
 		}
 	    }
-	    obstack_grow(&in->stk, itr.curptr, itr.curwidth);
+	    rc = _dico_tkn_grow(tb, itr.curptr, itr.curwidth);
 	}
-	obstack_1grow(&in->stk, 0);
+	if (rc == 0)
+	    rc = _dico_tkn_1grow(tb, 0);
 	argc++;
     }
 
-    in->rootptr = obstack_finish(&in->stk);
-
-    in->argc = argc;
-    in->argv = obstack_alloc(&in->stk, (argc + 1) * sizeof(in->argv[0]));
-
-    for (i = 0; i < argc; i++) {
-	in->argv[i] = in->rootptr;
-	in->rootptr += strlen(in->rootptr) + 1;
+    if (rc)
+	return rc;
+    
+    if (tb->tb_tokc + argc + 1 > tb->tb_tokm) {
+	size_t nmax = tb->tb_tokc + argc + 1;
+	char **nargv = realloc(tb->tb_tokv, sizeof(tb->tb_tokv[0]) * nmax);
+	if (!nargv)
+	    return ENOMEM;
+	tb->tb_tokv = nargv;
+	tb->tb_tokm = nmax;
     }
-    in->argv[i] = NULL;
-    *pargc = in->argc;
-    *pargv = in->argv;
-    return argc;
+
+    for (i = 0, p = tb->tb_base + start_level; i < argc; i++) {
+	tb->tb_tokv[tb->tb_tokc++] = p;
+	p += strlen(p) + 1;
+    }
+    tb->tb_tokv[tb->tb_tokc] = NULL;
+    return 0;
 }
+

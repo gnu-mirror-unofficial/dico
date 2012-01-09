@@ -44,6 +44,7 @@ libdico_la_SOURCES=\
  soundex.c\
  strat.c\
  stream.c\
+ tokenize.c\
  udb.c\
  url.c\
  utf8.c\
@@ -57,11 +58,11 @@ libxdico_a_SOURCES=\
  iputil.c\
  jiscvt.c\
  timer.c\
- tokenize.c\
  userprivs.c\
  xhostname.c\
  xscript.c\
  xstream.c\
+ xtkn.c\
  xutil.c
 
 libextra_a_SOURCES=xalloc-die.c

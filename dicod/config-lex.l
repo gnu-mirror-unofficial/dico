@@ -221,7 +221,7 @@ static void
 unescape_to_obstack(int c)
 {
     if (c != '\n') {
-	int t = xdico_unquote_char(c);
+	int t = dico_unquote_char(c);
 	if (t)
 	    obstack_1grow(&stk, t);
 	else {

@@ -243,13 +243,11 @@ dicod_loop(dico_stream_t str)
     char *buf = NULL;
     size_t size = 0;
     size_t rdbytes;
-    xdico_input_t input;
-    int argc;
-    char **argv;
+    struct dico_tokbuf tb;
     
     begin_timing("dicod");
     signal(SIGALRM, sig_alarm);
-    memset(&input, 0, sizeof input);
+
     got_quit = 0;
     if (transcript) {
 	dico_stream_t logstr = dico_log_stream_create(L_DEBUG);
@@ -268,15 +266,15 @@ dicod_loop(dico_stream_t str)
     check_db_visibility();
     initial_banner(iostr);
 
-    input = xdico_tokenize_begin();
+    dico_tokenize_begin(&tb);
     while (!got_quit && get_input_line(iostr, &buf, &size, &rdbytes) == 0) {
 	trimnl(buf, rdbytes);
-	xdico_tokenize_input(input, buf, &argc, &argv);
-	if (argc == 0)
+	xdico_tokenize_string(&tb, buf);
+	if (tb.tb_tokc == 0)
 	    continue;
-	dicod_handle_command(iostr, argc, argv);
+	dicod_handle_command(iostr, tb.tb_tokc, tb.tb_tokv);
     }
-    xdico_tokenize_end(&input);
+    dico_tokenize_end(&tb);
     close_databases();    
     init_auth_data();
     access_log_free_cache();

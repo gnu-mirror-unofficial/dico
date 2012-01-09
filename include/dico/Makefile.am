@@ -24,6 +24,7 @@ pkginclude_HEADERS = \
  parseopt.h\
  strat.h\
  stream.h\
+ tokenize.h\
  types.h\
  udb.h\
  url.h\

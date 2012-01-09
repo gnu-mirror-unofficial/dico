@@ -172,6 +172,7 @@ Modules
 * Python::
 * Stratall::
 * Substr::
+* Word::
 * Ldap::
 
 The @command{guile} module.
@@ -2575,6 +2576,7 @@ languages, correspondingly.
 * Python::
 * Stratall::
 * Substr::
+* Word::
 * Ldap::
 @end menu
 
@@ -3513,6 +3515,28 @@ load-module substr @{
         command "substr";
 @}
 @end smallexample
+
+@node Word
+@section The @command{word} module
+@cindex word, strategy
+  The @command{word} module provides a strategy for matching a word
+anywhere in the headword.  For example:
+
+@smallexample
+C: MATCH devdict word government
+152 1 matches found: list follows
+devdict "MONARCHICAL GOVERNMENT"
+.
+250 Command complete [d/m/c = 0/1/995 0.003r 0.004u 0.000s]
+@end smallexample
+
+  The loading procedure expects no arguments:
+
+@smallexample
+load-module word @{
+        command "word";
+@}
+@end smallexample  
 
 @node Ldap
 @section The @command{ldap} module

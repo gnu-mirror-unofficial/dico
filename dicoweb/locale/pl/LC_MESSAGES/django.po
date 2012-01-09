@@ -1,5 +1,5 @@
 # Polish translations for GNU Dico (Dicoweb) package.
-# Copyright (C) 2008, 2009 Wojciech Polak
+# Copyright (C) 2008-2009, 2012 Wojciech Polak
 # This file is distributed under the same license as the GNU Dico package.
 # Wojciech Polak <polak@gnu.org>, 2008, 2009.
 #

@@ -1,6 +1,6 @@
 # Ukrainian messages for Dicoweb
 # This file is distributed under the same license as the Dico package.
-# Copyright (C) 2009 Free Software Foundation, Inc.
+# Copyright (C) 2009, 2012 Free Software Foundation, Inc.
 # Sergey Poznyakoff <gray@gnu.org>, 2009.
 #
 msgid ""

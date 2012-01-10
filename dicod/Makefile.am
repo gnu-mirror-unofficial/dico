@@ -45,9 +45,6 @@ dicod_SOURCES=\
 
 noinst_HEADERS=dicod.h
 
-incdir=$(pkgdatadir)/$(VERSION)/include
-inc_DATA = $(PP_SETUP_FILE)
-
 AM_CFLAGS = \
  -DSYSCONFIG=\"$(sysconfdir)\"\
  -DLOCALSTATEDIR=\"$(localstatedir)\"\
@@ -79,4 +76,4 @@ SUFFIXES=.opt .c
 	$(AM_V_GEN)m4 -s $(top_srcdir)/@GRECS_SUBDIR@/build-aux/getopt.m4 $< > $@
 
 BUILT_SOURCES=cmdline.c 
-EXTRA_DIST=cmdline.opt pp-setup
+EXTRA_DIST=cmdline.opt

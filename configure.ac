@@ -244,7 +244,7 @@ if test -z "$DEFAULT_DICT_SERVER" ; then
 fi
 
 # Grecs configuration system
-GRECS_SETUP(grecs, [tests getopt git2chg])
+GRECS_SETUP(grecs, [tests getopt git2chg std-pp-setup])
 GRECS_HOST_PROJECT_INCLUDES='-I$(top_srcdir)/gnu -I$(top_builddir)/gnu'
 
 # Check for Guile

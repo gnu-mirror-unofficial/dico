@@ -21,7 +21,7 @@ mod_LTLIBRARIES=guile.la
 guile_la_SOURCES = guile.c
 guile_la_LIBADD = ../../lib/libdico.la @GUILE_LIBS@
 AM_LDFLAGS = -module -avoid-version -no-undefined -rpath $(moddir)
-INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include @GUILE_INCLUDES@
+INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include @GRECS_INCLUDES@ @GUILE_INCLUDES@
 
 SUFFIXES =
 BUILT_SOURCES =

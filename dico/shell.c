@@ -459,27 +459,23 @@ _command_generator(const char *text, int state)
 static char **
 _command_completion(char *cmd, int start, int end)
 {
-    int argc;
-    char **argv;
     char **ret;
-    char *p;
-
-    for (p = rl_line_buffer; p < rl_line_buffer + start && isspace (*p); p++)
-	;
-
+    struct wordsplit ws;
+    
     /* FIXME: Use tokenizer */
-    if (dico_argcv_get_n (p, end, NULL, NULL, &argc, &argv))
+    if (wordsplit_len (rl_line_buffer, end, &ws, WRDSF_DEFFLAGS))
 	return NULL;
     rl_completion_append_character = ' ';
   
-    if (argc == 0 || (argc == 1 && strlen (argv[0]) <= end - start)) {
+    if (ws.ws_wordc == 0 ||
+	(ws.ws_wordc == 1 && strlen (ws.ws_wordv[0]) <= end - start)) {
 	ret = rl_completion_matches (cmd, _command_generator);
 	rl_attempted_completion_over = 1;
     } else {
-	struct funtab *ft = find_funtab(argv[0] + (cmdprefix ? 1 : 0));
+	struct funtab *ft = find_funtab(ws.ws_wordv[0] + (cmdprefix ? 1 : 0));
 	if (ft) {
 	    if (ft->compl)
-		ret = ft->compl(argc, argv, start == end);
+		ret = ft->compl(ws.ws_wordc, ws.ws_wordv, start == end);
 	    else if (ft->argmax == 1) {
 		rl_attempted_completion_over = 1;
 		ret = NULL;
@@ -490,7 +486,7 @@ _command_completion(char *cmd, int start, int end)
 	    ret = NULL;
 	}
     }
-    dico_argcv_free(argc, argv);
+    wordsplit_free(&ws);
     return ret;
 }
 

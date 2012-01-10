@@ -19,6 +19,7 @@
 #endif
 #include <dico.h>
 #include <appi18n.h>
+#include <wordsplit.h>
 
 #include <errno.h>
 #include <ldap.h>
@@ -178,8 +179,6 @@ static int
 db_open(void **phandle, dico_url_t url, const char *options)
 {
     struct _dico_ldap_handle hstr, *handle;
-    int argc;
-    char **argv;
     int rc;
     long debug = 0;
     
@@ -196,13 +195,17 @@ db_open(void **phandle, dico_url_t url, const char *options)
 
     memset(&hstr, 0, sizeof(hstr));
     if (options) {
-	if (rc = dico_argcv_get(options, NULL, NULL, &argc, &argv)) {
-	    dico_log(L_ERR, rc, _("cannot parse options `%s'"), options);
+	struct wordsplit ws;
+
+	if (wordsplit(options, &ws, WRDSF_DEFFLAGS)) {
+	    dico_log(L_ERR, 0, _("cannot parse options `%s': %s"), options,
+		     wordsplit_strerror(&ws));
 	    return 1;
 	}
 
-	rc = dico_parseopt(option, argc, argv, DICO_PARSEOPT_PARSE_ARGV0, NULL);
-	dico_argcv_free(argc, argv);
+	rc = dico_parseopt(option, ws.ws_wordc, ws.ws_wordv,
+			   DICO_PARSEOPT_PARSE_ARGV0, NULL);
+	wordsplit_free(&ws);
 	if (rc)
 	    return 1;
 	hstr.debug = debug;

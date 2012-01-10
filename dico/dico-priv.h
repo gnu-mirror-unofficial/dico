@@ -39,6 +39,7 @@
 #include <netdb.h>
 #include <signal.h>
 #include <ltdl.h>
+#include "wordsplit.h"
 
 #include <xdico.h>
 #include <inttostr.h>

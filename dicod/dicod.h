@@ -41,6 +41,7 @@
 #include <sysexits.h>
 #include <ltdl.h>
 #include "grecs.h"
+#include "wordsplit.h"
 
 #include <xdico.h>
 #include <inttostr.h>

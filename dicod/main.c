@@ -598,6 +598,7 @@ set_dict_handler(enum grecs_callback_command cmd,
     dicod_module_instance_t *inst;
     dicod_database_t *db = varptr;
     int rc;
+    struct wordsplit ws;
     
     if (cmd != grecs_callback_set_value) {
 	grecs_error(locus, 0, _("Unexpected block statement"));
@@ -609,15 +610,21 @@ set_dict_handler(enum grecs_callback_command cmd,
 	return 1;
     }
 
-    if ((rc = dico_argcv_get(value->v.string, NULL, NULL,
-			     &db->argc, &db->argv))) {
-	grecs_error(locus, rc, _("cannot parse command line `%s'"),
-		     value->v.string);
+    if (wordsplit(value->v.string, &ws, WRDSF_DEFFLAGS)) {
+	grecs_error(locus, rc, _("cannot parse command line `%s': %s"),
+		    value->v.string, wordsplit_strerror (&ws));
 	dicod_database_free(db); 
 	return 1;
     } 
+
+    db->argc = ws.ws_wordc;
+    db->argv = ws.ws_wordv;
     db->command = db->argv[0];
-    
+
+    ws.ws_wordc = 0;
+    ws.ws_wordv = NULL;
+    wordsplit_free (&ws);
+
     inst = dico_list_locate(modinst_list, db->argv[0]);
     if (!inst) {
 	grecs_error(locus, 0, _("%s: handler not declared"), db->argv[0]);

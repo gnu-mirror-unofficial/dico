@@ -97,19 +97,18 @@ dicod_load_module0(dicod_module_instance_t *inst, int argc, char **argv)
 int
 dicod_load_module(dicod_module_instance_t *inst)
 {
-    int argc;
-    char **argv;
+    struct wordsplit ws;
     int rc;
-	
-    if (rc = dico_argcv_get(inst->command, NULL, NULL, &argc, &argv)) {
-	dico_log(L_ERR, rc, _("cannot parse command line `%s'"),
-		 inst->command);
+
+    if (wordsplit(inst->command, &ws, WRDSF_DEFFLAGS)) {
+	dico_log(L_ERR, rc, _("cannot parse command line `%s': %s"),
+		 inst->command, wordsplit_strerror (&ws));
 	return 1;
     }
 
-    rc = dicod_load_module0(inst, argc, argv);
+    rc = dicod_load_module0(inst, ws.ws_wordc, ws.ws_wordv);
 
-    dico_argcv_free(argc, argv);
+    wordsplit_free(&ws);
     
     return rc;
 }

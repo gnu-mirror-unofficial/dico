@@ -25,6 +25,7 @@
 #include <setjmp.h>
 #include <libguile.h>
 #include <appi18n.h>
+#include <wordsplit.h>
 
 #ifndef HAVE_SCM_T_OFF
 typedef off_t scm_t_off;
@@ -105,11 +106,15 @@ guile_load(char *filename, char *args)
 {
     struct load_closure lc;
     if (args) {
-	int rc = dico_argcv_get (args, NULL, NULL, &lc.argc, &lc.argv);
-	if (rc) {
-	    dico_log(L_ERR, rc, "dico_argcv_get");
+	struct wordsplit ws;
+
+	if (wordsplit(args, &ws, WRDSF_DEFFLAGS)) {
+	    dico_log(L_ERR, 0, "wordsplit: %s", wordsplit_strerror(&ws));
 	    return 1;
 	}
+	lc.argc = ws.ws_wordc;
+	lc.argv = ws.ws_wordv;
+	wordsplit_free(&ws);
     } else {
 	lc.argc = 0;
 	lc.argv = NULL;

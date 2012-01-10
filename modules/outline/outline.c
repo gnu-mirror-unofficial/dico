@@ -59,6 +59,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <appi18n.h>
+#include <wordsplit.h>
 
 static size_t compare_count;
 
@@ -597,28 +598,26 @@ outline_lang(dico_handle_t hp, dico_list_t list[2])
     list[0] = list[1] = NULL;
     if (file->lang_entry) {
 	int n = 0;
-	int rc;
-	int lc;
-	char **lv;
+	struct wordsplit ws;
 	char *buf = read_buf(file, file->lang_entry);
 
-	rc = dico_argcv_get_np(buf, strlen(buf), "\n", NULL, 0,
-			       &lc, &lv, NULL);
-	if (rc == 0) {
-	    if (lc) {
+	ws.ws_delim = "\n";
+	if (wordsplit(buf, &ws, WRDSF_DEFFLAGS|WRDSF_DELIM) == 0) {
+	    if (ws.ws_wordc) {
 		int i;
-		for (i = 0; i < lc; i++) {
-		    if (n == 0 && strcmp(lv[i], ":") == 0) { 
+		for (i = 0; i < ws.ws_wordc; i++) {
+		    if (n == 0 && strcmp(ws.ws_wordv[i], ":") == 0) { 
 			n = 1;
-			free(lv[i]);
+			free(ws.ws_wordv[i]);
 		    } else {
 			if (!list[n])
 			    list[n] = dico_list_create();
-			dico_list_append(list[n], lv[i]);
+			dico_list_append(list[n], ws.ws_wordv[i]);
 		    }
 		}
 	    }
-	    free(lv);
+	    ws.ws_wordc = 0;
+	    wordsplit_free(&ws);
 	} else {
 	    dico_log(L_ERR, 0, _("outline_lang: not enough memory"));
 	    return 1;

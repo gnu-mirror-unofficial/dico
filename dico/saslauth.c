@@ -32,8 +32,7 @@ get_implemented_mechs(Gsasl *ctx)
     char *listmech;
     dico_list_t supp = NULL;
     int rc;
-    int mechc;
-    char **mechv;
+    struct wordsplit ws;
     
     rc =  gsasl_server_mechlist(ctx, &listmech);
     if (rc != GSASL_OK) {
@@ -43,13 +42,14 @@ get_implemented_mechs(Gsasl *ctx)
 	return NULL;
     }
 
-    if (dico_argcv_get(listmech, "", NULL, &mechc, &mechv) == 0) {
+    if (wordsplit(listmech, &ws, WRDSF_DEFFLAGS) == 0) {
 	int i;
 	supp = xdico_list_create();
 	dico_list_set_free_item(supp, _free_el, NULL);
-	for (i = 0; i < mechc; i++) 
-	    xdico_list_append(supp, mechv[i]);
-	free(mechv);
+	for (i = 0; i < ws.ws_wordc; i++) 
+	    xdico_list_append(supp, ws.ws_wordv[i]);
+	ws.ws_wordc = 0;
+	wordsplit_free(&ws);
     }
     free(listmech);
     return supp;

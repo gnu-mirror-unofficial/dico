@@ -75,15 +75,13 @@ hostcmp(const char *a, const char *b)
     return 1;
 }
 
-static void
-argv_expand(int *pargc, char ***pargv, int xargc, char **xargv)
+static int
+begins_with(const char *str, const char *prefix)
 {
-    size_t nargc = *pargc + xargc + 1;
-    char **nargv = xrealloc(*pargv, (nargc + 1) * sizeof nargv[0]);
-    nargv[*pargc] = xstrdup("\n");
-    memcpy(nargv + 1 + *pargc, xargv, (xargc + 1) * sizeof nargv[0]);
-    *pargc = nargc;
-    *pargv = nargv;
+    size_t len = strlen (prefix);
+
+    return strlen (str) >= len && strncmp (str, prefix, len) == 0
+	   && (str[len] == 0 || str[len] == ' ' || str[len] == '\t');
 }
 
 enum kw_tok {
@@ -134,6 +132,44 @@ _cred_free(void *item, void *data)
     return 0;
 }
 
+struct matches {
+    const char *host;
+    int def_line;
+    int def_argc;
+    char **def_argv;
+    int host_argc;
+    char **host_argv;
+};
+
+static int
+match_line(struct wordsplit *ws, struct matches *matches, int line)
+{
+    int rc = 0;
+    
+    if (strcmp(ws->ws_wordv[0], "machine") == 0) {
+	if (hostcmp(ws->ws_wordv[1], matches->host) == 0) {
+	    XDICO_DEBUG_F1(1, _("Found matching line %d\n"), line);
+	    if (matches->host_argv)
+		dico_argcv_free(matches->host_argc, matches->host_argv);
+	    matches->host_argc = ws->ws_wordc;
+	    matches->host_argv = ws->ws_wordv;
+	    matches->def_line = line;
+	    rc = 1;
+	}
+    } else if (strcmp(ws->ws_wordv[0], "default") == 0) {
+	XDICO_DEBUG_F1(1, _("Found default line %d\n"), line);
+	if (matches->def_argv)
+	    dico_argcv_free(matches->def_argc, matches->def_argv);
+	matches->def_argc = ws->ws_wordc;
+	matches->def_argv = ws->ws_wordv;
+	matches->def_line = line;
+    }
+    ws->ws_wordc = 0;
+    ws->ws_wordv = NULL;
+    return rc;
+}
+
+
 /* Parse netrc-like autologin file and set up user and key accordingly. */
 int
 parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
@@ -142,17 +178,13 @@ parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
     FILE *fp;
     char *buf = NULL;
     size_t n = 0;
-    int def_argc = 0;
-    char **def_argv = NULL;
-    int def_line = 0;
-    char **host_argv = NULL;
-    int host_argc = 0;
-    char ***pp_argv;
-    int *pp_argc;
+    struct matches matches;
     char **p_argv = NULL;
     int line = 0;
     int flags = 0;
-    int stop = 0;
+    struct wordsplit ws;
+    int wsflags = 0;
+    int beg_line = 0;
     
     fp = fopen (filename, "r");
     if (!fp) {
@@ -164,83 +196,68 @@ parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
     } else
 	XDICO_DEBUG_F1(1, _("Reading autologin file %s...\n"), filename);
 
+    memset(&matches, 0, sizeof matches);
+    matches.host = host;
     while (getline (&buf, &n, fp) > 0 && n > 0) {
-	int rc;
 	char *p;
-	size_t len;
-	int argc;
-	char **argv;
 
 	line++;
-	len = strlen(buf);
-	if (len > 1 && buf[len - 1] == '\n')
-	    buf[len - 1] = 0;
 	p = skipws(buf);
-	if (*p == 0 || *p == '#')
-	    continue;
 
-	if ((rc = dico_argcv_get(buf, "", "#", &argc, &argv))) {
-	    dico_log(L_ERR, rc, _("dico_argcv_get failed"));
+	if ((wsflags & WRDSF_APPEND) &&
+	    (begins_with(p, "machine") || begins_with(p, "default"))) {
+	    wsflags &= ~WRDSF_APPEND;
+	    if (match_line(&ws, &matches, beg_line))
+		break;
+	    beg_line = line;
+	} else if (!(wsflags & WRDSF_REUSE))
+	    beg_line = line;
+
+	ws.ws_comment = "#";
+	if (wordsplit(p, &ws, WRDSF_DEFFLAGS|WRDSF_COMMENT|wsflags)) {
+	    dico_log(L_ERR, 0, _("failed to parse command `%s': %s"),
+		     p, wordsplit_strerror(&ws));
 	    fclose(fp);
 	    free(buf);
+	    if (wsflags & WRDSF_REUSE)
+		wordsplit_free(&ws);
 	    return 1;
 	}
-
-	if (pp_argv) {
-	    if (strcmp(argv[0], "machine") == 0
-		|| strcmp(argv[0], "default") == 0) {
-		if (stop) {
-		    dico_argcv_free(argc, argv);
-		    break;
-		}
-		pp_argv = NULL;
-		pp_argc = 0;
-	    } else {
-		argv_expand(pp_argc, pp_argv, argc, argv);
-		free(argv);
-		continue;
-	    }
+	wsflags |= WRDSF_REUSE | WRDSF_APPEND;
+	/* Add newline marker */
+	if (wordsplit("#", &ws, WRDSF_DEFFLAGS|WRDSF_NOSPLIT|wsflags)) {
+	    dico_log(L_ERR, 0, _("failed to add line marker: %s"),
+		     wordsplit_strerror(&ws));
+	    fclose(fp);
+	    free(buf);
+	    if (wsflags & WRDSF_REUSE)
+		wordsplit_free(&ws);
+	    return 1;
 	}
-	if (strcmp(argv[0], "machine") == 0) {
-	    if (hostcmp(argv[1], host) == 0) {
-		XDICO_DEBUG_F1(1, _("Found matching line %d\n"), line);
-		stop = 1;
-		host_argc = argc;
-		host_argv = argv;
-		pp_argc = &host_argc;
-		pp_argv = &host_argv;
-		def_line = line;
-		continue;
-	    }
-	} else if (strcmp(argv[0], "default") == 0) {
-	    XDICO_DEBUG_F1(1, _("Found default line %d\n"), line);
-	    def_argc = argc;
-	    def_argv = argv;
-	    pp_argc = &def_argc;
-	    pp_argv = &def_argv;
-	    def_line = line;
-	    continue;
-	} 
-	dico_argcv_free(argc, argv);
     }
+    if (wsflags & WRDSF_APPEND)
+	match_line(&ws, &matches, line);
+    if (wsflags & WRDSF_REUSE)
+	wordsplit_free(&ws);
+
     fclose(fp);
     free(buf);
 
-    if (host_argv) 
-	p_argv = host_argv + 2;
-    else if (def_argv) 
-	p_argv = def_argv + 1;
+    if (matches.host_argv) 
+	p_argv = matches.host_argv + 2;
+    else if (matches.def_argv) 
+	p_argv = matches.def_argv + 1;
     else {
 	XDICO_DEBUG(1, _("No matching line found\n"));
 	p_argv = NULL;
     }
 
     if (p_argv) {
-	line = def_line;
+	line = matches.def_line;
 
 	pcred->sasl = sasl_enabled_p();
-	while (*p_argv)	{
-	    if (strcmp(*p_argv, "\n") == 0) {
+	while (*p_argv) {
+	    if (**p_argv == '#') {
 		line++;
 		p_argv++;
 	    } else {
@@ -302,33 +319,37 @@ parse_autologin(const char *filename, char *host, struct auth_cred *pcred,
 		    break;
 		    
 		case kw_mechanism: {
-		    int i, c;
-		    char **v;
-		
+		    int i;
+		    struct wordsplit mechws;
+		    
 		    if (!(flags & AUTOLOGIN_MECH)) {
 			pcred->mech = xdico_list_create();
 			dico_list_set_free_item(pcred->mech, _cred_free, NULL);
 			flags |= AUTOLOGIN_MECH;
 		    }
-		    if (dico_argcv_get(arg, ",", NULL, &c, &v)) {
+		    mechws.ws_delim = ",";
+		    if (wordsplit(arg, &mechws,
+				  WRDSF_NOVAR | WRDSF_NOCMD | WRDSF_DELIM |
+				  WRDSF_WS)) {
 			dico_log(L_ERR, 0,
-				 _("%s:%d: not enough memory"),
-				 filename, line);
+				 _("%s:%d: failed to parse line: %s"),
+				 filename, line, wordsplit_strerror (&mechws));
 			exit(1);
 		    }
 		    
-		    for (i = 0; i < c; i++) 
-			xdico_list_append(pcred->mech, v[i]);
+		    for (i = 0; i < mechws.ws_wordc; i++) 
+			xdico_list_append(pcred->mech, mechws.ws_wordv[i]);
 		    
-		    free(v);
+		    mechws.ws_wordc = 0;
+		    wordsplit_free(&mechws);
 		    break;
 		  }
 		}
 	    }
 	}
     }
-    dico_argcv_free(def_argc, def_argv);
-    dico_argcv_free(host_argc, host_argv);
+    dico_argcv_free(matches.def_argc, matches.def_argv);
+    dico_argcv_free(matches.host_argc, matches.host_argv);
 
     if (pflags)
 	*pflags = flags;

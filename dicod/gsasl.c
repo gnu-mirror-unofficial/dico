@@ -358,9 +358,8 @@ register_sasl()
 {
   int rc;
   char *listmech;
-  int mechc;
-  char **mechv;
-
+  struct wordsplit ws;
+  
   if (!sasl_enable || init_sasl_0())
       return;
   rc =  gsasl_server_mechlist(ctx, &listmech);
@@ -370,17 +369,18 @@ register_sasl()
 	       gsasl_strerror (rc));
       return;
   }
-  
-  if (dico_argcv_get(listmech, "", NULL, &mechc, &mechv) == 0) {
+
+  if (wordsplit(listmech, &ws,
+		WRDSF_NOVAR | WRDSF_NOCMD | WRDSF_SQUEEZE_DELIMS) == 0) {
       int i;
-      for (i = 0; i < mechc; i++) {
-	  if (!disabled_mechanism_p(mechv[i])) {
-	      char *name = xdico_sasl_mech_to_capa(mechv[i]);
+      for (i = 0; i < ws.ws_wordc; i++) {
+	  if (!disabled_mechanism_p(ws.ws_wordv[i])) {
+	      char *name = xdico_sasl_mech_to_capa(ws.ws_wordv[i]);
 	      dicod_capa_register(name, NULL, init_sasl_1, NULL);
 	      dicod_capa_add(name);
 	  }
       }
-      dico_argcv_free(mechc, mechv);
+      wordsplit_free(&ws);
   }
   free(listmech);
 }

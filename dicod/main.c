@@ -1290,7 +1290,7 @@ config_parse()
     tree = grecs_parse (config_file);
     if (!tree)
 	exit (EX_CONFIG);
-    if (grecs_tree_process (tree, keywords))
+    if (grecs_tree_process (tree, keywords) || grecs_error_count)
 	exit (EX_CONFIG);
     grecs_tree_free (tree);
 }

@@ -33,7 +33,6 @@ LDADD=\
  ../lib/libextra.a\
  ../lib/libdico.la\
  $(READLINE_LIBS)\
- @GRECS_LDADD@\
  @LIBINTL@ @LIBICONV@\
  @LIBDICOSASL@\
  @GSASL_LIBS@\

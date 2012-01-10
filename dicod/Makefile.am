@@ -61,7 +61,6 @@ LDADD=\
  ../gnu/libgnu.a\
  ../lib/libextra.a\
  ../lib/libdico.la\
- @GRECS_LDADD@\
  @LIBINTL@ @LIBICONV@\
  @LIBDICOSASL@\
  @GSASL_LIBS@\

@@ -52,6 +52,7 @@ libdico_la_SOURCES=\
  xlat.c
 
 libdico_la_LDFLAGS = -version-info 1:0:0
+libdico_la_LIBADD = ../grecs/src/libgrecs.la
 
 libxdico_a_SOURCES=\
  appi18n.c\

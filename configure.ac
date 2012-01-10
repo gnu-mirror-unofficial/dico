@@ -16,7 +16,7 @@ dnl Process this file with -*- autoconf -*- to produce a configure script.
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
 AC_PREREQ(2.63)
-AC_INIT([GNU dico], 2.1, [bug-dico@gnu.org])
+AC_INIT([GNU dico], 2.1.90, [bug-dico@gnu.org])
 AC_CONFIG_SRCDIR([dicod/main.c])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
@@ -81,7 +81,6 @@ AC_CHECK_TYPE([socklen_t],,
 ])
 
 dnl Checks for library functions.
-AC_FUNC_SETVBUF_REVERSED
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS(gethostname select socket strdup strerror strtol \
                setegid setregid setresgid seteuid setreuid \
@@ -130,15 +129,6 @@ fi
 AC_DEFINE_UNQUOTED([LOG_FACILITY],$LOG_FACILITY,
                    [Default syslog facility.])
 	
-# FIXME: This is not a right place for this
-AH_BOTTOM([
-#if defined (SETVBUF_REVERSED)
-# define SETVBUF(str,buf,mode,size) setvbuf(str,mode,buf,size)
-#else
-# define SETVBUF(str,buf,mode,size) setvbuf(str,buf,mode,size)
-#endif
-])
-
 
 # Check for Berkeley DB
 db_path=

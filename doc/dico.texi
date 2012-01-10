@@ -253,7 +253,7 @@ The Libdico Library
 
 @node Preface
 @unnumbered Preface
-@UNREVISED
+@WRITEME
 
 @node Intro
 @chapter Introduction to GNU Dico
@@ -3462,7 +3462,7 @@ needed.
 @node Python
 @section The @command{python} module
 @cindex Python
-@UNREVISED
+@WRITEME
 
 @node Stratall
 @section The @command{stratall} module
@@ -3734,15 +3734,15 @@ handle, obtained from a previous call to @code{dico_match} or
 
 @node Strategies
 @section Strategies
-@UNREVISED
+@WRITEME
 
 @node Output
 @section Output
-@UNREVISED
+@WRITEME
 
 @node Error Reporting
 @section Error Reporting
-@UNREVISED
+@WRITEME
 
 @node dico client
 @chapter Dico --- a client program.

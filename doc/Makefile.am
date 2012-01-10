@@ -20,7 +20,6 @@ dico_TEXINFOS=\
  libdico.texi\
  macros.texi\
  proto.texi\
- rendition.texi\
  strftime.texi
 
 EXTRA_DIST = \
@@ -38,7 +37,7 @@ CHECK_DOCS=$(top_srcdir)/@IMPRIMATUR_MODULE_DIR@/check-docs.sh
 check-options:
 	@$(CHECK_DOCS) options \
 	   '/OPTIONS_BEGIN/,/OPTIONS_END/s/OPTION( *\([^,][^,]*\),.*/\1/pg' \
-	   '/@c option --/{s///;s/^\(help\|version\|usage\)//;p}' \
+	   '/@c option --/{s///;t a;:a;s/^\(\\option\\\|help\|version\|usage\)//;t;p}' \
 	   $(top_srcdir)/dicod/cmdline.opt -- \
 	   $(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS) -I $(srcdir) -E - \
 		$(info_TEXINFOS) 

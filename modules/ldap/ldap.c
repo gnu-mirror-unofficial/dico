@@ -157,7 +157,7 @@ _dico_ldap_bind(struct _dico_ldap_handle *lp)
     }
 
     if (matched)
-    ber_memfree(matched);
+        ber_memfree(matched);
     if (info)
 	ber_memfree(info);
     if (refs)

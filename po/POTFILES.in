@@ -36,13 +36,10 @@ dico/cmdline.c
 dico/lookup.c
 dico/saslauth.c
 
-dicod/pp.c
 dicod/regex.c
 dicod/dicod.c
 dicod/acl.c
 dicod/dbtext.c
-dicod/config-format.c
-dicod/config-lex.l
 dicod/auth.c
 dicod/main.c
 dicod/cmdline.c
@@ -51,7 +48,6 @@ dicod/alias.c
 dicod/server.c
 dicod/ident.c
 
-dicod/config-gram.y
 dicod/accesslog.c
 dicod/gsasl.c
 dicod/ckpass.c
@@ -64,3 +60,12 @@ modules/guile/guile.c
 modules/outline/outline.c
 
 modules/ldap/ldap.c
+
+grecs/src/format.c
+grecs/src/grecs-gram.y
+grecs/src/grecs-lex.l
+grecs/src/path-parser.c
+grecs/src/preproc.c
+grecs/src/symtab.c
+grecs/src/tree.c
+grecs/src/wordsplit.c

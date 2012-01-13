@@ -242,66 +242,28 @@ db_close(void *handle)
 char *
 _dico_ldap_expand_user(const char *query, const char *user)
 {
-    const char *p;
-    char *s, *res;
-    size_t len;
-    int ulen = strlen(user);
+    struct wordsplit ws;
+    const char *env[3];
+    char *res;
     
-    /* Compute resulting query length */
-    len = strlen(query);
-    for (p = query; *p; ) {
-	char *q = strchr(p, '$');
-	if (!q)
-	    break;
-	if (strncmp(q + 1, "user", 4) == 0
-	    && (q[5] == 0 || !(q[5] == '_' || isalnum(q[5])))) {
-	    len += ulen - 5;
-	    p = q + 5;
-	} else if (strncmp(q + 1, "{user}", 6) == 0) {
-	    len += ulen - 7;
-	    p = q + 7;
-	} else
-	    p = q + 1;
+    env[0] = "user";
+    env[1] = user;
+    env[2] = NULL;
+
+    ws.ws_env = env;
+    if (wordsplit(query, &ws,
+		  WRDSF_NOSPLIT | WRDSF_NOCMD |
+		  WRDSF_ENV | WRDSF_ENV_KV)) {
+	dico_log(L_ERR, 0, _("cannot expand query `%s': %s"), query,
+		 wordsplit_strerror(&ws));
+	return NULL;
     }
 
-    /* Allocate sufficient memory */
-    res = malloc(len + 1);
-    if (!res)
-	return res;
-
-    /* Format output value */
-    for (p = query, s = res; *p; ) {
-	char *q;
-	size_t n;
-	
-	q = strchr(p, '$');
-	if (!q) {
-	    n = strlen(p);
-	    memcpy(s, p, n);
-	    s += n;
-	    break;
-	} else {
-	    n = q - p;
-	    memcpy(s, p, n);
-	    s += n;
-	}
-	
-	if (strncmp(q + 1, "user", 4) == 0
-	    && (q[5] == 0 || !(q[5] == '_' || isalnum(q[5])))) {
-	    memcpy(s, user, ulen);
-	    q += 5;
-	    s += ulen;
-	} else if (strncmp(q + 1, "{user}", 6) == 0) {
-	    memcpy(s, user, ulen);
-	    q += 7;
-	    s += ulen;
-	} else
-	    *s++ = *q++;
-	p = q;
-    }
-    *s = 0;
+    res = ws.ws_wordv[0];
+    ws.ws_wordv[0] = NULL;
+    wordsplit_free(&ws);
     return res;
-}
+}    
 
 static LDAPMessage *
 _dico_ldap_search(struct _dico_ldap_handle *lp, const char *filter_pat,

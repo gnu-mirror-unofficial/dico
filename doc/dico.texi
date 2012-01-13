@@ -3524,10 +3524,10 @@ anywhere in the headword.  For example:
 
 @smallexample
 C: MATCH devdict word government
-152 1 matches found: list follows
-devdict "MONARCHICAL GOVERNMENT"
-.
-250 Command complete [d/m/c = 0/1/995 0.003r 0.004u 0.000s]
+S: 152 1 matches found: list follows
+S: devdict "MONARCHICAL GOVERNMENT"
+S: .
+S: 250 Command complete [d/m/c = 0/1/995 0.003r 0.004u 0.000s]
 @end smallexample
 
   The loading procedure expects no arguments:

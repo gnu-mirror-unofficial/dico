@@ -44,6 +44,9 @@
 (define (result-count rh)
   #f)
 
+(define (result-headers rh hdr)
+  (list))
+
 (define-public (dico-init arg)
   (list (cons "open" open-module)
         (cons "close" close-module)
@@ -53,4 +56,5 @@
         (cons "define" define-word)
         (cons "match" match-word)
         (cons "output" output)
-        (cons "result-count" result-count)))
+        (cons "result-count" result-count)
+	(cons "result-headers" result-headers)))

@@ -117,6 +117,13 @@ mod_free_result(dico_result_t rp)
     /* FIXME */
 }
 
+static int
+mod_result_headers(dico_result_t rp, dico_assoc_list_t hdr)
+{  
+    /* FIXME */
+    return 0;
+}
+
 struct dico_database_module DICO_EXPORT(sample, module) = {
     DICO_MODULE_VERSION,
     DICO_CAPA_NONE,
@@ -133,5 +140,6 @@ struct dico_database_module DICO_EXPORT(sample, module) = {
     mod_output_result,
     mod_result_count,
     mod_compare_count,
-    mod_free_result
+    mod_free_result,
+    mod_result_headers
 };

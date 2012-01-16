@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 1998-2000, 2008, 2010, 2012 Sergey Poznyakoff
+# Copyright (C) 2012 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,27 +14,23 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-if GUILE_COND
-  GUILE_DIR=guile
-endif
-if PYTHON_COND
-  PYTHON_DIR=python
-endif
-if LDAP_COND
-  LDAP_DIR=ldap
-endif
-if PCRE_COND
-  PCRE_DIR=pcre
-endif
-SUBDIRS = \
- outline\
- dict.org\
- gcide\
- $(GUILE_DIR)\
- $(PYTHON_DIR)\
- stratall\
- substr\
- $(LDAP_DIR)\
- $(PCRE_DIR)\
- word
-EXTRA_DIST = template.c template.py template.scm
+moddir=@DICO_MODDIR@
+
+mod_LTLIBRARIES=gcide.la
+noinst_LTLIBRARIES=libgcide.la
+libgcide_la_SOURCES=webchr.c ent.c
+
+gcide_la_SOURCES = gcide.c idx.c 
+gcide_la_LIBADD = ./libgcide.la ../../lib/libdico.la $(LIBICONV)
+gcide_la_LDFLAGS = -module -avoid-version -no-undefined
+
+libexec_PROGRAMS=idxgcide 
+idxgcide_SOURCES=idxgcide.l 
+
+noinst_HEADERS = gcide.h
+
+AM_LFLAGS=-d
+AM_CPPFLAGS=-DLIBEXECDIR=\"${libexecdir}\"
+
+INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include @GRECS_INCLUDES@
+idxgcide_LDADD = ./libgcide.la ../../lib/libdico.la $(LIBICONV)

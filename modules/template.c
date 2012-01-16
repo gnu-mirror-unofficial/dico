@@ -70,10 +70,10 @@ mod_descr(dico_handle_t hp)
 }
 
 int
-dico_db_lang (dico_handle_t hp, dico_list_t list[2])
+mod_lang (dico_handle_t hp, dico_list_t list[2])
 {
     /* FIXME */
-    return NULL;
+    return 1;
 }
 
 static dico_result_t
@@ -129,7 +129,7 @@ struct dico_database_module DICO_EXPORT(sample, module) = {
     DICO_CAPA_NONE,
     mod_init,
     mod_init_db,
-    mod_free_db
+    mod_free_db,
     mod_open,
     mod_close,
     mod_info,

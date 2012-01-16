@@ -439,6 +439,7 @@ AC_CONFIG_FILES([Makefile
 		 modules/pcre/Makefile
 		 modules/ldap/Makefile
 		 modules/word/Makefile
+		 modules/gcide/Makefile
 		 dico/Makefile
 		 tests/Makefile
 		 doc/Makefile

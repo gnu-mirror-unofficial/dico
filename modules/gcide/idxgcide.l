@@ -51,10 +51,10 @@ struct gcide_idx_page *idx_page;
 unsigned long char_position;
 unsigned long file_position;
 unsigned long headword_position;
-char *headword;
 struct obstack stk;
 struct obstack refstk;
 int retstate;
+char *endtag;
 
 #define YY_USER_ACTION do {						\
     char_position = file_position;                                      \
@@ -134,8 +134,11 @@ flush_headwords()
 {
     char *p;
     unsigned long size;
+    char *headword;
 
-    if (!headword)
+    obstack_1grow(&stk, 0);
+    headword = obstack_finish(&stk);
+    if (!headword[0])
 	return;
     size = char_position - headword_position;
     for (p = headword; *p; p += strlen(p) + 1) {
@@ -160,6 +163,9 @@ flush_headwords()
     headword_position = char_position;
 }
 
+#define BEGIN_HEADWORD(end) \
+    { retstate = YYSTATE; endtag = (end); BEGIN(HEADWORD); }
+
 %}
 %option case-insensitive 8bit
 
@@ -172,33 +178,31 @@ XD [0-9a-f]
   "<!"       { BEGIN(HTMLCOM); }
   "<p><hw>"|"<hw>"  {
 	       flush_headwords();
-               retstate = YYSTATE;
-	       BEGIN(HEADWORD);
+	       BEGIN_HEADWORD("hw");
              }
   "<p><mhw>"|"<mhw>" {
 	       flush_headwords();
                BEGIN(MHW);
              }
+  "<asp>"     BEGIN_HEADWORD("asp");
+  "<altname>" BEGIN_HEADWORD("altname");
   .          ;
   \n         ;
 }
 <MHW>{
-  "<hw>"     { retstate = YYSTATE; BEGIN(HEADWORD); };
-  "</mhw>"   { BEGIN(INITIAL);
-               obstack_1grow(&stk, 0);
-	       headword = obstack_finish(&stk);
-             }
+  "<hw>"     BEGIN_HEADWORD("hw");
+  "</mhw>"   { BEGIN(INITIAL); }
   .          ;
   \n         ;
 }
 <HEADWORD>{
-  "</hw>"    { BEGIN(retstate);
-               obstack_1grow(&stk, 0);
-	       if (retstate == INITIAL) {
-		   obstack_1grow(&stk, 0);
-		   headword = obstack_finish(&stk);
-	       }
-             }
+  "</"[a-z][a-z]*">" {
+      if (yyleng == strlen(endtag) + 3 &&
+	  memcmp(endtag, yytext + 2, yyleng-3) == 0) {
+	  BEGIN(retstate);
+	  obstack_1grow(&stk, 0);
+      }
+  }
   ["*`]      ;
   "\\'"{XD}{XD} {
                  char const *s = gcide_escape_to_utf8(yytext+2);
@@ -359,9 +363,8 @@ main(int argc, char **argv)
     yywrap();
     while (yylex ())
         ;
-    if (headword)
-	flush_headwords();
 
+    flush_headwords();
     flush_refs();
 
     fseek(idxfile, 0, SEEK_SET);

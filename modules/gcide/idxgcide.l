@@ -39,6 +39,7 @@ int dry_run_option;
 char *dictdir, *idxdir, *infile, *suf;
 char letters[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 int i;
+unsigned line;
 
 char *idxname;
 FILE *idxfile;
@@ -187,13 +188,13 @@ XD [0-9a-f]
   "<asp>"     BEGIN_HEADWORD("asp");
   "<altname>" BEGIN_HEADWORD("altname");
   .          ;
-  \n         ;
+  \n         line++;
 }
 <MHW>{
   "<hw>"     BEGIN_HEADWORD("hw");
   "</mhw>"   { BEGIN(INITIAL); }
   .          ;
-  \n         ;
+  \n         line++;
 }
 <HEADWORD>{
   "</"[a-z][a-z]*">" {
@@ -203,6 +204,18 @@ XD [0-9a-f]
 	  obstack_1grow(&stk, 0);
       }
   }
+  "<"[a-z?][a-z0-9]*"/" {
+      char const *s = gcide_entity_to_utf8(yytext);
+      if (s) {
+	  if (strcmp(s, "<?>") == 0)
+	      dico_log(L_WARN, 0, _("%s:%u: unknown or illegible character in a headword"),
+		       infile, line);
+          obstack_grow(&stk, s, strlen(s));
+      } else
+	  dico_log(L_WARN, 0, _("%s:%u: unrecognized entity: %s"),
+		   infile, line, yytext);
+  }
+  "<"[a-z][^/>]*">"   /* ignore tag */;
   ["*`]      ;
   "\\'"{XD}{XD} {
                  char const *s = gcide_escape_to_utf8(yytext+2);
@@ -210,21 +223,25 @@ XD [0-9a-f]
                  if (s) {
                      int len = strlen(s);
                      obstack_grow(&stk, s, len);
-                 } else
+                 } else {
                      obstack_grow(&stk, yytext, yyleng);
+	             dico_log(L_WARN, 0,
+                              _("%s:%u: unknown character sequence %s"),
+		              infile, line, yytext);
+                 }
              }
   .          obstack_grow(&stk, yytext, yyleng);
-  \n         ;
+  \n         line++;
 }
 <COMMENT>{
   "-->"      { BEGIN(INITIAL); }
   .          ;
-  \n         ;
+  \n         line++;
 }
 <HTMLCOM>{
   "!>"       { BEGIN(INITIAL); }
   .          ;
-  \n         ;
+  \n         line++;
 }
 %%
 
@@ -244,6 +261,7 @@ yywrap()
          exit(EX_NOINPUT);
     }
     file_position = char_position = 0;
+    line = 1;
     return 0;
 }
 

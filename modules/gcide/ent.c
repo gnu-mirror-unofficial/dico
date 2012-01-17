@@ -30,30 +30,31 @@ static struct gcide_entity gcide_entity[] = {
     { "Cced",   "Ç" },
     { "uum",    "ü" },
     { "eacute", "é" },
-    { "acirc",  "â" },
+    { "acir",   "â" },
     { "aum",    "ä" },
     { "agrave", "à" },
     { "aring",  "å" },
     { "ccedil", "ç" },
-    { "ecirc",  "ê" },
+    { "cced",   "ç" },
+    { "ecir",   "ê" },
     { "euml",   "ë" },
     { "egrave", "è" },
     { "iuml",   "ï" },
-    { "icirc",  "î" },
+    { "icir",   "î" },
     { "igrave", "ì" },
     { "Auml",   "Ä" },
     { "Aring",  "Å" },
     { "Eacute", "È" },
-    { "aelig",  "æ" },
-    { "AElig",  "Æ" },
-    { "ocirc",  "ô" },
-    { "ouml",   "ö" },
+    { "ae",     "æ" },
+    { "AE",     "Æ" },
+    { "ocir",   "ô" },
+    { "oum",    "ö" },
     { "ograve", "ò" },
-    { "ucirc",  "û" },
+    { "ucir",   "û" },
     { "ugrave", "ù" },
     { "yuml",   "ÿ" },
-    { "Ouml",   "Ö" },
-    { "Uuml",   "Ü" },
+    { "Oum",    "Ö" },
+    { "Uum",    "Ü" },
     { "pound",  "£", },
     { "aacute", "á" },
     { "iacute", "í" },
@@ -224,7 +225,7 @@ gcide_entity_to_utf8(const char *str)
 
     if (str[0] == '<') {
 	str++;
-	len = strcspn(str, "/") - 1;
+	len = strcspn(str, "/");
     } else
 	len = strlen(str);
 

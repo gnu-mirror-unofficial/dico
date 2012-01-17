@@ -483,6 +483,8 @@ void *
 dico_list_pop(struct dico_list *list)
 {
     void *p;
+    if (!list->head)
+	return NULL;
     dico_list_remove(list, list->head->data, &p);
     return p;
 }

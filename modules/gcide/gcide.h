@@ -14,6 +14,8 @@
    You should have received a copy of the GNU General Public License
    along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include "dico.h"
+
 /* GCIDE-specific definitions. */
 #define GCIDE_IDX_MAGIC "GCIDEIDX"
 #define GCIDE_IDX_MAGIC_LEN (sizeof(GCIDE_IDX_MAGIC)-1)
@@ -78,6 +80,40 @@ int gcide_iterator_flags(gcide_iterator_t itr);
 extern char gcide_webchr[256][4];
 char const *gcide_escape_to_utf8(const char *esc);
 char const *gcide_entity_to_utf8(const char *str);
+
+enum gcide_content_type
+{
+    gcide_content_unspecified,
+    gcide_content_text,
+    gcide_content_taglist
+};
+
+struct gcide_tag {
+    size_t tag_parmc;
+    char **tag_parmv;
+#define tag_name tag_parmv[0]
+    enum gcide_content_type tag_type;
+    struct gcide_tag *tag_next;
+    union {
+	char *text;
+	size_t textpos;
+	dico_list_t taglist;
+    } tag_v;
+};
+
+struct gcide_parse_tree {
+    char *textspace;
+    size_t textsize;
+    struct gcide_tag *root;
+};
+
+extern int gcide_markup_debug;
+
+struct gcide_parse_tree *gcide_markup_parse(char const *text, size_t len);
+void gcide_parse_tree_free(struct gcide_parse_tree *tp);
+int gcide_parse_tree_inorder(struct gcide_parse_tree *tp,
+			     int (*fun)(int, struct gcide_tag *, void *),
+			     void *data);
 
 
 

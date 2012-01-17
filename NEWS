@@ -1,4 +1,4 @@
-GNU Dico NEWS -- history of user-visible changes. 2012-01-10
+GNU Dico NEWS -- history of user-visible changes. 2012-01-17
 Copyright (C) 2008-2010, 2012 Sergey Poznyakoff
 See the end of file for copying conditions.
 
@@ -6,6 +6,27 @@ Please send Dico bug reports to <bug-dico@gnu.org.ua>
 
 
 Version 2.1.90 (Git)
+
+* Configuration changes
+
+** load-module
+
+The load-module form allows for a statement use, e.g.:
+
+  load-module word;
+
+The above statement is equivalent to:  
+
+  load-module word {
+     command "word";
+  }
+
+Either string or list of strings is accepted as argument.  The latter
+is useful for loading several modules with a single statement, e.g.:
+
+  load-module (stratall,substr,word);
+  
+* New module: gcide
 
 
 Version 2.1, 2010-07-07

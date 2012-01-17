@@ -7,29 +7,18 @@ access-log-format "%h %l %u %t \"%r\" %>s %b \"\" \"%C\"";
 
 prepend-load-path ("<BUILDDIR>/modules/stratall",
                    "<BUILDDIR>/modules/substr",
+                   "<BUILDDIR>/modules/word",
                    "<BUILDDIR>/modules/outline",
                    "<BUILDDIR>/modules/guile",
 		   "<BUILDDIR>/modules/python");
 
-load-module stratall {
-        command "stratall";
-}
-
-load-module substr {
-        command "substr";
-}
-
-load-module outline {
-	command "outline";
-}
+load-module (stratall,substr,word);
 
 load-module guile {
 	command "guile debug";
 }
 
-load-module python {
-	command "python";
-}
+load-module python;
 
 database {
 	name "devdict";

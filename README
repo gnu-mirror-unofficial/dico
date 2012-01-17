@@ -55,6 +55,13 @@ The package comes with the following modules:
 - dictorg
   This module handles databases in dict.org format.
 
+- outline
+  Support for databases in Emacs outline format. This module is
+  designed mostly as an example and for testing purposes.
+
+- gcide
+  GNUCIDE dictionary support.
+  
 - guile
   An abstract layer for interfacing with database modules written in
   Guile.
@@ -63,10 +70,6 @@ The package comes with the following modules:
   An abstract layer for interfacing with database modules written in
   Python.
  
-- outline
-  Support for databases in Emacs outline format. This module is
-  designed mostly as an example and for testing purposes.
-
 - substr
   Defines the "substr" lookup strategy, which matches a supplied
   substring anywhere in the headword.
@@ -75,6 +78,13 @@ The package comes with the following modules:
   Defines a special lookup strategy, named "all", which returns all
   headwords from the database.
 
+- word
+  Defines the "word" lookup strategy, which matches a supplied
+  word anywhere in the headword.
+
+- pcre
+  Defines a strategy for using Perl-compatible regular expressions.
+  
 - ldap
   Brings support for LDAP user databases.
   

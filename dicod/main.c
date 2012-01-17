@@ -495,6 +495,22 @@ cmp_modinst_ident(const void *item, void *data)
     return strcmp(inst->ident, (const char*)data);
 }
 
+static int
+_add_simple_module(grecs_value_t *value, void *unused_data)
+{
+    if (value->type != GRECS_TYPE_STRING) 
+	grecs_error(&value->locus, 0, _("tag must be a string"));
+    else if (value->v.string == NULL) 
+	grecs_error(&value->locus, 0, _("missing tag"));
+    else {
+	dicod_module_instance_t *inst = xzalloc(sizeof(*inst));
+	inst->ident = xstrdup(value->v.string);
+	inst->command = xstrdup(value->v.string);
+	xdico_list_append(modinst_list, inst);
+    }
+    return 0;
+}
+
 int
 load_module_cb(enum grecs_callback_command cmd,
 	       grecs_locus_t *locus,
@@ -504,6 +520,11 @@ load_module_cb(enum grecs_callback_command cmd,
 {
     dicod_module_instance_t *inst;
     void **pdata = cb_data;
+    
+    if (!modinst_list) {
+	modinst_list = xdico_list_create();
+	dico_list_set_comparator(modinst_list, cmp_modinst_ident);
+    }
     
     switch (cmd) {
     case grecs_callback_section_begin:
@@ -518,17 +539,24 @@ load_module_cb(enum grecs_callback_command cmd,
 	break;
 	
     case grecs_callback_section_end:
-	if (!modinst_list) {
-	    modinst_list = xdico_list_create();
-	    dico_list_set_comparator(modinst_list, cmp_modinst_ident);
-	}
 	inst = *pdata;
 	xdico_list_append(modinst_list, inst);
 	*pdata = NULL;
 	break;
 	
     case grecs_callback_set_value:
-	grecs_error(locus, 0, _("invalid use of block statement"));
+	switch (value->type) {
+	case GRECS_TYPE_STRING:
+	    _add_simple_module(value, NULL);
+	    break;
+
+	case GRECS_TYPE_LIST:
+	    grecs_list_iterate(value->v.list, _add_simple_module, NULL);
+	    break;
+
+	case GRECS_TYPE_ARRAY:
+	    grecs_error(locus, 0, _("too many arguments"));
+	}
     }
     return 0;
 }
@@ -1249,7 +1277,14 @@ struct grecs_keyword keywords[] = {
     { "database", NULL, N_("Define a dictionary database."),
       grecs_type_section, GRECS_DFLT, NULL, 0, set_database, NULL,
       kwd_database },
-    { "load-module", N_("name: string"), N_("Load a module instance."),
+    { "load-module",
+      N_("name: string"),
+      N_("Load a module instance.\n"
+	 "If <name> is the same as <arg> in command, it can be simplified as:\n"
+	 "  load-module <name: string>;\n"
+	 "Furthermore, several simplified forms can be combined into one\n"
+	 "by using a list of names as its argument, as in:\n"
+	 "  load-module (stratall,word);\n"),
       grecs_type_section, GRECS_DFLT, NULL, 0, load_module_cb, NULL,
       kwd_load_module },
     { "acl", N_("name: string"), N_("Define an ACL."),

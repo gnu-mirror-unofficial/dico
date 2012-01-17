@@ -1240,9 +1240,7 @@ To configure @acronym{LDAP} user database, you need first to load
 the @samp{ldap} module (@pxref{Ldap, LDAP module}):
 
 @smallexample
-load-module ldap @{
-        command "ldap";
-@}
+load-module ldap;
 @end smallexample
 
 The @acronym{URL} of the database is:
@@ -1910,6 +1908,33 @@ the module @file{dictorg} and passes its initialization function a
 single argument, @samp{dbdir=/var/dicodb}.  If the module name is not
 an absolute file name, as in this example, the loadable module will be
 searched in the module load path.
+
+@cindex load-module, shortcut form
+A common case is when a module does not require initialization
+arguments and its command string is the same as its name, e.g.:
+
+@smallexample
+@group
+load-module outline @{
+  command "outline";
+@}
+@end group
+@end smallexample
+
+The configuration syntax provides a shortcut for such usage:
+
+@smallexample
+load-module outline;
+@end smallexample
+
+If @code{load-module} is used this way, it accepts a single string or
+a list of strings as its argument.  In the latter case, it loads all
+modules listed in the argument.  For example:
+
+@smallexample
+load-module (stratall,substr,word);
+@end smallexample
+
 
 @cindex module load path
 @cindex load path
@@ -2641,9 +2666,7 @@ directive, as shown in the example below:
 
 @smallexample
 @group
-load-module outline @{
-   command "outline";
-@}
+load-module outline;
 
 database @{
    name "devdict";
@@ -3475,9 +3498,7 @@ database, no matter what the actual search word is.
   To load this strategy, use the following configuration statement:
 
 @smallexample
-load-module stratall @{
-        command "stratall";
-@}
+load-module stratall;
 @end smallexample
 
   Using this strategy on a full set of databases (@samp{MATCH * all
@@ -3511,9 +3532,7 @@ S: eng-deu "format"
   The loading procedure expects no arguments:
 
 @smallexample
-load-module substr @{
-        command "substr";
-@}
+load-module substr;
 @end smallexample
 
 @node Word
@@ -3533,9 +3552,7 @@ S: 250 Command complete [d/m/c = 0/1/995 0.003r 0.004u 0.000s]
   The loading procedure expects no arguments:
 
 @smallexample
-load-module word @{
-        command "word";
-@}
+load-module word;
 @end smallexample  
 
 @node Ldap
@@ -3547,9 +3564,7 @@ databases.  It is available if Dico has been configured with
 The module needs no additional configuration parameters:
 
 @smallexample
-load-module ldap @{
-        command "ldap";
-@}
+load-module ldap;
 @end smallexample
 
 @xref{ldap}, for a description of its use.

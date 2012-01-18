@@ -81,6 +81,9 @@ extern char gcide_webchr[256][4];
 char const *gcide_escape_to_utf8(const char *esc);
 char const *gcide_entity_to_utf8(const char *str);
 
+const char *gcide_grk_to_utf8(const char *input, size_t *prd);
+
+
 enum gcide_content_type
 {
     gcide_content_unspecified,

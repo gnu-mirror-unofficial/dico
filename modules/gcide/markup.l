@@ -209,12 +209,16 @@ append_tag(struct gcide_tag *tag)
     dico_list_append(current_tag->tag_v.taglist, tag);
 }
 
+static int in_grk;
+
 static void
 push_tag(struct gcide_tag *tag)
 {
     append_tag(tag);
     dico_list_push(tagstk, current_tag);
     current_tag = tag;
+    in_grk =
+	current_tag->tag_parmc && strcmp(current_tag->tag_name, "grk") == 0;
 }
 
 static void
@@ -226,6 +230,9 @@ pop_tag(const char *tagstr, size_t taglen)
 	if (tagstr[len] == ' ' || tagstr[len] == '\t')
 	    break;
 
+    if (len == 3 && memcmp(tagstr, "grk", 3) == 0)
+	in_grk = 0;
+    
     if (strlen(current_tag->tag_name) == len &&
 	memcmp(current_tag->tag_name, tagstr, len) == 0)
 	current_tag = dico_list_pop(tagstk);
@@ -277,7 +284,7 @@ XD [0-9a-f]
 	  dico_log(L_WARN, 0, _("%u: unrecognized entity: %s"),
 		   token_beg, yytext);
   }
-  [""*`]      ;
+  [""*`]   { if (in_grk)  text_add_chr(yytext[0]); }
   "\\'"{XD}{XD} {
       char const *s = gcide_escape_to_utf8(yytext+2);
 		 
@@ -362,7 +369,46 @@ tag_fixup(void *item, void *data)
     }
     return 0;
 }
+
+static size_t
+greek_translit(size_t n)
+{
+    while (textspace[n]) {
+	size_t rd;
+	const char *greek = gcide_grk_to_utf8(textspace + n, &rd);
 
+	if (greek) {
+	    text_add_str(greek, strlen(greek));
+	    n += rd;
+	} else {
+	    text_add_chr(textspace[n]);
+	    n++;
+	}
+    }
+    return text_segment_finish();
+}
+
+static int
+early_fixup(void *item, void *data)
+{
+    struct gcide_tag *tag = item;
+    int translate = data ? *(int*)data : 0;
+    
+    switch (tag->tag_type) {
+    case gcide_content_unspecified:
+	break;
+    case gcide_content_text:
+	if (translate)
+	    tag->tag_v.textpos = greek_translit(tag->tag_v.textpos);
+	break;
+    case gcide_content_taglist:
+	translate = (tag->tag_parmc && strcmp(tag->tag_name, "grk") == 0);
+	dico_list_iterate(tag->tag_v.taglist, early_fixup, &translate);
+	break;
+    }
+    return 0;
+}
+
 struct gcide_parse_tree *
 gcide_markup_parse(char const *text, size_t len)
 {
@@ -397,6 +443,16 @@ gcide_markup_parse(char const *text, size_t len)
     while (yylex ())
         ;
 
+    /* Append trailing text segment, if any */
+    if (text_segment_length()) {
+	struct gcide_tag *tag = calloc(1, sizeof(*tag));
+	if (!tag)
+	    memerr("gcide lexer");
+	tag->tag_type = gcide_content_text;
+	tag->tag_v.textpos = text_segment_finish();
+	append_tag(tag);
+    }
+    
     while (p = dico_list_pop(tagstk))
 	/* FIXME: Report unclosed tag */
 	current_tag = p;
@@ -407,6 +463,8 @@ gcide_markup_parse(char const *text, size_t len)
 	free(textspace);
 	return NULL;
     }
+    
+    early_fixup(current_tag, NULL);
     
     tp = malloc(sizeof(*tp));
     if (!tp)

@@ -499,11 +499,64 @@ gcide_result_ref(struct gcide_result *res)
     return ref;
 }
 
+#define GOF_AS 0x01
+
+struct output_closure {
+    dico_stream_t stream;
+    int flags;
+    int rc;
+};
+
+static int
+print_text(int end, struct gcide_tag *tag, void *data)
+{
+    struct output_closure *clos = data;
+    
+    switch (tag->tag_type) {
+    case gcide_content_unspecified:
+	break;
+    case gcide_content_text:
+	if (clos->flags & GOF_AS) {
+	    char *s = tag->tag_v.text;
+
+	    if (strncmp(s, "as", 2) == 0 &&
+		(isspace(s[3]) || ispunct(s[3]))) {
+		
+		dico_stream_write(clos->stream, s, 3);
+		for (s += 3; *s && isspace(*s); s++)
+		    dico_stream_write(clos->stream, s, 1);
+		dico_stream_write(clos->stream, "“", 1);
+		dico_stream_write(clos->stream, s, strlen(s));
+	    } else
+		dico_stream_write(clos->stream, "“", 1);
+	} else
+	    dico_stream_write(clos->stream, tag->tag_v.text,
+			      strlen(tag->tag_v.text));
+	break;
+    case gcide_content_taglist:
+	if (tag->tag_parmc) {
+	    clos->flags &= ~GOF_AS;
+	    if (end) {
+		if (strcmp(tag->tag_name, "as") == 0)
+		    dico_stream_write(clos->stream, "”", 1);
+	    } else {
+		if (strcmp(tag->tag_name, "sn") == 0)
+		    dico_stream_write(clos->stream, "\n", 1);
+		else if (strcmp(tag->tag_name, "as") == 0)
+		    clos->flags |= GOF_AS;
+	    }
+	}
+    }
+    return 0;
+}
+
+
 static int
 output_def(dico_stream_t str, struct gcide_db *db, struct gcide_ref *ref)
 {
-    char buf[512];
-    size_t size;
+    char *buffer;
+    struct gcide_parse_tree *tree;
+    int rc;
     
     if (db->file_letter != ref->ref_letter) {
 	int rc;
@@ -544,21 +597,35 @@ output_def(dico_stream_t str, struct gcide_db *db, struct gcide_ref *ref)
 	return 1;
     }
 
-    for (size = ref->ref_size; size; ) {
-	int rc;
-	size_t rdsize = size;
-	if (rdsize > sizeof(buf))
-	    rdsize = sizeof(buf);
-	if ((rc = dico_stream_read(db->file_stream, buf, rdsize, NULL))) {
-	    dico_log(L_ERR, 0, _("%s: read error: %s"),
-		     db->tmpl_name,
-		     dico_stream_strerror(db->file_stream, rc));
-	    break;
-	}
-	dico_stream_write(str, buf, rdsize);
-	size -= rdsize;
+    buffer = malloc(ref->ref_size);
+    if (!buffer) {
+	dico_log(L_ERR, errno, "output_def");
+	return 1;
     }
-    return 0;
+    
+    if ((rc = dico_stream_read(db->file_stream, buffer, ref->ref_size, NULL))) {
+	dico_log(L_ERR, 0, _("%s: read error: %s"),
+		 db->tmpl_name,
+		 dico_stream_strerror(db->file_stream, rc));
+	free(buffer);
+	return 1;
+    }
+
+    tree = gcide_markup_parse(buffer, ref->ref_size);
+    if (!tree)
+	rc = dico_stream_write(str, buffer, ref->ref_size);
+    else {
+	struct output_closure clos;
+	clos.stream = str;
+	clos.flags = 0;
+	clos.rc = 0;
+	gcide_parse_tree_inorder(tree, print_text, &clos);
+	gcide_parse_tree_free(tree);
+	rc = clos.rc;
+	
+    }
+    free(buffer);
+    return rc;
 }
 
 static int

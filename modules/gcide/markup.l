@@ -298,6 +298,7 @@ XD [0-9a-f]
 		   token_beg, yytext);
       }
   }
+  \r    ;
   .     text_add_str(yytext, yyleng);
   \n    text_add_str(yytext, yyleng);
 }

@@ -27,7 +27,13 @@ gcide_la_LIBADD = ./libgcide.la ../../lib/libdico.la $(LIBICONV)
 gcide_la_LDFLAGS = -module -avoid-version -no-undefined
 
 libexec_PROGRAMS=idxgcide 
-idxgcide_SOURCES=idxgcide.l 
+idxgcide_SOURCES=idxgcide.l idxgcide-cli.h
+idxgcide_LDADD = \
+ ../../gnu/libgnu.a\
+ ./libgcide.la\
+ ../../lib/libxdico.a\
+ ../../lib/libdico.la\
+ $(LIBICONV)
 
 noinst_HEADERS = gcide.h
 
@@ -35,4 +41,11 @@ AM_LFLAGS=-d
 AM_CPPFLAGS=-DLIBEXECDIR=\"${libexecdir}\"
 
 INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include @GRECS_INCLUDES@
-idxgcide_LDADD = ./libgcide.la ../../lib/libdico.la $(LIBICONV)
+
+SUFFIXES=.opt .h
+
+.opt.h:
+	$(AM_V_GEN)m4 -s $(top_srcdir)/@GRECS_SUBDIR@/build-aux/getopt.m4 $< > $@
+
+BUILT_SOURCES=idxgcide-cli.h
+EXTRA_DIST=idxgcide-cli.opt

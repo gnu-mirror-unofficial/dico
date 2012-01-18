@@ -61,6 +61,15 @@ modules/outline/outline.c
 
 modules/ldap/ldap.c
 
+modules/gcide/ent.c
+modules/gcide/gcide.c
+modules/gcide/grk.c
+modules/gcide/idx.c
+modules/gcide/idxgcide-cli.opt
+modules/gcide/idxgcide.l
+modules/gcide/markup.l
+modules/gcide/webchr.c
+
 grecs/src/format.c
 grecs/src/grecs-gram.y
 grecs/src/grecs-lex.l

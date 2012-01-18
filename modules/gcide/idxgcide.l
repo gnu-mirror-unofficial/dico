@@ -168,7 +168,8 @@ flush_headwords()
     { retstate = YYSTATE; endtag = (end); BEGIN(HEADWORD); }
 
 %}
-%option case-insensitive 8bit
+%option 8bit
+%option nounput
 
 %x HEADWORD MHW COMMENT HTMLCOM
 
@@ -208,7 +209,8 @@ XD [0-9a-f]
       char const *s = gcide_entity_to_utf8(yytext);
       if (s) {
 	  if (strcmp(s, "<?>") == 0)
-	      dico_log(L_WARN, 0, _("%s:%u: unknown or illegible character in a headword"),
+	      dico_log(L_WARN, 0,
+		       _("%s:%u: unknown or illegible character in a headword"),
 		       infile, line);
           obstack_grow(&stk, s, strlen(s));
       } else
@@ -216,7 +218,7 @@ XD [0-9a-f]
 		   infile, line, yytext);
   }
   "<"[a-z][^/>]*">"   /* ignore tag */;
-  ["*`]      ;
+  [""*`]      ;
   "\\'"{XD}{XD} {
                  char const *s = gcide_escape_to_utf8(yytext+2);
 
@@ -265,67 +267,20 @@ yywrap()
     return 0;
 }
 
-static void
-usage(FILE *fp)
-{
-    fprintf(fp, _("usage: %s [-dvhn] [-p SIZE] DICTDIR [IDXDIR]\n"), dico_program_name);
-}
+#include "idxgcide-cli.h"
 
 /* Usage: idxgcide DICTDIR [IDXDIR] */
 int
 main(int argc, char **argv)
 {
-    int c;
-    char *p;
+    int index;
     
-    //FIXME: appi18n_init();
+    appi18n_init();
     dico_set_program_name(argv[0]);
-    
     yy_flex_debug = 0;
-    while ((c = getopt(argc, argv, "dvhnp:s")) != -1) {
-	switch (c) {
-	case 'd':
-	    yy_flex_debug = 1;
-	    break;
-	case 'h':
-	    usage(stdout);
-	    exit(0);
-	case 'n':
-	    dry_run_option = 1;
-	    verbose_option++;
-	case 'v':
-	    verbose_option++;
-	    break;
-	case 'p':
-	    idx_header.ihdr_pagesize = strtoul(optarg, &p, 10);
-	    switch (*p) {
-	    case 0:
-		break;
-	    case 'g':
-	    case 'G':
-		idx_header.ihdr_pagesize <<= 10;
-	    case 'm':
-	    case 'M':
-		idx_header.ihdr_pagesize <<= 10;
-	    case 'k':
-	    case 'K':
-		idx_header.ihdr_pagesize <<= 10;
-		break;
-	    default:
-		dico_log(L_ERR, 0, _("not a valid size: %s"), optarg);
-		exit(EX_USAGE);
-	    }
-	    break;
 
-	case 's':
-	    /* FIXME: reserved for syslog */
-	    break;
-	default:
-	    dico_log(L_ERR, 0, _("unrecognized option"));
-	    exit(EX_USAGE);
-	}
-    }
-
+    get_options(argc, argv, &index);
+    
     idx_page = malloc(idx_header.ihdr_pagesize);
     if (!idx_page) {
 	dico_log(L_ERR, 0, _("not enough memory"));
@@ -341,11 +296,11 @@ main(int argc, char **argv)
     }
     idx_header.ihdr_maxpageref--;
     
-    argc -= optind;
-    argv += optind;
+    argc -= index;
+    argv += index;
     
     if (argc < 1 || argc > 2) {
-        usage(stderr);
+        dico_log(L_ERR, 0, _("bad number of arguments"));
         exit(EX_USAGE);
     }
     dictdir = argv[0];

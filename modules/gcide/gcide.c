@@ -511,6 +511,7 @@ static int
 print_text(int end, struct gcide_tag *tag, void *data)
 {
     struct output_closure *clos = data;
+    static char *quote[2] = { "“", "”" };
     
     switch (tag->tag_type) {
     case gcide_content_unspecified:
@@ -518,17 +519,17 @@ print_text(int end, struct gcide_tag *tag, void *data)
     case gcide_content_text:
 	if (clos->flags & GOF_AS) {
 	    char *s = tag->tag_v.text;
-
+	    
 	    if (strncmp(s, "as", 2) == 0 &&
 		(isspace(s[3]) || ispunct(s[3]))) {
 		
 		dico_stream_write(clos->stream, s, 3);
 		for (s += 3; *s && isspace(*s); s++)
 		    dico_stream_write(clos->stream, s, 1);
-		dico_stream_write(clos->stream, "“", 1);
+		dico_stream_write(clos->stream, quote[0], strlen(quote[0]));
 		dico_stream_write(clos->stream, s, strlen(s));
 	    } else
-		dico_stream_write(clos->stream, "“", 1);
+		dico_stream_write(clos->stream, quote[0], strlen(quote[0]));
 	} else
 	    dico_stream_write(clos->stream, tag->tag_v.text,
 			      strlen(tag->tag_v.text));
@@ -538,7 +539,7 @@ print_text(int end, struct gcide_tag *tag, void *data)
 	    clos->flags &= ~GOF_AS;
 	    if (end) {
 		if (strcmp(tag->tag_name, "as") == 0)
-		    dico_stream_write(clos->stream, "”", 1);
+		    dico_stream_write(clos->stream, quote[1], strlen(quote[1]));
 	    } else {
 		if (strcmp(tag->tag_name, "sn") == 0)
 		    dico_stream_write(clos->stream, "\n", 1);

@@ -440,6 +440,7 @@ AC_CONFIG_FILES([Makefile
 		 modules/ldap/Makefile
 		 modules/word/Makefile
 		 modules/gcide/Makefile
+		 modules/gcide/tests/Makefile
 		 dico/Makefile
 		 tests/Makefile
 		 doc/Makefile

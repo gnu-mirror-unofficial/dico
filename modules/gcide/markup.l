@@ -30,25 +30,25 @@
 #include "gcide.h"
 #include "wordsplit.h"
 
-#define yy_create_buffer      markup_yy_create_buffer       
-#define yy_delete_buffer      markup_yy_delete_buffer       
-#define yy_flex_debug	      markup_yy_flex_debug          
-#define yy_init_buffer	      markup_yy_init_buffer         
-#define yy_flush_buffer	      markup_yy_flush_buffer        
-#define yy_load_buffer_state  markup_yy_load_buffer_state   
-#define yy_switch_to_buffer   markup_yy_switch_to_buffer    
-#define yyin		      markup_yyin                   
-#define yyleng		      markup_yyleng                 
-#define yylex		      markup_yylex                  
-#define yylineno	      markup_yylineno               
-#define yyout		      markup_yyout                  
-#define yyrestart	      markup_yyrestart              
-#define yytext		      markup_yytext                 
-#define yywrap		      markup_yywrap                 
-#define yyalloc		      markup_yyalloc                
-#define yyrealloc	      markup_yyrealloc              
-#define yyfree                markup_yyfree
-#define yyunput               markup_yyunput    
+#define yy_create_buffer      gcide_markup_yy_create_buffer       
+#define yy_delete_buffer      gcide_markup_yy_delete_buffer       
+#define yy_flex_debug	      gcide_markup_yy_flex_debug          
+#define yy_init_buffer	      gcide_markup_yy_init_buffer         
+#define yy_flush_buffer	      gcide_markup_yy_flush_buffer        
+#define yy_load_buffer_state  gcide_markup_yy_load_buffer_state   
+#define yy_switch_to_buffer   gcide_markup_yy_switch_to_buffer    
+#define yyin		      gcide_markup_yyin                   
+#define yyleng		      gcide_markup_yyleng                 
+#define yylex		      gcide_markup_yylex                  
+#define yylineno	      gcide_markup_yylineno               
+#define yyout		      gcide_markup_yyout                  
+#define yyrestart	      gcide_markup_yyrestart              
+#define yytext		      gcide_markup_yytext                 
+#define yywrap		      gcide_markup_yywrap                 
+#define yyalloc		      gcide_markup_yyalloc                
+#define yyrealloc	      gcide_markup_yyrealloc              
+#define yyfree                gcide_markup_yyfree
+#define yyunput               gcide_markup_yyunput    
 }
 %{
 
@@ -242,6 +242,7 @@ pop_tag(const char *tagstr, size_t taglen)
 %}
 
 %option 8bit
+%option nounput
 
 %x COMMENT
 
@@ -301,7 +302,7 @@ XD [0-9a-f]
   \n    text_add_str(yytext, yyleng);
 }
 <COMMENT>{
-  [^<][^ \t]*">" {
+  [^< \t][^ \t>]*">" {
       if (strcmp(yytext, endtag) == 0)
 	  BEGIN(retstate);
   }
@@ -440,6 +441,7 @@ gcide_markup_parse(char const *text, size_t len)
 	memerr("gcide_markup_parse");
 
     yy_flex_debug = gcide_markup_debug;
+    BEGIN(INITIAL);
     while (yylex ())
         ;
 

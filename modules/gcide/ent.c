@@ -130,6 +130,7 @@ static struct gcide_entity gcide_entity[] = {
     { "chi",      "χ" }, 
     { "psi",      "ψ" }, 
     { "omega",    "ω" },
+    { "digamma",  "ϝ" },
     { "ALPHA",    "Α" },
     { "BETA",     "Β" },	
     { "GAMMA",    "Γ" },	

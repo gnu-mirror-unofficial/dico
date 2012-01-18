@@ -19,6 +19,7 @@
 #endif
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include "gcide.h"
 
 static void
@@ -32,7 +33,9 @@ print_greek(const char *arg)
 	    printf("%s", greek);
 	    arg += rd;
 	} else {
-	    printf("<!>%c", *arg);
+	    if (!(*arg == '-' || isspace(*arg)))
+		printf("<!>");
+	    putchar(*arg);
 	    arg++;
 	}
     }

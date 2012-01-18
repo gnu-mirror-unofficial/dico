@@ -63,13 +63,17 @@ open_sockets()
     srvcount = dico_list_count(listen_addr);
     if (srvcount == 0) {
 	/* Provide defaults */
-	struct sockaddr_in *sp = xmalloc(sizeof(*sp));
+	struct sockaddr_in *s_in = xmalloc(sizeof(*s_in));
+
+	sp = xmalloc(sizeof(*sp));
+	sp->sa = (struct sockaddr*) s_in;
+	sp->len = sizeof(*s_in);
 	
 	if (!listen_addr)
 	    listen_addr = xdico_list_create();
-	sp->sin_family = AF_INET;
-	sp->sin_addr.s_addr = INADDR_ANY;
-	sp->sin_port = htons(DICO_DICT_PORT);
+	s_in->sin_family = AF_INET;
+	s_in->sin_addr.s_addr = INADDR_ANY;
+	s_in->sin_port = htons(DICO_DICT_PORT);
 	xdico_list_append(listen_addr, sp);
 	srvcount = 1;
     }

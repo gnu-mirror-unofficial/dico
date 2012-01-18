@@ -45,6 +45,7 @@ dicod_SOURCES=\
 
 noinst_HEADERS=dicod.h
 
+incdir=$(pkgdatadir)/$(VERSION)/include
 AM_CFLAGS = \
  -DSYSCONFIG=\"$(sysconfdir)\"\
  -DLOCALSTATEDIR=\"$(localstatedir)\"\

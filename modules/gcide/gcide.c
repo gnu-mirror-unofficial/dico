@@ -640,7 +640,7 @@ gcide_output_result(dico_result_t rp, size_t n, dico_stream_t str)
 	return 1;
     switch (res->type) {
     case result_match:
-	dico_stream_write(str, ref->ref_headword, ref->ref_hwbytelen);
+	dico_stream_write(str, ref->ref_headword, ref->ref_hwbytelen - 1);
 	break;
 
     case result_define:

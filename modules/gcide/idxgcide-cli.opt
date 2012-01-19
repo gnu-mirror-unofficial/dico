@@ -31,7 +31,7 @@ OPTION(dry-run, n,,
        [<dry run: do nothing, but print everything>])
 BEGIN
    dry_run_option = 1;
-   verbose_option += 2;
+   verbose_option++;
 END
 
 OPTION(verbose, v,,

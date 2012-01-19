@@ -1627,6 +1627,9 @@ main(int argc, char **argv)
 	      EX_CONFIG : 0);
 
     config_parse();
+    /* Logging settings may have been changed by the config, so setup
+       it again. */
+    dicod_log_setup();
 
     apply_conf_override(&ovr);
     

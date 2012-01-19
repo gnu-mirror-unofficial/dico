@@ -2582,21 +2582,16 @@ are binary loadable files, installed in
 (@pxref{Handlers, command}) and per-database (@pxref{Databases,
 handler}) basis.
 
-  GNU Dico version @value{VERSION} is shipped with the following modules:
-@samp{Outline}, @samp{Dictorg}, @samp{Guile}, and @samp{Python}.  The
-@samp{Outline} module handles databases written in Emacs Outline
-format.  It is useful for small databases.  The @samp{Dictorg} module
-handles databases in format designed by @cite{@acronym{DICT} development
-group}.  The most existing free databases are written in this format.
-Finally, the @samp{Guile} and @samp{Python} allow you to use
-arbitrary database modules written in Scheme and Python programming
-languages, correspondingly.
-
+  GNU Dico version @value{VERSION} is shipped with a set of modules
+which provide support for various dictionary formats, search
+strategies and extension languages.
+  
   In this chapter we will describe these modules in detail.
 
 @menu
 * Outline::
 * Dictorg::
+* GCIDE::
 * Guile::
 * Python::
 * Stratall::
@@ -2774,7 +2769,142 @@ that particular database.  Forms prefixed with @samp{no} may be used
 to disable the corresponding option for this database.  For example, 
 @code{notrim-ws} cancels the effect of @code{trim-ws} used when
 initializing the module instance.
- 
+
+@node GCIDE
+@section @command{gcide}
+  The @command{gcide} module provides support for GNU Collaborative
+International Dictionary of English. This dictionary can be downloaded
+from @uref{http://download.gnu.org.ua/pub/gcide/gcide-0.46.zip}. It
+consists of a set of files named from @file{CIDE.A} through
+@file{CIDE.Z}, written using a special markup.
+
+  The @command{gcide} module is started via the following statement:
+
+@smallexample
+load-module gcide;
+@end smallexample
+
+@kwindex dbdir
+  The database is initialized as follows:
+
+@smallexample
+@group
+database @{
+    handler "gcide dbdir=@var{directory} [@var{options}]";
+    ...
+@}
+@end group
+@end smallexample
+
+The @samp{dbdir} parameter supplies the name of the directory where
+database files are located.  Upon startup, the module scans the
+dictionary files and creates an index file, named @file{CIDE.IDX}, if
+it does not already exist.  The file is created using a subsidiary
+program @command{idxgcide}, described below.  Unless specified
+otherwise, this file is created in the same directory where the
+database files are located, therefore the directory must be writable
+for the user @command{dicod} is started as.
+
+Other options are:
+
+@deffn {gcide parameter} idxdir directory
+Specifies alternate directory for @file{CIDE.IDX} index file.
+@end deffn
+
+@deffn {gcide parameter} index-cache-size size
+Sets the maximum number of index pages the module keeps in memory
+simultaneously.  The default value is 16.  The pages are cached using
+the @dfn{last recently used} algorithm.  Raising this value will make
+dictionary accesses faster at the expense of using more memory.
+@end deffn
+
+@deffn {gcide parameter} index-program progname
+Specifies the full name of the index program.  Usually this option is
+not needed, because the module is configured to start the
+@command{idxgcide} utility from its default location.  It is mostly
+useful for the module developers.
+@end deffn
+
+  Here's a full example of a @samp{gcide} as used in
+@indicateurl{dico.gnu.org.ua}:
+
+@smallexample
+@group
+load-module gcide;
+
+database @{
+    name "gcide";
+    handler "gcide dbdir=/var/dictdb/gcide";
+    languages-from "en";
+    languages-to "en";
+    description "Collaborative International Dictionary of English";
+        info <<EOT
+The dictionary was derived from the
+         Webster's Revised Unabridged Dictionary
+                 Version published 1913
+               by the  C. & G. Merriam Co.
+                   Springfield, Mass.
+                 Under the direction of
+                Noah Porter, D.D., LL.D.
+@dots{}
+EOT;
+@}
+@end group
+@end smallexample
+
+  The dots represent further content of the description which is too
+big and irrelevant to copy it here.
+
+@menu
+* idxgcide::
+@end menu
+
+@node idxgcide
+@subsection @command{idxgcide}
+  The @command{idxgcide} utility is used by the @command{gcide} module
+to index the GCIDE dictionary.  You can start it manually to reindex
+the database.  It can be needed, for example, if you install a
+modified version of the dictionary.  It is installed in
+@dfn{libexecdir}.  The usage is:
+
+@smallexample
+idxgcide [@var{options}] @var{dbdir} [@var{idxdir}]
+@end smallexample
+
+The only mandatory argument @var{dbdir} specifies the name of the
+directory where the GCIDE dictionary is installed.  The optional
+@var{idxdir} argument specifies the directory for the index file, if
+it differs from @var{dbdir}.  Accepted @var{options} are:
+
+@table @option
+@item --debug
+@itemx -d
+Debug lexical analyzer.
+
+@item --dry-run
+@itemx -n
+Do nothing, but print everything.  This implies @option{--verbose}.
+
+@item --verbose
+@itemx -v
+Increase output verbosity.  This option can be specified multiple
+times, each occurrence increasing the verbosity level by one.  By
+default the utility outputs only errors and warnings.  At level one,
+it prints additionally the names of source files that are being
+indexed at the moment.  At level two (the maximum level implemented at
+the moment) it outputs each headword being indexed along with its
+location.  This is useful only for debugging.
+
+@item --page-size=@var{number}
+@itemx -p @var{number}
+Defines the size of index file page.  The @var{number} specifies the
+size in bytes.  The following case-insensitive suffixes can be used:
+@samp{k} (@samp{kb}), @samp{m} (@samp{mb}) or @samp{g} (@samp{gb}),
+specifying kilobytes, megabytes and gigabytes (ouch!) correspondingly.
+
+The default page size is 10240 bytes.
+@end table
+
 @node Guile
 @section The @command{guile} module.
 @cindex Guile

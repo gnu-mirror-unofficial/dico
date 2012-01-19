@@ -6,9 +6,9 @@ stroke count.
 
 The shell has the following layout:
 
- ╭────────────╮  ╭─────────╮  ╭────────────╮  ╭──╮ ╭──╮ 
- │ RAD_STROKES │   │ RADICAL │   │ NUM_STROKES │  │次│ │前│
- ╰────────────╯  ╰─────────╯  ╰────────────╯  ╰──╯ ╰──╯
+ ╭─────────────╮  ╭─────────╮  ╭─────────────╮  ╭──╮ ╭──╮ 
+ │ RAD_STROKES │  │ RADICAL │  │ NUM_STROKES │  │次 │ │前│
+ ╰─────────────╯  ╰─────────╯  ╰─────────────╯  ╰──╯ ╰──╯
 
 To search for a kanji:
 

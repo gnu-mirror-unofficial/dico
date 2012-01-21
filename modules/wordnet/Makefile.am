@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 1998-2000, 2008, 2010, 2012 Sergey Poznyakoff
+# Copyright (C) 2012 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,31 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-if GUILE_COND
-  GUILE_DIR=guile
-endif
-if PYTHON_COND
-  PYTHON_DIR=python
-endif
-if LDAP_COND
-  LDAP_DIR=ldap
-endif
-if PCRE_COND
-  PCRE_DIR=pcre
-endif
-if WORDNET_COND
-  WORDNET_DIR=wordnet
-endif
-SUBDIRS = \
- outline\
- dict.org\
- gcide\
- $(GUILE_DIR)\
- $(PYTHON_DIR)\
- stratall\
- substr\
- $(LDAP_DIR)\
- $(PCRE_DIR)\
- $(WORDNET_DIR)\
- word
-EXTRA_DIST = template.c template.py template.scm
+moddir=@DICO_MODDIR@
+
+mod_LTLIBRARIES=wordnet.la
+
+wordnet_la_SOURCES = wordnet.c
+wordnet_la_LIBADD = ../../lib/libdico.la @WORDNET_LOPT@ -lWN
+AM_LDFLAGS = -module -avoid-version -no-undefined
+INCLUDES = \
+ -I$(top_srcdir)/include\
+ -I$(top_builddir)/include\
+ @WORDNET_IOPT@\
+ @GRECS_INCLUDES@

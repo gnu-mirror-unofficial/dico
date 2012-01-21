@@ -383,7 +383,41 @@ if test $status_ldap != no; then
  	        status_ldap=no])
 fi
 AM_CONDITIONAL([LDAP_COND], [test $status_ldap = yes])
-    
+
+# WordNet
+AC_SUBST(WORDNET_LOPT)
+AC_SUBST(WORDNET_IOPT)
+AC_ARG_WITH([wordnet],
+            AC_HELP_STRING([--with-wordnet@<:@=DIR@:>@],
+                           [use wordnet]),
+            [
+case "${withval}" in
+  yes) status_wordnet=req ;;
+  no)  status_wordnet=no ;;
+  /*)  status_wordnet=req
+       WORDNET_LOPT=-L${withval}/lib
+       WORDNET_IOPT=-I${withval}/include;;
+  *)   AC_MSG_ERROR([argument for --with-wordnet must be an absoulute directory name]) ;;
+esac],[status_wordnet=maybe])
+
+if test $status_wordnet != no; then
+  save_LIBS=$LIBS
+  save_CPPFLAGS=$CPPFLAGS
+  LIBS="$LIBS $WORDNET_LOPT"
+  CPPFLAGS="$CPPFLAGS $WORDNET_IOPT"
+  AC_CHECK_HEADER([wn.h],
+      [AC_CHECK_LIB(WN, findtheinfo, status_wordnet=yes)])
+  case $status_wordnet in
+  req) AC_MSG_ERROR([required module wordnet cannot be built because of missing prerequisites]);;
+  maybe) status_wordnet=no;;
+  esac
+  AM_CONDITIONAL([WORDNET_COND],[test $status_wordnet = yes])
+  LIBS=$save_LIBS
+  CPPFLAGS=$save_CPPFLAGS
+fi
+
+
+# Imprimatur
 IMPRIMATUR_INIT
 
 AC_CONFIG_COMMANDS([status],[
@@ -400,6 +434,7 @@ Readline ........................ $status_readline
 Preprocessor .................... $dicopp
 
 Perl-compatible regexs .......... $status_pcre
+WordNet ......................... $status_wordnet
 
 Default server .................. $defserver
 Autologin file .................. $autologin_file
@@ -417,6 +452,7 @@ else
   dicopp="$DEFAULT_PREPROCESSOR"
 fi
 status_pcre=$status_pcre
+status_wordnet=$status_wordnet
 defserver="$DEFAULT_DICT_SERVER"
 autologin_file="$DEFAULT_AUTOLOGIN_FILE"
 ])
@@ -441,6 +477,7 @@ AC_CONFIG_FILES([Makefile
 		 modules/word/Makefile
 		 modules/gcide/Makefile
 		 modules/gcide/tests/Makefile
+		 modules/wordnet/Makefile
 		 dico/Makefile
 		 tests/Makefile
 		 doc/Makefile

@@ -545,12 +545,19 @@ _dico_list_insert_sorted(struct dico_list *list, void *data,
 
     if (!cmp)
 	cmp = cmp_ptr;
+
+    if (!list->head)
+	return _dico_list_append(list, data);
     
-    for (cur = list->head, i = 0; cur; cur = cur->next, i++)
-	if (cmp(cur->data, data) > 0)
+    for (cur = list->head, i = 0; cur; cur = cur->next, i++) {
+	int res = cmp(cur->data, data);
+	if (res > 0)
 	    break;
+	else if (res == 0 && list->flags)
+	    return EEXIST;
+    }
     
-    if (!cur->prev) {
+    if (cur && !cur->prev) {
 	rc = _dico_list_prepend(list, data);
     } else if (!cur) {
 	rc = _dico_list_append(list, data);

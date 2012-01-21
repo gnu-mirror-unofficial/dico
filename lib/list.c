@@ -271,10 +271,14 @@ dico_iterator_item(dico_iterator_t ip, size_t n)
     return dico_iterator_current(ip);
 }
 
-int
+static void _dico_list_remove_item(struct dico_list *list,
+				   struct list_entry *p,
+				   void **pptr);
+
+void
 dico_iterator_remove_current(dico_iterator_t ip, void **pptr)
 {
-    return _dico_list_remove(ip->list, ip->cur->data, NULL, pptr);
+    _dico_list_remove_item(ip->list, ip->cur, pptr);
 }
 
 void
@@ -424,27 +428,11 @@ dico_list_prepend(struct dico_list *list, void *data)
     return _dico_list_prepend(list, data);
 }
 
-int
-_dico_list_remove(struct dico_list *list, void *data, dico_list_comp_t cmp,
-		  void **pptr)
+static void
+_dico_list_remove_item(struct dico_list *list, struct list_entry *p,
+		       void **pptr)
 {
-    struct list_entry *p, *prev;
-
-    if (!list || !list->head) {
-	errno = ENOENT;
-	return 1;
-    }
-
-    if (!cmp)
-	cmp = cmp_ptr;
-    for (p = list->head; p; p = p->next)
-	if (cmp(p->data, data) == 0)
-	    break;
-    
-    if (!p) {
-	errno = ENOENT;
-	return 1;
-    }
+    struct list_entry *prev;
     
     _iterator_advance(list->itr, p);
     
@@ -463,9 +451,35 @@ _dico_list_remove(struct dico_list *list, void *data, dico_list_comp_t cmp,
     list->count--;
 
     if (pptr)
-	*pptr = data;
+	*pptr = p->data;
     else if (list->free_item)
-	list->free_item (data, list->free_data);
+	list->free_item (p->data, list->free_data);
+}
+
+int
+_dico_list_remove(struct dico_list *list, void *data, dico_list_comp_t cmp,
+		  void **pptr)
+{
+    struct list_entry *p;
+
+    if (!list || !list->head) {
+	errno = ENOENT;
+	return 1;
+    }
+
+    if (!cmp)
+	cmp = cmp_ptr;
+    for (p = list->head; p; p = p->next)
+	if (cmp(p->data, data) == 0)
+	    break;
+    
+    if (!p) {
+	errno = ENOENT;
+	return 1;
+    }
+
+    _dico_list_remove_item(list, p, pptr);
+
     return 0;
 }
 
@@ -485,7 +499,7 @@ dico_list_pop(struct dico_list *list)
     void *p;
     if (!list->head)
 	return NULL;
-    dico_list_remove(list, list->head->data, &p);
+    _dico_list_remove_item(list, list->head, NULL);
     return p;
 }
 

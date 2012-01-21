@@ -29,8 +29,9 @@
 struct wndb {
     char *dbname;
     int pos;
-    int search;
     int sense;
+    int optc;
+    struct wn_option **optv;
 };
 
 static int
@@ -41,10 +42,11 @@ _dico_display_message(char *msg)
 }
 
 static int
-wn_free_db (dico_handle_t hp)
+wn_free_db(dico_handle_t hp)
 {
     struct wndb *wndb = (struct wndb *)hp;
     free(wndb->dbname);
+    free(wndb->optv);
     free(wndb);
     return 0;
 }
@@ -107,74 +109,67 @@ static int pos_trans[] = {
     ADJSAT
 };
 
-static const char *search_choice[] = {
-    "overview",
-    "antptr",      
-    "hyperptr",    
-    "hypoptr",     
-    "entailptr",   
-    "simptr",      
-    "ismemberptr", 
-    "isstuffptr",  
-    "ispartptr",   
-    "hasmemberptr",
-    "hasstuffptr", 
-    "haspartptr",  
-    "meronym",
-    "holonym",
-    "causeto",
-    "pplptr",
-    "seealsoptr",
-    "pertptr",
-    "attribute",
-    "verbgroup",
-    "derivation",      
-    "classification",  
-    "class",           
-    "syns",
-    "freq",            
-    "frames",          
-    "coords",
-    "relatives",
-    "hmeronym",
-    "hholonym",
-    "wngrep",
-    NULL
+struct wn_option {
+    char *option;	 /* user's search request */
+    int search;		 /* search to pass findtheinfo() */
+    int posmask;	 /* for what parts of speech it is defined */
+    char *label;	 /* text for search header message */
 };
-    
-static int search_trans[] = {
-    OVERVIEW,
-    ANTPTR,      
-    HYPERPTR,    
-    HYPOPTR,     
-    ENTAILPTR,   
-    SIMPTR,      
-    ISMEMBERPTR, 
-    ISSTUFFPTR,  
-    ISPARTPTR,   
-    HASMEMBERPTR,
-    HASSTUFFPTR, 
-    HASPARTPTR,  
-    MERONYM,
-    HOLONYM,
-    CAUSETO,
-    PPLPTR,
-    SEEALSOPTR,
-    PERTPTR,
-    ATTRIBUTE,
-    VERBGROUP,
-    DERIVATION,      
-    CLASSIFICATION,  
-    CLASS,           
-    SYNS,
-    FREQ,            
-    FRAMES,          
-    COORDS,
-    RELATIVES,
-    HMERONYM,
-    HHOLONYM,
-    WNGREP
+
+#define POS_MASK(n) bit(n)
+#define PM_ALL 0xffffffff
+
+static struct wn_option wn_optlist[] = {
+    { "overview", OVERVIEW, PM_ALL, "Overview" },
+
+    { "similar",   SIMPTR,    POS_MASK(ADJ), "Similarity" },
+    { "synonym",   SYNS,      POS_MASK(ADV), "Synonyms" }, 
+    { "antonym",   ANTPTR,    PM_ALL, "Antonyms" },
+    { "pertainym", PERTPTR,   POS_MASK(ADV)|POS_MASK(ADV), "Pertainyms" },
+    { "attribute", ATTRIBUTE, POS_MASK(NOUN)|POS_MASK(ADJ), "Attributes" },
+    { "domain",    CLASSIFICATION,  PM_ALL, "Domain" },
+    { "class",     CLASS,     PM_ALL,  "Domain Terms" },
+    { "familarity", FREQ,     PM_ALL,  "Familiarity" },
+    { "hypernym",   HYPERPTR, POS_MASK(NOUN)|POS_MASK(VERB),
+      "Synonyms/Hypernyms (Ordered by Estimated Frequency)" },
+    { "hypernym/rec", -HYPERPTR, POS_MASK(NOUN)|POS_MASK(VERB),
+      "Synonyms/Hypernyms (Ordered by Estimated Frequency)" },
+    { "hyponym",     HYPOPTR,  POS_MASK(NOUN)|POS_MASK(VERB), "Hyponyms" },
+    { "hyponym/rec", -HYPOPTR, POS_MASK(NOUN), "Hyponyms" },
+    { "holonym",     HOLONYM,  POS_MASK(NOUN), "Holonyms" },
+    { "holonym/rec", -HHOLONYM, POS_MASK(NOUN), "Holonyms" },
+    { "holonym/part", ISPARTPTR, POS_MASK(NOUN), "Part Holonyms" },
+    { "holonym/member", ISMEMBERPTR, POS_MASK(NOUN), "Member Holonyms" },
+    { "holonym/substance", ISSTUFFPTR, POS_MASK(NOUN), "Substance Holonyms" },
+    { "meronym",      MERONYM, POS_MASK(NOUN), "Meronyms" },
+    { "meronym/rec", -HMERONYM, POS_MASK(NOUN), "Meronyms" },
+    { "meronym/substance", HASSTUFFPTR, POS_MASK(NOUN), "Substance Meronyms" },
+    { "meronym/part", HASPARTPTR, POS_MASK(NOUN), "Part Meronyms" },
+    { "meronym/member", HASMEMBERPTR, POS_MASK(NOUN), "Member Meronyms" },
+    { "derivation", DERIVATION, POS_MASK(NOUN)|POS_MASK(VERB),
+      "Derived Forms" },
+    { "relatives", RELATIVES, POS_MASK(VERB),
+      "Synonyms (Grouped by Similarity of Meaning)" },
+    { "coords", COORDS, POS_MASK(NOUN)|POS_MASK(VERB),
+      "Coordinate Terms (sisters)" },
+    { "entail", ENTAILPTR, POS_MASK(VERB), "Entailment" },
+    { "cause",  CAUSETO, POS_MASK(VERB), "\'Cause To\'" },
+    { "frames", FRAMES, POS_MASK(VERB), "Sample Sentences" },
+
+    { NULL }
 };
+
+static struct wn_option *
+find_option(const char *text)
+{
+    struct wn_option *p;
+
+    for (p = wn_optlist; p->option; p++) {
+	if (strcmp(p->option, text) == 0)
+	    return p;
+    }
+    return NULL;
+}
 
 static dico_handle_t
 wn_init_db(const char *dbname, int argc, char **argv)
@@ -182,21 +177,48 @@ wn_init_db(const char *dbname, int argc, char **argv)
     struct wndb *wndb;
     long sense = ALLSENSES;
     int pos = 0;
-    int search = 0;
-
+    int idx, i;
+    struct wn_option **optv;
+    int optc;
+    
     struct dico_option init_db_option[] = {
 	{ DICO_OPTSTR(pos), dico_opt_enum, &pos, { enumstr: pos_choice } },
-	{ DICO_OPTSTR(search), dico_opt_enum, &search, { enumstr: search_choice } },
 	{ DICO_OPTSTR(sense), dico_opt_long, &sense },
 	{ NULL }
     };
 
-    if (dico_parseopt(init_db_option, argc, argv, 0, NULL))
+    if (dico_parseopt(init_db_option, argc, argv, DICO_PARSEOPT_PERMUTE,
+		      &idx))
 	return NULL;
+
+    argc -= idx;
+    argv += idx;
+
+    if (argc == 0) {
+	static char *defopt[] = { "overview" };
+	argc = 1;
+	argv = defopt;
+    }
+    
+    optc = argc;
+    optv = calloc(optc, sizeof(optv[0]));
+    if (!optv) {
+	dico_log(L_ERR, ENOMEM, "wn_init_db");
+	return NULL;
+    }
+    
+    for (i = 0; i < optc; i++) {
+	if ((optv[i] = find_option(argv[i])) == NULL) {
+	    dico_log(L_ERR, 0, _("wordnet: unknown option %s"), argv[i]);
+	    free(optv);
+	    return NULL;
+	}
+    }
     
     wndb = calloc(1, sizeof(*wndb));
     if (!wndb) {
 	dico_log(L_ERR, ENOMEM, "wn_init_db");
+	free(optv);
 	return NULL;
     }
     wndb->dbname = strdup(dbname);
@@ -206,8 +228,9 @@ wn_init_db(const char *dbname, int argc, char **argv)
 	return NULL;
     }
     wndb->pos = pos_trans[pos];
-    wndb->search = search_trans[search];
     wndb->sense = sense;
+    wndb->optc = optc;
+    wndb->optv = optv;
 
     return (dico_handle_t)wndb;
 }
@@ -301,24 +324,36 @@ enum result_type {
     result_define
 };
 
+struct defn {
+    SynsetPtr synset;
+    int root_entry;
+    int pos;
+    int opt;
+};
+
 struct result {
     enum result_type type;
     size_t compare_count;
-    union {
-	struct {
-	    dico_list_t list;
-	    dico_iterator_t itr;
-	} match;
-	struct {
-	    SynsetPtr synset[NUMPARTS];
-	    SynsetPtr curss;
-	    int i;
-	} defn;
-    } v;
+    struct wndb *wndb;
+    dico_list_t list;
+    dico_iterator_t itr;
+    /* For definitions only: */
+    char *searchword;
+    dico_stream_t stream;
 };
 
 static int
-free_string (void *item, void *data)
+free_defn(void *item, void *data)
+{
+    struct defn *dp = item;
+    if (dp->root_entry)
+	free_syns(dp->synset);
+    free(dp);
+    return 0;
+}
+
+static int
+free_string(void *item, void *data)
 {
     free(item);
     return 0;
@@ -331,7 +366,7 @@ compare_words(const void *a, void *b)
 }
 
 static struct result *
-wn_create_match_result()
+wn_create_match_result(struct wndb *wndb)
 {
     struct result *res;
 
@@ -341,15 +376,16 @@ wn_create_match_result()
 	return NULL;
     }
     res->type = result_match;
-    res->v.match.list = dico_list_create();
+    res->wndb = wndb;
+    res->list = dico_list_create();
     if (!res) {
 	dico_log(L_ERR, ENOMEM, "wn_create_match_result");
 	free(res);
 	return NULL;
     }
-    dico_list_set_free_item(res->v.match.list, free_string, NULL);
-    dico_list_set_comparator(res->v.match.list, compare_words);
-    dico_list_set_flags(res->v.match.list, DICO_LIST_COMPARE_TAIL);
+    dico_list_set_free_item(res->list, free_string, NULL);
+    dico_list_set_comparator(res->list, compare_words);
+    dico_list_set_flags(res->list, DICO_LIST_COMPARE_TAIL);
     return res;
 }
 
@@ -363,7 +399,7 @@ wn_match_result_add(struct result *res, const char *hw)
 	dico_log(L_ERR, ENOMEM, "wn_result_add_key");
 	return -1;
     }
-    rc = dico_list_insert_sorted(res->v.match.list, s);
+    rc = dico_list_insert_sorted(res->list, s);
     if (rc) {
 	free(s);
 	if (rc != EEXIST) {
@@ -439,11 +475,39 @@ lineback(FILE *fp, struct wordbuf *wb)
     return 0;
 }
 
+static int
+wn_is_defined(struct wndb *wndb, char *searchword)
+{
+    int i, j;
+    unsigned int search;
+    
+    for (i = 1; i <= NUMPARTS; i++) {
+	if ((search = is_defined(searchword, i)) != 0) {
+	    for (j = 0; j < wndb->optc; j++) {
+		int n;
+
+		if (!(POS_MASK(i) & wndb->optv[j]->posmask))
+		    continue;
+
+		n = wndb->optv[j]->search;
+		if (n < 0)
+		    n = -n;
+		if (bit(n) & search)
+		    return 1;
+	    }
+	}
+    }
+    return 0;
+}
+
 static void
-wn_foreach_db(int dbn, struct dico_key *key, struct result *res)
+wn_foreach_db(struct wndb *wndb, int dbn, char *searchword,
+	      struct dico_key *key, struct result *res)
 {
     FILE *fp = indexfps[dbn];
     struct wordbuf wb = INIT_WORDBUF;
+    dico_iterator_t itr;
+    char *word;
     
     fseek(fp, 0, SEEK_SET);
     for (skipheader(fp); getword(fp, &wb) == 0; skipeol(fp)) {
@@ -454,31 +518,51 @@ wn_foreach_db(int dbn, struct dico_key *key, struct result *res)
 	}
     }
     free(wb.word);
+
+    itr = dico_list_iterator(res->list);
+    for (word = dico_iterator_first(itr); word;
+	 word = dico_iterator_next(itr)) {
+	if (!wn_is_defined(wndb, word))
+	    dico_iterator_remove_current(itr, NULL);
+    }
+    dico_iterator_destroy(&itr);
 }
 
 static struct result *
 wn_foreach(struct wndb *wndb, const dico_strategy_t strat, const char *word)
 {
-    struct result *res = wn_create_match_result();
+    struct result *res = wn_create_match_result(wndb);
     struct dico_key key;
+    char *searchword;
 
-    if (dico_key_init(&key, strat, word)) {
-	dico_log(L_ERR, 0, _("wn_foreach: key initialization failed"));
+    searchword = strdup(word);
+    strtolower(strsubst(searchword, ' ', '_'));
+
+    if (!searchword) {
+	dico_log(L_ERR, ENOMEM, "wn_foreach");
 	wn_free_result((dico_result_t) res);
 	return NULL;
     }
-
+	       
+    if (dico_key_init(&key, strat, word)) {
+	dico_log(L_ERR, 0, _("wn_foreach: key initialization failed"));
+	wn_free_result((dico_result_t) res);
+	free(searchword);
+	return NULL;
+    }
+	       
     if (wndb->pos == ALL_POS) {
 	int i;
 
 	for (i = 1; i <= NUMPARTS; i++)
-	    wn_foreach_db(i, &key, res);
+	    wn_foreach_db(wndb, i, searchword, &key, res);
     } else
-	wn_foreach_db(wndb->pos, &key, res);
+	wn_foreach_db(wndb, wndb->pos, searchword, &key, res);
     
     dico_key_deinit(&key);
+    free(searchword);
     
-    if (dico_list_count(res->v.match.list) == 0) {
+    if (dico_list_count(res->list) == 0) {
 	wn_free_result((dico_result_t) res);
 	return NULL;
     }
@@ -528,14 +612,11 @@ static struct result *
 wn_exact_match(struct wndb *db, const char *hw)
 {
     struct result *res;
-    int i, d;
 
-    for (i = 1; (d = is_defined((char*)hw, i)) == 0 && i <= NUMPARTS; i++);
-
-    if (!d)
-	return 0;
-    res = wn_create_match_result();
-    dico_list_append(res->v.match.list, strdup(hw));
+    if (!wn_is_defined(db, hw))
+	return NULL;
+    res = wn_create_match_result(db);
+    dico_list_append(res->list, strdup(hw));
     return res;
 }
 
@@ -559,7 +640,7 @@ wn_prefix_match(struct wndb *db, const char *hw)
     struct prefix pfx;
     struct wordbuf wb = INIT_WORDBUF;
     
-    res = wn_create_match_result();
+    res = wn_create_match_result(db);
     if (!res)
 	return NULL;
     pfx.str = hw;
@@ -580,7 +661,7 @@ wn_prefix_match(struct wndb *db, const char *hw)
 	}
     }
     free(wb.word);
-    if (dico_list_count(res->v.match.list) == 0) {
+    if (dico_list_count(res->list) == 0) {
 	wn_free_result((dico_result_t) res);
 	return NULL;
     }
@@ -617,6 +698,34 @@ wn_register_strategies(void)
 	dico_strategy_add(&stratdef[i].strat);
 }
 
+#define ISSPACE(c) ((c) == ' ' || (c) == '\t')
+
+static char *
+nornmalize_search_word(const char *word)
+{
+    char *copy = NULL;
+    char *p;
+    const char *q;
+
+    copy = malloc(strlen(word) + 1);
+    if (!copy) {
+	dico_log(L_ERR, ENOMEM, "nornmalize_search_word");
+	return NULL;
+    }
+    for (p = copy, q = word; *q; ) {
+	if (ISSPACE(*q)) {
+	    *p++ = '_';
+	    do
+		q++;
+	    while (*q && ISSPACE(*q));
+	} else
+	    *p++ = *q++;
+    }
+    *p = 0;
+    strtolower(copy);
+    return copy;
+}
+
 static dico_result_t
 wn_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 {
@@ -632,7 +741,42 @@ wn_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
     return NULL;
 }
 
-#define ISSPACE(c) ((c) == ' ' || (c) == '\t')
+static int
+search_defns(struct wndb *wndb, int pos, struct result *res,
+	     const char *searchword)
+{
+    SynsetPtr sp;
+    int found = 0;
+    int i;
+    
+    for (i = 0; i < wndb->optc; i++) {
+	if (!(POS_MASK(pos) & wndb->optv[i]->posmask))
+	    continue;
+	sp = findtheinfo_ds((char*)searchword, pos, wndb->optv[i]->search,
+			    wndb->sense);
+	if (sp) {
+	    int re = 1;
+	    do {
+		struct defn *dp;
+	    
+		dp = malloc(sizeof(*dp));
+		if (!dp) {
+		    dico_log(L_ERR, ENOMEM, "wn_define");
+		    break;
+		}
+		dp->root_entry = re;
+		re = 0;
+		dp->synset = sp;
+		dp->opt = i;
+		dp->pos = pos;
+		dico_list_append(res->list, dp);
+		found++;
+	    } while (sp = sp->nextss);
+	}
+    }
+
+    return found;
+}
 
 static dico_result_t
 wn_define(dico_handle_t hp, const char *word)
@@ -641,7 +785,7 @@ wn_define(dico_handle_t hp, const char *word)
     struct result *res;
     int i;
     int found = 0;
-    char *copy = NULL;
+    char *copy;
     
     res = calloc(1, sizeof(*res));
     if (!res) {
@@ -649,46 +793,36 @@ wn_define(dico_handle_t hp, const char *word)
 	return NULL;
     }
 
-    if (word[strcspn(word, " \t")]) {
-	char *p, *q;
-	
-	copy = malloc(strlen(word) + 1);
-	if (!copy) {
-	    dico_log(L_ERR, ENOMEM, "wn_define");
-	    free(res);
-	    return NULL;
-	}
-	for (p = copy, q = word; *q; ) {
-	    if (ISSPACE(*q)) {
-		*p++ = '_';
-		do
-		    q++;
-		while (*q && ISSPACE(*q));
-	    } else
-		*p++ = *q++;
-	}
-	*p = 0;
-	word = copy;
-    }
-    
-    res->type = result_define;
-    if (wndb->pos == ALL_POS) {
-	for (i = 0; i < NUMPARTS; i++) {
-	    if (res->v.defn.synset[i] =
-		findtheinfo_ds((char*)word, i + 1, wndb->search, wndb->sense))
-		found++;
-	}
-    } else 
-	if (res->v.defn.synset[i] =
-	    findtheinfo_ds((char*)word, i + 1, wndb->search, wndb->sense))
-	    found++;
-
-    free(copy);
-    
-    if (!found) {
+    res->list = dico_list_create();
+    if (!res->list) {
+	dico_log(L_ERR, ENOMEM, "wn_define");
 	free(res);
 	return NULL;
     }
+    dico_list_set_free_item(res->list, free_defn, NULL);
+    
+    copy = nornmalize_search_word(word);
+    if (!copy) {
+	wn_free_result((dico_result_t) res);
+	return NULL;
+    }
+
+    res->wndb = wndb;
+    res->type = result_define;
+    if (wndb->pos == ALL_POS) {
+	for (i = 1; i <= NUMPARTS; i++)
+	    found += search_defns(wndb, i, res, copy);
+    } else
+	found = search_defns(wndb, wndb->pos, res, copy);
+
+    if (!found) {
+	free(copy);
+	wn_free_result((dico_result_t) res);
+	return NULL;
+    }
+    res->searchword = copy;
+    strsubst(copy, ' ', '_');
+
     return (dico_result_t)res;
 }
 
@@ -705,10 +839,13 @@ format_word(const char *word, dico_stream_t str)
     }
 }
 
-static void
-format_synset(SynsetPtr sp, dico_stream_t str)
+static int
+format_defn(struct defn *defn, struct result *res, dico_stream_t str)
 {
-    int i;
+    struct wndb *wndb = res->wndb;
+    SynsetPtr sp = defn->synset;
+    struct wn_option *opt = wndb->optv[defn->opt];
+    int i, n;
     
     /* Print words: */
     for (i = 0; i < sp->wcount; i++) {
@@ -725,34 +862,51 @@ format_synset(SynsetPtr sp, dico_stream_t str)
     /* Print definition */
     dico_stream_write(str, sp->defn, strlen(sp->defn));
     dico_stream_write(str, "\n", 1);
+
+    /* FIXME: stream_printf is needed! */
+    if (opt->search != OVERVIEW) {
+	dico_stream_write(str, opt->label, strlen(opt->label));
+	dico_stream_write(str, " of ", 4);
+	dico_stream_write(str, partnames[defn->pos],
+			  strlen(partnames[defn->pos]));
+	dico_stream_write(str, " ", 1);
+	dico_stream_write(str, res->searchword, strlen(res->searchword));
+	dico_stream_write(str, "\n\n", 2);
+    }
+    
+    n = 0;
+    for (sp = sp->ptrlist; sp; sp = sp->nextss) {
+	for (i = 0; i < sp->wcount; i++, n++) {
+	    if (n)
+		dico_stream_write(str, ", ", 2);
+	    format_word(sp->words[i], str);
+	}
+    }
+    if (n)
+	dico_stream_write(str, "\n", 1);
+
+    return 0;
 }
 
 int
-wn_output_result (dico_result_t rp, size_t n, dico_stream_t str)
+wn_output_result(dico_result_t rp, size_t n, dico_stream_t str)
 {
     struct result *res = (struct result *) rp;
-    char *word;
+    void *item;
     
+    if (!res->itr) {
+	res->itr = dico_list_iterator(res->list);
+	if (!res->itr)
+	    return 1;
+    }
+    item = dico_iterator_item(res->itr, n);
     switch (res->type) {
     case result_match:
-	if (!res->v.match.itr) {
-	    res->v.match.itr = dico_list_iterator(res->v.match.list);
-	    if (!res->v.match.itr)
-		return 1;
-	}
-	word = dico_iterator_item(res->v.match.itr, n);
-	dico_stream_write(str, word, strlen(word));
+	dico_stream_write(str, item, strlen((char*)item));
 	break;
 
     case result_define:
-	if (!res->v.defn.curss) {
-	    while (res->v.defn.curss == NULL && res->v.defn.i < NUMPARTS)
-		res->v.defn.curss = res->v.defn.synset[res->v.defn.i++];
-	    if (!res->v.defn.curss)
-		return 1;
-	}
-	format_synset(res->v.defn.curss, str);
-        res->v.defn.curss = res->v.defn.curss->nextss;
+	format_defn(item, res, str);
 	break;
 	    
     default:
@@ -765,23 +919,7 @@ static size_t
 wn_result_count (dico_result_t rp)
 {
     struct result *res = (struct result *) rp;
-    size_t count = 0;
-    int i;
-    
-    switch (res->type) {
-    case result_match:
-	count = dico_list_count(res->v.match.list);
-	break;
-
-    case result_define:
-	for (i = 0; i < NUMPARTS; i++) {
-	    SynsetPtr sp;
-	    for (sp = res->v.defn.synset[i]; sp; sp = sp->nextss)
-		count++;
-	}
-	break;
-    }
-    return count;
+    return dico_list_count(res->list);
 }
 
 static size_t
@@ -795,19 +933,10 @@ static void
 wn_free_result(dico_result_t rp)
 {
     struct result *res = (struct result *) rp;
-    int i;
     
-    switch (res->type) {
-    case result_match:
-	dico_list_destroy(&res->v.match.list);
-	dico_iterator_destroy(&res->v.match.itr);
-	break;
-
-    case result_define:
-	for (i = 0; i < NUMPARTS; i++) 
-	    if (res->v.defn.synset[i])
-		free_syns(res->v.defn.synset[i]);
-    }
+    dico_list_destroy(&res->list);
+    dico_iterator_destroy(&res->itr);
+    free(res->searchword);
     free(res);
 }
 

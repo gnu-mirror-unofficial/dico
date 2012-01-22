@@ -152,7 +152,85 @@ close_databases()
     }
     dico_iterator_destroy(&itr);
 }
+
+/* Default selectors for some commonly used methods. Modules should
+   override these. */
+int
+exact_sel(int cmd, dico_key_t key, const char *dict_word)
+{
+    switch (cmd) {
+    case DICO_SELECT_BEGIN:
+	break;
 
+    case DICO_SELECT_RUN:
+	return utf8_strcasecmp(key->word, (char*)dict_word) == 0;
+
+    case DICO_SELECT_END:
+	break;
+    }
+    return 0;
+}
+
+int
+prefix_sel(int cmd, dico_key_t key, const char *dict_word)
+{
+    size_t wordlen, keylen;
+    
+    switch (cmd) {
+    case DICO_SELECT_BEGIN:
+	key->call_data = (void*) utf8_strlen(key->word);
+	break;
+
+    case DICO_SELECT_RUN:
+	keylen = (size_t)key->call_data;
+	wordlen = utf8_strlen(dict_word);
+	return (wordlen >= keylen &&
+		utf8_strncasecmp((char*)dict_word, key->word, keylen) == 0);
+
+    case DICO_SELECT_END:
+	break;
+    }
+    return 0;
+}
+
+struct suffix {
+    size_t charlen;
+    size_t bytelen;
+};
+
+int
+suffix_sel(int cmd, dico_key_t key, const char *dict_word)
+{
+    size_t wordlen;
+    struct suffix *suf;
+    
+    switch (cmd) {
+    case DICO_SELECT_BEGIN:
+	suf = malloc(sizeof(*suf));
+	if (!suf) {
+	    dico_log(L_ERR, ENOMEM, "stdstrat_suffix");
+	    return -1;
+	}
+	suf->bytelen = utf8_strlen(key->word);
+	suf->charlen = strlen(key->word);
+	key->call_data = suf;
+	break;
+
+    case DICO_SELECT_RUN:
+	suf = (struct suffix*)key->call_data;
+	wordlen = strlen(dict_word);
+	return (wordlen >= suf->bytelen &&
+		utf8_strncasecmp((char*)dict_word + (wordlen - suf->bytelen),
+				 key->word, suf->bytelen) == 0);
+
+    case DICO_SELECT_END:
+	free(key->call_data);
+	break;
+    }
+    return 0;
+}
+
+/* Soundex selector */
 int
 soundex_sel(int cmd, dico_key_t key, const char *dict_word)
 {
@@ -181,8 +259,9 @@ void
 dicod_init_strategies()
 {
     static struct dico_strategy defstrat[] = {
-	{ "exact", "Match words exactly" },
-	{ "prefix", "Match word prefixes" },
+	{ "exact", "Match words exactly", exact_sel },
+	{ "prefix", "Match word prefixes", prefix_sel },
+	{ "suffix", "Match word suffixes", suffix_sel },
 	{ "soundex", "Match using SOUNDEX algorithm", soundex_sel, NULL },
     };
     int i;

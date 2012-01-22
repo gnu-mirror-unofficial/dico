@@ -629,15 +629,10 @@ outline_lang(dico_handle_t hp, dico_list_t list[2])
 
 
 dico_result_t
-outline_match0(dico_handle_t hp, const char *strat,
-	       const char *word)
+outline_match0(dico_handle_t hp, entry_match_t match, const char *word)
 {
     struct outline_file *file = (struct outline_file *) hp;
     struct result *res;
-    entry_match_t match = find_matcher(strat);
-
-    if (!match)
-	return NULL;
     
     compare_count = 0;
     res = malloc(sizeof(*res));
@@ -702,10 +697,12 @@ outline_match_all(dico_handle_t hp, dico_strategy_t strat, const char *word)
 dico_result_t
 outline_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 {
-    if (strat->sel) 
+    entry_match_t match = find_matcher(strat->name);
+    if (match)
+	return outline_match0(hp, match, word);
+    else if (strat->sel) 
 	return outline_match_all(hp, strat, word);
-    else
-	return outline_match0(hp, strat->name, word);
+    return NULL;
 }
 
 dico_result_t

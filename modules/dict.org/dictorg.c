@@ -779,13 +779,9 @@ mod_descr(dico_handle_t hp)
 
 
 static dico_result_t
-_match_simple(struct dictdb *db, const char *strat, const char *word)
+_match_simple(struct dictdb *db, entry_match_t match, const char *word)
 {
     struct result *res;
-    entry_match_t match = find_matcher(strat);
-
-    if (!match)
-	return NULL;
     
     res = malloc(sizeof(*res));
     if (!res)
@@ -854,14 +850,17 @@ static dico_result_t
 mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 {
     struct dictdb *db = (struct dictdb *) hp;
+    entry_match_t match;
 
     if (RESERVED_WORD(db, word))
 	return NULL;
-    
-    if (strat->sel) 
+
+    match = find_matcher(strat->name);
+    if (match)
+	return _match_simple(db, match, word);
+    else if (strat->sel) 
 	return _match_all(db, strat, word);
-    else
-	return _match_simple(db, strat->name, word);
+    return NULL;
 }
 
 static dico_result_t

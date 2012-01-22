@@ -155,7 +155,6 @@ static struct wn_option wn_optlist[] = {
     { "entail", ENTAILPTR, POS_MASK(VERB), "Entailment" },
     { "cause",  CAUSETO, POS_MASK(VERB), "\'Cause To\'" },
     { "frames", FRAMES, POS_MASK(VERB), "Sample Sentences" },
-
     { NULL }
 };
 
@@ -339,7 +338,6 @@ struct result {
     dico_iterator_t itr;
     /* For definitions only: */
     char *searchword;
-    dico_stream_t stream;
 };
 
 static int
@@ -730,14 +728,12 @@ static dico_result_t
 wn_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 {
     struct wndb *wndb = (struct wndb *)hp;
+    wn_matcher_t match = wn_find_matcher(strat->name);
 
-    if (strat->sel)
+    if (match)
+	return (dico_result_t) match(wndb, word);
+    else if (strat->sel)
 	return (dico_result_t) wn_foreach(wndb, strat, word);
-    else {
-	wn_matcher_t match = wn_find_matcher(strat->name);
-	if (match)
-	    return (dico_result_t) match(wndb, word);
-    }
     return NULL;
 }
 
@@ -863,28 +859,31 @@ format_defn(struct defn *defn, struct result *res, dico_stream_t str)
     dico_stream_write(str, sp->defn, strlen(sp->defn));
     dico_stream_write(str, "\n", 1);
 
-    /* FIXME: stream_printf is needed! */
-    if (opt->search != OVERVIEW) {
-	dico_stream_write(str, opt->label, strlen(opt->label));
-	dico_stream_write(str, " of ", 4);
-	dico_stream_write(str, partnames[defn->pos],
-			  strlen(partnames[defn->pos]));
-	dico_stream_write(str, " ", 1);
-	dico_stream_write(str, res->searchword, strlen(res->searchword));
-	dico_stream_write(str, "\n\n", 2);
+    if (sp->ptrlist) {
+	/* FIXME: stream_printf is needed! */
+	if (opt->search != OVERVIEW) {
+	    dico_stream_write(str, opt->label, strlen(opt->label));
+	    dico_stream_write(str, " of ", 4);
+	    dico_stream_write(str, partnames[defn->pos],
+			      strlen(partnames[defn->pos]));
+	    dico_stream_write(str, " ", 1);
+	    dico_stream_write(str, res->searchword, strlen(res->searchword));
+	    dico_stream_write(str, "\n\n", 2);
+	}
+    
+	n = 0;
+	for (sp = sp->ptrlist; sp; sp = sp->nextss) {
+	    for (i = 0; i < sp->wcount; i++, n++) {
+		if (n)
+		    dico_stream_write(str, ", ", 2);
+		format_word(sp->words[i], str);
+	    }
+	}
+	
+	if (n)
+	    dico_stream_write(str, "\n", 1);
     }
     
-    n = 0;
-    for (sp = sp->ptrlist; sp; sp = sp->nextss) {
-	for (i = 0; i < sp->wcount; i++, n++) {
-	    if (n)
-		dico_stream_write(str, ", ", 2);
-	    format_word(sp->words[i], str);
-	}
-    }
-    if (n)
-	dico_stream_write(str, "\n", 1);
-
     return 0;
 }
 

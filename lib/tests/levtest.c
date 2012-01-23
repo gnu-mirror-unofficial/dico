@@ -17,36 +17,35 @@
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
-#include <unistd.h>
-#include <getopt.h>
+#include <stdio.h>
+#include <string.h>
 #include <dico.h>
 
 int
 main(int argc, char **argv)
 {
-    int c;
     int flags = 0;
-    
-    while ((c = getopt(argc, argv, "dhn")) != EOF) {
-	switch (c) {
-	case 'd':
+
+    dico_set_program_name(argv[0]);
+
+    while (--argc) {
+	char *arg = *++argv;
+	if (strcmp(arg, "-d") == 0)
 	    flags |= DICO_LEV_DAMERAU;
-	    break;
-
-	case 'n':
+	else if (strcmp(arg, "-n") == 0)
 	    flags |= DICO_LEV_NORM;
-	    break;
-
-	case 'h':
-	    printf("Usage: %s [-dn] word word\n", argv[0]);
+	else if (strcmp(arg, "-h") == 0) {
+	    printf("Usage: %s [-dn] word word\n", dico_program_name);
 	    return 0;
-
-	default:
+	} else if (strcmp(arg, "--") == 0) {
+	    --argc;
+	    ++argv;
+	} else if (arg[0] == '-') {
+	    dico_log(L_ERR, 0, "unknown option '%s'", arg);
 	    return 1;
-	}
+	} else
+	    break;
     }
-    argc -= optind;
-    argv += optind;
     if (argc != 2) {
 	fprintf(stderr, "Usage: %s [-dn] word word\n", argv[0]);
 	return 1;

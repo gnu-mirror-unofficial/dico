@@ -456,7 +456,12 @@ status_wordnet=$status_wordnet
 defserver="$DEFAULT_DICT_SERVER"
 autologin_file="$DEFAULT_AUTOLOGIN_FILE"
 ])
-	
+
+# Tests
+AC_CONFIG_TESTDIR(lib/tests)
+AC_CONFIG_FILES(lib/tests/Makefile)
+AC_CONFIG_FILES(lib/tests/atlocal)
+
 AC_CONFIG_FILES([Makefile
                  include/Makefile
                  include/dico/Makefile

@@ -1780,15 +1780,15 @@ int
 utf8_strncasecmp(char *a, char *b, size_t maxlen)
 {
     int alen, blen;
-    char *aend = a + maxlen, *bend = b + maxlen;
+    unsigned asz = 0, bsz = 0;
 
-    for (; a < aend; a += alen, b += blen) {
+    while (asz < maxlen) {
 	unsigned wa, wb;
 
 	if (*a == 0)
 	    return (*b == 0) ? 0 : -1;
 
-	if (*b == 0 || b >= bend)
+	if (*b == 0)
 	    return 1;
 
 	alen = utf8_char_width(a);
@@ -1805,7 +1805,10 @@ utf8_strncasecmp(char *a, char *b, size_t maxlen)
 	    return -1;
 	if (wa > wb)
 	    return 1;
-
+	a += alen;
+	b += blen;
+	asz ++;
+	bsz ++;
     }
     return 0;
 }
@@ -1819,9 +1822,10 @@ utf8_wc_toupper(unsigned wc)
 }
 
 int
-utf8_toupper(char *s, size_t len)
+utf8_toupper(char *s)
 {
-    while (len > 0) {
+    size_t len = strlen(s);
+    while (*s) {
 	unsigned wc;
 	int rc = utf8_mbtowc(&wc, s, len);
 	if (rc <= 0)
@@ -1829,7 +1833,6 @@ utf8_toupper(char *s, size_t len)
 	if (rc != utf8_wctomb(s, utf8_wc_toupper(wc)))
 	    return 1;
 	s += rc;
-	len -= rc;
     }
     return 0;
 }
@@ -1842,9 +1845,10 @@ utf8_wc_tolower(unsigned wc)
 }
 
 int
-utf8_tolower(char *s, size_t len)
+utf8_tolower(char *s)
 {
-    while (len > 0) {
+    size_t len = strlen(s);
+    while (*s) {
 	unsigned wc;
 	int rc = utf8_mbtowc(&wc, s, len);
 	if (rc <= 0)
@@ -1852,7 +1856,6 @@ utf8_tolower(char *s, size_t len)
 	if (rc != utf8_wctomb(s, utf8_wc_tolower(wc)))
 	    return 1;
 	s += rc;
-	len -= rc;
     }
     return 0;
 }
@@ -1914,7 +1917,9 @@ utf8_wc_strncmp(const unsigned *a, const unsigned *b, size_t n)
     if (n == 0)
 	return 0;
     while (*a == *b) {
-	if (--n == 0 || *a == 0)
+	if (*a == 0)
+	    return -1;
+	if (--n == 0)
 	    return 0;
 	a++;
 	b++;
@@ -1954,7 +1959,7 @@ utf8_wc_strncasecmp(const unsigned *a, const unsigned *b, size_t n)
     if (n == 0)
 	return 0;
     while (*a) {
-	if (--n == 0 || *b == 0)
+	if (*b == 0)
 	    return 1;
 	if (*a != *b) {
 	    unsigned wa, wb;
@@ -1966,6 +1971,8 @@ utf8_wc_strncasecmp(const unsigned *a, const unsigned *b, size_t n)
 	    if (wa > wb)
 		return 1;
 	}
+	if (--n == 0)
+	    return 0;
 	a++;
 	b++;
     }
@@ -2094,7 +2101,7 @@ utf8_wc_strlower(unsigned *str)
 }
 
 int
-utf8_mbstr_to_wc(const char *str, unsigned **wptr, size_t * plen)
+utf8_mbstr_to_wc(const char *str, unsigned **wptr, size_t *plen)
 {
     ssize_t sc = strlen(str);
     size_t len, i;

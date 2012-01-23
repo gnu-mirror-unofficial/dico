@@ -45,9 +45,9 @@ int utf8_strcasecmp(char *a, char *b);
 int utf8_strncasecmp(char *a, char *b, size_t maxlen);
 
 unsigned utf8_wc_toupper (unsigned wc);
-int utf8_toupper (char *s, size_t len);
+int utf8_toupper (char *s);
 unsigned utf8_wc_tolower (unsigned wc);
-int utf8_tolower (char *s, size_t len);
+int utf8_tolower (char *s);
 size_t utf8_wc_strlen (const unsigned *s);
 unsigned *utf8_wc_strdup (const unsigned *s);
 size_t utf8_wc_hash_string (const unsigned *ws, size_t n_buckets);

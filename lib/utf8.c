@@ -1909,24 +1909,67 @@ utf8_wc_strcmp(const unsigned *a, const unsigned *b)
 }
 
 int
-utf8_wc_strcasecmp(const unsigned *a, const unsigned *b)
+utf8_wc_strncmp(const unsigned *a, const unsigned *b, size_t n)
 {
-    unsigned wa, wb;
-
+    if (n == 0)
+	return 0;
     while (*a == *b) {
-	if (*a == 0)
+	if (--n == 0 || *a == 0)
 	    return 0;
 	a++;
 	b++;
     }
-    wa = utf8_wc_toupper(*a);
-    wb = utf8_wc_toupper(*b);
-
-    if (wa < wb)
+    if (*a < *b)
 	return -1;
-    if (wa > wb)
+    if (*a > *b)
 	return 1;
     return 0;
+}
+
+int
+utf8_wc_strcasecmp(const unsigned *a, const unsigned *b)
+{
+    while (*a) {
+	if (*b == 0)
+	    return 1;
+	if (*a != *b) {
+	    unsigned wa, wb;
+	    wa = utf8_wc_toupper(*a);
+	    wb = utf8_wc_toupper(*b);
+
+	    if (wa < wb)
+		return -1;
+	    if (wa > wb)
+		return 1;
+	}
+	a++;
+	b++;
+    }
+    return *b ? -1 : 0;
+}
+
+int
+utf8_wc_strncasecmp(const unsigned *a, const unsigned *b, size_t n)
+{
+    if (n == 0)
+	return 0;
+    while (*a) {
+	if (--n == 0 || *b == 0)
+	    return 1;
+	if (*a != *b) {
+	    unsigned wa, wb;
+	    wa = utf8_wc_toupper(*a);
+	    wb = utf8_wc_toupper(*b);
+
+	    if (wa < wb)
+		return -1;
+	    if (wa > wb)
+		return 1;
+	}
+	a++;
+	b++;
+    }
+    return *b ? -1 : 0;
 }
 
 const unsigned *

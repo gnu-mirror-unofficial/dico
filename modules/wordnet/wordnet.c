@@ -29,7 +29,6 @@
 struct wndb {
     char *dbname;
     int pos;
-    int sense;
     int optc;
     struct wn_option **optv;
 };
@@ -108,20 +107,30 @@ static int pos_trans[] = {
     ADJSAT,
     ADJSAT
 };
-
+
+/* Forward declarations */
+static void _wn_print_overview(struct wn_option *, SynsetPtr, dico_stream_t);
+static void _wn_print_hypernym(struct wn_option *, SynsetPtr, dico_stream_t);
+
 struct wn_option {
     char *option;	 /* user's search request */
     int search;		 /* search to pass findtheinfo() */
     int posmask;	 /* for what parts of speech it is defined */
     char *label;	 /* text for search header message */
+    void (*tracer) (SynsetPtr);
+    void (*printer) (struct wn_option *, SynsetPtr, dico_stream_t);
 };
 
 #define POS_MASK(n) bit(n)
 #define PM_ALL 0xffffffff
 
 static struct wn_option wn_optlist[] = {
-    { "overview", OVERVIEW, PM_ALL, "Overview" },
-
+    { "hypernym",   HYPERPTR, POS_MASK(NOUN)|POS_MASK(VERB),
+      "Synonyms/Hypernyms (Ordered by Estimated Frequency)",
+      NULL, _wn_print_hypernym },
+    { "synonym",   },
+#if 0
+    /* These are some thoughts only */
     { "similar",   SIMPTR,    POS_MASK(ADJ), "Similarity" },
     { "synonym",   SYNS,      POS_MASK(ADV), "Synonyms" }, 
     { "antonym",   ANTPTR,    PM_ALL, "Antonyms" },
@@ -155,6 +164,7 @@ static struct wn_option wn_optlist[] = {
     { "entail", ENTAILPTR, POS_MASK(VERB), "Entailment" },
     { "cause",  CAUSETO, POS_MASK(VERB), "\'Cause To\'" },
     { "frames", FRAMES, POS_MASK(VERB), "Sample Sentences" },
+#endif
     { NULL }
 };
 
@@ -174,15 +184,15 @@ static dico_handle_t
 wn_init_db(const char *dbname, int argc, char **argv)
 {
     struct wndb *wndb;
-    long sense = ALLSENSES;
     int pos = 0;
-    int idx, i;
+    int idx, i, j;
     struct wn_option **optv;
     int optc;
+    static struct wn_option overview =
+	{ "overview", OVERVIEW, PM_ALL, "Overview", NULL, _wn_print_overview };
     
     struct dico_option init_db_option[] = {
 	{ DICO_OPTSTR(pos), dico_opt_enum, &pos, { enumstr: pos_choice } },
-	{ DICO_OPTSTR(sense), dico_opt_long, &sense },
 	{ NULL }
     };
 
@@ -193,25 +203,31 @@ wn_init_db(const char *dbname, int argc, char **argv)
     argc -= idx;
     argv += idx;
 
-    if (argc == 0) {
-	static char *defopt[] = { "overview" };
-	argc = 1;
-	argv = defopt;
-    }
-    
-    optc = argc;
+    optc = argc + 1;
     optv = calloc(optc, sizeof(optv[0]));
     if (!optv) {
 	dico_log(L_ERR, ENOMEM, "wn_init_db");
 	return NULL;
     }
+
+    optv[0] = &overview;
     
-    for (i = 0; i < optc; i++) {
-	if ((optv[i] = find_option(argv[i])) == NULL) {
+    for (i = 0, j = 1; i < argc; i++) {
+	struct wn_option *p;
+	
+	if ((p = find_option(argv[i])) == NULL) {
 	    dico_log(L_ERR, 0, _("wordnet: unknown option %s"), argv[i]);
 	    free(optv);
 	    return NULL;
 	}
+	while (p->search == 0 && p > wn_optlist)
+	    p--;
+	if (!p->printer) {
+	    dico_log(L_WARN, 0, _("wordnet: option %s is not yet supported"),
+		     argv[i]);
+	    continue;
+	}
+	optv[j] = p;
     }
     
     wndb = calloc(1, sizeof(*wndb));
@@ -227,7 +243,6 @@ wn_init_db(const char *dbname, int argc, char **argv)
 	return NULL;
     }
     wndb->pos = pos_trans[pos];
-    wndb->sense = sense;
     wndb->optc = optc;
     wndb->optv = optv;
 
@@ -324,10 +339,9 @@ enum result_type {
 };
 
 struct defn {
-    SynsetPtr synset;
-    int root_entry;
-    int pos;
-    int opt;
+    int pos;           /* Part of speach */
+    SynsetPtr *synset; /* wndb->optc elements, first one always being
+			  the overview. */
 };
 
 struct result {
@@ -338,15 +352,22 @@ struct result {
     dico_iterator_t itr;
     /* For definitions only: */
     char *searchword;
+    dico_list_t rootlist; /* List of root synsets */
 };
 
 static int
 free_defn(void *item, void *data)
 {
     struct defn *dp = item;
-    if (dp->root_entry)
-	free_syns(dp->synset);
+    free(dp->synset);
     free(dp);
+    return 0;
+}
+
+static int
+free_root_synset(void *item, void *data)
+{
+    free_syns(item);
     return 0;
 }
 
@@ -384,6 +405,42 @@ wn_create_match_result(struct wndb *wndb)
     dico_list_set_free_item(res->list, free_string, NULL);
     dico_list_set_comparator(res->list, compare_words);
     dico_list_set_flags(res->list, DICO_LIST_COMPARE_TAIL);
+    return res;
+}
+
+static struct result *
+wn_create_define_result(struct wndb *wndb, const char *searchword)
+{
+    struct result *res;
+
+    res = calloc(1, sizeof(*res));
+    if (!res) {
+	dico_log(L_ERR, ENOMEM, "wn_create_define_result");
+	return NULL;
+    }
+    res->type = result_define;
+    res->wndb = wndb;
+    res->list = dico_list_create();
+    if (!res) {
+	dico_log(L_ERR, ENOMEM, "wn_create_match_result");
+	free(res);
+	return NULL;
+    }
+    dico_list_set_free_item(res->list, free_defn, NULL);
+
+    res->searchword = strdup(searchword);
+    if (!res->searchword) {
+	dico_log(L_ERR, ENOMEM, "wn_create_match_result");
+	wn_free_result((dico_result_t) res);
+    }
+
+    res->rootlist = dico_list_create();
+    if (!res->rootlist) {
+	dico_log(L_ERR, ENOMEM, "wn_create_match_result");
+	wn_free_result((dico_result_t) res);
+    }
+    dico_list_set_free_item(res->rootlist, free_root_synset, NULL);
+    
     return res;
 }
 
@@ -736,42 +793,60 @@ wn_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 	return (dico_result_t) wn_foreach(wndb, strat, word);
     return NULL;
 }
+
+static struct defn *
+create_defn(struct wndb *wndb, int pos)
+{
+    struct defn *p = malloc(sizeof(*p));
+    if (!p) {
+	dico_log(L_ERR, ENOMEM, "create_defn");
+	return NULL;
+    }
+    p->synset = calloc(wndb->optc, sizeof(p->synset[0]));
+    if (!p->synset) {
+	dico_log(L_ERR, ENOMEM, "create_defn");
+	free(p);
+	return NULL;
+    }
+    p->pos = pos;
+    return p;
+}
 
 static int
 search_defns(struct wndb *wndb, int pos, struct result *res,
 	     const char *searchword)
 {
     SynsetPtr sp;
-    int found = 0;
     int i;
+    struct defn *dp;
+    int sense = 0;
     
-    for (i = 0; i < wndb->optc; i++) {
-	if (!(POS_MASK(pos) & wndb->optv[i]->posmask))
-	    continue;
-	sp = findtheinfo_ds((char*)searchword, pos, wndb->optv[i]->search,
-			    wndb->sense);
-	if (sp) {
-	    int re = 1;
-	    do {
-		struct defn *dp;
-	    
-		dp = malloc(sizeof(*dp));
-		if (!dp) {
-		    dico_log(L_ERR, ENOMEM, "wn_define");
-		    break;
-		}
-		dp->root_entry = re;
-		re = 0;
-		dp->synset = sp;
-		dp->opt = i;
-		dp->pos = pos;
-		dico_list_append(res->list, dp);
-		found++;
-	    } while (sp = sp->nextss);
-	}
-    }
+    sp = findtheinfo_ds((char*)searchword, pos, OVERVIEW, ALLSENSES);
 
-    return found;
+    if (!sp)
+	return 0;
+    dico_list_append(res->rootlist, sp);
+
+    do {
+	dp = create_defn(wndb, pos);
+	if (!dp)
+	    return 0;
+	dp->synset[0] = sp;
+
+	++sense;
+	for (i = 1; i < wndb->optc; i++) {
+	    SynsetPtr ssp;
+	    if (!(POS_MASK(pos) & wndb->optv[i]->posmask))
+		continue;
+	    ssp = findtheinfo_ds((char*)searchword, pos, wndb->optv[i]->search,
+				 sense);
+	    if (ssp)
+		dp->synset[i] = ssp;
+	}
+	dico_list_append(res->list, dp);
+    } while (sp = sp->nextss);
+
+    return 1;
 }
 
 static dico_result_t
@@ -783,19 +858,7 @@ wn_define(dico_handle_t hp, const char *word)
     int found = 0;
     char *copy;
     
-    res = calloc(1, sizeof(*res));
-    if (!res) {
-	dico_log(L_ERR, ENOMEM, "wn_define");
-	return NULL;
-    }
-
-    res->list = dico_list_create();
-    if (!res->list) {
-	dico_log(L_ERR, ENOMEM, "wn_define");
-	free(res);
-	return NULL;
-    }
-    dico_list_set_free_item(res->list, free_defn, NULL);
+    res = wn_create_define_result(wndb, word);
     
     copy = nornmalize_search_word(word);
     if (!copy) {
@@ -816,12 +879,11 @@ wn_define(dico_handle_t hp, const char *word)
 	wn_free_result((dico_result_t) res);
 	return NULL;
     }
-    res->searchword = copy;
-    strsubst(copy, ' ', '_');
-
+    free(copy);
+    
     return (dico_result_t)res;
 }
-
+
 static void
 format_word(const char *word, dico_stream_t str)
 {
@@ -835,14 +897,11 @@ format_word(const char *word, dico_stream_t str)
     }
 }
 
-static int
-format_defn(struct defn *defn, struct result *res, dico_stream_t str)
+static void
+_wn_print_overview(struct wn_option *opt, SynsetPtr sp, dico_stream_t str)
 {
-    struct wndb *wndb = res->wndb;
-    SynsetPtr sp = defn->synset;
-    struct wn_option *opt = wndb->optv[defn->opt];
-    int i, n;
-    
+    int i;
+
     /* Print words: */
     for (i = 0; i < sp->wcount; i++) {
 	if (i)
@@ -858,32 +917,35 @@ format_defn(struct defn *defn, struct result *res, dico_stream_t str)
     /* Print definition */
     dico_stream_write(str, sp->defn, strlen(sp->defn));
     dico_stream_write(str, "\n", 1);
+}
 
-    if (sp->ptrlist) {
-	/* FIXME: stream_printf is needed! */
-	if (opt->search != OVERVIEW) {
-	    dico_stream_write(str, opt->label, strlen(opt->label));
-	    dico_stream_write(str, " of ", 4);
-	    dico_stream_write(str, partnames[defn->pos],
-			      strlen(partnames[defn->pos]));
-	    dico_stream_write(str, " ", 1);
-	    dico_stream_write(str, res->searchword, strlen(res->searchword));
-	    dico_stream_write(str, "\n\n", 2);
-	}
+static void
+_wn_print_hypernym(struct wn_option *opt, SynsetPtr ptr, dico_stream_t str)
+{
+    int i;
+    SynsetPtr sp;
     
-	n = 0;
-	for (sp = sp->ptrlist; sp; sp = sp->nextss) {
-	    for (i = 0; i < sp->wcount; i++, n++) {
-		if (n)
-		    dico_stream_write(str, ", ", 2);
-		format_word(sp->words[i], str);
-	    }
+    dico_stream_write(str, opt->label, strlen(opt->label));
+    dico_stream_write(str, ":\n\n", 3);
+
+    for (sp = ptr->ptrlist; sp; sp = sp->nextss) {
+	for (i = 0; i < sp->wcount; i++) {
+	    if (i)
+		dico_stream_write(str, ", ", 2);
+	    format_word(sp->words[i], str);
 	}
-	
-	if (n)
-	    dico_stream_write(str, "\n", 1);
+	dico_stream_write(str, "\n", 1);
     }
-    
+}
+
+static int
+format_defn(struct defn *defn, struct result *res, dico_stream_t str)
+{
+    int i;
+    struct wndb *wndb = res->wndb;
+
+    for (i = 0; i < wndb->optc; i++)
+	wndb->optv[i]->printer(wndb->optv[i], defn->synset[i], str);
     return 0;
 }
 
@@ -935,6 +997,7 @@ wn_free_result(dico_result_t rp)
     
     dico_list_destroy(&res->list);
     dico_iterator_destroy(&res->itr);
+    dico_list_destroy(&res->rootlist);
     free(res->searchword);
     free(res);
 }

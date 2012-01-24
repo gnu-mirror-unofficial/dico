@@ -50,7 +50,7 @@ dico_list_t  dico_list_intersect(dico_list_t a, dico_list_t b,
 				 dico_list_comp_t cmp);
 int dico_list_intersect_p(dico_list_t a, dico_list_t b, dico_list_comp_t cmp);
 
-#define dico_list_push dico_list_prepend
+#define dico_list_push dico_list_append
 void *dico_list_pop(dico_list_t list);
 
 void *_dico_list_locate(dico_list_t list, void *data, dico_list_comp_t cmp);

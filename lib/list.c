@@ -497,9 +497,9 @@ void *
 dico_list_pop(struct dico_list *list)
 {
     void *p;
-    if (!list->head)
+    if (!list->tail)
 	return NULL;
-    _dico_list_remove_item(list, list->head, &p);
+    _dico_list_remove_item(list, list->tail, &p);
     return p;
 }
 

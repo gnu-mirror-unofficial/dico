@@ -38,10 +38,13 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 ## Non-installable programs
 ## -------------------------- ##
 
-INCLUDES = -I${top_srcdir}/include 
+INCLUDES = -I${top_srcdir}/include @GRECS_INCLUDES@
 noinst_PROGRAMS = \
  levtest\
+ listop\
  utf8
+
+listop_SOURCES=listop.c itrsh.c itrsh.h
 
 LDADD = ../libdico.la
 
@@ -54,6 +57,7 @@ TESTSUITE_AT = \
  dlev01.at\
  lev00.at\
  lev01.at\
+ list.at\
  strcasecmp.at\
  strlen.at\
  strncasecmp.at\

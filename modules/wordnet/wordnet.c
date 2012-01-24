@@ -26,8 +26,11 @@
 #include <appi18n.h>
 #include <wn.h>
 
+#define WNDB_MERGE_DEFS 0x01
+
 struct wndb {
     char *dbname;
+    int flags;
     int pos;
     int optc;
     struct wn_option **optv;
@@ -58,7 +61,7 @@ wn_init(int argc, char **argv)
 {
     char *wnsearchdir = NULL;
     char *wnhome = NULL;
-
+    
     struct dico_option init_option[] = {
 	{ DICO_OPTSTR(wnsearchdir), dico_opt_string, &wnsearchdir },
 	{ DICO_OPTSTR(wnhome), dico_opt_string, &wnhome },
@@ -109,8 +112,13 @@ static int pos_trans[] = {
 };
 
 /* Forward declarations */
-static void _wn_print_overview(struct wn_option *, SynsetPtr, dico_stream_t);
-static void _wn_print_hypernym(struct wn_option *, SynsetPtr, dico_stream_t);
+struct result;
+static void _wn_print_overview(struct wn_option *, SynsetPtr,
+			       struct result *res, dico_stream_t);
+static void _wn_print_definition(struct wn_option *opt, SynsetPtr sp,
+				 struct result *res, dico_stream_t str);
+static void _wn_print_hypernym(struct wn_option *, SynsetPtr,
+			       struct result *res, dico_stream_t);
 
 struct wn_option {
     char *option;	 /* user's search request */
@@ -118,7 +126,8 @@ struct wn_option {
     int posmask;	 /* for what parts of speech it is defined */
     char *label;	 /* text for search header message */
     void (*tracer) (SynsetPtr);
-    void (*printer) (struct wn_option *, SynsetPtr, dico_stream_t);
+    void (*printer) (struct wn_option *, SynsetPtr, struct result *,
+		     dico_stream_t);
 };
 
 #define POS_MASK(n) bit(n)
@@ -188,11 +197,17 @@ wn_init_db(const char *dbname, int argc, char **argv)
     int idx, i, j;
     struct wn_option **optv;
     int optc;
-    static struct wn_option overview =
-	{ "overview", OVERVIEW, PM_ALL, "Overview", NULL, _wn_print_overview };
+    int flags = 0;
+    static struct wn_option overview[2] = {
+	{ "overview", OVERVIEW, PM_ALL, "Overview", NULL, _wn_print_overview },
+	{ "overview", OVERVIEW, PM_ALL, "Overview", NULL, _wn_print_definition }
+    };
+	
     
     struct dico_option init_db_option[] = {
 	{ DICO_OPTSTR(pos), dico_opt_enum, &pos, { enumstr: pos_choice } },
+	{ DICO_OPTSTR(merge-defs), dico_opt_bool, &flags,
+	  { value: WNDB_MERGE_DEFS } },
 	{ NULL }
     };
 
@@ -210,7 +225,7 @@ wn_init_db(const char *dbname, int argc, char **argv)
 	return NULL;
     }
 
-    optv[0] = &overview;
+    optv[0] = overview + ((flags & WNDB_MERGE_DEFS) ? 1 : 0);
     
     for (i = 0, j = 1; i < argc; i++) {
 	struct wn_option *p;
@@ -242,6 +257,7 @@ wn_init_db(const char *dbname, int argc, char **argv)
 	free(wndb);
 	return NULL;
     }
+    wndb->flags = flags;
     wndb->pos = pos_trans[pos];
     wndb->optc = optc;
     wndb->optv = optv;
@@ -898,7 +914,23 @@ format_word(const char *word, dico_stream_t str)
 }
 
 static void
-_wn_print_overview(struct wn_option *opt, SynsetPtr sp, dico_stream_t str)
+format_defn_string(const char *defn, dico_stream_t str)
+{
+    size_t len = strlen(defn);
+
+    if (len == 0)
+	return;
+    if (defn[0] == '(' && defn[len-1] == ')') {
+	    defn++;
+	    len -= 2;
+    }
+    dico_stream_write(str, defn, len);
+    dico_stream_write(str, "\n", 1);
+}
+
+static void
+_wn_print_overview(struct wn_option *opt, SynsetPtr sp, struct result *res,
+		   dico_stream_t str)
 {
     int i;
 
@@ -915,12 +947,39 @@ _wn_print_overview(struct wn_option *opt, SynsetPtr sp, dico_stream_t str)
     dico_stream_write(str, ".\n\n", 3);
 
     /* Print definition */
-    dico_stream_write(str, sp->defn, strlen(sp->defn));
-    dico_stream_write(str, "\n", 1);
+    format_defn_string(sp->defn, str);
 }
 
 static void
-_wn_print_hypernym(struct wn_option *opt, SynsetPtr ptr, dico_stream_t str)
+_wn_print_definition(struct wn_option *opt, SynsetPtr sp, struct result *res,
+		     dico_stream_t str)
+{
+    /* Print definition */
+    format_defn_string(sp->defn, str);
+
+    if (sp->wcount > 1) {
+	int i, j;
+	static char const *sym = "Synonyms: ";
+	
+	dico_stream_write(str, sym, strlen(sym));
+	for (i = j = 0; i < sp->wcount; i++) {
+	    if (strcmp(sp->words[i], res->searchword) == 0)
+		continue;
+	    if (j)
+		dico_stream_write(str, ", ", 2);
+	    dico_stream_write(str, "{", 1);
+	    format_word(sp->words[i], str);
+	    dico_stream_write(str, "}", 1);
+	    j++;
+	}
+	dico_stream_write(str, "\n", 1);
+    }
+    
+}
+
+static void
+_wn_print_hypernym(struct wn_option *opt, SynsetPtr ptr, struct result *res,
+		   dico_stream_t str)
 {
     int i;
     SynsetPtr sp;
@@ -945,8 +1004,47 @@ format_defn(struct defn *defn, struct result *res, dico_stream_t str)
     struct wndb *wndb = res->wndb;
 
     for (i = 0; i < wndb->optc; i++)
-	wndb->optv[i]->printer(wndb->optv[i], defn->synset[i], str);
+	wndb->optv[i]->printer(wndb->optv[i], defn->synset[i], res, str);
     return 0;
+}
+
+static void
+print_num(dico_stream_t str, unsigned num)
+{
+    while (num) {
+	unsigned x = num % 10;
+	char c = x + '0';
+	dico_stream_write(str, &c, 1);
+	num /= 10;
+    }
+    dico_stream_write(str, ". ", 2);
+}
+
+static void
+format_all_defns(struct result *res, dico_stream_t str)
+{
+    struct defn *defn;
+    int pos = 0;
+    unsigned num;
+
+    format_word(res->searchword, str);
+    dico_stream_write(str, "\n", 1);
+
+    for (defn = dico_iterator_first(res->itr); defn;
+	 defn = dico_iterator_next(res->itr)) {
+	if (defn->pos != pos) {
+	    pos = defn->pos;
+	    num = 1;
+
+	    dico_stream_write(str, defn->synset[0]->pos,
+			      strlen(defn->synset[0]->pos));
+	    dico_stream_write(str, ". ", 2);
+	} 
+
+	print_num(str, num);
+	format_defn(defn, res, str);
+	num++;
+    }
 }
 
 int
@@ -967,7 +1065,10 @@ wn_output_result(dico_result_t rp, size_t n, dico_stream_t str)
 	break;
 
     case result_define:
-	format_defn(item, res, str);
+	if (res->wndb->flags & WNDB_MERGE_DEFS)
+	    format_all_defns(res, str);
+	else
+	    format_defn(item, res, str);
 	break;
 	    
     default:
@@ -980,6 +1081,8 @@ static size_t
 wn_result_count (dico_result_t rp)
 {
     struct result *res = (struct result *) rp;
+    if (res->type == result_define && (res->wndb->flags & WNDB_MERGE_DEFS))
+	    return 1;
     return dico_list_count(res->list);
 }
 

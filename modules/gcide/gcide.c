@@ -512,6 +512,7 @@ print_text(int end, struct gcide_tag *tag, void *data)
 {
     struct output_closure *clos = data;
     static char *quote[2] = { "“", "”" };
+    static char *ref[2] = { "{" , "}" };
     
     switch (tag->tag_type) {
     case gcide_content_unspecified:
@@ -540,11 +541,15 @@ print_text(int end, struct gcide_tag *tag, void *data)
 	    if (end) {
 		if (strcmp(tag->tag_name, "as") == 0)
 		    dico_stream_write(clos->stream, quote[1], strlen(quote[1]));
+		else if (strcmp(tag->tag_name, "er") == 0)
+		    dico_stream_write(clos->stream, ref[1], strlen(ref[1]));
 	    } else {
 		if (strcmp(tag->tag_name, "sn") == 0)
 		    dico_stream_write(clos->stream, "\n", 1);
 		else if (strcmp(tag->tag_name, "as") == 0)
 		    clos->flags |= GOF_AS;
+		else if (strcmp(tag->tag_name, "er") == 0)
+		    dico_stream_write(clos->stream, ref[0], strlen(ref[0]));
 	    }
 	}
     }

@@ -1,4 +1,4 @@
-GNU Dico NEWS -- history of user-visible changes. 2012-01-17
+GNU Dico NEWS -- history of user-visible changes. 2012-01-25
 Copyright (C) 2008-2010, 2012 Sergey Poznyakoff
 See the end of file for copying conditions.
 
@@ -27,6 +27,15 @@ is useful for loading several modules with a single statement, e.g.:
   load-module (stratall,substr,word);
   
 * New module: gcide
+
+This module provides support for GNU Collaborative International
+Dictionary of English.
+
+* New module: wordnet
+
+This module provides support for WordNet, a lexical database for the
+English language developed in the Princeton University and distributed
+under a BSD style license.
 
 
 Version 2.1, 2010-07-07

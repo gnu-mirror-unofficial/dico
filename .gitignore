@@ -31,5 +31,6 @@ gmon.out
 gnu
 libltdl
 libtool
+local-tests
 m4
 stamp-h1

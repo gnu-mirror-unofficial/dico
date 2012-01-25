@@ -70,6 +70,8 @@ modules/gcide/idxgcide.l
 modules/gcide/markup.l
 modules/gcide/webchr.c
 
+modules/wordnet/wordnet.c
+
 grecs/src/format.c
 grecs/src/grecs-gram.y
 grecs/src/grecs-lex.l

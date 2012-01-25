@@ -19,6 +19,6 @@ EXTRA_DIST = \
  glossary.scm\
  listdict.scm\
  numerals-pl.ldb\
- testdict.py\
+ textdict.py\
  numerals-cz.txt
 

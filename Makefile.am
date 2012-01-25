@@ -16,7 +16,22 @@
 
 ACLOCAL_AMFLAGS = -I m4 -I am -I grecs/am -I gint -I imprimatur
 
-SUBDIRS=include utils gint gnu grecs lib libltdl dicod modules dico tests imprimatur doc po
+SUBDIRS=\
+ include\
+ utils\
+ examples\
+ gint\
+ gnu\
+ grecs\
+ lib\
+ libltdl\
+ dicod\
+ modules\
+ dico\
+ tests\
+ imprimatur\
+ doc\
+ po
 #FIXME: add these when ready: makedict client fonts
 
 EXTRA_DIST = ChangeLog.2008

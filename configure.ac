@@ -458,13 +458,13 @@ autologin_file="$DEFAULT_AUTOLOGIN_FILE"
 ])
 
 # Tests
-AC_CONFIG_TESTDIR(lib/tests)
-AC_CONFIG_FILES(lib/tests/Makefile)
-AC_CONFIG_FILES(lib/tests/atlocal)
+DICO_TESTS(lib)
+DICO_TESTS(modules/outline)
 
 AC_CONFIG_FILES([Makefile
                  include/Makefile
                  include/dico/Makefile
+		 examples/Makefile 
                  utils/Makefile
 		 gint/Makefile
 		 gnu/Makefile

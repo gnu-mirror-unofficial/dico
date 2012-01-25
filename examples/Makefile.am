@@ -14,22 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-SUFFIXES = .cfin .conf
+EXTRA_DIST = \
+ devdict.out\
+ listdict.scm\
+ numerals-pl.ldb
 
-noinst_DATA=dicod.conf
-
-CLEANFILES=dicod.conf
-
-.cfin.conf:
-	$(AM_V_GEN)sed 's|<BUILDDIR>|'`cd $(top_builddir); pwd`'|g;s|<SRCDIR>|'`cd $(top_srcdir); pwd`'|g' \
-		$< > $@
-
-LDADD=\
- ../lib/libxdico.a\
- ../gnu/libgnu.a\
- ../lib/libextra.a\
- ../lib/libdico.la\
- @LIBINTL@ @LIBICONV@
-INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu -I../gnu
-
-EXTRA_DIST=dicod.cfin example.py

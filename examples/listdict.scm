@@ -14,7 +14,7 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-(define-module (example)
+(define-module (listdict)
   #:use-module (guile-user)
   #:use-module (ice-9 syncase)
   #:use-module (ice-9 format)

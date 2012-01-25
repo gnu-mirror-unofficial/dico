@@ -14,9 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-EXTRA_DIST = $(TESTSUITE_AT) testsuite package.m4 
+EXTRA_DIST = $(TESTSUITE_AT) testsuite package.m4 dicod.cfin
 DISTCLEANFILES       = atconfig $(check_SCRIPTS)
 MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
+
+SUFFIXES = .cfin .conf
+
+.cfin.conf:
+	$(AM_V_GEN)sed 's|~moddir~|$(abs_top_builddir)/modules|g;s|~dictdir~|$(abs_top_srcdir)/examples|g' $< > $@
+
+noinst_DATA = dicod.conf
+CLEANFILES = dicod.conf
 
 ## ------------ ##
 ## package.m4.  ##
@@ -34,49 +42,26 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 
 #
 
-## -------------------------- ##
-## Non-installable programs
-## -------------------------- ##
-
-INCLUDES = -I${top_srcdir}/include @GRECS_INCLUDES@
-noinst_PROGRAMS = \
- levtest\
- listop\
- utf8
-
-listop_SOURCES=listop.c itrsh.c itrsh.h
-
-LDADD = ../libdico.la
-
 ## ------------ ##
 ## Test suite.  ##
 ## ------------ ##
 
 TESTSUITE_AT = \
- dlev00.at\
- dlev01.at\
- lev00.at\
- lev01.at\
- list.at\
- strcasecmp.at\
- strlen.at\
- strncasecmp.at\
- testsuite.at\
- tolower.at\
- toupper.at\
- wcstrchr.at\
- wcstrcasecmp.at\
- wcstrncasecmp.at\
- wcstrncmp.at\
- wcstrcmp.at\
- wcstrstr.at
+ define.at\
+ exact.at\
+ prefix.at\
+ showdb.at\
+ showinfo.at\
+ showlang.at\
+ suffix.at\
+ testsuite.at
 
 TESTSUITE = $(srcdir)/testsuite
 M4=m4
 
 AUTOTEST = $(AUTOM4TE) --language=autotest
 $(TESTSUITE): package.m4 $(TESTSUITE_AT)
-	$(AM_V_GEN)$(AUTOTEST) -I $(srcdir) testsuite.at -o $@.tmp
+	$(AM_V_GEN)$(AUTOTEST) -I $(srcdir) -I $(top_srcdir)/include testsuite.at -o $@.tmp
 	$(AM_V_at)mv $@.tmp $@
 
 atconfig: $(top_builddir)/config.status

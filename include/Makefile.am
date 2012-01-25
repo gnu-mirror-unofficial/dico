@@ -19,12 +19,13 @@ noinst_HEADERS=\
  libi18n.h\
  gsaslstr.h\
  dict.h\
- xdico.h
+ xdico.h\
+ testsuite.inc
 
 pkginclude_HEADERS = dico.h
 
 SUBDIRS = dico
 
-pkgdata_DATA = gjdict.xbm
-EXTRA_DIST = gjdict.xbm
+#pkgdata_DATA = gjdict.xbm
+#EXTRA_DIST = gjdict.xbm
 

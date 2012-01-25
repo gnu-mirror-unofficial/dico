@@ -139,10 +139,10 @@ strategies are supported by the server:
 
 @table @asis
 @item exact
-Match a word exactly (case-insensitive).
+Match a word exactly.
 
 @item prefix
-Match a word prefix (case-insensitive).
+Match a word prefix.
 
 @item soundex
 Match using @acronym{SOUNDEX} algorithm.
@@ -162,15 +162,12 @@ Match using POSIX 1003.2 (a.k.a @samp{extended}) regular expressions.
 
 @item regexp
 Match using basic regular expressions.
-@end table
 
-The @code{dictorg} module (@pxref{Dictorg}) additionally provides the
-following strategy:
-
-@table @asis
 @item suffix
-Match word suffixes (case-insensitive).
+Match word suffixes.
 @end table
+
+Note, that all strategies are case-insensitive.
 
 Other modules may provide more matching strategies.
 

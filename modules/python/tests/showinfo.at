@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 2008, 2010, 2012 Sergey Poznyakoff
+# Copyright (C) 2012 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,10 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-EXTRA_DIST = \
- devdict.out\
- listdict.scm\
- numerals-pl.ldb\
- testdict.py\
- numerals-cz.txt
+AT_SETUP(show info)
+AT_DICOD([show info cznum
+quit
+],
+[220
+112 information for cznum
+Short English-Czech dictionary of numerals (1 - 10)
+Hardly worth copyrighting, but just in case:
+
+This dictionary is public domain. You can do with it whatever you
+like to do, except changing the meaning of the words, of course.
+
+.
+250
+221
+])
+AT_CLEANUP
+
 

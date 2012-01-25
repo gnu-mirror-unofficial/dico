@@ -461,6 +461,7 @@ autologin_file="$DEFAULT_AUTOLOGIN_FILE"
 DICO_TESTS(lib)
 DICO_TESTS(modules/outline)
 DICO_TESTS(modules/guile)
+DICO_TESTS(modules/python)
 
 AC_CONFIG_FILES([Makefile
                  include/Makefile

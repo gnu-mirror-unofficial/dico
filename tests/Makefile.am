@@ -32,4 +32,4 @@ LDADD=\
  @LIBINTL@ @LIBICONV@
 INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu -I../gnu
 
-EXTRA_DIST=dicod.cfin example.py
+EXTRA_DIST=dicod.cfin 

@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 2008, 2010, 2012 Sergey Poznyakoff
+# Copyright (C) 2012 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,10 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-EXTRA_DIST = \
- devdict.out\
- listdict.scm\
- numerals-pl.ldb\
- testdict.py\
- numerals-cz.txt
-
+AT_SETUP(prefix)
+AT_KEYWORDS(match)
+AT_DICOD([dnl
+match cznum prefix f
+quit
+],
+[220
+152 2 matches found: list follows
+cznum "four"
+cznum "five"
+.
+250
+221
+])
+AT_CLEANUP

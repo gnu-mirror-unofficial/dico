@@ -48,12 +48,18 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 
 TESTSUITE_AT = \
  define.at\
+ dlev.at\
+ dnlev.at\
  exact.at\
  lev.at\
+ nlev.at\
  prefix.at\
+ re.at\
+ regexp.at\
  showdb.at\
  showinfo.at\
  showlang.at\
+ soundex.at\
  suffix.at\
  testsuite.at
 

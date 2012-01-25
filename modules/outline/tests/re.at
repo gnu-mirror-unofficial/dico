@@ -14,28 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-m4_include(testsuite.inc)
-
-AT_INIT
-
-# -----------------------------------------------------------------------
-
-AT_BANNER(Match)
-m4_include(exact.at)
-m4_include(prefix.at)
-m4_include(suffix.at)
-m4_include(lev.at)
-m4_include(nlev.at)
-m4_include(dlev.at)
-m4_include(dnlev.at)
-m4_include(soundex.at)
-m4_include(regexp.at)
-m4_include(re.at)
-
-AT_BANNER(Define)
-m4_include(define.at)
-
-AT_BANNER(Show)
-m4_include(showdb.at)
-m4_include(showinfo.at)
-m4_include(showlang.at)
+AT_SETUP(Extended regular expressions)
+AT_KEYWORDS(match)
+AT_DICOD([dnl
+match dev re "^a.{4,6}n$" 
+quit
+],
+[220
+152 4 matches found: list follows
+dev "ABDOMEN"
+dev "AFRICAN"
+dev "ALDERMAN"
+dev "AMBITION"
+.
+250
+221
+])
+AT_CLEANUP

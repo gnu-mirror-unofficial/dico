@@ -224,6 +224,9 @@ static struct gcide_entity gcide_entity[] = {
     { "UDD",      "U" },
     
     { "br",       "\n" },
+    { "and",      "and" },
+    { "or",       "or" },
+    
     { NULL }
 };
 

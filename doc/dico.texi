@@ -273,7 +273,8 @@ layer is handled by external @dfn{loadable modules}.  Thus, Dico
 does not impose any specific dictionary database format.  A single
 server can handle databases in various formats, provided that
 appropriate modules are available.  Several database modules are
-shipped with GNU Dico:
+shipped with GNU Dico.  The following is a short introductions for
+some of them.  For more information, @ref{Modules}.
 
 @table @asis
 @item dictorg
@@ -283,6 +284,22 @@ the @cite{@acronym{DICT} development group} (@uref{http://dict.org}).
 This is a @i{de facto} standard for @acronym{DICT} databases.  A
 number of dictionary databases in this format are provided by the
 @cite{FreeDict} project (@uref{http://freedict.org}).
+
+@item wordnet
+@cindex wordnet
+  Support for @samp{WordNet} databases.  WordNet is a lexical
+database for the English language developed in the Princeton
+University and distributed under a BSD style license.
+
+@item gcide
+@cindex gcide
+@cindex GNU Collaborative International Dictionary of English
+@cindex Patrick J.@: Cassidy
+  Support for @samp{GNU Collaborative International Dictionary of
+English}.  This dictionary derived from Webster's Revised Unabridged
+Dictionary, supplemented with some of the definitions from WordNet.
+It was edited by Patrick J.@: Cassidy, proof-read and supplemented by
+volunteers from around the world.
 
 @item guile
   This module provides an interface to Guile, the @dfn{GNU's
@@ -2772,6 +2789,7 @@ initializing the module instance.
 
 @node GCIDE
 @section @command{gcide}
+@cindex GNU Collaborative International Dictionary of English
   The @command{gcide} module provides support for GNU Collaborative
 International Dictionary of English. This dictionary can be downloaded
 from @uref{http://download.gnu.org.ua/pub/gcide/gcide-0.46.zip}. It
@@ -2825,6 +2843,14 @@ not needed, because the module is configured to start the
 useful for the module developers.
 @end deffn
 
+@deffn {gcide parameter} suppress-pr
+This paramenter suppresses the output of @samp{pr} (pronunciation)
+tags.  According to GCIDE docs, @cite{very few of the pronunciation
+fields have been filled in}, so it is usually better to avoid
+displaying them at all.
+@end deffn
+
+
   Here's a full example of a @samp{gcide} as used in
 @indicateurl{dico.gnu.org.ua}:
 
@@ -2834,7 +2860,7 @@ load-module gcide;
 
 database @{
     name "gcide";
-    handler "gcide dbdir=/var/dictdb/gcide";
+    handler "gcide dbdir=/var/dictdb/gcide suppress-pr";
     languages-from "en";
     languages-to "en";
     description "Collaborative International Dictionary of English";

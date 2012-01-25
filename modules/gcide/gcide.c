@@ -26,13 +26,16 @@
 #include <errno.h>
 #include <appi18n.h>
 
+#define GCIDE_NOPR 0x01
+
 struct gcide_db {
     char *db_dir;
     char *idx_dir;
     char *tmpl_name;
     char *tmpl_letter;
     char *idxgcide;
-
+    int flags;
+    
     int file_letter;
     dico_stream_t file_stream;
     
@@ -189,6 +192,7 @@ gcide_init_db(const char *dbname, int argc, char **argv)
     char *idx_dir = NULL;
     char *idxgcide = NULL;
     long idx_cache_size = 16;
+    int flags = 0;
     struct gcide_db *db;
     
     struct dico_option init_db_option[] = {
@@ -196,6 +200,7 @@ gcide_init_db(const char *dbname, int argc, char **argv)
 	{ DICO_OPTSTR(idxdir), dico_opt_string, &idx_dir },
 	{ DICO_OPTSTR(index-program), dico_opt_string, &idxgcide },
 	{ DICO_OPTSTR(index-cache-size), dico_opt_long, &idx_cache_size },
+	{ DICO_OPTSTR(suppress-pr), dico_opt_bitmask, &flags, { value: GCIDE_NOPR } },
 	{ NULL }
     };
     
@@ -225,6 +230,7 @@ gcide_init_db(const char *dbname, int argc, char **argv)
     db->db_dir = db_dir;
     db->idx_dir = idx_dir;
     db->idx_cache_size = idx_cache_size;
+    db->flags = flags;
     
     if (gcide_check_dir(db->db_dir) || gcide_check_dir(db->idx_dir)) {
 	free_db(db);
@@ -499,7 +505,8 @@ gcide_result_ref(struct gcide_result *res)
     return ref;
 }
 
-#define GOF_AS 0x01
+#define GOF_IGNORE 0x0001000
+#define GOF_AS     0x0002000
 
 struct output_closure {
     dico_stream_t stream;
@@ -513,11 +520,13 @@ print_text(int end, struct gcide_tag *tag, void *data)
     struct output_closure *clos = data;
     static char *quote[2] = { "“", "”" };
     static char *ref[2] = { "{" , "}" };
-    
+
     switch (tag->tag_type) {
     case gcide_content_unspecified:
 	break;
     case gcide_content_text:
+	if (clos->flags & GOF_IGNORE)
+	    break;
 	if (clos->flags & GOF_AS) {
 	    char *s = tag->tag_v.text;
 	    
@@ -539,12 +548,22 @@ print_text(int end, struct gcide_tag *tag, void *data)
 	if (tag->tag_parmc) {
 	    clos->flags &= ~GOF_AS;
 	    if (end) {
-		if (strcmp(tag->tag_name, "as") == 0)
+		if (strcmp(tag->tag_name, "pr") == 0 &&
+			 clos->flags & GCIDE_NOPR)
+		    clos->flags &= ~GOF_IGNORE;
+		else if (clos->flags & GOF_IGNORE)
+		    break;
+		else if (strcmp(tag->tag_name, "as") == 0)
 		    dico_stream_write(clos->stream, quote[1], strlen(quote[1]));
 		else if (strcmp(tag->tag_name, "er") == 0)
 		    dico_stream_write(clos->stream, ref[1], strlen(ref[1]));
 	    } else {
-		if (strcmp(tag->tag_name, "sn") == 0)
+		if (strcmp(tag->tag_name, "pr") == 0 &&
+			 clos->flags & GCIDE_NOPR)
+		    clos->flags |= GOF_IGNORE;
+		else if (clos->flags & GOF_IGNORE)
+		    break;
+		else if (strcmp(tag->tag_name, "sn") == 0)
 		    dico_stream_write(clos->stream, "\n", 1);
 		else if (strcmp(tag->tag_name, "as") == 0)
 		    clos->flags |= GOF_AS;
@@ -623,7 +642,7 @@ output_def(dico_stream_t str, struct gcide_db *db, struct gcide_ref *ref)
     else {
 	struct output_closure clos;
 	clos.stream = str;
-	clos.flags = 0;
+	clos.flags = db->flags;
 	clos.rc = 0;
 	gcide_parse_tree_inorder(tree, print_text, &clos);
 	gcide_parse_tree_free(tree);

@@ -24,6 +24,7 @@ AT_BANNER(Match)
 m4_include(exact.at)
 m4_include(prefix.at)
 m4_include(suffix.at)
+m4_include(lev.at)
 
 AT_BANNER(Define)
 m4_include(define.at)

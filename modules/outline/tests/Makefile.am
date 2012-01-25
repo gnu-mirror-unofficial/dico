@@ -49,6 +49,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 TESTSUITE_AT = \
  define.at\
  exact.at\
+ lev.at\
  prefix.at\
  showdb.at\
  showinfo.at\

@@ -14,22 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-m4_include(testsuite.inc)
-
-AT_INIT
-
-# -----------------------------------------------------------------------
-
-AT_BANNER(Match)
-m4_include(exact.at)
-m4_include(prefix.at)
-m4_include(suffix.at)
-m4_include(lev.at)
-
-AT_BANNER(Define)
-m4_include(define.at)
-
-AT_BANNER(Show)
-m4_include(showdb.at)
-m4_include(showinfo.at)
-m4_include(showlang.at)
+AT_SETUP(Levenshtein)
+AT_KEYWORDS(match)
+AT_DICOD([dnl
+match dev lev til
+quit
+],
+[220
+152 1 matches found: list follows
+dev "TAIL"
+.
+250
+221
+])
+AT_CLEANUP

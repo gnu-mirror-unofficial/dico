@@ -462,6 +462,9 @@ DICO_TESTS(lib)
 DICO_TESTS(modules/outline)
 DICO_TESTS(modules/guile)
 DICO_TESTS(modules/python)
+DICO_TESTS(modules/stratall)
+DICO_TESTS(modules/word)
+DICO_TESTS(modules/substr)
 
 AC_CONFIG_FILES([Makefile
                  include/Makefile

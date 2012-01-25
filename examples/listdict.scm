@@ -135,7 +135,7 @@
   (list (cons "Content-Type" "text/plain; charset=UTF-8")
 	(cons "Content-Transfer-Encoding" "quoted-printable")))
 
-(define-public (example-init arg)
+(define-public (listdict-init arg)
   (list (cons "open" open-module)
         (cons "descr" descr)
         (cons "info" info)

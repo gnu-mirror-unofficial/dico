@@ -460,6 +460,7 @@ autologin_file="$DEFAULT_AUTOLOGIN_FILE"
 # Tests
 DICO_TESTS(lib)
 DICO_TESTS(modules/outline)
+DICO_TESTS(modules/guile)
 
 AC_CONFIG_FILES([Makefile
                  include/Makefile

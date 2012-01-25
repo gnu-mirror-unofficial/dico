@@ -28,7 +28,6 @@ SUBDIRS=\
  dicod\
  modules\
  dico\
- tests\
  imprimatur\
  doc\
  po

@@ -486,7 +486,6 @@ AC_CONFIG_FILES([Makefile
 		 modules/gcide/tests/Makefile
 		 modules/wordnet/Makefile
 		 dico/Makefile
-		 tests/Makefile
 		 doc/Makefile
 		 po/Makefile.in])
 

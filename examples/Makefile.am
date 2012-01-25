@@ -16,6 +16,7 @@
 
 EXTRA_DIST = \
  devdict.out\
+ glossary.scm\
  listdict.scm\
  numerals-pl.ldb\
  testdict.py\

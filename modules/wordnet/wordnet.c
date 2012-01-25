@@ -1011,12 +1011,15 @@ format_defn(struct defn *defn, struct result *res, dico_stream_t str)
 static void
 print_num(dico_stream_t str, unsigned num)
 {
-    while (num) {
-	unsigned x = num % 10;
-	char c = x + '0';
-	dico_stream_write(str, &c, 1);
+    char buf[128];
+    char *p = buf + sizeof(buf);
+
+    *--p = 0;
+    while (p > buf && num) {
+	*--p = num % 10 + '0';
 	num /= 10;
     }
+    dico_stream_write(str, p, strlen(p));
     dico_stream_write(str, ". ", 2);
 }
 

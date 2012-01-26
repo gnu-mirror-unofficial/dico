@@ -460,6 +460,7 @@ autologin_file="$DEFAULT_AUTOLOGIN_FILE"
 # Tests
 DICO_TESTS(lib)
 DICO_TESTS(modules/outline)
+DICO_TESTS(modules/gcide)
 DICO_TESTS(modules/guile)
 DICO_TESTS(modules/python)
 DICO_TESTS(modules/stratall)
@@ -486,7 +487,6 @@ AC_CONFIG_FILES([Makefile
 		 modules/ldap/Makefile
 		 modules/word/Makefile
 		 modules/gcide/Makefile
-		 modules/gcide/tests/Makefile
 		 modules/wordnet/Makefile
 		 dico/Makefile
 		 doc/Makefile

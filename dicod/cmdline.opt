@@ -143,8 +143,7 @@ BEGIN
 END
 
 OPTION(include-dir,I,DIR,
-       [<Add the directory DIR to the list of directories
-        to be searched for preprocessor include files>])
+       [<Add the directory DIR to the list of directories to be searched for preprocessor include files>])
 BEGIN
    grecs_preproc_add_include_dir(optarg); 
 END

@@ -19,7 +19,7 @@
 #endif
 #include <dico.h>
 #include <unistd.h>
-#include <getopt.h>    
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>    
 #include <errno.h>
@@ -30,10 +30,12 @@
 static void
 usage(FILE *fp)
 {
-    fprintf(fp, "usage: %s [-dhs] FILE OFF SIZE\n", dico_program_name);
+    fprintf(fp, "usage: %s [-debug] [-struct] [-nopr] [-help] FILE [OFF SIZE]\n", dico_program_name);
 }    
 
-struct print_closure {
+struct output_closure {
+    FILE *stream;
+    int flags;
     int level;
 };
 
@@ -41,7 +43,7 @@ static int
 print_tag(int end, struct gcide_tag *tag, void *data)
 {
     size_t i;
-    struct print_closure *clos = data;
+    struct output_closure *clos = data;
 
     if (end) {
 	clos->level--;
@@ -77,45 +79,62 @@ print_tag(int end, struct gcide_tag *tag, void *data)
     return 0;
 }
 
-struct print_hint {
-    int as;
-};
+#define GCIDE_NOPR 0x0000001
+#define GOF_IGNORE 0x0001000
+#define GOF_AS     0x0002000
 
 static int
 print_text(int end, struct gcide_tag *tag, void *data)
 {
-    struct print_hint *hint = data;
-    
+    struct output_closure *clos = data;
+    static char *quote[2] = { "``", "''" };
+    static char *ref[2] = { "{" , "}" };
+
     switch (tag->tag_type) {
     case gcide_content_unspecified:
 	break;
     case gcide_content_text:
-	if (hint->as) {
+	if (clos->flags & GOF_IGNORE)
+	    break;
+	if (clos->flags & GOF_AS) {
 	    char *s = tag->tag_v.text;
-
+	    
 	    if (strncmp(s, "as", 2) == 0 &&
 		(isspace(s[3]) || ispunct(s[3]))) {
-
-		fwrite(s, 3, 1, stdout);
+		fwrite(s, 3, 1, clos->stream);
 		for (s += 3; *s && isspace(*s); s++)
-		    putchar(*s);
-		printf("``%s", s);
+		    fputc(*s, clos->stream);
+		fprintf(clos->stream, "%s%s", quote[0], s);
 	    } else
-		printf("``");
+		fprintf(clos->stream, "%s", quote[0]);
 	} else
-	    printf("%s", tag->tag_v.text);
+	    fprintf(clos->stream, "%s", tag->tag_v.text);
 	break;
     case gcide_content_taglist:
 	if (tag->tag_parmc) {
-	    hint->as = 0;
+	    clos->flags &= ~GOF_AS;
 	    if (end) {
-		if (strcmp(tag->tag_name, "as") == 0)
-		    printf("''");
-	    } else {
-		if (strcmp(tag->tag_name, "sn") == 0)
-		    putchar('\n');
+		if (strcmp(tag->tag_name, "pr") == 0 &&
+			 clos->flags & GCIDE_NOPR)
+		    clos->flags &= ~GOF_IGNORE;
+		else if (clos->flags & GOF_IGNORE)
+		    break;
 		else if (strcmp(tag->tag_name, "as") == 0)
-		    hint->as = 1;
+		    fprintf(clos->stream, "%s", quote[1]);
+		else if (strcmp(tag->tag_name, "er") == 0)
+		    fprintf(clos->stream, "%s", ref[1]);
+	    } else {
+		if (strcmp(tag->tag_name, "pr") == 0 &&
+			 clos->flags & GCIDE_NOPR)
+		    clos->flags |= GOF_IGNORE;
+		else if (clos->flags & GOF_IGNORE)
+		    break;
+		else if (strcmp(tag->tag_name, "sn") == 0)
+		    fputc('\n', clos->stream);
+		else if (strcmp(tag->tag_name, "as") == 0)
+		    clos->flags |= GOF_AS;
+		else if (strcmp(tag->tag_name, "er") == 0)
+		    fprintf(clos->stream, "%s", ref[0]);
 	    }
 	}
     }
@@ -125,48 +144,67 @@ print_text(int end, struct gcide_tag *tag, void *data)
 int
 main(int argc, char **argv)
 {
-    int c;
     char *file;
-    unsigned long offset;
-    unsigned long size;
+    unsigned long offset = 0;
+    unsigned long size = 0;
     FILE *fp;
     char *textbuf;
     struct gcide_parse_tree *tree;
-    struct print_closure clos;
+    struct output_closure clos;
     int show_struct = 0;
     
     dico_set_program_name(argv[0]);
+    clos.flags = 0;
+    clos.stream = stdout;
 
-    while ((c = getopt(argc, argv, "dhs")) != -1) {
-	switch (c) {
-	case 'd':
+    while (--argc) {
+	char *arg = *++argv;
+
+	if (strcmp(arg, "-debug") == 0)
 	    gcide_markup_debug = 1;
-	    break;
-
-	case 'h':
+	else if (strcmp(arg, "-h") == 0 || strcmp(arg, "-help") == 0) {
 	    usage(stdout);
 	    exit(0);
-
-	case 's':
+	} else if (strcmp(arg, "-struct") == 0)
 	    show_struct = 1;
+	else if (strcmp(arg, "-nopr") == 0)
+	    clos.flags = GCIDE_NOPR;
+	else if (strcmp(arg, "--") == 0) {
+	    --argc;
+	    ++argv;
 	    break;
-	    
-	default:
+	} else if (arg[0] == '-') {
+	    usage(stderr);
 	    exit(EX_USAGE);
-	}
+	} else
+	    break;
     }
 
-    argc -= optind;
-    argv += optind;
-    if (argc != 3) {
+    if (argc == 0 || argc > 3) {
 	usage(stderr);
 	exit(EX_USAGE);
     }
 
     file = argv[0];
-    offset = atoi(argv[1]);
-    size = atoi(argv[2]);
+    if (argc > 1) {
+	offset = atoi(argv[1]);
+	if (argc == 3)
+	    size = atoi(argv[2]);
+    }
 
+    if (size == 0) {
+	struct stat st;
+	if (stat(file, &st)) {
+	    dico_log(L_ERR, errno, "stat");
+	    exit(EX_UNAVAILABLE);
+	}
+	if (st.st_size < offset) {
+	    dico_log(L_ERR, 0, "invalid offset");
+	    exit(EX_UNAVAILABLE);
+	}   
+	size = st.st_size - offset;
+    }
+    
     textbuf = malloc(size);
     if (!textbuf) {
 	dico_log(L_ERR, 0, "not enough memory");

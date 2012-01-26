@@ -117,7 +117,7 @@ run_idxgcide(char *idxname, struct gcide_db *db)
     }
     pid = fork();
     if (pid == 0) {
-	execl(idxgcide, db->db_dir, db->idx_dir, NULL);
+	execl(idxgcide, idxgcide, db->db_dir, db->idx_dir, NULL);
     }
     if (pid == -1) {
 	dico_log(L_ERR, errno, _("gcide_open_idx: fork failed"));

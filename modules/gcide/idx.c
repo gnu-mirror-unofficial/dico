@@ -142,8 +142,10 @@ gcide_idx_file_open(const char *name, size_t cachesize)
 void
 gcide_idx_file_close(struct gcide_idx_file *file)
 {
-    close(file->fd);
-    _free_index(file);
+    if (file) {
+	close(file->fd);
+	_free_index(file);
+    }
 }
 
 size_t

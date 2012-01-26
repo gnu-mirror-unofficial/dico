@@ -14,24 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-m4_include(testsuite.inc)
-
-AT_INIT
-
-# -----------------------------------------------------------------------
-
-AT_SETUP(substr)
-AT_KEYWORDS(match substr)
-AT_DICOD([dnl
-match dev substr phon
+AT_SETUP(define)
+AT_DICOD([define dev bore
 quit
 ],
 [220
-152 2 matches found: list follows
-dev "PHONOGRAPH"
-dev "TELEPHONE"
+150 1 definitions found: list follows
+151 "bore" dev "THE DEVIL'S DICTIONARY ((C)1911 Released April 15 1993)"
+BORE, n.  A person who talks when you wish him to listen.
+
+
+
 .
 250
 221
 ])
 AT_CLEANUP
+
+

@@ -1,4 +1,4 @@
-# This file is part of GNU Dico
+# This file is part of GNU Dico -*- Autotest -*-
 # Copyright (C) 2012 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
@@ -14,22 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-m4_include(testsuite.inc)
-
-AT_INIT
-
-# -----------------------------------------------------------------------
-
-AT_SETUP(substr)
-AT_KEYWORDS(match substr)
+AT_SETUP(exact)
+AT_KEYWORDS(match)
 AT_DICOD([dnl
-match dev substr phon
+match gcide exact madman
 quit
 ],
 [220
-152 2 matches found: list follows
-dev "PHONOGRAPH"
-dev "TELEPHONE"
+152 1 matches found: list follows
+gcide "Madman"
 .
 250
 221

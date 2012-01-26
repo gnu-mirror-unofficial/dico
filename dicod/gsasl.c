@@ -315,7 +315,7 @@ callback(Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop)
 	
     default:
 	rc = GSASL_NO_CALLBACK;
-	dico_log(L_NOTICE, 0, _("Unsupported callback property %d"), prop);
+	/*dico_log(L_NOTICE, 0, _("Unsupported callback property %d"), prop);*/
 	break;
     }
 

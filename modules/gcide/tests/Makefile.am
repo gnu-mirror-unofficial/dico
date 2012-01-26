@@ -14,17 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-EXTRA_DIST = $(TESTSUITE_AT) testsuite package.m4 #dicod.cfin
-DISTCLEANFILES       = atconfig $(check_SCRIPTS)
+EXTRA_DIST = $(TESTSUITE_AT) testsuite package.m4 dicod.cfin
+DISTCLEANFILES       = atconfig $(check_SCRIPTS) GCIDE.IDX
 MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
 
-# SUFFIXES = .cfin .conf
+SUFFIXES = .cfin .conf
 
-# .cfin.conf:
-# 	$(AM_V_GEN)sed 's|~moddir~|$(abs_top_builddir)/modules|g;s|~dictdir~|$(abs_top_srcdir)/examples|g' $< > $@
+.cfin.conf:
+	$(AM_V_GEN)sed 's|~moddir~|$(abs_top_builddir)/modules|g;s|~dictdir~|$(abs_srcdir)/dict|g;s|~idxdir~|$(abs_builddir)|g' $< > $@
 
-# noinst_DATA = dicod.conf
-# CLEANFILES = dicod.conf
+noinst_DATA = dicod.conf
+CLEANFILES = dicod.conf
+
+dist-hook:
+	tar -C $(srcdir) -c -f - dict/CIDE.[A-Z] | \
+	      tar -C $(distdir) -x -f -
 
 ## ------------ ##
 ## package.m4.  ##
@@ -59,9 +63,16 @@ INCLUDES = \
 ## ------------ ##
 
 TESTSUITE_AT = \
+ all.at\
+ autoidx.at\
+ def00.at\
+ def01.at\
+ exact.at\
  greek.at\
+ idx.at\
  markup.at\
  nopr.at\
+ prefix.at\
  testsuite.at
 
 TESTSUITE = $(srcdir)/testsuite

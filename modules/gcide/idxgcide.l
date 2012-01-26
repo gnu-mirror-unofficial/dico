@@ -38,7 +38,7 @@ int dry_run_option;
 
 char *dictdir, *idxdir, *infile, *suf;
 char letters[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-int i;
+int letno;
 unsigned line;
 
 char *idxname;
@@ -115,6 +115,7 @@ refcmp(const void *a, const void *b)
 static void
 flush_refs()
 {
+    int i;
     struct gcide_ref *ref = obstack_finish(&refstk);
 
     if (verbose_option)
@@ -139,27 +140,27 @@ flush_headwords()
 
     obstack_1grow(&stk, 0);
     headword = obstack_finish(&stk);
-    if (!headword[0])
-	return;
-    size = char_position - headword_position;
-    for (p = headword; *p; p += strlen(p) + 1) {
-	struct gcide_ref ref;
+    if (headword[0]) {
+	size = char_position - headword_position;
+	for (p = headword; *p; p += strlen(p) + 1) {
+	    struct gcide_ref ref;
 	
-	if (verbose_option > 1)
-	    dico_log(L_INFO, 0, "%s: %c %lu %lu", p, letters[i-1],
-		     headword_position, size);
-	memset(&ref, 0, sizeof(ref));
+	    if (verbose_option > 1)
+		dico_log(L_INFO, 0, "%s: %c %lu %lu", p, letters[letno-1],
+			 headword_position, size);
+	    memset(&ref, 0, sizeof(ref));
 
-	ref.ref_hwbytelen = strlen(p) + 1;
-	ref.ref_hwlen = utf8_strlen(p);
-	ref.ref_letter = letters[i-1];
-	ref.ref_offset = headword_position;
-	ref.ref_size = size;
-	ref.ref_headword = p;
-	obstack_grow(&refstk, &ref, sizeof(ref));
-	idx_header.ihdr_num_headwords++;
+	    ref.ref_hwbytelen = strlen(p) + 1;
+	    ref.ref_hwlen = utf8_strlen(p);
+	    ref.ref_letter = letters[letno-1];
+	    ref.ref_offset = headword_position;
+	    ref.ref_size = size;
+	    ref.ref_headword = p;
+	    obstack_grow(&refstk, &ref, sizeof(ref));
+	    idx_header.ihdr_num_headwords++;
+	}
+	idx_header.ihdr_num_defs++;
     }
-    idx_header.ihdr_num_defs++;
     headword = NULL;
     headword_position = char_position;
 }
@@ -250,9 +251,11 @@ XD [0-9a-f]
 int
 yywrap()
 {
-    if (letters[i] == 0)
+    flush_headwords();
+
+    if (letters[letno] == 0)
         return 1;
-    *suf = letters[i++];
+    *suf = letters[letno++];
     if (yyin)
          fclose(yyin);
     if (verbose_option)
@@ -262,7 +265,7 @@ yywrap()
          dico_log(L_ERR, errno, _("cannot open file %s"), infile);
          exit(EX_NOINPUT);
     }
-    file_position = char_position = 0;
+    file_position = char_position = headword_position = 0;
     line = 1;
     return 0;
 }
@@ -305,7 +308,7 @@ main(int argc, char **argv)
     }
     dictdir = argv[0];
     idxdir = argc == 2 ? argv[1] : dictdir;
-    
+
     infile = dico_full_file_name(dictdir, "CIDE.A");
     if (!infile) {
         dico_log(L_ERR, 0, _("not enough memory"));
@@ -332,12 +335,11 @@ main(int argc, char **argv)
     obstack_init(&stk);
     obstack_init(&refstk);
 
-    i = 0;
+    letno = 0;
     yywrap();
     while (yylex ())
         ;
 
-    flush_headwords();
     flush_refs();
 
     fseek(idxfile, 0, SEEK_SET);

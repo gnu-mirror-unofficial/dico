@@ -179,7 +179,7 @@ XD [0-9a-f]
 <INITIAL>{
   "<--"      { BEGIN(COMMENT); }
   "<!"       { BEGIN(HTMLCOM); }
-  "<p><hw>"|"<hw>"  {
+  "<p>"("\\'d8")?"<hw>"|"<hw>"  {
 	       flush_headwords();
 	       BEGIN_HEADWORD("hw");
              }
@@ -220,6 +220,7 @@ XD [0-9a-f]
   }
   "<"[a-z][^/>]*">"   /* ignore tag */;
   [""*`]      ;
+  "\\'d8"     ;       /* ignore double vertical bar */
   "\\'"{XD}{XD} {
                  char const *s = gcide_escape_to_utf8(yytext+2);
 

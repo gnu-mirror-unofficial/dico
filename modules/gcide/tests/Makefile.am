@@ -67,6 +67,10 @@ TESTSUITE_AT = \
  autoidx.at\
  def00.at\
  def01.at\
+ def02.at\
+ def03.at\
+ def04.at\
+ def05.at\
  exact.at\
  greek.at\
  idx.at\

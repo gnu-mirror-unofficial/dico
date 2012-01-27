@@ -14,36 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-m4_include(testsuite.inc)
-m4_pushdef([AT_DICOD],[
-AT_DATA([input],dico_quote($1))
-AT_CHECK([dnl
-dicod --config $abs_builddir/dicod.conf --stderr -i < input 2>err | dnl
-    tr -d '\r' | sed 's/^\(2[[25][0-9]]\) .*/\1/;s/ *$//' 
-sed '/Notice: gcide_open_idx: creating index/d' err >&2],
-[0],
-[$2],
-[$3])])
+AT_SETUP([mhw (second definition)])
+AT_KEYWORDS([define def05])
+AT_DICOD([define gcide cyclical
+quit
+],
+[220
+150 1 definitions found: list follows
+151 "cyclical" gcide "A mock GCIDE dictionary"
+{ Cyclic, Cyclical} a.
+[[Gr. κυκλικός, fr. κύκλος See {Cycle}.]]
+Going in cycles
 
-AT_INIT
+[[Dico testsuite]]
 
-AT_BANNER(General)
-m4_include(markup.at)
-m4_include(nopr.at)
-m4_include(greek.at)
-m4_include(idx.at)
-m4_include(autoidx.at)
 
-AT_BANNER(Match)
-m4_include(exact.at)
-m4_include(prefix.at)
-m4_include(all.at)
 
-AT_BANNER(Define)
-m4_include(def00.at)
-m4_include(def01.at)
-m4_include(def02.at)
-m4_include(def04.at)
-m4_include(def05.at)
 
-m4_popdef([AT_DICOD])
+
+.
+250
+221
+])
+AT_CLEANUP
+
+

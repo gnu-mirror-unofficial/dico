@@ -129,7 +129,7 @@ run_idxgcide(char *idxname, struct gcide_db *db)
 	return 1;
     }
     if (!WIFEXITED(status)) {
-	dico_log(L_ERR, errno, _("gcide_open_idx: %s failed"), idxgcide);
+	dico_log(L_ERR, 0, _("gcide_open_idx: %s failed"), idxgcide);
 	return 1;
     }
 
@@ -176,10 +176,11 @@ gcide_open_idx(struct gcide_db *db)
     else
 	dico_log(L_ERR, errno, _("gcide_open_idx: cannot access %s"),
 		 idxname);
-
-    db->idx = gcide_idx_file_open(idxname, db->idx_cache_size);
-    if (!db->idx)
-	rc = 1;
+    if (rc == 0) {
+	db->idx = gcide_idx_file_open(idxname, db->idx_cache_size);
+	if (!db->idx)
+	    rc = 1;
+    }
     
     free(idxname);
     return rc;

@@ -168,12 +168,18 @@ Modules
 
 * Outline::
 * Dictorg::
+* GCIDE::
+* Wordnet::
 * Guile::
 * Python::
 * Stratall::
 * Substr::
 * Word::
 * Ldap::
+
+@command{gcide}
+
+* idxgcide::
 
 The @command{guile} module.
 
@@ -2609,6 +2615,7 @@ strategies and extension languages.
 * Outline::
 * Dictorg::
 * GCIDE::
+* Wordnet::
 * Guile::
 * Python::
 * Stratall::
@@ -2930,6 +2937,134 @@ specifying kilobytes, megabytes and gigabytes (ouch!) correspondingly.
 
 The default page size is 10240 bytes.
 @end table
+
+@node Wordnet
+@section WordNet
+@dfn{WordNet} is a lexical database for the English language, created
+and maintained at the Cognitive Science Laboratory of Princeton
+University@footnote{See @uref{http://wordnet.princeton.edu/wordnet/},
+for a detailed information, including links to download.}.  It groups
+English words into sets of synonyms called @dfn{synsets}, provides short,
+general definitions, and records the various semantic relations
+between these synonym sets.
+
+@cindex libWN
+Dico provides a @command{wordnet} module for reading WordNet lexical
+database files.  The module relies on @file{libWN}, the support
+library distributed with the WordNet database.
+
+@findex wn.h
+@opindex --with-wordnet, @command{configure} option.
+The module is compiled automatically if the configure script was able
+to find the library and its header file @file{wn.h}.  If it was not,
+use the @option{--with-wordnet} configure option to specify the
+location where these files can be found.  For example, if WordNet was
+installed using the default procedure, then the following option will
+do the job:
+
+@smallexample
+  ./configure --with-wordnet=/usr/local/WordNet-3.0
+@end smallexample
+
+This command tells Dico to look for WordNet library files in
+@file{/usr/@/local/@/WordNet-3.0/@/lib} and for include files in
+@file{/usr/@/local/@/WordNet-3.0/@/include}.
+
+A compiled module is installed using the following statement:
+
+@smallexample
+load-module wordnet @{
+    command "wordnet [@var{parameters}]";
+@}
+@end smallexample
+
+Optional parameters are:
+
+@deffn {wordnet module parameter} wnhome dir
+Base directory for WordNet files.
+@end deffn
+
+@deffn {wordnet module parameter} wnsearchdir dir
+Directory in which the WordNet database has been installed.
+@end deffn
+
+Normally, these values are set at compile time and you won't need to
+override them.  The use of these parameters may, however, be necessary
+if the database is moved or installed in a non-standard location.
+
+One or more WordNet database instances can be defined.  They all will
+be sharing the same database.  The reason for having several database
+instances is that they may have different output options.  For
+example, you may configure one database to return word definitions and
+another one to act as a thesaurus.
+
+Dico version @value{VERSION} defines the following database parameters:
+
+@deffn {wordnet database parameter} pos value
+Select part of speech to be displayed by this database.  By default,
+all parts of speech are displayed.  Valid values are:
+
+@table @asis
+@item all
+Display all parts of speech.  This is the default.
+
+@item noun
+Display only nouns.
+
+@item verb
+Display only verbs.
+
+@item adj
+@itemx adjective
+Display only adjectives.
+
+@item adv
+@itemx adverb
+Display only adverbs.
+
+@item satellite
+@itemx adjsat
+Display only @dfn{satellites}.
+@end table
+@end deffn
+
+@deffn {wordnet database parameter} merge-defs
+When specified, this parameter instructs the WordNet database to merge
+all definitions with the same part of speech into a single definition,
+which will be returned in the usual dictionary fashion, e.g.:
+
+@smallexample
+@group
+sail
+n. 1. a large piece of fabric (usually canvas fabric) by
+means of which wind is used to propel a sailing vessel 
+Synonyms: @{canvas@}, @{canvass@}, @{sheet@}
+2. an ocean trip taken for pleasure
+Synonyms: @{cruise@}
+3. any structure that resembles a sail
+v. 1. traverse or travel on (a body of water); "We sailed the
+Atlantic"; "He sailed the Pacific all alone" 
+2. move with sweeping, effortless, gliding motions
+@end group
+@end smallexample
+
+By default, each definition is returned as a separate entry.
+@end deffn
+
+As an example, the following is the database definition the author
+uses on his server:
+
+@smallexample
+@group
+database @{
+    name "WordNet";
+    handler "wordnet merge-defs";
+    languages-from "en";
+    languages-to "en";
+    description "WordNet dictionary, version 3.0";
+@}
+@end group
+@end smallexample
 
 @node Guile
 @section The @command{guile} module.
@@ -4170,7 +4305,7 @@ From eng-swa, English-Swahili xFried/FreeDict Dictionary:
 @end group
 @end smallexample
                         
-  Displayed is a list matches retrieved using the default strategy.
+  Displayed is a list of matches retrieved using the default strategy.
 To see a definition for a particular match, type the number shown
 at its left.  For example, to define ``men'':
 
@@ -4445,7 +4580,7 @@ warranty conditions and a command to get help, e.g.:
 
 @smallexample
 dico @value{VERSION}
-Copyright (C) 2005, 2006, 2007, 2008 Sergey Poznyakoff
+Copyright (C) 2005-2012 Sergey Poznyakoff
 License GPLv3+: GNU GPL version 3 or later
 <http://gnu.org/licenses/gpl.html>
 This is free software: you are free to change and redistribute it.

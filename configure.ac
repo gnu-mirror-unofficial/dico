@@ -364,7 +364,7 @@ MU_CHECK_GSASL(0.2.5, [
     AC_DEFINE(WITH_GSASL,1,[Define if GNU SASL is present])
     status_gsasl=yes
     AC_SUBST(BUILD_LIBDICOSASL,'libdicosasl.a')
-    AC_SUBST(LIBDICOSASL,'../lib/libdicosasl.a')])
+    AC_SUBST(LIBDICOSASL,'$(top_builddir)/lib/libdicosasl.a')])
 
 # SASL
 
@@ -459,6 +459,7 @@ autologin_file="$DEFAULT_AUTOLOGIN_FILE"
 
 # Tests
 DICO_TESTS(lib)
+DICO_TESTS(dicod)
 DICO_TESTS(modules/outline)
 DICO_TESTS(modules/gcide)
 DICO_TESTS(modules/guile)

@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
+SUBDIRS=. tests
 bin_PROGRAMS=dicod
 dicod_SOURCES=\
  accesslog.c\

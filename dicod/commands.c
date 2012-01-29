@@ -165,7 +165,7 @@ dicod_show_server(dico_stream_t str, int argc, char **argv)
     } else
 	stream_writez(str, "server on ");
     stream_writez(str, hostname);
-    if (show_sys_info_p()) {
+    if (timing_option && show_sys_info_p()) {
 	xdico_timer_t t;
 	double x, fph;
 	

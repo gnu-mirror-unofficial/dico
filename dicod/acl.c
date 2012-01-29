@@ -34,6 +34,7 @@ struct acl_entry {
     grecs_locus_t locus;
     int allow;
     int authenticated;
+    int dflt;
     dicod_acl_t acl;
     dico_list_t groups;
     dico_list_t sockaddrs;
@@ -73,6 +74,8 @@ dicod_acl_create(const char *name, grecs_locus_t *locus)
     dicod_acl_t acl = xmalloc(sizeof(acl[0]));
     acl->name = xstrdup(name);
     acl->locus = *locus;
+    acl->locus.beg.file = strdup(acl->locus.beg.file);
+    acl->locus.end.file = strdup(acl->locus.end.file);
     acl->list = dico_list_create();
     return acl;
 }
@@ -215,22 +218,27 @@ _parse_from(struct acl_entry *entry, size_t argc, grecs_value_t **argv)
 	return 1;
     }
 
-    entry->sockaddrs = xdico_list_create();
-    if (argv[0]->type == GRECS_TYPE_STRING) {
-	if (_parse_sockaddr(entry, argv[0]))
-	    return 1;
+    if (argv[0]->type == GRECS_TYPE_STRING &&
+	strcmp(argv[0]->v.string, "any") == 0) {
+	entry->dflt = 1;
     } else {
-	int rc = 0;
-	struct grecs_list_entry *ep;
-
-	for (ep = argv[0]->v.list->head; ep; ep = ep->next) {
-	    grecs_value_t *p = ep->data;
-	    rc += _parse_sockaddr(entry, p);
+	entry->sockaddrs = xdico_list_create();
+	if (argv[0]->type == GRECS_TYPE_STRING) {
+	    if (_parse_sockaddr(entry, argv[0]))
+		return 1;
+	} else {
+	    int rc = 0;
+	    struct grecs_list_entry *ep;
+	    
+	    for (ep = argv[0]->v.list->head; ep; ep = ep->next) {
+		grecs_value_t *p = ep->data;
+		rc += _parse_sockaddr(entry, p);
+	    }
+	    if (rc)
+		return rc;
 	}
-	if (rc)
-	    return rc;
     }
-
+    
     if (argc - 1) {
 	grecs_warning(&entry->locus, 0, _("junk after `from' list"));
 	return 1;
@@ -320,6 +328,8 @@ parse_acl_line(grecs_locus_t *locus, int allow, dicod_acl_t acl,
     struct acl_entry *entry = xzalloc(sizeof(*entry));
 
     entry->locus = *locus;
+    entry->locus.beg.file = strdup(entry->locus.beg.file);
+    entry->locus.end.file = strdup(entry->locus.end.file);
     entry->allow = allow;
 
     switch (value->type) {
@@ -399,25 +409,27 @@ static int
 _acl_check(struct acl_entry *ent)
 {
     int result = 1;
-    
+
     if (ent->authenticated) {
 	result = user_name != NULL;
 	if (!result)
-	    return result;
+	    return 0;
     }
 
     if (ent->groups) {
 	result = dico_list_intersect_p(ent->groups, user_groups,
 				       cmp_group_name);
 	if (!result)
-	    return result;
+	    return 0;
     }	
 
     result = dicod_acl_check(ent->acl, 1);
     if (!result)
-	return result;
-    
-    if (ent->sockaddrs) {
+	return 0;
+
+    if (ent->dflt)
+	result = 1;
+    else if (ent->sockaddrs) {
 	result = 0;
 	dico_list_iterate(ent->sockaddrs, _check_sockaddr, &result);
     }

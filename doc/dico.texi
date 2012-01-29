@@ -44,13 +44,9 @@ Copyright @copyright{} 2008, 2010, 2012 Sergey Poznyakoff
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
-Invariant Sections, with the Front-Cover texts being ``GNU Dico Manual'',
-and with the Back-Cover Texts as in (a) below.  A copy of the license
-is included in the section entitled ``GNU Free Documentation License''.
-
-(a) The FSF's Back-Cover Text is: ``You have freedom to copy and modify
-this GNU Manual, like GNU software.  Copies published by the Free
-Software Foundation raise funds for GNU development.''
+Invariant Sections, no Front-Cover, and no Back-Cover texts.
+A copy of the license is included in the section entitled ``GNU Free
+Documentation License''.
 @end copying
 
 @titlepage
@@ -273,14 +269,14 @@ GNU Dico is an implementation of @acronym{DICT} dictionary server
 (described in @acronym{RFC} 2229) and a set of accompanying utilities.
 The GNU Dico server uses two-layer model.  The @dfn{protocol
 layer} is responsible for correct @acronym{DICT} protocol dialog and
-is served by the @command{dicod} daemon itself.  The @dfn{database
+is handled by the @command{dicod} daemon itself.  The @dfn{database
 layer} is responsible for look ups in dictionary databases.  This
 layer is handled by external @dfn{loadable modules}.  Thus, Dico
 does not impose any specific dictionary database format.  A single
 server can handle databases in various formats, provided that
 appropriate modules are available.  Several database modules are
 shipped with GNU Dico.  The following is a short introductions for
-some of them.  For more information, @ref{Modules}.
+some of them.  For more information, see @ref{Modules}.
 
 @table @asis
 @item dictorg
@@ -324,8 +320,7 @@ format.  It is designed mostly for test purposes.
 
   This manual describes how to configure and use the Dico dictionary
 system.  It also describes the @acronym{API} for writing
-Dico database modules both in @acronym{C} and in
-@acronym{Scheme}.
+Dico database modules in @acronym{C}, @acronym{Scheme} or Python.
 
 @node Building
 @chapter Building the Package
@@ -333,8 +328,8 @@ Dico database modules both in @acronym{C} and in
 @command{./configure}, then @command{make}, followed by @command{make
 install}, and you are done.
 
-  Actions the @command{configure} script performs can be altered
-using a set of command line options and variables.  Some of these
+  Actions the @command{configure} script performs are controlled
+by a set of command line options and variables.  Some of these
 options are generic, i.e. common for all packages using the GNU
 @command{autoconf} system.  For a detailed description of these option
 see the @file{INSTALL} file shipped with the sources.  Yet another
@@ -357,8 +352,8 @@ options are specific for Dico.  We will describe them in this chapter.
 the configuration file (@pxref{Preprocessor}), which makes the
 configuration extremely flexible.  We recommend to use GNU m4 as a
 preprocessor@footnote{@uref{http://www.gnu.org/software/m4}}.
-However, any other implementation of @command{m4} may be used.  The
-@command{configure} script tries to determine full file name of the
+However, any other implementation of @command{m4} may be used as well.
+The @command{configure} script tries to determine the full file name of the
 preprocessor binary and the necessary command line options.  In case
 it makes a wrong guess, you can instruct it to use a particular
 preprocessor by using @env{DEFAULT_PREPROCESSOR} configuration
@@ -385,8 +380,8 @@ disable it using @option{--without-preprocessor} option to
 @cindex dict server, default
 @vrindex DEFAULT_DICT_SERVER
 
-Unless given an explicit dictionary server, the client program @command{dico}
-attempts to connect the server @indicateurl{dict://dico.gnu.org.ua}.  You may
+Unless given an explicit dictionary server, the @command{dico} client program
+attempts to connect to the server @indicateurl{dict://dico.gnu.org.ua}.  You may
 change this default by defining the @env{DEFAULT_DICT_SERVER} variable.  For
 example, the following command line selects @samp{dict.org} as the default
 server:
@@ -439,7 +434,7 @@ addition, these words can be prefixed with @samp{log_}.
 @node Dicod
 @chapter The @command{dicod} daemon.
 @cindex @command{dicod}, description
-  The main component of GNU Dico is @command{dicod} daemon.  It is
+  The main component of GNU Dico is the @command{dicod} daemon.  It is
 responsible for serving client requests and for coordinating the work
 of dictionary modules.
 
@@ -463,7 +458,7 @@ Two more pieces of textual data are associated with a database.  A
 @dfn{database information} string (or @dfn{info}, for short), supplies
 a short description of the database.  It is a sentence, tersely
 describing the database, e.g.@: @samp{English-German Dictionary}.  A
-@dfn{database description} provides full description of the
+@dfn{database description} provides a full description of the
 dictionary, with author credits and copyright information.  The length
 of this description is not limited.
 
@@ -513,7 +508,7 @@ displayed, otherwise a diagnostic message will be returned, telling
 that the headword was not found.
 
 @cindex strategy
-  @FIXME{Write it}
+  @FIXME{Describe strategies}
   
 
 @cindex @command{dicod}, operation modes
@@ -534,7 +529,7 @@ There are two @dfn{operation modes}: @samp{daemon} and @samp{inetd}.
   The @samp{daemon} mode is enabled by @code{mode daemon} statement in
 the configuration file (@pxref{mode statement}).  It is also the
 default mode.  In daemon mode @command{dicod} listens for incoming 
-requests on one or several interfaces.  Unless the
+requests on one or several network interfaces.  Unless the
 @command{--foreground} option is specified, it disconnects from the 
 controlling terminal and switches to background (becomes a
 @dfn{daemon}).  When an incoming connection arrives, it forks a
@@ -556,8 +551,8 @@ using @option{--config} option) are absolute file names.
 @cindex restarting @command{dicod}
   Upon receiving @samp{SIGHUP}, @command{dicod} first verifies if the
 configuration file does not contain fatal errors.  To do that, the
-program executes a copy of itself with @option{--lint} option
-(@pxref{--lint}) and analyzes its return value.  Only if this check
+program executes a copy of itself with the @option{--lint} option
+(@pxref{--lint}) and analyzes its return code.  Only if this check
 passes, @command{dicod} restarts itself.  This ensures that the daemon
 will not terminate due to unnoticed errors in its configuration file.
 
@@ -567,7 +562,7 @@ will not terminate due to unnoticed errors in its configuration file.
 program stops accepting incoming requests and sends the @samp{SIGTERM}
 signal to all active subprocesses.  Then it waits a predefined amount
 of time for all processes to terminate (@pxref{shutdown-timeout}).
-Any subprocesses that do not terminate after this time are sent
+Any subprocesses that do not terminate after this time are sent the
 @samp{SIGKILL} signal.  Then, the database modules are unloaded and
 @command{dicod} terminates.
 
@@ -609,28 +604,28 @@ dict  stream  tcp  nowait  nobody /usr/local/bin/dicod --inetd
 definitions from a @dfn{configuration file} @file{dicod.conf}.  By
 default it is located in @var{$sysconfidr} (i.e., in most cases
 @file{/usr/local/etc}, or @file{/etc}), but an alternative location
-may be specified using @option{--config} command line option
+may be specified using the @option{--config} command line option
 (@pxref{--config}).
 
   If any errors are encountered in the configuration file, the program
 reports them on the standard error and exits with a non-zero status.
 
 @xopindex{lint, introduced}
-  To test the configuration file without starting the server use
+  To test the configuration file without starting the server, use
 @option{--lint} (@option{-t}) command line option.  It causes
-@command{dicod} to check configuration file and to exit with status 0
-if no errors were detected, and withs status 1 otherwise.
+@command{dicod} to check its configuration file and exit with status 0
+if no errors were detected, and with status 1 otherwise.
 
 @opindex -E, introduced
 @xopindex{no-preprocessor, introduced}
-  Before parsing, configuration file is preprocessed using
+  Before parsing, the configuration file is preprocessed using
 @command{m4} (@pxref{Preprocessor}).  To see the preprocessed
 configuration without actually parsing it, use @option{-E} command
 line option.  To avoid preprocessing it, use
 @option{--no-preprocessor} option.
 
 @xopindex{config-help, introduced}
-  The rest of this section describes the configuration file syntax in
+  The rest of this section describes configuration file syntax in
 detail.  You can receive a concise summary of all configuration
 directives any time by running @command{dicod --config-help}.
 
@@ -703,7 +698,7 @@ pragmatic comments are understood:
 @kwindex #include
 @item #include <@var{file}>
 @itemx #include @var{file}
-Include the contents of the file @var{file}.  If @var{file} is an
+Include the contents of the @var{file}.  If @var{file} is an
 absolute file name, both forms are equivalent.  Otherwise, the form
 with angle brackets searches for the file in the @dfn{include 
 search path}, while the second one looks for it in the current working
@@ -718,7 +713,7 @@ The default include search path is:
 @end enumerate
 
 @noindent
-Where @var{prefix} is the installation prefix.
+where @var{prefix} is the installation prefix.
 
   New directories can be appended in front of it using @option{-I}
 (@option{--include-dir}) command line option (@pxref{--include-dir}).  
@@ -752,8 +747,8 @@ parsing, see @ref{Preprocessor}.
 @cindex configuration file statements
 @cindex statement, simple
 @cindex simple statements
-  A @dfn{simple statement} consists of a keyword and value
-separated by any amount of whitespace.  Simple statement is terminated
+  A @dfn{simple statement} consists of a keyword and a value
+separated by any amount of whitespace.  The simple statement is terminated
 with a semicolon (@samp{;}), unless it contains a @dfn{here-document}
 (see below), in which case semicolon is optional.
 
@@ -784,7 +779,7 @@ Examples of keywords are: @samp{group}, @samp{identity-check}.
 @cindex string, unquoted
   An unquoted string may contain letters, digits, and any of the
 following characters: @samp{_}, @samp{-}, @samp{.}, @samp{/},
-@samp{:}.
+@samp{@@}, @samp{*}, @samp{:}.
 
 @item quoted string
 @cindex quoted string
@@ -805,6 +800,7 @@ with a single character according to the following rules:
 @item \n @tab Newline character (@acronym{ASCII} 10)
 @item \r @tab Carriage return character (@acronym{ASCII} 13)
 @item \t @tab Horizontal tabulation character (@acronym{ASCII} 9)
+@item \v @tab Vertical tabulation character (@acronym{ASCII} 11)
 @item \\ @tab A single backslash (@samp{\})
 @item \" @tab A double-quote.
 @end multitable
@@ -826,8 +822,8 @@ above, the backslash is ignored and a warning is issued.
 
   Two or more adjacent quoted strings are concatenated, which gives
 another way to split long strings over several lines to improve
-readability.  The following fragment produces the same result as the
-example above:
+readability.  For instance, the following fragment produces the same
+result as the example above:
 
 @smallexample
 @group
@@ -839,7 +835,7 @@ example above:
 @anchor{here-document}
 @item Here-document
 @cindex here-document
-  @dfn{Here-document} is a special construct that allows to introduce
+  A @dfn{here-document} is a special construct that allows to introduce
 strings of text containing embedded newlines.  
 
   The @code{<<@var{word}} construct instructs the parser to read all
@@ -976,12 +972,12 @@ option.  @xref{--inetd}.
 @end deffn
 
 @deffn {Configuration} listen @var{list};
-Specify @acronym{IP} addresses and ports to listen on in daemon mode.
+Specify the @acronym{IP} addresses and ports to listen on in daemon mode.
 By default, @command{dicod} will listen on port 2628 on all existing
-interfaces.  Use @code{listen} statement to abridge the list of
+interfaces.  Use the @code{listen} statement to abridge the list of
 interfaces to listen on, or to change the port number. 
 
-Elements of @var{list} can have the following form:
+Elements of @var{list} can have the following forms:
 
 @table @asis
 @item @var{host}:@var{port}
@@ -1020,7 +1016,7 @@ listen (10.10.10.1, /var/run/dict);
 @deffn {Configuration} pidfile @var{string}
 Store @acronym{PID} of the master process in this file.
 Default is @file{@var{localstatedir}/run/dicod.pid}. 
-Notice that the privileges of this default directory are
+Notice that the privileges of this default directory
 may be insufficient for @command{dicod} to write there after switching
 to users privileges (@pxref{user statement}).  One solution to this is
 to create a subdirectory with the same owner as given by @code{user}
@@ -1104,7 +1100,7 @@ groups this user belongs to.  Notice, that due to the specifics of
 are stored in plain text, therefore special care must be taken to
 protect the contents of your authentication database from compromise.
 
-The database is defined using @code{user-db} block statement:
+The database is defined using the @code{user-db} block statement:
 
 @deffn {Configuration} user-db url
 Declare user authentication database.
@@ -1124,7 +1120,7 @@ ones):
 
 @table @var
 @item type
-A @dfn{database type}, or format.  See below for the list of
+A @dfn{database type}, or format.  See below for a list of
 available database formats.
 
 @item user
@@ -1139,7 +1135,7 @@ Domain name or @acronym{IP} address of a machine running the database.
 @item path
 A @dfn{path} to the database.  The exact meaning of this element
 depends on the database protocol.  It is described in detail when
-discussing particular database protocols.
+discussing the particular database protocols.
 
 @item params
 A list of protocol-dependent parameters.  Each parameter is of the
@@ -1148,7 +1144,7 @@ with semicolons.
 @end table
 
   If the underlying mechanism requires some additional configuration
-data that cannot be supplied using @acronym{URL}, these are passed to
+data that cannot be supplied in an @acronym{URL}, these are passed to
 it using the following statement:
 
 @cindex option, authentication
@@ -1159,7 +1155,7 @@ depends on the type of the database.
 @end deffn
 
   The @acronym{URL} defines how the database is accessed.  Another
-important point is where to get user data from.  This is specified by
+important point is where to get the user data from.  This is specified by
 the following two sub-statements:
 
 @cindex resource, authentication
@@ -1176,7 +1172,7 @@ The exact semantics of @dfn{database resource} depends on the
 type of database being used.  For flat text databases, resource means
 the name of a text file that contains these data, for @acronym{SQL}
 databases, resource is an @acronym{SQL} query, etc.  Below we will
-discuss @acronym{URLS}s and resources used by each database type.
+discuss @acronym{URL}s and resources used by each database type.
 
 @cindex authentication database configuration
 @cindex authentication database definition
@@ -1192,7 +1188,7 @@ user-db @var{url} @{
   # @r{Name of a password resource.}
   password-resource @var{resource};
 
-  # @r{Name of a resource returning user group information.}
+  # @r{Name of the resource returning user group information.}
   group-resource @var{resource};
 @}
 @end group
@@ -1221,7 +1217,7 @@ key in the database.  Second field is the requested resource.
 @end itemize
 
   Record keys in a password file must be unique, i.e. no two records
-may contain the same first field.  Group file may contain multiple
+may contain the same first field.  The group file may contain multiple
 records with the same key.  For example:
 
 @smallexample
@@ -1268,7 +1264,7 @@ load-module ldap;
 
 The @acronym{URL} of the database is:
 @samp{ldap://@var{host}[:@var{port}]}, where @var{host} is the host
-name or IP address of the @acronym{LDAP} server, and option @var{port}
+name or IP address of the @acronym{LDAP} server, and optional @var{port}
 specifies the port number it is listening on (by default, port 389 is
 assumed).
 
@@ -1299,8 +1295,8 @@ Sets OpenLDAP debug level.
 @item user-filter=@var{filter}
 A LDAP filter to select the objects describing given user.  Any
 occurrence of @samp{$user} in @var{filter} is replaced with the actual
-user name obtaining during the authentication.  Variable expansion
-occurs much the same way as in the shell.  In particular, the variable
+user name obtained during the authentication.  This @dfn{variable expansion}
+occurs much the same way as in shell.  In particular, the variable
 is expanded only unless it is immediately followed by an alphanumeric
 character.  For example, it occurs in:
 

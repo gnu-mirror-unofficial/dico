@@ -26,6 +26,7 @@ OPTIONS_BEGIN("dicod",
               [<GNU dictionary server>],
 	      [<>],
 	      [<gnu>],
+	      [<gnupackage>],
 	      [<copyright_year=2005-2012>],
 	      [<copyright_holder=Free Software Foundation, Inc.>])
 

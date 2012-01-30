@@ -360,9 +360,9 @@ preprocessor by using @env{DEFAULT_PREPROCESSOR} configuration
 variable.  For example, the following @command{configure} invocation
 instructs it to use @command{/usr/local/bin/gm4}:
 
-@smallexample
+@example
 $ ./configure DEFAULT_PREPROCESSOR="/usr/local/bin/gm4 -s"
-@end smallexample
+@end example
 
 Note the use of the @option{-s} preprocessor option.  It instructs
 @command{m4} to produce line directives which help @command{dicod}
@@ -466,7 +466,7 @@ of this description is not limited.
 command @code{SHOW DB} lists all available databases along with their
 descriptions:
 
-@smallexample
+@example
 SHOW DB
 110 3 databases present
 jargon "Jargon File (4.3.1, 29 Jun 2001)"
@@ -474,7 +474,7 @@ deu-eng "German-English Freedict dictionary"
 en-pl-naut "English-Polish dictionary of nautical terms"
 .
 250 ok
-@end smallexample
+@end example
 
 Each line of output lists a name of the dictionary, and the
 corresponding description.
@@ -482,7 +482,7 @@ corresponding description.
 The @code{SHOW INFO} command displays full information about a
 database, whose name is given as its argument:
 
-@smallexample
+@example
 SHOW INFO en-pl-naut
 112 information for en-pl-naut
 An English-Polish dictionary of nautical terms
@@ -493,15 +493,15 @@ any later version published by the Free Software Foundation; with no
 Invariant Sections, no Front-Cover and Back-Cover Texts
 .
 250 ok
-@end smallexample
+@end example
 
   A definition for any given headword can be requested using the
 @code{DEFINE} command.  It takes two arguments, the name of the
 database and the headword to look for in that database, e.g.:
 
-@smallexample
+@example
 DEFINE en-pl-naut sprit
-@end smallexample
+@end example
 
 If the headword is found in the database, its definition will be
 displayed, otherwise a diagnostic message will be returned, telling
@@ -591,9 +591,9 @@ line option (@pxref{--inetd}).  This mode is usually used when
 invoking @command{dicod} from @file{inetd.conf} file, as in example
 below:
 
-@smallexample
+@example
 dict  stream  tcp  nowait  nobody /usr/local/bin/dicod --inetd
-@end smallexample
+@end example
   
 @node Configuration
 @section Configuration
@@ -672,10 +672,10 @@ configuration file.  There are two kinds of comments:
 single-line and multi-line comments.  @dfn{Single-line} comments start
 with @samp{#} or @samp{//} and continue to the end of the line:
 
-@smallexample
+@example
 # This is a comment
 // This too is a comment
-@end smallexample
+@end example
 
 @cindex multi-line comments
   @dfn{Multi-line} or @dfn{C-style} comments start with the two
@@ -749,15 +749,15 @@ parsing, see @ref{Preprocessor}.
 @cindex simple statements
   A @dfn{simple statement} consists of a keyword and a value
 separated by any amount of whitespace.  The simple statement is terminated
-with a semicolon (@samp{;}), unless it contains a @dfn{here-document}
+with a semicolon (@samp{;}), unless its value is a @dfn{here-document}
 (see below), in which case semicolon is optional.
 
   Examples of simple statements:
 
-@smallexample
+@example
 timing yes;
 access-log-file /var/log/access_log;
-@end smallexample
+@end example
 
   A @dfn{keyword} begins with a letter and may contain letters,
 decimal digits, underscores (@samp{_}) and dashes (@samp{-}).
@@ -810,12 +810,12 @@ with a single character according to the following rules:
 the string.  This allows to split long strings over several
 physical lines, e.g.:
 
-@smallexample
+@example
 @group
 "a long string may be\
  split over several lines"
 @end group
-@end smallexample
+@end example
 
   If the character following a backslash is not one of those specified
 above, the backslash is ignored and a warning is issued.
@@ -825,12 +825,12 @@ another way to split long strings over several lines to improve
 readability.  For instance, the following fragment produces the same
 result as the example above:
 
-@smallexample
+@example
 @group
 "a long string may be"
 " split over several lines"
 @end group
-@end smallexample
+@end example
 
 @anchor{here-document}
 @item Here-document
@@ -843,14 +843,14 @@ the following lines up to the line containing only @var{word}, with
 possible trailing blanks.  Any lines thus read are concatenated
 together into a single string.  For example:
 
-@smallexample
+@example
 @group
 <<EOT
 A multiline
 string
 EOT
 @end group
-@end smallexample
+@end example
 
   Body of a here-document is interpreted the same way as
 double-quoted string, unless @var{word} is preceded by a backslash
@@ -863,14 +863,14 @@ tab characters are stripped from input lines and the line containing
 all leading whitespace is stripped from them.  This allows to indent
 here-documents in a natural fashion.  For example:
 
-@smallexample
+@example
 @group
 <<- TEXT
     All leading whitespace will be
     ignored when reading these lines.
 TEXT
 @end group
-@end smallexample
+@end example
 
   It is important that the terminating delimiter be the only token on
 its line.  The only exception to this rule is allowed if a
@@ -878,11 +878,11 @@ here-document appears as the last element of a statement.  In this
 case a semicolon can be placed on the same line with its terminating 
 delimiter, as in: 
 
-@smallexample
+@example
 help-text <<-EOT
         A sample help text.
 EOT;
-@end smallexample
+@end example
 
 @item list
 @cindex list
@@ -890,9 +890,9 @@ EOT;
 delimited by parentheses.  The following example shows a statement
 whose value is a list of strings:
 
-@smallexample
+@example
 capability (mime,auth);
-@end smallexample
+@end example
 
   In any case where a list is appropriate, a single value is allowed
 without being a member of a list: it is equivalent to a list with a
@@ -908,13 +908,13 @@ statements.  It consists of a keyword, followed by an optional value,
 and a sequence of statements enclosed in curly braces, as shown in
 the example below:
 
-@smallexample
+@example
 @group
 load-module outline @{
         command "outline";
 @}
 @end group
-@end smallexample
+@end example
 
   The closing curly brace may be followed by a semicolon, although
 this is not required.
@@ -932,9 +932,9 @@ statement when running @command{dicod} in daemon mode.
 @xref{Daemon Mode}. 
 
 Example:
-@smallexample
+@example
 user nobody;
-@end smallexample
+@end example
 @end deffn
 
 @anchor{group statement}
@@ -946,10 +946,10 @@ groups.  For example, this might be necessary to access dictionary
 databases.  The @code{group} statement retains the supplementary
 groups listed in @var{list}, e.g.:
 
-@smallexample
+@example
 user nobody;
 group (man, dict);
-@end smallexample
+@end example
 
 This statement is ignored if @code{user} statement is not present or
 if @command{dicod} is running in inetd mode.  @xref{Inetd Mode}. 
@@ -993,11 +993,11 @@ case the colon may be omitted, too.
 
   Examples:
   
-@smallexample
+@example
 listen localhost:2628;
 listen 127.0.0.1;
 listen :2628;
-@end smallexample
+@end example
 
 @item @var{filename}
   Specifies the name of a @acronym{UNIX} socket to listen on.
@@ -1007,9 +1007,9 @@ listen :2628;
 the address @samp{10.10.10.1}, port 2628 and on the @acronym{UNIX}
 socket @file{/var/run/dict}:
 
-@smallexample
+@example
 listen (10.10.10.1, /var/run/dict);
-@end smallexample
+@end example
 
 @end deffn
 
@@ -1022,9 +1022,9 @@ to users privileges (@pxref{user statement}).  One solution to this is
 to create a subdirectory with the same owner as given by @code{user}
 statement and to point the @acronym{PID} file there:
 
-@smallexample
+@example
 pidfile /var/run/dict/dicod.pid;
-@end smallexample
+@end example
 
 Another solution is to make @acronym{PID} directory group-writable and
 to add the owner group to the @code{group} statement (@pxref{group
@@ -1087,9 +1087,9 @@ utilization on the server machine.
 authentication database, then you enable it by declaring @code{auth}
 server capability (@pxref{Capabilities}):
 
-@smallexample
+@example
 capability auth;
-@end smallexample
+@end example
 
 @cindex authentication database
 @cindex database, authentication
@@ -1114,9 +1114,9 @@ by its @acronym{URL}, or @dfn{Universal Resource Locator}.  It
 consists of the following parts (square brackets denoting optional
 ones):
 
-@smallexample
+@example
 @var{type}://[[@var{user}[:@var{password}]@@]@var{host}]/@var{path}[@var{params}]
-@end smallexample
+@end example
 
 @table @var
 @item type
@@ -1178,7 +1178,7 @@ discuss @acronym{URL}s and resources used by each database type.
 @cindex authentication database definition
 To summarize, the definition of an authentication database is:
 
-@smallexample
+@example
 @group
 # @r{Define user database for authentication.}
 user-db @var{url} @{
@@ -1192,7 +1192,7 @@ user-db @var{url} @{
   group-resource @var{resource};
 @}
 @end group
-@end smallexample
+@end example
 
 @menu
 * text::        Flat Text Databases.
@@ -1220,14 +1220,14 @@ key in the database.  Second field is the requested resource.
 may contain the same first field.  The group file may contain multiple
 records with the same key.  For example:
 
-@smallexample
+@example
 $ grep smith pass
 smith guessme
 $ grep smith group
 smith user
 smith timing
 smith tester
-@end smallexample
+@end example
 
   This means that user @samp{smith} has password @samp{guessme} and is
 a member of three groups: @samp{user}, @samp{timing} and
@@ -1244,23 +1244,23 @@ groups are kept in file @file{user}, and both files reside in
 @file{/var/db/dico} directory, then the appropriate database
 configuration will be:
 
-@smallexample
+@example
 @group
 user-db text:///var/db/dico @{
   password-resource passwd;
   group-resource group;
 @}
 @end group
-@end smallexample
+@end example
 
 @node ldap
 @subsubsection LDAP Databases.
 To configure @acronym{LDAP} user database, you need first to load
 the @samp{ldap} module (@pxref{Ldap, LDAP module}):
 
-@smallexample
+@example
 load-module ldap;
-@end smallexample
+@end example
 
 The @acronym{URL} of the database is:
 @samp{ldap://@var{host}[:@var{port}]}, where @var{host} is the host
@@ -1300,29 +1300,29 @@ occurs much the same way as in shell.  In particular, the variable
 is expanded only unless it is immediately followed by an alphanumeric
 character.  For example, it occurs in:
 
-@smallexample
+@example
 (uid=$user)
-@end smallexample
+@end example
 
 @noindent
 and
 
-@smallexample
+@example
 (uid=$user.1)
-@end smallexample
+@end example
 
 But it does not occur in
 
-@smallexample
+@example
 (uid=$users)
-@end smallexample
+@end example
 
 If it is necessary to expand the variable in such a context, enclose
 its name in curly braces:
 
-@smallexample
+@example
 (uid=$@{user@}s)
-@end smallexample
+@end example
 
 @item group-filter=@var{filter}
 A @acronym{LDAP} filter that selects the user groups.  The
@@ -1334,7 +1334,7 @@ configured for base DN @samp{example.com} which uses
 @samp{posixAccount} and @samp{posixGroup} objects from
 @samp{nis.schema}:
 
-@smallexample
+@example
 @group
 user-db "ldap://localhost" @{
   password-resource userPassword;
@@ -1344,7 +1344,7 @@ user-db "ldap://localhost" @{
           "base=dc=example,dc=com";
 @}
 @end group
-@end smallexample
+@end example
 
   A note on password usage is in order here.  Most authentication methods
 require the passwords to be stored in the database in @emph{plain
@@ -1364,16 +1364,16 @@ and what resources are offered to whom.
 @kwindex acl
 An @acronym{ACL} is defined using @code{acl} block statement:
 
-@smallexample
+@example
 acl @var{name} @{
   @var{definitions}
 @}
-@end smallexample
+@end example
 
-The @var{name} parameter specifies a unique name for that
+The parameter @var{name} specifies a unique name for that
 @acronym{ACL}.  This name will be used by another configuration
-statements (@xref{Security Settings}, and @pxref{Database Visibility})
-to refer to that @acronym{ACL}. 
+statements to refer to that @acronym{ACL} (@xref{Security Settings},
+and @pxref{Database Visibility}).
 
 A part between the curly braces (denoted by @var{definitions} above),
 is a list of @dfn{access statements}.  There are two types of
@@ -1411,9 +1411,9 @@ Authenticated users which are members of at least one of groups listed in
 The @var{sub-acl} part, if present, allows to branch to another
 @acronym{ACL}.  The syntax of this group is:
 
-@smallexample
+@example
 acl @var{name}
-@end smallexample
+@end example
 
 @noindent
 where @var{name} is the name of a previously defined @acronym{ACL}.
@@ -1423,6 +1423,9 @@ It consists of a @code{from} keyword followed by a list of
 @dfn{address specifiers}.  Allowed address specifiers are:
 
 @table @asis
+@item @code{any}
+Matches any client address.
+
 @item @var{addr}
 Matches if the client @acronym{IP} equals @var{addr}.
 The latter may be given either as an @acronym{IP}
@@ -1449,10 +1452,10 @@ Matches if connection was received from a @acronym{UNIX} socket
 
 To summarize, the syntax of an access statement is:
 
-@smallexample
+@example
 allow|deny [all|authenticated|group @var{group-list}]
            [acl @var{name}] [from @var{addr-list}]
-@end smallexample
+@end example
 
 @noindent
 where square brackets denote optional parts and vertical bar means
@@ -1475,7 +1478,7 @@ coming from the network @samp{10.10.0.0/24} are allowed if they
 authenticate themselves and are members of groups @samp{dicod} or
 @samp{users}.  Access is denied for anybody else:
 
-@smallexample
+@example
 @group
 acl common @{
     allow all from ("/tmp/dicod.sock", "192.168.10.0/24");
@@ -1484,7 +1487,7 @@ acl common @{
     deny all;
 @}
 @end group
-@end smallexample
+@end example
 
 @xref{Security Settings}, for information on how to control daemon
 security settings.
@@ -1504,7 +1507,7 @@ The @acronym{ACL} itself must be defined before this statement.  Using
 no sense, because authentication is performed after connection is
 established.
 
-@smallexample
+@example
 @group
 acl incoming-conn @{
    allow from 213.130.0.0/19;
@@ -1513,7 +1516,7 @@ acl incoming-conn @{
 
 connection-acl incoming-conn;
 @end group
-@end smallexample
+@end example
 @end deffn
 
 @deffn {Configuration} show-sys-info @var{acl-name}
@@ -1528,10 +1531,10 @@ built and the kernel version thereof, host name, total operational
 time of the daemon, number of subprocesses executed so far and average
 usage frequency.  For example:
 
-@smallexample
-dicod (dico @value{VERSION}) on Linux 2.6.24.4,
-dict.example.net up 110+04:42:58, 19647044 forks (6867.9/hour)
-@end smallexample
+@example
+dicod (dico @value{VERSION}) on Linux 2.6.32,
+dict.example.net up 99+04:42:58, 19647 forks (686.9/hour)
+@end example
 @end deffn
 
 @node Logging and Debugging
@@ -1561,20 +1564,21 @@ Log session transcript.  The lines received from client are prefixed
 with @samp{C:}, those sent in reply are marked with @samp{S:}.  Here is
 an excerpt from the transcript output:
 
-@smallexample
-S: 220 Trurl.gnu.org.ua dicod (dico 1.99.90) <mime.xversion>
-<1645.1212874507@@Trurl.gnu.org.ua>
-C: client ``Kdict''
+@example
+S: 220 example.net dicod (dico @value{VERSION}) <mime.xversion>
+  <1645.1212874507@@example.net>
+C: client "Kdict"
 S: 250 ok
 C: show db
 S: 110 16 databases present
-S: afr-deu ``Afrikaans-German Freedict dictionary''
-S: afr-eng ``Afrikaans-English FreeDict Dictionary''
+S: afr-deu "Afrikaans-German Freedict dictionary"
+S: afr-eng "Afrikaans-English FreeDict Dictionary"
 [...]
 S: .
 S: 250 ok
-@end smallexample
+@end example
 
+(The first line is split in two to fit in the printed page width.)
 This option produces lots of output and can significantly slow down
 the server.  Use it only if you are debugging @command{dicod} or
 some remote client.  Never use it in a production environment.
@@ -1593,12 +1597,12 @@ following directive:
 @deffn {Configuration} access-log-file @var{string}
 Set access log file name.
 
-@smallexample
+@example
 access-log-file /var/log/dico/access.log;
-@end smallexample
+@end example
 @end deffn
 
-  The format of log file entries is specified using
+  The format of log file entries is defined via the
 @code{access-log-format} directive:
 
 @deffn {Configuration} access-log-format @var{string}
@@ -1611,7 +1615,7 @@ the log file verbatim, and @dfn{format specifiers}, i.e. special
 sequences which begin with @samp{%} and are replaced in the log file
 as shown in the table below.
 
-@table @asis
+@table @code
 @item %%
 The percent sign.
 
@@ -1676,9 +1680,9 @@ reply.
 @item %t
 Time the request was received in the standard Apache format, e.g.:
 
-@smallexample
+@example
 [04/Jun/2008:11:05:22 +0300]
-@end smallexample
+@end example
 
 @item %@{@var{format}@}t
 The time, in the form given by @var{format}, which should be a valid
@@ -1687,9 +1691,9 @@ description.
 
 The standard @samp{%t} format is equivalent to
 
-@smallexample
+@example
 [%d/%b/%Y:%H:%M:%S %z]
-@end smallexample
+@end example
 
 @item %T
 The time taken to serve the request, in seconds.
@@ -1712,14 +1716,14 @@ The word from the request.
   For the reference, here is the list of format specifiers that
 have different meaning than in Apache: @samp{%C}, @samp{%H}, @samp{%m},
 @samp{%q}.  The following format specifiers are unique to @command{dicod}:
-@samp{d}, @samp{%@{@var{n}@}R}, @samp{%V}, @samp{%W}.
+@samp{%d}, @samp{%@{@var{n}@}R}, @samp{%V}, @samp{%W}.
 
-  Absence of the @code{access-log-format} directive is equivalent to
+  The absence of @code{access-log-format} directive is equivalent to
 the following statement:
 
-@smallexample
+@example
 access-log-format "%h %l %u %t \"%r\" %>s %b";
-@end smallexample
+@end example
 
 @cindex webalizer
   It was chosen so as to be compatible with Apache access logs and 
@@ -1729,9 +1733,9 @@ be easily parsable by existing log analyzing tools, such as
   Extending this format string with the client name produces a log
 format similar to Apache @samp{combined log}:
 
-@smallexample
+@example
 access-log-format "%h %l %u %t \"%r\" %>s %b \"\" \"%C\"";
-@end smallexample
+@end example
 
 
 @node General Settings
@@ -1747,9 +1751,9 @@ reply.
 When connection is established, the server sends an @dfn{initial reply} to
 the client, that looks like in the example below:
 
-@smallexample
-220 Trurl.gnu.org.ua <auth.mime> <520.1212912026@@Trurl.gnu.org.ua>
-@end smallexample
+@example
+220 example.org <auth.mime> <520.1212912026@@example.org>
+@end example
 
 @xref{Initial Reply}, for a detailed description of its parts.
 
@@ -1759,17 +1763,17 @@ bracket is modifiable and can contain arbitrary text.  You can use
 there.  Note, that @var{string} may not contain newlines.  For
 example:
 
-@smallexample
+@example
 initial-banner-text "Please authenticate yourself,";
-@end smallexample
+@end example
 
 This statement produces the following initial reply (split over two
 lines for readability):
 
-@smallexample
-220 Trurl.gnu.org.ua Please authenticate yourself,
-  <auth.mime> <520.1212912026@@Trurl.gnu.org.ua>
-@end smallexample
+@example
+220 example.org Please authenticate yourself,
+  <auth.mime> <520.1212912026@@Texample.org>
+@end example
 @end deffn
 
 @anchor{hostname directive}
@@ -1779,11 +1783,11 @@ however, it makes a wrong guess, you can fix it using this directive.
 
 The server hostname is used, among others, in the initial reply after
 @samp{220} code (see above) and may also be displayed in the access
-log file using @samp{%v} escape (@pxref{Access Log}).
+log file using the @samp{%v} escape (@pxref{Access Log}).
 @end deffn
 
 @deffn {Configuration} server-info @var{string}
-Set server description to be shown in reply to @code{SHOW SERVER}
+Set the server description to be shown in reply to @code{SHOW SERVER}
 (@pxref{SHOW, SHOW SERVER}) command.
 
 The first line of the reply, after the usual @samp{114} response line,
@@ -1795,14 +1799,14 @@ The lines that follow are taken from the @code{server-info}
 directive.  It is common to specify @var{string} using
 ``here-document'' syntax (@pxref{here-document}), e.g.:
 
-@smallexample
+@example
 server-info <<EOT
 Welcome to the FOO dictionary service.
 
 Contact <dict@@foo.org> if you have questions or
 suggestions.
 EOT;
-@end smallexample
+@end example
 
 @end deffn
 
@@ -1812,26 +1816,25 @@ Set the text to be displayed in reply to the @acronym{HELP} command.
 The default reply to @acronym{HELP} command displays a list of
 commands understood by the server with a short description of each.
 
-You can use @command{help-text} directive to @emph{append} arbitrary
-text to that output, provided that you begin @var{string} with a
-plus sign, e.g.:
+If the @var{string} begins with a plus sign, it will be appended to
+the default reply:
 
-@smallexample
+@example
 help-text <<-EOT
   +
   The commands beginning with an X are extensions.
 EOT;
-@end smallexample
+@end example
 
-If @var{string} begins with any character, except @samp{+}, it will
-replace the default help output.  For example:
+If the @var{string} begins with any other character, except @samp{+},
+it will replace the default help output.  For example:
 
-@smallexample
+@example
 help-text <<-EOT
   There is no help.
   See RFC 2229 for detailed information.
 EOT;
-@end smallexample
+@end example
 @end deffn
 
 @deffn {Configuration} default-strategy @var{string}
@@ -1839,9 +1842,9 @@ Set the name of the default matching strategy
 (@pxref{MATCH}).  By default, Levenshtein matching is used,
 which is equivalent to
 
-@smallexample
+@example
 default-strategy lev;
-@end smallexample
+@end example
 @end deffn
 
 @node Capabilities
@@ -1886,11 +1889,11 @@ appropriate entries are added to the @code{HELP} command output.
 @cindex database module, defined
   A @dfn{database module} is an external piece of software designed to
 handle a particular format of dictionary databases.  This piece of
-software is built as a shared library so that @command{dicod} can load
+software is built as a shared library that @command{dicod} loads
 at run time.
 
 @cindex database handler, defined
-  A @dfn{handler} is an instance of a database module loaded by
+  A @dfn{handler} is an instance of the database module loaded by
 @command{dicod} and configured for a specific database or a set of
 databases. 
 
@@ -1905,22 +1908,23 @@ sub-statement allowed within it is @code{command} statement:
 @deffn {load-module config} command @var{string}
 Set the command line for this handler.  It is similar to shell's
 command line: it consists of a name of database module, optionally
-followed by a whitespace-separated list of its arguments.  Just as in
-shell, the name of the module specifies the disk file which should be
-loaded.  Arguments are passed to the module @dfn{initialization function}
+followed by a whitespace-separated list of its arguments.  The name of
+the module specifies the disk file to load (see below for a detailed
+description of the loading sequence).  Both command name and arguments
+are passed to the module @dfn{initialization function}
 (@pxref{dico_init}).
 @end deffn
 @end deffn
 
 For example:
 
-@smallexample
+@example
 @group
 load-module dict @{
   command "dictorg dbdir=/var/dicodb";
 @}
 @end group
-@end smallexample
+@end example
 
 This statement defines a handler named @samp{dict}, which loads
 the module @file{dictorg} and passes its initialization function a
@@ -1932,27 +1936,27 @@ searched in the module load path.
 A common case is when a module does not require initialization
 arguments and its command string is the same as its name, e.g.:
 
-@smallexample
+@example
 @group
 load-module outline @{
   command "outline";
 @}
 @end group
-@end smallexample
+@end example
 
 The configuration syntax provides a shortcut for such usage:
 
-@smallexample
+@example
 load-module outline;
-@end smallexample
+@end example
 
 If @code{load-module} is used this way, it accepts a single string or
 a list of strings as its argument.  In the latter case, it loads all
 modules listed in the argument.  For example:
 
-@smallexample
+@example
 load-module (stratall,substr,word);
-@end smallexample
+@end example
 
 
 @cindex module load path
@@ -1981,13 +1985,13 @@ The value of the environment variable @env{LTDL_LIBRARY_PATH}.
 @item
 @flindex /etc/ld.so.conf
 @vrindex LD_LIBRARY_PATH
-The system dependent library search path (e.g. on Linux it is set
+The system dependent library search path (e.g. on GNU/Linux it is set
 by the contents of the file @file{/etc/ld.so.conf} and the value of
-the environment variable @env{LD_LIBRARY_PATH}.
+the environment variable @env{LD_LIBRARY_PATH}).
 @end enumerate
 
 The value of @env{LTDL_LIBRARY_PATH} and @env{LD_LIBRARY_PATH} must be a
-colon-separated list of absolute directories, for example,
+colon-separated list of absolute directory names, for example
 @samp{/usr/lib/mypkg:/lib/foo}.
 
 In any of these directories, @command{dicod} first attempts to find and
@@ -2007,20 +2011,20 @@ e.g., @samp{.so}, @samp{.sl}, etc.
 This directive adds the directories listed in its argument to the
 module load path.  Example:
 
-@smallexample
+@example
 module-load-path (/usr/lib/dico,/usr/local/dico/lib);
-@end smallexample
+@end example
 @end deffn
 
 @deffn {Configuration} prepend-load-path @var{list}
-Same @code{module-load-path}, but adds directories to the beginning
-of the module load path.  Example:
+Same as @code{module-load-path}, but adds directories to the beginning
+of the module load path.
 @end deffn
 
 @node Databases
 @subsection Databases
 @cindex databases, defining
-  Dictionary databases are defined using @code{database} block
+  Dictionary databases are defined using the @code{database} block
 statement.
 
 @deffn {Configuration} database @{ @var{statements} @}
@@ -2043,12 +2047,12 @@ For example, the following fragment defines a database named
 @samp{en-de}, which is handled by @samp{dictord} handler.  The handler
 is passed one argument, @code{database=en-de}:
 
-@smallexample
+@example
 database @{
         name "en-de";
         handler "dictorg database=en-de";
 @}
-@end smallexample
+@end example
 
 More directives are available to fine-tune the database.
 
@@ -2060,8 +2064,8 @@ Use this statement if the database itself does not supply a
 description, or if its description is malformed.
 
 In any case, if @code{description} directive is specified, its value
-takes precedence over description string retrieved from the database
-itself.
+takes precedence over the description string retrieved from the
+database itself.
 
 @xref{SHOW, SHOW DB}, for a description of @code{SHOW DB} command.
 @end deffn
@@ -2072,7 +2076,7 @@ in reply to @code{SHOW INFO} (@pxref{SHOW, SHOW INFO}) command.  The
 @var{string} is usually a multi-line text, so it is common to use
 here-document syntax (@pxref{here-document}), e.g.:
 
-@smallexample
+@example
 @group
 info <<- EOT
    This is a foo-bar dictionary.
@@ -2081,7 +2085,7 @@ info <<- EOT
    Documentation license.
 EOT;
 @end group
-@end smallexample
+@end example
 
 Use this statement if the database itself does not supply a full
 description, or if its full description is malformed.
@@ -2097,14 +2101,14 @@ encoding used when formatting replies from this database if
 @deffn {Database} content-type @var{string}
 Set the content type of the reply.  E.g.:
 
-@smallexample
+@example
 directory @{
    name "foo";
    handler "dictorg";
    content-type "text/html";
    ...
 @}   
-@end smallexample
+@end example
 @end deffn
 
 @deffn {Database} content-transfer-encoding @var{enum}
@@ -2145,15 +2149,15 @@ control lists: global visibility @acronym{ACL} and database visibility
   Both @acronym{ACL}s are defined using @code{visibility-acl} statement:
 
 @deffn {Configuration} visibility-acl @var{acl-name}
-Set name of an @acronym{ACL} controlling database visibility.  If used
-in global scope, this statement sets global visibility @acronym{ACL}.
-If used within a @code{database} block, it sets visibility
+Set name of an @acronym{ACL} controlling database visibility.  When used
+in global scope, this statement sets the global visibility @acronym{ACL}.
+If used within a @code{database} block, it sets the visibility
 @acronym{ACL} for that particular database.
 @end deffn
 
   Consider the following example:
 
-@smallexample
+@example
 acl glob-vis @{
   allow authenticated;
   deny all;
@@ -2169,7 +2173,7 @@ database @{
   name "terms";
   visibility-acl local-nets;
 @}
-@end smallexample
+@end example
 
 In this configuration, the @samp{terms} database is visible to
 everybody coming from the @samp{192.168.10.0/24} network and from
@@ -2181,7 +2185,7 @@ unless they authenticate themselves.
 @subsection Strategies and Default Searches
 @cindex default searches
   @dfn{Default search} is a @code{MATCH} request with @samp{*} or
-@samp{!} as database argument (@pxref{MATCH}).  The former means
+@samp{!} as the database argument (@pxref{MATCH}).  The former means
 search in all available databases, the latter means search in all
 databases until a match is found.
 
@@ -2195,7 +2199,7 @@ requests, Dico allows to limit the use of certain strategies in
 default searches.
 
 @deffn {Configuration} strategy @var{name} @{ @var{statements} @}
-Restrict the use of strategy @var{name} in default searches.
+Restrict the use of the strategy @var{name} in default searches.
 @end deffn
 
 The @var{statements} define conditions the 4th argument of a
@@ -2238,11 +2242,11 @@ Deny if length of the search word is not equal to @var{number}.
 For example, the following statement denies the use of @samp{prefix}
 strategy in default searches if its argument is an empty string:
 
-@smallexample
+@example
 strategy prefix @{
   deny-length-eq 0;
 @}
-@end smallexample
+@end example
 
 If the @code{dicod} daemon is configured this way, it will always return
 a @samp{552} reply on commands @code{MATCH * prefix ""} or @code{MATCH
@@ -2263,9 +2267,9 @@ operation.  This information is displayed after the following
 requests: @code{MATCH}, @code{DEFINE}, and @code{QUIT}.  It consists
 of the following parts:
 
-@smallexample
+@example
 [d/m/c = @var{nd}/@var{nm}/@var{nc} @var{RT}r @var{UT}u @var{ST}s]
-@end smallexample
+@end example
 
 @noindent
 where:
@@ -2295,9 +2299,9 @@ Time in kernel space spent serving the request.
 
 An example of a server reply with timing information follows:
 
-@smallexample
-250 Command complete [d/m/c = 0/63/107265 2.293r 1.120u 0.010s]
-@end smallexample
+@example
+250 Done [d/m/c = 0/63/107265 2.293r 1.120u 0.010s]
+@end example
 @end deffn
 
 You can also add timing information to your access log files, see
@@ -2320,23 +2324,23 @@ as they allow to create abbreviations for some frequently typed
 commands.  For example, the following alias creates new command
 @code{d} which is equivalent to @code{DEFINE *}:
 
-@smallexample
+@example
 alias d DEFINE "*";
-@end smallexample
+@end example
 
   Aliases may be recursive, i.e. the first word of @var{command} may
 refer to another alias.  For example:
 
-@smallexample
+@example
 alias d DEFINE;
 alias da d "*";
-@end smallexample
+@end example
 
   This configuration will produce the following expansion:
 
-@smallexample
+@example
 da word @result{} DEFINE * word
-@end smallexample
+@end example
 
   To prevent endless loops, recursive expansion is stopped if the
 first word of the replacement text is identical to an alias expanded
@@ -2346,7 +2350,7 @@ earlier.
 @subsection Using Preprocessor to Improve the Configuration.
 @cindex preprocessor
 @cindex m4
-  Before parsing configuration file, @command{dicod} preprocesses
+  Before parsing its configuration file, @command{dicod} preprocesses
 it.  The built-in preprocessor handles only file inclusion
 and @code{#line} statements (@pxref{Pragmatic Comments}), while the
 rest of traditional preprocessing facilities, such as macro expansion,
@@ -2386,7 +2390,7 @@ is almost the same, except for the dictionary name and eventual
 description entry for several databases that miss it.  To avoid
 repeating the same text over again, we define the following macro:
 
-@smallexample
+@example
 @group
 # defdb(@sc{name}[, @sc{descr}])
 # @r{Produce a standard definition for a database @sc{name}}.
@@ -2400,7 +2404,7 @@ m4_ifelse(`$2',,,`
 @}
 ')
 @end group
-@end smallexample
+@end example
 
 It takes two arguments.  The first one, @sc{name} defines the dictionary
 name visible in the output of @code{SHOW DB} command.  Optional second
@@ -2409,14 +2413,14 @@ that miss it.
 
 Given this macro, the database definitions look like:
 
-@smallexample
+@example
 @group
 defdb(eng-swa)
 defdb(swa-eng)
 defdb(afr-eng, Afrikaans-English Dictionary)
 defdb(eng-afr, English-Afrikaans Dictionary)
 @end group
-@end smallexample
+@end example
 
 @node Exit Codes
 @section Dicod Exit Codes
@@ -2441,7 +2445,7 @@ within a time out interval (@pxref{inactivity-timeout}).
 @item 64
 @itemx EX_USAGE
 The program was invoked incorrectly, e.g. an invalid option was given,
-or an option was supplied erroneous argument.
+or an erroneous argument was supplied to an option.
 
 @item 67
 @item EX_NOUSER
@@ -2594,18 +2598,15 @@ Print program version and exit.
 @node Modules
 @chapter Modules
 @cindex Modules
-  GNU Dico comes with a set of loadable modules for handling several
-database formats and for extending its functionality.  Modules
+  GNU Dico comes with a set of loadable modules for handling various
+database formats and extending the server functionality.  Modules
 are binary loadable files, installed in
-@file{@var{$prefix}/lib/dico}.  Modules are configurable on per-module
+@file{@var{$prefix}/lib/dico}.  Thet are configurable on per-module
 (@pxref{Handlers, command}) and per-database (@pxref{Databases,
 handler}) basis.
 
-  GNU Dico version @value{VERSION} is shipped with a set of modules
-which provide support for various dictionary formats, search
-strategies and extension languages.
-  
-  In this chapter we will describe these modules in detail.
+  In this chapter we will describe the modules included in the 
+distribution of GNU Dico version @value{VERSION}.
 
 @menu
 * Outline::
@@ -2621,7 +2622,7 @@ strategies and extension languages.
 @end menu
 
 @node Outline
-@section The @command{outline} module.
+@section @command{Outline}
 @cindex outline module
   The @command{outline} module supports databases written in
 @dfn{Emacs outline mode}.  It is not designed for storing large
@@ -2633,14 +2634,14 @@ can be composed easily and quickly using the Emacs editor.
 Outline Mode, emacs, The Emacs Editor}.  In short it is a usual plain
 text file, containing @dfn{header lines} and @dfn{body lines}.  Header
 lines start with one or more stars, the number of starts indicating
-the depth of heading in the document structure: one star for chapters,
-two stars for sections, etc.  Body lines are anything that is not
-header lines.
+the nesting level of the heading in the document structure: one star for
+chapters, two stars for sections, etc.  Body lines are anything that
+is not header lines.
 
 @cindex outline dictionary
   The outline dictionary must have at least a chapter named
 @samp{Dictionary}, that contains dictionary corpus.  Within it, each
-subsection is treated as a dictionary article, its header line giving
+section is treated as a dictionary article, its header line giving
 the headword, and its body lines supplying the article itself.  Apart
 from this, two more chapters have special meaning.  The
 @samp{Description} chapter gives a short description to be displayed
@@ -2652,7 +2653,7 @@ optional.
 
   To summarize, the structure of an outline database is:
 
-@smallexample
+@example
 * Description
 @var{line}
    
@@ -2665,44 +2666,44 @@ optional.
 @var{text}
 
 [@r{any number of entries follows}]
-@end smallexample
+@end example
 
 @cindex Ambrose Bierce
 @cindex Devil's Dictionary
 @flindex devils.out
   As an example of outline format, the GNU Dico package includes
 Ambrose Bierce's @cite{Devil's Dictionary} in this format, see
-@file{tests/devils.out}. 
+@file{examples/devdict.out}. 
 
-  Outline module initialization does not require any command line
-parameters, specifying @code{command "outline";} is enough.  To
-declare a database, supply its full file name to @code{handler}
-directive, as shown in the example below:
+  The initialization of the @command{outline} module does not require
+any command line parameters.  To declare a database, supply its full
+file name to the database @code{handler} directive, as shown in the
+example below:
 
-@smallexample
+@example
 @group
 load-module outline;
 
 database @{
    name "devdict";
-   handler "outline /var/db/devils.out";
+   handler "outline /var/db/devdict.out";
 @}
 @end group
-@end smallexample
+@end example
 
 @node Dictorg
-@section The @command{dictorg} module.
+@section @command{Dictorg}
 @cindex dictorg module
   The @command{dictorg} module supports dictionaries in the format
 designed by @cite{@acronym{DICT} development group}
 (@uref{http://dict.org}).  Lots of free dictionaries in this format
-are available from @uref{http://freedict.org, @cite{FreeDict}
+are available from the @uref{http://freedict.org, @cite{FreeDict}
 project}.
 
   A dictionary in this format consists of two files: a @dfn{dictionary
 database file}, named @file{@var{name}.dict} or
 @file{@var{name}.dict.dz} (a compressed form), and an @dfn{index file},
-which lists article headwords and corresponding offsets in the
+which lists article headwords with the corresponding offsets in the
 database.  The index file is named @file{@var{name}.index}.  The
 common part of these two file names, @var{name}, is called the @dfn{base
 name} for that dictionary.
@@ -2711,11 +2712,11 @@ name} for that dictionary.
   An instance of the @command{dictorg} module is created using the
 following statement:
 
-@smallexample
+@example
 load-module @var{inst-name} @{
     command "dictorg [@var{options}]";
 @}
-@end smallexample
+@end example
 
 @noindent
 where square brackets denote optional part.  Valid @var{options} are
@@ -2735,8 +2736,7 @@ are marked with headwords that begin with @samp{00-database-}.  By
 default they are exempt from database look-ups and cannot be retrieved
 using @code{MATCH} or @code{DEFINE} command.
 
-Using @option{show-dictorg-entries} removes this limitation and makes
-these entries behave as other database entries.
+Using @option{show-dictorg-entries} removes this limitation.
 
 @kwindex sort
 @item sort
@@ -2759,14 +2759,14 @@ using this module instance, unless overridden in their declarations.
 @cindex dictorg database declaration
 A database that uses this module must be declared as follows:
 
-@smallexample
+@example
 @group
 database @{
     handler "@var{inst-name} database=@var{file} [@var{options}]";
     ...
 @}
 @end group
-@end smallexample
+@end example
 
 @noindent
 where @var{inst-name} is the instance name used in the @code{load-module}
@@ -2791,7 +2791,7 @@ to disable the corresponding option for this database.  For example,
 initializing the module instance.
 
 @node GCIDE
-@section @command{gcide}
+@section @command{Gcide}
 @cindex GNU Collaborative International Dictionary of English
   The @command{gcide} module provides support for GNU Collaborative
 International Dictionary of English. This dictionary can be downloaded
@@ -2801,26 +2801,26 @@ consists of a set of files named from @file{CIDE.A} through
 
   The @command{gcide} module is started via the following statement:
 
-@smallexample
+@example
 load-module gcide;
-@end smallexample
+@end example
 
 @kwindex dbdir
   The database is initialized as follows:
 
-@smallexample
+@example
 @group
 database @{
     handler "gcide dbdir=@var{directory} [@var{options}]";
     ...
 @}
 @end group
-@end smallexample
+@end example
 
 The @samp{dbdir} parameter supplies the name of the directory where
 database files are located.  Upon startup, the module scans the
-dictionary files and creates an index file, named @file{CIDE.IDX}, if
-it does not already exist.  The file is created using a subsidiary
+dictionary files and creates an index file, named @file{GCIDE.IDX}, if
+it does not already exist.  The file is created using an ancillary
 program @command{idxgcide}, described below.  Unless specified
 otherwise, this file is created in the same directory where the
 database files are located, therefore the directory must be writable
@@ -2857,7 +2857,7 @@ displaying them at all.
   Here's a full example of a @samp{gcide} as used in
 @indicateurl{dico.gnu.org.ua}:
 
-@smallexample
+@example
 @group
 load-module gcide;
 
@@ -2866,7 +2866,8 @@ database @{
     handler "gcide dbdir=/var/dictdb/gcide suppress-pr";
     languages-from "en";
     languages-to "en";
-    description "Collaborative International Dictionary of English";
+    description "Collaborative International Dictionary"
+                " of English";
         info <<EOT
 The dictionary was derived from the
          Webster's Revised Unabridged Dictionary
@@ -2879,7 +2880,7 @@ The dictionary was derived from the
 EOT;
 @}
 @end group
-@end smallexample
+@end example
 
   The dots represent further content of the description which is too
 big and irrelevant to copy it here.
@@ -2893,17 +2894,17 @@ big and irrelevant to copy it here.
   The @command{idxgcide} utility is used by the @command{gcide} module
 to index the GCIDE dictionary.  You can start it manually to reindex
 the database.  It can be needed, for example, if you install a
-modified version of the dictionary.  It is installed in
+modified version of the dictionary.  The program is installed in
 @dfn{libexecdir}.  The usage is:
 
-@smallexample
+@example
 idxgcide [@var{options}] @var{dbdir} [@var{idxdir}]
-@end smallexample
+@end example
 
 The only mandatory argument @var{dbdir} specifies the name of the
 directory where the GCIDE dictionary is installed.  The optional
 @var{idxdir} argument specifies the directory for the index file, if
-it differs from @var{dbdir}.  Accepted @var{options} are:
+it differs from @var{dbdir}.  Available @var{options} are:
 
 @table @option
 @item --debug
@@ -2935,7 +2936,7 @@ The default page size is 10240 bytes.
 @end table
 
 @node Wordnet
-@section WordNet
+@section @command{Wordnet}
 @dfn{WordNet} is a lexical database for the English language, created
 and maintained at the Cognitive Science Laboratory of Princeton
 University@footnote{See @uref{http://wordnet.princeton.edu/wordnet/},
@@ -2958,9 +2959,9 @@ location where these files can be found.  For example, if WordNet was
 installed using the default procedure, then the following option will
 do the job:
 
-@smallexample
+@example
   ./configure --with-wordnet=/usr/local/WordNet-3.0
-@end smallexample
+@end example
 
 This command tells Dico to look for WordNet library files in
 @file{/usr/@/local/@/WordNet-3.0/@/lib} and for include files in
@@ -2968,11 +2969,11 @@ This command tells Dico to look for WordNet library files in
 
 A compiled module is installed using the following statement:
 
-@smallexample
+@example
 load-module wordnet @{
     command "wordnet [@var{parameters}]";
 @}
-@end smallexample
+@end example
 
 Optional parameters are:
 
@@ -3029,7 +3030,7 @@ When specified, this parameter instructs the WordNet database to merge
 all definitions with the same part of speech into a single definition,
 which will be returned in the usual dictionary fashion, e.g.:
 
-@smallexample
+@example
 @group
 sail
 n. 1. a large piece of fabric (usually canvas fabric) by
@@ -3038,11 +3039,11 @@ Synonyms: @{canvas@}, @{canvass@}, @{sheet@}
 2. an ocean trip taken for pleasure
 Synonyms: @{cruise@}
 3. any structure that resembles a sail
-v. 1. traverse or travel on (a body of water); "We sailed the
-Atlantic"; "He sailed the Pacific all alone" 
+v. 1. traverse or travel on (a body of water); "We sailed
+the Atlantic"; "He sailed the Pacific all alone" 
 2. move with sweeping, effortless, gliding motions
 @end group
-@end smallexample
+@end example
 
 By default, each definition is returned as a separate entry.
 @end deffn
@@ -3050,7 +3051,7 @@ By default, each definition is returned as a separate entry.
 As an example, the following is the database definition the author
 uses on his server:
 
-@smallexample
+@example
 @group
 database @{
     name "WordNet";
@@ -3060,10 +3061,10 @@ database @{
     description "WordNet dictionary, version 3.0";
 @}
 @end group
-@end smallexample
+@end example
 
 @node Guile
-@section The @command{guile} module.
+@section @command{Guile}
 @cindex Guile
 @cindex Scheme
   @dfn{Guile} is an acronym for @dfn{GNU's Ubiquitous Intelligent
@@ -3078,7 +3079,7 @@ For a detailed description of Guile and its features, see
 GNU Dico modules in Scheme.  The module is loaded
 using the following configuration file statement:
 
-@smallexample
+@example
 @group
 load-module @var{mod-name} @{
    command "guile [@var{options}]"
@@ -3087,19 +3088,19 @@ load-module @var{mod-name} @{
            " init-fun=@var{function}";
 @}
 @end group
-@end smallexample
+@end example
 
 @kwindex init-script
 @kwindex init-args
 @kwindex init-fun
   The @code{init-script} parameter specifies the name of a Scheme
-source file that must be loaded in order to initialize the module.
+source file to be loaded in order to initialize the module.
 The @code{init-args} parameter supplies additional arguments to the
 module.  They will be accessible to the @file{@var{script}} via
 @code{command-line} function.  This parameter is optional.
 
   The @code{init-fun} parameter specifies the name of a function that
-will be invoked to perform the initialization of the module and of
+will be invoked to perform initialization of the module and of
 particular databases.  @xref{Guile Initialization}, for a description
 of initialization sequence.  Optional arguments, @var{options}, are:
 
@@ -3133,16 +3134,17 @@ See the section @uref{http://www.gnu.org/software/guile/manual/html_node/Build-C
 @end table
 
 @anchor{guile-cmdline}
-  Guile databases are declared using the following syntax:
+@noindent
+Guile databases are declared using the following syntax:
 
-@smallexample
+@example
 @group
 database @{
         name "@var{dbname}";
         handler "@var{mod-name} [@var{options}] @var{cmdline}";
 @}
 @end group
-@end smallexample
+@end example
 
 @noindent
 where:
@@ -3159,7 +3161,7 @@ above),
 @kwindex init-script
 @kwindex init-args
 @kwindex init-fun
-Options, that allow to override global settings given in the
+Options that override global settings given in the
 @code{load-module} statement.  The following options are understood:
 @code{init-script}, @code{init-args}, and @code{init-fun}.  Their
 meaning is the same as for @code{load-module} statement (see above),
@@ -3181,7 +3183,7 @@ is the command line that will be passed to the Guile
 @node Virtual Functions
 @subsection Virtual Functions
 @cindex virtual functions, guile module
-  A database handled by @command{guile} module is associated with a 
+  A database handled by the @command{guile} module is associated with a 
 @var{virtual function table}.  This table is an association list, that
 supplies to the module the Scheme @dfn{call-back functions} implemented to
 perform particular tasks on that database.  In this association list,
@@ -3242,14 +3244,14 @@ Particular virtual functions are described in @ref{Guile API}.
   The following configuration statement causes loading and
 initialization of the @command{guile} module: 
 
-@smallexample
+@example
 @group
 load-module @var{mod-name} @{
-   command "guile init-script=@file{@var{script}}"
+   command "guile init-script=@var{script}"
            " init-fun=@var{function}";
 @}
 @end group
-@end smallexample
+@end example
 @kwindex init-script
 @kwindex init-fun
   Upon module initialization stage, the module attempts to load the
@@ -3257,8 +3259,8 @@ file named @file{@var{script}}.  The file is loaded using
 @code{primitive-load} call (@pxref{Loading, primitive-load, Loading,
 guile, The Guile Reference Manual}), i.e. the load paths are not
 searched, so @var{script} must be an absolute path name.  The
-@code{init-fun} parameter supplies the name of an @dfn{initialization
-function}.  This Scheme function is used to construct virtual 
+@code{init-fun} parameter supplies the name of the @dfn{initialization
+function}.  This Scheme function constructd virtual 
 function tables for the module itself and for each database that uses
 this module.  It must be declared as follows:
 
@@ -3268,21 +3270,24 @@ this module.  It must be declared as follows:
 @end smalllisp
 
 This function is called several times.  First of all, it is called after
-@var{script} is loaded.  This time it is given @code{#f} as its
+the @var{script} is loaded.  This time it is given @code{#f} as its
 argument, and its return value is saved as a global function table.
 Then, it is called for each @code{database} statement that has
 @var{mod-name} (used in @code{load-module} above) in its
 @code{handler} keyword, e.g.:
 
-@smallexample
+@example
+@group
 database @{
    name @var{db-name};
-   handler "@var{mod-name}...";
+   handler "@var{mod-name} @dots{}";
 @}
-@end smallexample
+@end group
+@end example
 
-This time, it is given @var{db-name} as its argument and its return is
-stored as the virtual function table for this particular database.
+This time, it is given @var{db-name} as its argument and the value it
+returns is stored as the virtual function table for this particular
+database.
 
 The following example function returns a complete virtual function table:
 
@@ -3321,20 +3326,20 @@ databases and for returning information about them.
 Virtual table: @code{(cons "open" open-db)}@*
 
 Open the database.  The argument @var{name} contains database name as
-given in @code{name} statement of @code{database} block
+given in the @code{name} statement of one of @code{database} blocks
 (@pxref{Databases}).  Optional argument @var{args} is a list of
 command line parameters obtained from @var{cmdline} in @code{handler}
 statement (@pxref{guile-cmdline}).  For example, if the configuration
 file contained: 
 
-@smallexample
+@example
 @group
 database @{
     name "foo";
     handler "guile db=file 1 no";
 @}
 @end group
-@end smallexample
+@end example
 
 @noindent
 then the @code{open-db} callback will be called as:
@@ -3344,10 +3349,9 @@ then the @code{open-db} callback will be called as:
 @end smalllisp
 
 The @code{open-db} callback returns a @dfn{database handle}, i.e. an
-opaque structure that is used to identify this database, and that
-keeps its internal state.  This value, hereinafter named @var{dbh},
-will be passed to another callback functions that need to access the
-database.
+opaque object that will be used to identify this database.  This
+value, hereinafter named @var{dbh}, will be passed to another callback
+functions that need to access the database.
 
 The return value @code{#f} or @code{'()} indicates an error.
 @end deffn
@@ -3375,7 +3379,7 @@ The argument @var{dbh} is a database handle returned by
 This callback is optional.  If it is not defined, or if it returns
 @code{#f} (@code{'()}), the text from @code{description} statement
 is used (@pxref{Databases, description}).  Otherwise, if no
-@code{description} statement is present, empty string is used.
+@code{description} statement is present, an empty string will be returned.
 @end deffn
 
 @deffn {Guile Callback} info dbh
@@ -3393,17 +3397,17 @@ is used (@pxref{Databases, info}).  If there is no @code{info} statement,
 the string @samp{No information available} is used.
 @end deffn
 
-Database searches are a two-phase process.  First, an appropriate
-callback is called to do the search: @code{define-word} is called for
-@code{DEFINE} searches and @code{match-word} is called for matches.
-This callback returns an opaque entity, called @dfn{result handle},
-which is then passed to @code{output} callback, which is responsible
-for outputting it.
-
 @deffn {Guile Callback} lang dbh
 Virtual Table: @code{(cons "lang" lang)}@*
 @FIXME{Returns (cons (list @var{source}) (list @var{dest}))}
 @end deffn
+
+A database is searched in a two-phase process.  First, an appropriate
+callback is called to do the search: @code{define-word} is called for
+@code{DEFINE} searches and @code{match-word} is called for matches.
+This callback returns an opaque entity, called @dfn{result handle},
+which is then passed to the @code{output} callback, which is responsible
+for outputting it.
 
 @deffn {Guile Callback} define-word dbh word
 Virtual Table: @code{(cons "define" define-word)}@*
@@ -3427,9 +3431,15 @@ about the word being looked for.  To obtain the actual word, use
 the @code{dico-key->word} function (@pxref{dico-key->word}).
 
 The argument @var{dbh} is a database handle returned by
-@code{open-db}.  Matching strategy @var{strat} is a special Scheme
+@code{open-db}.  The matching strategy @var{strat} is a special Scheme
 object that can be accessed using a set of functions described below
 (@pxref{Dico Scheme Primitives}). 
+@end deffn
+
+@deffn {Guile Callback} result-count resh
+Virtual Table: @code{(cons "result-count" result-count)}@*
+
+Return the number of elements in the result set @var{resh}.
 @end deffn
 
 @deffn {Guile Callback} output resh n
@@ -3441,13 +3451,16 @@ Output @var{n}th result from the result set @var{resh}.  The argument
 
 The data must be output to the current output port, e.g. using
 @code{display} or @code{format} primitives.  If @var{resh} represents
-a match result, the output must not be quoted or terminated by newlines.
-@end deffn
+a match result, the output must not be quoted or terminated by
+newlines.
 
-@deffn {Guile Callback} result-count resh
-Virtual Table: @code{(cons "result-count" result-count)}@*
+It is guaranteed that the @code{output} callback will be called
+as many times as there are elements in @var{resh} (as determined by the
+@code{result-count} callback) and that for each subsequent call the
+value of @var{n} equals its value from the previous call incremented
+by one.
 
-Return the number of elements in the result set @var{resh}.
+At the first call @var{n} equals 0.
 @end deffn
 
 @node Dico Scheme Primitives
@@ -3516,8 +3529,8 @@ It must return @code{#t} if @var{key} matches @var{word}, and
 @subsection Example Module
   In this subsection we will show how to build a simple @command{dicod} module
 written in Scheme.  The source code of this module, called
-@file{example.scm} and a short database for it, @file{example.db}, are
-shipped with the distribution in the directory @file{tests}.
+@file{listdict.scm} and a short database for it, @file{numerals-pl.db}, are
+shipped with the distribution in the directory @file{examples}.
 
   The database is stored in a disk file in form of a list.  The first
 two elements of this list contain database description and full
@@ -3525,7 +3538,7 @@ information strings.  Rest of elements are conses, whose @code{car}
 contains the headword, and @code{cdr} contains the corresponding
 dictionary article.  Following is an example of such a database:
 
-@smallexample
+@example
 ("Short English-Norwegian numerals dictionary"
  "Short English-Norwegian dictionary of numerals (1 - 7)"
  ("one" . "en")
@@ -3535,17 +3548,17 @@ dictionary article.  Following is an example of such a database:
  ("five" . "fem")
  ("six" . "seks")
  ("seven" . "sju"))
-@end smallexample
+@end example
 
   We wish to declare such databases in @file{dicod.conf} the following
 way:
   
-@smallexample
+@example
 database @{
         name "numerals";
         handler "guile example.db";
 @}
-@end smallexample
+@end example
 
 @noindent
 Thus, the @code{rest} argument to @samp{open-db} callback will be
@@ -3621,7 +3634,7 @@ function, which is supposed to be defined elsewhere:
 arguments: a database handler @var{dbh}, a strategy descriptor
 @var{strat}, and a word @var{word} to look for.  The result handle it
 returns contains a list of headwords from the database that match
-@var{word} in sense of @var{strat}.  Thus, the behavior of
+@var{word} in the sense of @var{strat}.  Thus, the behavior of
 @samp{match-word} depends on the @var{strat}.  To implement
 this, let's define a list of directly supported strategies (see below
 for definitions of particular @samp{match-} functions):
@@ -3770,12 +3783,12 @@ module initialization function:
 needed. 
 
 @node Python
-@section The @command{python} module
+@section @command{Python}
 @cindex Python
 @WRITEME
 
 @node Stratall
-@section The @command{stratall} module
+@section @command{Stratall}
 @cindex stratall
 @cindex all, strategy
   The @command{stratall} module provides a new strategy, called @samp{all}.
@@ -3784,29 +3797,29 @@ database, no matter what the actual search word is.
  
   To load this strategy, use the following configuration statement:
 
-@smallexample
+@example
 load-module stratall;
-@end smallexample
+@end example
 
   Using this strategy on a full set of databases (@samp{MATCH * all
 ""}) produces enormous amount of output, which may induce a
 considerable strain on the server, therefore it is advised to block
 such usage as suggested in @ref{Strategies and Default Searches}:
 
-@smallexample
+@example
 strategy all @{
         deny-all yes;
 @}
-@end smallexample
+@end example
 
 @node Substr
-@section The @command{substr} module
+@section @command{Substr}
 @cindex substr, strategy
   The @command{substr} module provides a @samp{substr} search
 strategy.  This strategy matches a substring anywhere in the
 keyword.  For example:
 
-@smallexample
+@example
 C: MATCH eng-deu substr orma
 S: 152 207 matches found: list follows
 S: eng-deu "abnormal"
@@ -3814,45 +3827,45 @@ S: eng-deu "conformable"
 S: eng-deu "doorman"
 S: eng-deu "format"
 @dots{}
-@end smallexample
+@end example
 
   The loading procedure expects no arguments:
 
-@smallexample
+@example
 load-module substr;
-@end smallexample
+@end example
 
 @node Word
-@section The @command{word} module
+@section @command{Word}
 @cindex word, strategy
   The @command{word} module provides a strategy for matching a word
 anywhere in the headword.  For example:
 
-@smallexample
+@example
 C: MATCH devdict word government
 S: 152 1 matches found: list follows
 S: devdict "MONARCHICAL GOVERNMENT"
 S: .
 S: 250 Command complete [d/m/c = 0/1/995 0.003r 0.004u 0.000s]
-@end smallexample
+@end example
 
   The loading procedure expects no arguments:
 
-@smallexample
+@example
 load-module word;
-@end smallexample  
+@end example  
 
 @node Ldap
-@section The @command{ldap} module
+@section @command{Ldap}
 The @command{ldap} module loads the support for @acronym{LDAP} user
 databases.  It is available if Dico has been configured with
 @acronym{LDAP}.
 
 The module needs no additional configuration parameters:
 
-@smallexample
+@example
 load-module ldap;
-@end smallexample
+@end example
 
 @xref{ldap}, for a description of its use.
 
@@ -3880,9 +3893,22 @@ current interface.
 
 @deftypevr {dico_database_module} unsigned dico_capabilities
 @vrindex DICO_CAPA_DEFAULT
-Additional capabilities.  This member is reserved for future use (as
-of GNU Dico version @value{VERSION}.  Use @code{DICO_CAPA_DEFAULT} to
-initialize it.
+Module capabilities.  As of version @value{VERSION}, this member can
+be one of the following:
+
+@table @code
+@item DICO_CAPA_DEFAULT
+This module defines a handler for a specific database format.
+
+@item DICO_CAPA_NODB
+This module does not handle any databases.  When this capability is
+specified, @command{dicod} will call only the @command{dico_init}
+member of the structure.
+
+This capability is used by modules defining new matching strategies or
+authentication methods.
+@end table
+
 @end deftypevr
 
 @anchor{dico_init}
@@ -3904,12 +3930,15 @@ quoted strings (using both single and double quotes) are parsed as a
 single word.
 @end table
 
-This method is optional.
+If @code{dico_capabilities} is @code{DICO_CAPA_DEFAULT}, this
+method is optional.  If @code{dico_capabilities} is set to
+@code{DICO_CAPA_NODB}, @code{dico_init} is mandatory and must be
+the only method defined.
 @end deftypefn
 
 @deftypefn {Dico Callback} dico_handle_t dico_init_db (const char *@var{db}, @
  int @var{argc}, char **@var{argv})
-Initialize the database.  This method is called as part of database
+Initialize the database.  This method is called as a part of database
 initialization routine at startup of @command{dicod}, after processing
 @code{dictionary} configuration statement (@pxref{Databases}).  Its
 arguments are:
@@ -3927,17 +3956,18 @@ The command line given by @code{handler} configuration statement
 @end table
 
 This method returns a @dfn{database handle}, an opaque structure
-identifying the database.  This handle is passed as the first argument
-to other methods.  On error, @code{dico_init_db} returns @code{NULL}.
+identifying the database.  This handle will be passed as the first
+argument to other methods.  On error, @code{dico_init_db} shall return
+@code{NULL}.
 
-Notice that this function is not required to actually open the
+Notice, that this function is not required to actually open the
 database, if the @samp{open} notion is supported by the underlying
 mechanism.  Another method, @code{dico_open} is responsible for that.
 @end deftypefn
 
 @deftypefn {Dico Callback} int dico_free_db (dico_handle_t @var{dh})
 Reclaim any resources associated with database handle @var{dh}.  This
-method is called as part of exit cleanup routine, before the main
+method is called as a part of exit cleanup routine, before the main
 @command{dicod} process terminates.
 
 Return @samp{0} on success, or any non-@samp{0} value on failure.
@@ -3968,7 +3998,7 @@ Return a database information string for the database identified by
 @var{dh}.  This function is called on each @code{SHOW INFO} command,
 unless an informational text for this database is supplied in the
 configuration file (@pxref{Databases, info}).  After use, the value
-returned by @code{dico_db_info} is freed using system @code{free}
+returned by @code{dico_db_info} shall be freed using the @code{free}
 function.
 
 This method is optional.
@@ -3979,16 +4009,16 @@ Return a short database description string for the database identified
 by @var{dh}.  This function is called on each @code{SHOW DB} command,
 unless a description for this database is supplied in the
 configuration file (@pxref{Databases, descr}).  After use, the value
-returned by @code{dico_db_descr} is freed using system @code{free}
-function.
+returned by @code{dico_db_descr} shall be freed using the @file{libc}
+@code{free} function.
 
 This method is optional.
 @end deftypefn
 
 @deftypefn {Dico Callback} dico_result_t dico_match (dico_handle_t @var{dh}, @
   const dico_strategy_t @var{strat}, const char *@var{word})
-Find in the database identified by @var{dh} matches for headword
-@var{word}, using matching strategy @var{strat}.
+Use the strategy @var{strat} to search the database @var{dh}, and
+return all headwords matching @var{word}.
 
 This method returns a @dfn{result handle}, an opaque pointer that can
 then be used to display the obtained results.  It returns @code{NULL}
@@ -4013,16 +4043,24 @@ handle, obtained from a previous call to @code{dico_match} or
 @code{dico_define}.
 
 Return @samp{0} on success, or any non-@samp{0} value on failure.
+
+It is guaranteed that the @code{dico_output_result} callback is
+called as many times as there are elements in @var{rp} (as determined by the
+@code{dico_result_count} callback, described below) and that for each
+subsequent call the value of @var{n} equals its value from the
+previous call incremented by one.
+
+At the first call @var{n} equals 0.
 @end deftypefn
 
 @deftypefn {Dico Callback} size_t dico_result_count (dico_result_t @var{rp})
-Return number of distinct elements in a result set, identified by
-@var{rp}, which is a result handle, obtained from a previous call to
-@code{dico_match} or @code{dico_define}.
+Return the number of distinct elements in the result set identified by
+@var{rp}.  The latter is a result handle, obtained from a previous
+call to @code{dico_match} or @code{dico_define}.
 @end deftypefn
 
 @deftypefn {Dico Callback} size_t dico_compare_count (dico_result_t @var{rp})
-Return number of comparisons performed when constructing the result
+Return the number of comparisons performed when constructing the result
 set identified by @var{rp}.
 
 This method is optional.
@@ -4055,7 +4093,7 @@ dictionary servers.  It has two operation modes.  In @dfn{single query
 mode}, the utility performs a query, displays its result and exits
 immediately.  This mode is entered if a word or a @acronym{URL} was
 given in the command line.  In @dfn{interactive mode}, the utility
-enters a read-and-eval loop, in which it read requests from the
+enters a read-and-eval loop, in which it reads requests from the
 keyboard, performs the necessary searches, and displays obtained
 results on the screen.
 
@@ -4074,9 +4112,9 @@ results on the screen.
   The simplest way to use @command{dico} utility is to invoke it with
 a word as an argument, e.g.:
 
-@smallexample
+@example
 $ dico entdeckung
-@end smallexample
+@end example
 
   In the example above, the utility will search definitions of the
 word @samp{entdeckung} using its default server name and database.  The
@@ -4103,52 +4141,52 @@ which is impossible using @acronym{URL}s.
 @subsection Dico Command Line Options
 
 To connect to a particular dictionary server,
-use @option{--host} option, for example:
+use the @option{--host} option, for example:
 
-@smallexample
+@example
 $ dico --host dico.org entdeckung
-@end smallexample
+@end example
 
-  To search in a particular database, use @option{--database}
+  To search in a particular database, use the @option{--database}
 (@option{-d}) option.  For example, to display definitions from
 all databases:
 
-@smallexample
+@example
 $ dico --database '*' entdeckung
-@end smallexample
+@end example
 
 @noindent
 Note single quotes around the asterisk.
 
-  To get a list of databases offered by the server, use @option{--dbs}
+  To get a list of databases offered by the server, use the @option{--dbs}
 (@option{-D}) option.  In this case you may not give any non-option
 arguments.   For example:
 
-@smallexample
+@example
 $ dico --dbs
-@end smallexample
+@end example
 
   If you wish to get a list of matches, instead of definitions, use
-@option{--match} (@option{-m}) option.  For example, the following
+the @option{--match} (@option{-m}) option.  For example, the following
 invocation will display all matches from all the databases:
 
-@smallexample
+@example
 $ dico --database '*' --match entdeckung
-@end smallexample
+@end example
 
   The match mode uses @samp{.} strategy by default (@pxref{MATCH,
 strategy}), which means a server-dependent default strategy, which
 suits best for interactive spell checking.  To select another
-strategy, use @option{--strategy} (@option{-s}) option.
+strategy, use the @option{--strategy} (@option{-s}) option.
 
   If the remote server supports @samp{xlev} experimental capability
-(@pxref{Extended Commands, XLEV}, you may use @option{--levdist}
+(@pxref{Extended Commands, XLEV}, you may use the @option{--levdist}
 (@option{--levenshtein-distance}) option to set maximum Levenshtein
 distance, for example:
 
-@smallexample
+@example
 $ dico --levdist 2 --match entdeckung
-@end smallexample
+@end example
 
   Note that setting the distance too high is impractical and may imply
 unnecessary strain on the server. 
@@ -4162,19 +4200,19 @@ descriptions, use the @option{--strategies} (@option{-S}) option.
   Another way to specify data for a query is by using @acronym{URL},
 instead of a word to search, as in the example below:
 
-@smallexample
+@example
 $ dico dict://gnu.org.ua/d:entdeckung
-@end smallexample
+@end example
 
 A @acronym{DICT} @acronym{URL} consists of the following parts:
 
-@smallexample
+@example
 dict://@var{user};@var{pass}@@@var{host}:@var{port}/d:@var{word}:@var{database}:@var{n}
 dict://@var{user};@var{pass}@@@var{host}:@var{port}/m:@var{word}:@var{database}:@var{strat}:@var{n}
-@end smallexample
+@end example
 
 The @samp{/d} syntax requests the definition of @var{word}, whereas
-the @samp{/m} syntax queries for matches, and is similar to
+the @samp{/m} syntax queries for matches, and is similar to the
 @option{--match} option.  Some or all of
 @samp{@var{user};@var{pass}@@}, @samp{:@var{port}}, @var{database},
 @var{strat}, and and @var{n} may be omitted.   The meaning of all
@@ -4183,14 +4221,14 @@ explained in the table below:
 
 @table @var
 @item user
-User name to use in authentication.  Similar to @option{--user}
+User name to use in authentication.  Similar to the @option{--user}
 option.  If @var{user} is omitted and cannot be retrieved by other
 means, no authentication is performed.  @xref{Autologin}, for a
 detailed description of authentication procedure and sources which
 are used to obtain authentication credentials.
 
 @item pass
-A shared key (password) for that user.  This part is similar to
+A shared key (password) for that user.  This part is similar to the
 @option{--key} command line option.
 
 For compatibility with other @acronym{URL}s, @command{dico} allows to
@@ -4201,14 +4239,14 @@ If @var{user} is given, but @var{pass} is not, @command{dico} will ask
 you to supply a password interactively (@pxref{Autologin}).
 
 @item host
-Host name or @acronym{IP} address of the server to query.  Same as
+Host name or @acronym{IP} address of the server to query.  Same as the
 @option{--host} command line option.
 
 @item port
 Port number or service name (from @file{/etc/services}).  If it is not
 present, the default of 2628 is used.
 
-Same as @option{--port} command line option.
+Same as the @option{--port} command line option.
 
 @item word
 The word to look for.
@@ -4216,12 +4254,12 @@ The word to look for.
 @item database
 The database to search in.  If not given, @samp{!} is assumed.
 
-Same as @option{--database} command line option.
+Same as the @option{--database} command line option.
 
 @item strat
 The matching strategy to use.  If omitted, @samp{.} is assumed.
 
-Same as @option{--strategy} command line option.
+Same as the @option{--strategy} command line option.
 
 @item n
 Extract and display the @var{n}th definition of the word.  If omitted,
@@ -4234,7 +4272,7 @@ it is used rarely.
 Trailing colons may be omitted.  For example, the following @acronym{URL}s
 might specify definitions or matches:
 
-@smallexample
+@example
 dict://dict.org/d:shortcake:
 dict://dict.org/d:shortcake:*
 dict://dict.org/d:shortcake:wordnet:
@@ -4247,7 +4285,7 @@ dict://dict.org/m:sun::soundex
 dict://dict.org/m:sun:wordnet::1
 dict://dict.org/m:sun::soundex:1
 dict://dict.org/m:sun:::
-@end smallexample
+@end example
 
 @node Interactive Mode
 @section Interactive Mode
@@ -4264,18 +4302,18 @@ waits for you to enter a command.  The default prompt is the name
 of the program, followed by a @samp{greater than} sign and a single
 space:
 
-@smallexample
+@example
 dico> _
-@end smallexample
+@end example
 
-  The input syntax is designed so as to save you maximum amount of
+  The input syntax is designed so as to save you the maximum amount of
 typing.
 
   If you type any word, the default action is to look up its
 definition using the default server and database settings, for
 example:
 
-@smallexample
+@example
 @group
 dico> @kbd{man}
 From eng-swa, English-Swahili xFried/FreeDict Dictionary:
@@ -4283,12 +4321,12 @@ man  <n.>
 
     mwanamume
 @end group
-@end smallexample
+@end example
 
-  To match the word, instead of defining it, prefix it with a slash
+  To match the word, instead of defining it, prefix it with a slash,
 much as you do in @command{vi}:
 
-@smallexample
+@example
 @group
 dico> /man
 From eng-swa, English-Swahili xFried/FreeDict Dictionary:
@@ -4299,13 +4337,13 @@ From eng-swa, English-Swahili xFried/FreeDict Dictionary:
 4) ``may''
 5) ``men''
 @end group
-@end smallexample
+@end example
                         
   Displayed is a list of matches retrieved using the default strategy.
 To see a definition for a particular match, type the number shown
 at its left.  For example, to define ``men'':
 
-@smallexample
+@example
 @group
 dico> 5
 From eng-swa, English-Swahili xFried/FreeDict Dictionary:
@@ -4313,7 +4351,7 @@ men <n.>
 
     wanaume
 @end group
-@end smallexample
+@end example
 
   Define and match are two basic actions.  To discern from them, the
 rest of @command{dico} commands begins with a @dfn{command prefix}, a
@@ -4344,9 +4382,9 @@ server.  It takes up to two arguments, first of them specifying
 the IP or host name of the server, and the optional second one
 specifying the port number to connect to.  For example:
 
-@smallexample
+@example
 dico> .open gnu.org.ua
-@end smallexample
+@end example
 
   If any or both of its arguments are absent, the @code{open} command
 reuses the value supplied with its previous invocation, or, if it is
@@ -4356,9 +4394,9 @@ values can be changed at configuration time, see @ref{Default Server}
 for a detailed instruction.
 
   Note that you are not required to issue this command.  If it is not
-given, @command{dico} will attempt to connect using its default
-settings before executing any command that requires a connection to
-the server.
+given, @command{dico} will attempt to establish a connection using its
+default settings before executing any command that requires a
+connection to the server.
 
 @cindex close
   The @code{close} command closes the connection.  It does not take
@@ -4369,59 +4407,59 @@ any arguments.
 
 @cindex database
   The @code{database} command changes or displays the database name which
-is used in define and match commands.  To display the database name,
+is used by define and match commands.  To display the database name,
 type the command without arguments:
 
-@smallexample
+@example
 @group
 dico> .database
 !
 @end group
-@end smallexample
+@end example
 
   To change the database, give its name as an argument to the command:
 
-@smallexample
+@example
 dico> .database *
-@end smallexample
+@end example
 
   Once the connection with the server is established, you may use
 command line completion facility to select the database from among
 those offered by the server.  Typing @kbd{TAB} will show you a list
 of databases that begin with the characters you typed:
 
-@smallexample
+@example
 dico> .database en@kbd{TAB}
 en-pl-naut  eng-afr     eng-deu     eng-swa
-@end smallexample
+@end example
 
   If you supply enough characters to identify a single choice,
-@kbd{TAB} will automatically select it, for example typing it
-after
+@kbd{TAB} will automatically select it.  In the example above, typing
+a @kbd{TAB} after
 
-@smallexample
+@example
 dico> .database en-
-@end smallexample
+@end example
 
 @noindent
 completes the database name to:
 
-@smallexample
+@example
 dico> .database en-pl-naut
-@end smallexample
+@end example
 
 @cindex strategy
   The @code{strategy} command displays or changes the default strategy
 name.  As with @code{database}, the strategy completion is available
 for this command.
 
-@smallexample
+@example
 @group
 dico> .strategy
 .
 dico> .strategy dlev
 @end group
-@end smallexample
+@end example
 
 @cindex distance
   If the remote server supports @samp{xlev} experimental capability 
@@ -4431,13 +4469,13 @@ Levenshtein algorithm.  If used without arguments, this command
 displays the distance reported by the server and the configured
 distance, e.g.:
 
-@smallexample
+@example
 @group
 dico> .distance
 Reported Levenshtein distance: 1
 No distance configured
 @end group
-@end smallexample
+@end example
 
   If used with a single numeric argument, it attempts to set the
 distance to the supplied value.
@@ -4449,66 +4487,68 @@ distance to the supplied value.
   The @code{ls} command lists available strategies (@pxref{SHOW, SHOW
 STRAT}):
 
-@smallexample
+@example
 dico> .ls
-exact ``Match words exactly''
-prefix ``Match word prefixes''
-soundex ``Match using SOUNDEX algorithm''
-all ``Match everything (experimental)''
-lev ``Match headwords within given Levenshtein distance''
-dlev ``Match headwords within given Damerau-Levenshtein distance''
-re ``POSIX 1003.2 (modern) regular expressions''
-regexp ``Old (basic) regular expressions''
-suffix ``Match word suffixes''
-rev-qu ``Reverse search in Quechua databases''
-@end smallexample
+exact "Match words exactly"
+prefix "Match word prefixes"
+soundex "Match using SOUNDEX algorithm"
+all "Match everything (experimental)"
+lev "Match headwords within given Levenshtein distance"
+dlev "Match headwords within given Damerau-Levenshtein
+      distance"
+re "POSIX 1003.2 (modern) regular expressions"
+regexp "Old (basic) regular expressions"
+suffix "Match word suffixes"
+rev-qu "Reverse search in Quechua databases"
+@end example
 
 @cindex .ld
   The @code{ld} command lists available databases (@pxref{SHOW, SHOW
 DB}):
 
-@smallexample
+@example
 dico> .ld
-eng-swa ``English-Swahili xFried/FreeDict Dictionary''
-swa-eng ``Swahili-English xFried/FreeDict Dictionary''
-afr-eng ``Afrikaans-English FreeDict Dictionary''
-eng-afr ``English-Afrikaans FreeDict Dictionary''
-@end smallexample
+eng-swa "English-Swahili xFried/FreeDict Dictionary"
+swa-eng "Swahili-English xFried/FreeDict Dictionary"
+afr-eng "Afrikaans-English FreeDict Dictionary"
+eng-afr "English-Afrikaans FreeDict Dictionary"
+@end example
 
 @cindex info
   The @code{info} command displays information about a database, whose
 name is given as its argument.  If used without arguments, it displays
 information about the current database.
 
-@smallexample
+@example
 dico> .info pl-en-naut
 pl-en-naut - A Polish-English dictionary of nautical terms.
 Copyright (C) 2008 Sergey Poznyakoff
 
-Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.2 or
-any later version published by the Free Software Foundation; with no
-Invariant Sections, no Front-Cover and Back-Cover Texts
-@end smallexample
+Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation
+License, Version 1.2 or any later version published by the
+Free Software Foundation; with no Invariant Sections, no
+Front-Cover and Back-Cover Texts.
+@end example
 
 @node History Commands
 @subsection History Commands
 @flindex .dico_history
   Each issued command is stored in a history list and assigned a
 unique @dfn{event number}.  When @command{dico} exits, it saves the
-command history in a file named @file{.dico_history} in your home
+command history to a file named @file{.dico_history} in your home
 directory.  Upon startup, it retrieves the history from this file, so
 the history is preserved between sessions.
 
 @cindex history
   You can view the command history using the @code{history} command:
 
-@smallexample
+@example
 dico> .history
   1) .open dict.org
   2) entdeckung
   3) /geschwindigkeit
-@end smallexample
+@end example
 
   A number of editing commands is provided, that allow you to refer to
 previous events from the history list and to edit them.  For example,
@@ -4527,24 +4567,24 @@ history, GNU History User Manual}.
   When any command produces an output that contains more lines than
 there are rows on the terminal, @command{dico} attempts to use a
 @dfn{pager program} to display it.  The name (and arguments) of
-the pager program is taken from the @command{dico} internal variable,
+the pager program are taken from the @command{dico} internal variable,
 or, if it is not set, from the @env{PAGER} environment variable.
 
-  The @command{dico} pager setting can be set or listed using
-@code{pager} command.  When used without arguments, it displays
+  The @command{dico} pager setting can be examined or changed using
+the @code{pager} command.  When used without arguments, it displays
 the current setting:
 
-@smallexample
+@example
 dico> .pager
 less
 (Pager set from environment)
-@end smallexample
+@end example
 
   When used with a single argument, it sets the pager:
 
-@smallexample
+@example
 dico> .pager "less -R"
-@end smallexample
+@end example
 
   The argument @samp{-} (a dash) disables pager.
 
@@ -4561,7 +4601,7 @@ File}).
 be used for authentication.  When used without arguments, it displays
 the current setting.  The argument to @command{autologin} command is
 subject to @dfn{tilde expansion}, i.e. if it begins with @samp{~/},
-this prefix is replaced by the name of the current user home
+this prefix is replaced with the name of the current user home
 directory, followed by @samp{/}.  Similarly, a prefix
 @samp{~@var{login}/} is replaced by the home directory for user
 @var{login}, followed by a slash.
@@ -4574,25 +4614,28 @@ startup banner.  When started, @command{dico} prints a short list
 of information useful for beginning users: the program version and
 warranty conditions and a command to get help, e.g.:
 
-@smallexample
+@example
+@group
 dico @value{VERSION}
 Copyright (C) 2005-2012 Sergey Poznyakoff
 License GPLv3+: GNU GPL version 3 or later
 <http://gnu.org/licenses/gpl.html>
-This is free software: you are free to change and redistribute it.
+This is free software: you are free to change and
+redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
 
 Type ? for help summary
 
 dico>
-@end smallexample
+@end group
+@end example
 
  If you find this output superfluous and useless, you can suppress it
 by setting
 
-@smallexample
+@example
 quiet yes
-@end smallexample
+@end example
 
 @noindent
 in your initialization file.
@@ -4606,56 +4649,56 @@ useful for debugging purposes.
 
   You enable session transcript by issuing the following command:
 
-@smallexample
+@example
 dico> .transcript yes
 # @r{or}
 dico> .transcript on
-@end smallexample
+@end example
 
   Starting from then, each @acronym{DICT} transaction will be
 displayed on standard error output, for example: 
 
-@smallexample
+@example
 dico> .open
 dico: Debug: S:220 Pirx.gnu.org.ua dicod (dico 1.99.90)
 <mime.xversion.xlev> <32004.1216639476@@Pirx.gnu.org.ua>
-dico: Debug: C:CLIENT ``dico 1.99.91''
+dico: Debug: C:CLIENT "dico 1.99.91"
 dico: Debug: S:250 ok
 dico: Debug: C:SHOW DATABASES
 dico: Debug: S:110 26 databases present
-...
+@dots{}
 dico: Debug: S:.
 dico: Debug: S:250 ok
 dico: Debug: C:SHOW STRATEGIES
 dico: Debug: S:111 10 strategies present: list follows
-dico: Debug: S:exact ``Match words exactly''
-dico: Debug: S:prefix ``Match word prefixes''
-dico: Debug: S:soundex ``Match using SOUNDEX algorithm''
-...
+dico: Debug: S:exact "Match words exactly"
+dico: Debug: S:prefix "Match word prefixes"
+dico: Debug: S:soundex "Match using SOUNDEX algorithm"
+@dots{}
 dico: Debug: S:.
 dico: Debug: S:250 ok
-@end smallexample
+@end example
 
-In the example above, ellipsis replaces long lists of data.  As you
-see, session transcripts may produce large amount of output.
+In the example above, ellipses are used to replace long lists of data.
+As you see, session transcripts may produce large amount of output.
 
   To turn the session transcript off, use the following command:
 
-@smallexample
+@example
 dico> .transcript no
 # @r{or}
 dico> .transcript off
-@end smallexample
+@end example
 
   Finally, to query the current state of session transcript, issue
 this command without arguments:
 
-@smallexample
+@example
 @group
 dico> .transcript
 transcript is on
 @end group
-@end smallexample
+@end example
 
 @node Other Commands
 @subsection Other Commands
@@ -4663,7 +4706,7 @@ transcript is on
 @cindex prefix
 The @code{prefix} command allows you to change command prefix:
 
-@smallexample
+@example
 @group
 dico> .prefix
 Command prefix is .
@@ -4671,19 +4714,19 @@ dico> .prefix @@
 dico> @@prefix
 Command prefix is @@
 @end group
-@end smallexample
+@end example
 
 @cindex prompt
   The @code{prompt} command changes the @command{dico} command line
 prompt.  For example, to change it to @samp{dico$}, followed by a single
 space, type:
 
-@smallexample
+@example
 @group
 dico> .prompt "dico$ "
 dico$ _
 @end group
-@end smallexample
+@end example
 
   Note the use of quotes to include the space character in the
 argument.
@@ -4692,7 +4735,7 @@ argument.
   The @code{help} command displays a short command usage summary.  For
 convenience, a single question mark can be used instead of it:
 
-@smallexample
+@example
 dico> ?
 /WORD                    Match WORD.
 /                        Redisplay previous matches.
@@ -4701,8 +4744,8 @@ NUMBER                   Define NUMBERth match.
 
 .open [HOST [PORT]]      Connect to a DICT server.
 .close                   Close the connection.
-...
-@end smallexample
+@dots{}
+@end example
 
 @cindex version
 @cindex warranty
@@ -4749,12 +4792,12 @@ of @var{bool}.
 @FIXME-xref{SASL}.
 
 @item database [@var{name}]
-Set or display current database name.
+Set or display the current database name.
 
 @xref{Database and Strategy, database}.
 
 @item strategy [@var{name}]
-Set or display current strategy.
+Set or display the current strategy name.
 
 @xref{Database and Strategy, strategy}.
 
@@ -4790,7 +4833,8 @@ Set or display session transcript mode.
 @xref{Session Transcript}.
 
 @item verbose [@var{number}]
-Set or display debugging verbosity level.  @FIXME{cross-reference, maybe?}.
+Set or display debugging verbosity level.
+@FIXME{cross-reference, maybe?}
 
 @item prompt @var{string}
 Change command line prompt.
@@ -4856,7 +4900,7 @@ terminal.}.
   Init files are useful to change the defaults for your @command{dico}
 invocation.  Consider, for example, this init file:
 
-@smallexample
+@example
 # An example init file for @command{dico}
 
 # Turn welcome banner off
@@ -4869,7 +4913,7 @@ open dict.org
 database *
 # Finally, set the custom command prefix
 prefix :
-@end smallexample
+@end example
 
 Notice, that if you wish to change your command prefix, it is
 preferable to do it as a last command in your init file, as shown in
@@ -4884,10 +4928,10 @@ this example.
 authentication and its credentials.}
 
   After connecting to a remote server, @command{dico} checks if it
-announces @samp{auth} capability, and if so, it attempts to authenticate
+announces the @samp{auth} capability, and if so, it attempts to authenticate
 to the remote server.  To do so @command{dico} needs two parameters:
-user name and password.  These parameters can either be supplied using
-different sources:
+user name and password.  These parameters can be supplied from
+the following sources:
 
 @enumerate 1
 @item
@@ -4902,7 +4946,7 @@ Autologin files.
 @end enumerate
 
   These three sources are consulted in that order, i.e., a user name
-supplied with @option{--user} command line option takes precedence
+supplied with the @option{--user} command line option takes precedence
 over the one found in an @acronym{URL} and over any names supplied by
 autologin files.
 
@@ -4910,7 +4954,7 @@ autologin files.
 established, while the password is not, the resulting action
 depends on whether the standard input is connected to a terminal.
 If it is, @command{dico} will ask the user to supply a password.
-If it is not, authentication is aborted and connection with the server
+If it is not, authentication is aborted and connection to the server
 is closed.
 
 @findex .dicologin
@@ -4932,8 +4976,8 @@ used by @command{ftp} utility.
 
   Empty lines and comments are ignored.
 
-  Non-empty lines compose @dfn{statements}.  Tokens in a statement may
-be separated by spaces, tabs, or newlines.  A valid statement must
+  Non-empty lines constitute @dfn{statements}.  Tokens in a statement
+are separated with spaces, tabs, or newlines.  A valid statement must
 begin with one of the following:
 
 @table @code
@@ -4954,7 +4998,7 @@ explicit @code{machine} statements.
   During the lookup, @command{dico} searches the autologin file for a
 @code{machine} statement whose @var{name} matches the remote server
 name as given by @option{--host} command line option, host part of an
-@acronym{URL} (@pxref{urls}), or an argument to the @code{open}
+@acronym{URL} (@pxref{urls}), or the argument to the @code{open}
 command (@pxref{Server Commands, open}).  If it reaches the end of
 file without having found such an entry, it uses the @code{default}
 value, if available.
@@ -5007,7 +5051,7 @@ automatically.
 
   Consider the following autologin entry, for example:
 
-@smallexample
+@example
 @group
 machine a.net user smith password guessme
 machine b.net
@@ -5018,12 +5062,12 @@ machine b.net
   user smith password guessme
 default noauth
 @end group
-@end smallexample
+@end example
 
   When connecting to the server @samp{a.net}, @command{dico} will attempt
-usual @acronym{APOP} authentication as user @samp{smith} with password
+the usual @acronym{APOP} authentication as user @samp{smith} with password
 @samp{guessme}.  When connecting to the machine @samp{b.net}, it will
-use @acronym{SASL} authentication, using either @acronym{GSSAPI} or
+use @acronym{SASL} authentication, via either @acronym{GSSAPI} or
 @acronym{DIGEST-MD5} mechanisms, realm name @samp{example.net},
 service name @samp{dico} and the same user name and password, as for
 @samp{a.net}.
@@ -5076,7 +5120,7 @@ Connect to this server.
 
 @item --port=@var{port}
 @itemx -p @var{port}
-Specify port to connect to.  The argument @var{port} can be either a
+Specify the port to connect to.  The argument @var{port} can be either a
 port number or its symbolic service name, as listed in
 @file{/etc/services}. 
 
@@ -5195,7 +5239,7 @@ Set the name of autologin file to use.
 
 @item --client=@var{string}
 @itemx -c @var{string}
-Additional text for client command, instead of the default @samp{dico
+Additional text for client command, instead of the default @samp{GNU dico
 @value{VERSION}}. 
 @end table
 

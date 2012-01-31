@@ -55,16 +55,88 @@ word_sel(int cmd, dico_key_t key, const char *dict_word)
     return rc;
 }
 
-static struct dico_strategy word_strat = {
-    "word",
-    "Match a word anywhere in the headword",
-    word_sel
+static int
+first_sel(int cmd, dico_key_t key, const char *dict_word)
+{
+    int rc = 0;
+    char const *key_word = key->word;
+    struct dico_tokbuf tb;
+    
+    switch (cmd) {
+    case DICO_SELECT_BEGIN:
+	break;
+
+    case DICO_SELECT_RUN:
+	dico_tokenize_begin(&tb);
+	if (dico_tokenize_string(&tb, (char*) dict_word) == 0)
+	    rc = utf8_strcasecmp(tb.tb_tokv[0], (char*) key_word) == 0;
+	dico_tokenize_end(&tb);
+	break;
+
+    case DICO_SELECT_END:
+	break;
+    }
+    return rc;
+}
+
+static int
+last_sel(int cmd, dico_key_t key, const char *dict_word)
+{
+    int rc = 0;
+    char const *key_word = key->word;
+    struct dico_tokbuf tb;
+    
+    switch (cmd) {
+    case DICO_SELECT_BEGIN:
+	break;
+
+    case DICO_SELECT_RUN:
+	dico_tokenize_begin(&tb);
+	if (dico_tokenize_string(&tb, (char*) dict_word) == 0)
+	    rc = utf8_strcasecmp(tb.tb_tokv[tb.tb_tokc-1],
+				 (char*) key_word) == 0;
+	dico_tokenize_end(&tb);
+	break;
+
+    case DICO_SELECT_END:
+	break;
+    }
+    return rc;
+}
+
+static struct dico_strategy strats[] = {
+    { "word", "Match a word anywhere in the headword", word_sel },
+    { "first", "Match the first word within headwords", first_sel },
+    { "last", "Match the last word within headwords", last_sel },
+    { NULL }
 };
+
+static struct dico_strategy *
+findstrat(const char *name)
+{
+    struct dico_strategy *sp;
+    for (sp = strats; sp->name; sp++)
+	if (strcmp(sp->name, name) == 0)
+	    return sp;
+    dico_log(L_ERR, 0, _("unknown strategy: %s"), name);
+    return NULL;
+}
 
 static int
 word_init(int argc, char **argv)
 {
-    dico_strategy_add(&word_strat);
+    struct dico_strategy *sp;
+
+    if (argc == 1) {
+	for (sp = strats; sp->name; sp++)
+	    dico_strategy_add(sp);
+    } else {
+	int i;
+	
+	for (i = 1; i < argc; i++)
+	    if ((sp = findstrat(argv[i])))
+		dico_strategy_add(sp);
+    }
     return 0;
 }
 

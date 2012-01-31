@@ -14,10 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-m4_include(testsuite.inc)
-
-AT_INIT
-m4_include(first.at)
-m4_include(word.at)
-m4_include(last.at)
-
+AT_SETUP(last)
+AT_KEYWORDS(last)
+AT_DICOD([dnl
+match dict last bar
+quit
+],
+[220
+152 2 matches found: list follows
+dict "bar"
+dict "quux bar"
+.
+250
+221
+])
+AT_CLEANUP

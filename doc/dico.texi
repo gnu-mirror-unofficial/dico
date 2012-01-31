@@ -3840,8 +3840,35 @@ load-module substr;
 @node word
 @section @command{Word}
 @cindex word, strategy
-  The @command{word} module provides a strategy for matching a word
-anywhere in the headword.  For example:
+  The @command{word} module provides the following strategies:
+
+@table @asis  
+@item word
+Match separate words within headwords.
+@item first
+Match the first word within headwords.
+@item last
+Match the last word within headwords.
+@end table
+
+The initialization procedure loads all three if given no arguments, as in
+
+@example
+load-module word;
+@end example  
+
+If arguments are given, the initialization procedure loads only those
+strategies that are listed in its command line.  For example, the
+statement below loads only @samp{first} and @samp{last} strategies:
+
+@example
+load-module word @{
+   command "word first last";
+@}   
+@end example
+
+The following is an example of using one of those strategies in a dico
+session:
 
 @example
 C: MATCH devdict word government
@@ -3850,12 +3877,6 @@ S: devdict "MONARCHICAL GOVERNMENT"
 S: .
 S: 250 Command complete [d/m/c = 0/1/995 0.003r 0.004u 0.000s]
 @end example
-
-  The loading procedure expects no arguments:
-
-@example
-load-module word;
-@end example  
 
 @node pcre
 @section @command{Pcre}

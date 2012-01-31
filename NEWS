@@ -1,4 +1,4 @@
-GNU Dico NEWS -- history of user-visible changes. 2012-01-25
+GNU Dico NEWS -- history of user-visible changes. 2012-01-31
 Copyright (C) 2008-2010, 2012 Sergey Poznyakoff
 See the end of file for copying conditions.
 
@@ -26,18 +26,28 @@ is useful for loading several modules with a single statement, e.g.:
 
   load-module (stratall,substr,word);
   
-* New module: gcide
+* New modules
+
+** gcide
 
 This module provides support for GNU Collaborative International
 Dictionary of English.
 
-* New module: wordnet
+** wordnet
 
 This module provides support for WordNet, a lexical database for the
 English language developed in the Princeton University and distributed
 under a BSD style license.
 
-* New module: pcre
+** word
+
+This module provides the following strategies:
+
+word "Match separate words within headwords"
+first "Match the first word within headwords"
+last "Match the last word within headwords"
+
+** pcre
 
 Provides matching strategy based on Perl regular expressions.
 

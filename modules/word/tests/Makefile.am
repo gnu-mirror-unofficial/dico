@@ -14,14 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-EXTRA_DIST = $(TESTSUITE_AT) testsuite package.m4 dicod.cfin
+EXTRA_DIST = $(TESTSUITE_AT) testsuite package.m4 dicod.cfin dict.out
 DISTCLEANFILES       = atconfig $(check_SCRIPTS)
 MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
 
 SUFFIXES = .cfin .conf
 
 .cfin.conf:
-	$(AM_V_GEN)sed 's|~moddir~|$(abs_top_builddir)/modules|g;s|~dictdir~|$(abs_top_srcdir)/examples|g' $< > $@
+	$(AM_V_GEN)sed 's|~moddir~|$(abs_top_builddir)/modules|g;s|~dictdir~|$(abs_srcdir)|g' $< > $@
 
 noinst_DATA = dicod.conf
 CLEANFILES = dicod.conf
@@ -47,7 +47,10 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 ## ------------ ##
 
 TESTSUITE_AT = \
- testsuite.at
+ first.at\
+ last.at\
+ testsuite.at\
+ word.at
 
 TESTSUITE = $(srcdir)/testsuite
 M4=m4

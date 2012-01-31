@@ -467,6 +467,7 @@ DICO_TESTS(modules/python)
 DICO_TESTS(modules/stratall)
 DICO_TESTS(modules/word)
 DICO_TESTS(modules/substr)
+DICO_TESTS(modules/nprefix)
 
 AC_CONFIG_FILES([Makefile
                  include/Makefile
@@ -489,6 +490,7 @@ AC_CONFIG_FILES([Makefile
 		 modules/word/Makefile
 		 modules/gcide/Makefile
 		 modules/wordnet/Makefile
+		 modules/nprefix/Makefile
 		 dico/Makefile
 		 doc/Makefile
 		 po/Makefile.in])

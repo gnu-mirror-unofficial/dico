@@ -47,6 +47,16 @@ word "Match separate words within headwords"
 first "Match the first word within headwords"
 last "Match the last word within headwords"
 
+** nprefix
+
+Provides the nprefix strategy.  It is similar to prefix but returns the
+specified range of matches.  For example
+
+   MATCH <dict> nprefix <skip>#<count>#<string>
+
+returns at most <count> headwords whose prefix matches <string>,
+skipping first <skip> unique matches.
+
 ** pcre
 
 Provides matching strategy based on Perl regular expressions.

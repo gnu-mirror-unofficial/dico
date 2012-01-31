@@ -171,6 +171,7 @@ Modules
 * stratall::
 * substr::
 * word::
+* nprefix::
 * pcre::
 * ldap::
 
@@ -2619,6 +2620,7 @@ distribution of GNU Dico version @value{VERSION}.
 * stratall::
 * substr::
 * word::
+* nprefix::
 * pcre::
 * ldap::
 @end menu
@@ -3876,6 +3878,31 @@ S: 152 1 matches found: list follows
 S: devdict "MONARCHICAL GOVERNMENT"
 S: .
 S: 250 Command complete [d/m/c = 0/1/995 0.003r 0.004u 0.000s]
+@end example
+
+@node nprefix
+@section @command{Nprefix}
+The @command{nprefix} module provides a strategy similar to
+@samp{prefix}, but which returns the specified range of bytes.  For
+example, the statement
+
+@example
+MATCH @var{dict} nprefix @var{skip}#@var{count}#@var{string}
+@end example
+
+@noindent
+where @var{skip} and @var{count} are positive integer numbers, returns
+at most @var{count} headwords whose prefix matches @var{string},
+omitting first @var{skip} unique matches.
+
+The entire @samp{@var{skip}#@var{count}#} construct is optional.  If
+not supplied, the @samp{nprefix} strategy behaves exactly as
+@samp{prefix}.
+
+The module is loaded using this simple statement:
+
+@example
+load-module nprefix;
 @end example
 
 @node pcre

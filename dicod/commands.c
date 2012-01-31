@@ -207,14 +207,15 @@ dicod_status(dico_stream_t str, int argc, char **argv)
 void
 dicod_client(dico_stream_t str, int argc, char **argv)
 {
-    int rc;
-    
     free(client_id);
-    rc = dico_argcv_string (argc - 1, (char const **)(argv + 1), &client_id);
-    if (rc)
-	dico_log(L_ERR, rc, "dicod_client");
-    else
-	dico_log(L_INFO, 0, "Client info: %s", client_id);
+    if (argc > 1) {
+	int rc = dico_argcv_string (argc - 1, (char const **)(argv + 1),
+				    &client_id);
+	if (rc)
+	    dico_log(L_ERR, rc, "dicod_client");
+	else
+	    dico_log(L_INFO, 0, "Client info: %s", client_id);
+    }
     stream_writez(str, "250 ok\r\n");
 }
 
@@ -287,7 +288,7 @@ struct dicod_command command_tab[] = {
       dicod_show_info },
     { "SHOW SERVER", 2, 2, NULL, "provide site-specific information",
       dicod_show_server },
-    { "CLIENT", 2, DICOD_MAXPARAM_INF, "info", "identify client to server",
+    { "CLIENT", 1, DICOD_MAXPARAM_INF, "info", "identify client to server",
       dicod_client },
     { "STATUS", 1, 1, NULL, "display timing information",
       dicod_status },

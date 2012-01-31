@@ -37,6 +37,10 @@ This module provides support for WordNet, a lexical database for the
 English language developed in the Princeton University and distributed
 under a BSD style license.
 
+* New module: pcre
+
+Provides matching strategy based on Perl regular expressions.
+
 
 Version 2.1, 2010-07-07
 

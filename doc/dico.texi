@@ -153,8 +153,8 @@ Configuration File Syntax
 
 Authentication
 
-* text::        Flat Text Databases.
-* ldap::        LDAP Databases.
+* text userdb::        Flat Text Databases.
+* ldap userdb::        LDAP Databases.
 
 Databases
 
@@ -162,22 +162,23 @@ Databases
 
 Modules
 
-* Outline::
-* Dictorg::
-* GCIDE::
-* Wordnet::
-* Guile::
-* Python::
-* Stratall::
-* Substr::
-* Word::
-* Ldap::
+* outline::
+* dictorg::
+* gcide::
+* wordnet::
+* guile::
+* python::
+* stratall::
+* substr::
+* word::
+* pcre::
+* ldap::
 
-@command{gcide}
+@command{Gcide}
 
 * idxgcide::
 
-The @command{guile} module.
+@command{Guile}
 
 * Virtual Functions::
 * Guile Initialization::
@@ -1195,11 +1196,11 @@ user-db @var{url} @{
 @end example
 
 @menu
-* text::        Flat Text Databases.
-* ldap::        LDAP Databases.
+* text userdb::        Flat Text Databases.
+* ldap userdb::        LDAP Databases.
 @end menu
 
-@node text
+@node text userdb
 @subsubsection Text Authentication Database
 @cindex text authentication database
 @cindex authentication database, text
@@ -1253,10 +1254,10 @@ user-db text:///var/db/dico @{
 @end group
 @end example
 
-@node ldap
+@node ldap userdb
 @subsubsection LDAP Databases.
 To configure @acronym{LDAP} user database, you need first to load
-the @samp{ldap} module (@pxref{Ldap, LDAP module}):
+the @samp{ldap} module (@pxref{ldap, LDAP module}):
 
 @example
 load-module ldap;
@@ -2609,19 +2610,20 @@ handler}) basis.
 distribution of GNU Dico version @value{VERSION}.
 
 @menu
-* Outline::
-* Dictorg::
-* GCIDE::
-* Wordnet::
-* Guile::
-* Python::
-* Stratall::
-* Substr::
-* Word::
-* Ldap::
+* outline::
+* dictorg::
+* gcide::
+* wordnet::
+* guile::
+* python::
+* stratall::
+* substr::
+* word::
+* pcre::
+* ldap::
 @end menu
 
-@node Outline
+@node outline
 @section @command{Outline}
 @cindex outline module
   The @command{outline} module supports databases written in
@@ -2691,7 +2693,7 @@ database @{
 @end group
 @end example
 
-@node Dictorg
+@node dictorg
 @section @command{Dictorg}
 @cindex dictorg module
   The @command{dictorg} module supports dictionaries in the format
@@ -2790,7 +2792,7 @@ to disable the corresponding option for this database.  For example,
 @code{notrim-ws} cancels the effect of @code{trim-ws} used when
 initializing the module instance.
 
-@node GCIDE
+@node gcide
 @section @command{Gcide}
 @cindex GNU Collaborative International Dictionary of English
   The @command{gcide} module provides support for GNU Collaborative
@@ -2935,7 +2937,7 @@ specifying kilobytes, megabytes and gigabytes (ouch!) correspondingly.
 The default page size is 10240 bytes.
 @end table
 
-@node Wordnet
+@node wordnet
 @section @command{Wordnet}
 @dfn{WordNet} is a lexical database for the English language, created
 and maintained at the Cognitive Science Laboratory of Princeton
@@ -3063,7 +3065,7 @@ database @{
 @end group
 @end example
 
-@node Guile
+@node guile
 @section @command{Guile}
 @cindex Guile
 @cindex Scheme
@@ -3782,12 +3784,12 @@ module initialization function:
   Notice, that in this implementation @samp{close-db} callback was not
 needed. 
 
-@node Python
+@node python
 @section @command{Python}
 @cindex Python
 @WRITEME
 
-@node Stratall
+@node stratall
 @section @command{Stratall}
 @cindex stratall
 @cindex all, strategy
@@ -3812,7 +3814,7 @@ strategy all @{
 @}
 @end example
 
-@node Substr
+@node substr
 @section @command{Substr}
 @cindex substr, strategy
   The @command{substr} module provides a @samp{substr} search
@@ -3835,7 +3837,7 @@ S: eng-deu "format"
 load-module substr;
 @end example
 
-@node Word
+@node word
 @section @command{Word}
 @cindex word, strategy
   The @command{word} module provides a strategy for matching a word
@@ -3855,7 +3857,59 @@ S: 250 Command complete [d/m/c = 0/1/995 0.003r 0.004u 0.000s]
 load-module word;
 @end example  
 
-@node Ldap
+@node pcre
+@section @command{Pcre}
+@cindex pcre
+@cindex regexp, Perl-compatible
+@cindex Perl-compatible regular expressions
+The @command{pcre} module provides a matching strategy using
+Perl-compatible regular expressions.  The module is loaded
+using a simple statement:
+
+@example
+load-module pcre;
+@end example
+
+The strategy has the same name as the module and is reflected in the
+server's HELP output as shown below:
+
+@example
+pcre  "Match using Perl-compatible regular expressions"
+@end example
+
+The headword argument to the @code{pcre} MATCH statement should be
+a valid Perl regular expression.  It can optionally be enclosed in
+a pair of slashes, in which case one or more of the following flags
+can appear after the closing slash:
+
+@table @code
+@item a
+The regexp is @dfn{anchored}, that is, it is constrained to match only
+at the first matching point in the string that is being searched.
+
+@item e
+Ignore whitespace and @samp{#} comments in the expression.
+
+@item i
+Ignore case when matching.
+
+@item G
+Inverts the @dfn{greediness} of the quantifiers so that they are not
+greedy by default, but become greedy if followed by @samp{?}.  The
+same can also be achieved by setting the @samp{(?U)} option within the
+pattern.
+@end table
+
+Any of these flags can also be used in reverted case, which also
+reverts its meaning.  For example, @samp{I} means case-sensitive matching.
+
+Here is an example of using this strategy in a dico session:
+
+@example
+MATCH ! pcre "/\\stext/i"
+@end example
+
+@node ldap
 @section @command{Ldap}
 The @command{ldap} module loads the support for @acronym{LDAP} user
 databases.  It is available if Dico has been configured with
@@ -3867,7 +3921,7 @@ The module needs no additional configuration parameters:
 load-module ldap;
 @end example
 
-@xref{ldap}, for a description of its use.
+@xref{ldap userdb}, for a description of its use.
 
 @node Interface
 @chapter Dico Module Interface

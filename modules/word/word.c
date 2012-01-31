@@ -68,7 +68,7 @@ first_sel(int cmd, dico_key_t key, const char *dict_word)
 
     case DICO_SELECT_RUN:
 	dico_tokenize_begin(&tb);
-	if (dico_tokenize_string(&tb, (char*) dict_word) == 0)
+	if (dico_tokenize_string(&tb, (char*) dict_word) == 0 && tb.tb_tokc) 
 	    rc = utf8_strcasecmp(tb.tb_tokv[0], (char*) key_word) == 0;
 	dico_tokenize_end(&tb);
 	break;
@@ -92,7 +92,7 @@ last_sel(int cmd, dico_key_t key, const char *dict_word)
 
     case DICO_SELECT_RUN:
 	dico_tokenize_begin(&tb);
-	if (dico_tokenize_string(&tb, (char*) dict_word) == 0)
+	if (dico_tokenize_string(&tb, (char*) dict_word) == 0 && tb.tb_tokc)
 	    rc = utf8_strcasecmp(tb.tb_tokv[tb.tb_tokc-1],
 				 (char*) key_word) == 0;
 	dico_tokenize_end(&tb);

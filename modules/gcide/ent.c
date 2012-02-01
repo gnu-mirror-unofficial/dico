@@ -54,6 +54,7 @@ static struct gcide_entity gcide_entity[] = {
     { "Oacute", "Ó" }, 
     { "ucir",   "û" },
     { "ugrave", "ù" },
+    { "uacute", "ú" },
     { "yum",    "ÿ" },
     { "Oum",    "Ö" },
     { "Uum",    "Ü" },
@@ -225,8 +226,14 @@ static struct gcide_entity gcide_entity[] = {
     { "ADD",      "A" }, 
     { "UDD",      "U" },
 
+    /* Accents */
+    { "prime",    "´" },
+    { "bprime",   "˝" },
+    { "mdash",    "—" },
+    { "divide",   "÷" },
+    
     /* Quotes */
-
+    { "lsquo",    "‘" },
     { "ldquo",    "“" },
     { "rdquo",    "”" },
     

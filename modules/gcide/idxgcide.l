@@ -190,6 +190,7 @@ XD [0-9a-f]
   "<p><ent>" flush_headwords();
   "<asp>"     BEGIN_HEADWORD("asp");
   "<altname>" BEGIN_HEADWORD("altname");
+  "<decf>"    BEGIN_HEADWORD("decf");
   .          ;
   \n         line++;
 }

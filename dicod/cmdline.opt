@@ -22,6 +22,8 @@
 #include <getopt.h>
 #include <gettext.h>
 
+static struct grecs_txtacc *pp_cmd_acc;
+
 OPTIONS_BEGIN("dicod",
               [<GNU dictionary server>],
 	      [<>],
@@ -149,10 +151,39 @@ BEGIN
    grecs_preproc_add_include_dir(optarg); 
 END
 
+OPTION(define,D,SYMBOL[=VALUE],
+       [<define a preprocessor symbol>])
+BEGIN
+   char *p;
+
+   if (!pp_cmd_acc)
+       pp_cmd_acc = grecs_txtacc_create();
+   grecs_txtacc_grow(pp_cmd_acc, " \"-D", 4);
+   for (p = optarg; *p; p++) {
+       if (*p == '\\' || *p == '"')
+	   grecs_txtacc_grow_char(pp_cmd_acc, '\\');
+       grecs_txtacc_grow_char(pp_cmd_acc, *p);
+   }
+   grecs_txtacc_grow_char(pp_cmd_acc, '"');			
+END
+
+
 OPTIONS_END
 
 void
 get_options(int argc, char *argv[], struct dicod_conf_override *conf)
 {
     GETOPT(argc, argv,, exit(EX_USAGE))
+    if (pp_cmd_acc && grecs_preprocessor) {
+	char *args, *cmd;
+
+	grecs_txtacc_grow_char(pp_cmd_acc, 0);
+	args = grecs_txtacc_finish(pp_cmd_acc, 0);
+	cmd = grecs_malloc(strlen(grecs_preprocessor) +
+			   strlen(args) + 1);
+	strcpy(cmd, grecs_preprocessor);
+	strcat(cmd, args);
+	grecs_preprocessor = cmd;
+    }
+    grecs_txtacc_free(pp_cmd_acc);
 }

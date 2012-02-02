@@ -2480,6 +2480,13 @@ An error in the configuration file was detected.
    This section summarizes @command{dicod} command line options.
    
 @table @option
+@opsummary{define}
+@item --define=@var{symbol}[=@var{value}]
+@itemx -D @var{symbol}[=@var{value}]
+Define the preprocessor symbol @var{symbol}.  Optional @var{value}
+supplies the new symbol value.  This option is passed to the
+preprocessor verbatim.
+
 @opsummary{config}
 @item --config=@var{file}
 Read this configuration file instead of the default

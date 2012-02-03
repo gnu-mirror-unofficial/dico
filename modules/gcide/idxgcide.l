@@ -179,7 +179,7 @@ XD [0-9a-f]
 <INITIAL>{
   "<--"      { BEGIN(COMMENT); }
   "<!"       { BEGIN(HTMLCOM); }
-  "<p>"("\\'d8")?"<hw>"|"<hw>"  {
+  ("\\'d8")?"<hw>"  {
 	       flush_headwords();
 	       BEGIN_HEADWORD("hw");
              }
@@ -191,6 +191,8 @@ XD [0-9a-f]
   "<asp>"     BEGIN_HEADWORD("asp");
   "<altname>" BEGIN_HEADWORD("altname");
   "<decf>"    BEGIN_HEADWORD("decf");
+  "<colf>"    BEGIN_HEADWORD("colf");
+  "<conjf>"   BEGIN_HEADWORD("conjf");
   .          ;
   \n         line++;
 }

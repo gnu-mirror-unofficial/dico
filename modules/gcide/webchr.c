@@ -191,7 +191,7 @@ char gcide_webchr[256][4] = {
 /* a6 */ "⅔",
 /* a7 */ "⅓",
 /* a8 */ "",
-/* a9 */ "′",
+/* a9 */ "˝",
 /* aa */ "",
 /* ab */ "½",
 /* ac */ "¼",
@@ -203,18 +203,18 @@ char gcide_webchr[256][4] = {
 /* b2 */ "",
 /* b3 */ "",
 /* b4 */ "↑",
-/* b5 */ "✊",   /* FIXME: pointing hand (printer's "fist") */
+/* b5 */ "☞",   /* pointing hand (printer's "fist") */
 /* b6 */ "˝",   /* bold accent */
 /* b7 */ "´",   /* light accent */ 
 /* b8 */ "”",
-/* b9 */ "||",
-/* ba */ "",
+/* b9 */ "",
+/* ba */ "‖",
 /* bb */ "",
 /* bc */ "§",
 /* bd */ "“",
 /* be */ "ā",
 /* bf */ "‘",
-/* c0 */ "ng",  /* FIXME: "n sub-macron" */
+/* c0 */ "ṉ",   /* "n sub-macron" */
 /* c1 */ "♯",
 /* c2 */ "♭",
 /* c3 */ "–",
@@ -222,14 +222,14 @@ char gcide_webchr[256][4] = {
 /* c5 */ "t",   /* First part of th ligature */
 /* c6 */ "ī",
 /* c7 */ "ē",
-/* c8 */ "ḍ",   /* FIXME: Sanskrit/Tamil d dot */
-/* c9 */ "ṇ",   /* FIXME: Sanskrit/Tamil n dot */
-/* ca */ "ṭ",   /* FIXME: Sanskrit/Tamil t dot */
+/* c8 */ "ḍ",   /* Sanskrit/Tamil d dot */
+/* c9 */ "ṇ",   /* Sanskrit/Tamil n dot */
+/* ca */ "ṭ",   /* Sanskrit/Tamil t dot */
 /* cb */ "ĕ",
 /* cc */ "ĭ",
 /* cd */ "",
 /* ce */ "ŏ",
-/* cf */ "-",   /* FIXME: short dash */
+/* cf */ "‐",   /* short dash */
 /* d0 */ "—",
 /* d1 */ "Œ",
 /* d2 */ "œ",
@@ -238,7 +238,7 @@ char gcide_webchr[256][4] = {
 /* d5 */ "ǒ",
 /* d6 */ "ǣ",
 /* d7 */ "ōē",  /* FIXME: oe ligature with macron */
-/* d8 */ "||",
+/* d8 */ "‖",
 /* d9 */ "",
 /* da */ "",
 /* db */ "",
@@ -252,7 +252,7 @@ char gcide_webchr[256][4] = {
 /* e2 */ "i",   /* FIXME: i "semilong" */
 /* e3 */ "o",   /* FIXME: o "semilong" */
 /* e4 */ "u",   /* FIXME: u "semilong" */
-/* e5 */ "a",   /* FIXME: a with dot above */
+/* e5 */ "ȧ",   /* a with dot above */
 /* e6 */ "μ",   
 /* e7 */ "h",   /* second part of th ligature */
 /* e8 */ "",
@@ -270,9 +270,9 @@ char gcide_webchr[256][4] = {
 /* f4 */ "ȝ",
 /* f5 */ "—",
 /* f6 */ "÷",
-/* f7 */ "≅",
+/* f7 */ "≈",
 /* f8 */ "°",
-/* f9 */ "∙",
+/* f9 */ "•",
 /* fa */ "·",
 /* fb */ "√",
 /* fc */ "",

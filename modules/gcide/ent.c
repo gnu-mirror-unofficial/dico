@@ -66,18 +66,18 @@ static struct gcide_entity gcide_entity[] = {
     { "frac12", "½" },
     { "frac14", "¼" },
     { "?",      "<?>" }, /* Place-holder for unknown or illegible character. */
-    { "hand",   "✊" },   /* FIXME: pointing hand (printer's "fist") */
+    { "hand",   "☞" },   /* pointing hand (printer's "fist") */
     { "sect",   "§" },
     { "amac",   "ā" },
-    { "nsm",    "ng" },  /* FIXME: "n sub-macron" */
+    { "nsm",    "ṉ" },   /* "n sub-macron" */
     { "sharp",  "♯" },
     { "flat",   "♭" },
     { "th",     "th" },
     { "imac",   "ī" },
     { "emac",   "ē" },
-    { "dsdot",  "ḍ" },   /* FIXME: Sanskrit/Tamil d dot */
-    { "nsdot",  "ṇ" },   /* FIXME: Sanskrit/Tamil n dot */
-    { "tsdot",  "ṭ" },   /* FIXME: Sanskrit/Tamil t dot */
+    { "dsdot",  "ḍ" },   /* Sanskrit/Tamil d dot */
+    { "nsdot",  "ṇ" },   /* Sanskrit/Tamil n dot */
+    { "tsdot",  "ṭ" },   /* Sanskrit/Tamil t dot */
     { "ecr",    "ĕ" },
     { "icr",    "ĭ" },
     { "ocr",    "ŏ" },
@@ -95,7 +95,7 @@ static struct gcide_entity gcide_entity[] = {
     { "isl",    "i" },   /* FIXME: i "semilong" */
     { "osl",    "o" },   /* FIXME: o "semilong" */
     { "usl",    "u" },   /* FIXME: u "semilong" */
-    { "adot",   "a" },   /* FIXME: a with dot above */
+    { "adot",   "ȧ" },   /* a with dot above */
     { "edh",    "ð" },
     { "thorn",  "þ" },
     { "atil",   "ã" },
@@ -114,7 +114,7 @@ static struct gcide_entity gcide_entity[] = {
     { "rsdot",  "ṛ" },
     { "yogh",   "ȝ" },
     { "deg",    "°" },
-    { "middot", "∙" },
+    { "middot", "•" },
     { "root",   "√" },
     /* Greek alphabet */
     { "alpha",    "α" },
@@ -240,7 +240,7 @@ static struct gcide_entity gcide_entity[] = {
     { "br",       "\n" },
     { "and",      "and" },
     { "or",       "or" },
-    
+    { "sec",      "˝" },
     { NULL }
 };
 

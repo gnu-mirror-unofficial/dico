@@ -238,7 +238,7 @@ soundex_sel(int cmd, dico_key_t key, const char *dict_word)
 
     switch (cmd) {
     case DICO_SELECT_BEGIN:
-	key->call_data = malloc(5);
+	key->call_data = malloc(DICO_SOUNDEX_SIZE);
 	if (!key->call_data)
 	    return 1;
 	dico_soundex(key->word, key->call_data);

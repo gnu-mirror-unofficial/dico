@@ -91,7 +91,8 @@ documents Dico Version @value{VERSION}.
 @end ifnottex
 
 @menu
-* Preface::             
+* Preface::
+* Overview::
 * Intro::                Introduction to Dico.
 * Building::             Building the Package.
 * Dicod::                The dicod daemon.
@@ -194,6 +195,11 @@ Dico Module Interface
 * Output::
 * Error Reporting::
 
+Strategies
+
+* Key::
+* Selector::
+
 Dico --- a client program.
 
 * Single Query Mode::
@@ -258,6 +264,132 @@ The Libdico Library
 @node Preface
 @unnumbered Preface
 @WRITEME
+
+@node Overview
+@chapter Overview
+@cindex database
+@cindex headword
+@cindex article
+  A dictionary server operates on a set of @dfn{databases}.  Each database
+contains a set of @dfn{headwords} with corresponding @dfn{articles},
+therefore it can be regarded as a dictionary, in which articles supply
+definitions (or translations) for headwords.
+
+  The server offers facilities for searching headwords in the
+databases and for fetching articles from them.
+
+  This chapter provides an overview of the dictionary protocol and
+defines basic terms and notions used throughout this manual.
+
+  When describing the protocol, the following typographic conventions
+are used: the data sent by the client are prefixed with @samp{C:} and
+the data sent in response by the server are prefixed with @samp{S:}.
+
+@cindex name, database
+@cindex database name
+@cindex information, database
+@cindex database description
+@cindex description, database
+@cindex database description
+  Each database has a unique name -- a string of characters that serves
+to identify this particular database in a set of available databases.
+Two more pieces of textual data are associated with a database.  The
+@dfn{database information} string (or @dfn{info}, for short), supplies
+a short description of the database.  It is a sentence, tersely
+describing the database, e.g.@: @samp{English-German Dictionary}.  The
+@dfn{database description} provides a full description of the
+dictionary, with author credits and copyright information.  The length
+of this description is not limited.
+
+  Both pieces of information can be requested by the remote user.  The
+command @code{SHOW DB} lists all available databases along with their
+descriptions:
+
+@example
+C: SHOW DB
+S: 110 3 databases present
+S: jargon "Jargon File (4.3.1, 29 Jun 2001)"
+S: deu-eng "German-English Freedict dictionary"
+S: en-pl-naut "English-Polish dictionary of nautical terms"
+S: .
+S: 250 ok
+@end example
+
+Each line of output lists a name of the dictionary, and the
+corresponding description.
+
+The @code{SHOW INFO} command displays full information about a
+database, whose name is given as its argument:
+
+@example
+C: SHOW INFO en-pl-naut
+S: 112 information for en-pl-naut
+S: English-Polish dictionary of nautical terms
+S: 
+S: Permission is granted to copy, distribute and/or modify this
+S: document under the terms of the GNU Free Documentation License,
+S: Version 1.2 or any later version published by the Free Software
+S: Foundation; with no Invariant Sections, no Front-Cover and
+S: Back-Cover Texts
+S: .
+S: 250 ok
+@end example
+
+  A definition for any given headword can be requested using the
+@code{DEFINE} command.  It takes two arguments, the name of the
+database and the headword to look for in that database, e.g.:
+
+@example
+DEFINE en-pl-naut sprit
+@end example
+
+If the headword is found in the database, its definition will be
+displayed, otherwise a diagnostic message will be returned, telling
+that the headword was not found.
+
+@cindex strategy
+A special mechanism is provided for looking up the headword in a
+database (or databases).  The @code{MATCH} command returns the
+headwords that match given string (the @dfn{search key}) using a
+particular @dfn{strategy}.  In other words, the strategy identifies
+algorithm used to compare headwords with the key.  For example, the
+strategy called @samp{exact} means literal comparison and returns only
+those headwords that match the key exactly.  The strategy
+@samp{prefix} matches word prefixes.  These two strategies are always
+present.  Depending on the configuration, the server may offer other
+strategies as well.
+
+@anchor{default strategy}
+@cindex default strategy
+@cindex strategy, default
+One of the strategies is selected as a @dfn{default strategy}.
+Usually such strategy tolerates possible typing errors and allows the
+user to find matching headwords even if he does not know exactly how
+the word in question is spelled.  The default strategy is denoted as
+@samp{.} (a dot).
+
+The @code{MATCH} command takes three arguments: the name of the
+database to search, the strategy and the search key.  For example:
+
+@example
+S: MATCH wn prefix sail
+C: 152 4 matches found: list follows
+C: wn "sail"
+C: wn "sail through"
+C: wn "sailboat"
+C: wn "sailcloth"
+C: .
+C: 250 Ok
+@end example
+
+Two database names are special.  The @samp{*} means search in all
+databases and return all matches.  The @samp{!} means search in all
+databases until the match is found in one of them and return only
+matches from that particular database. 
+
+These are basic facilities provided by the DICT protocol.  For a
+complete and detailed description of the protocol, see @ref{Dictionary
+Server Protocol}.
 
 @node Intro
 @chapter Introduction to GNU Dico
@@ -439,79 +571,6 @@ addition, these words can be prefixed with @samp{log_}.
   The main component of GNU Dico is the @command{dicod} daemon.  It is
 responsible for serving client requests and for coordinating the work
 of dictionary modules.
-
-@cindex database
-@cindex headword
-@cindex article
-  @command{Dicod} operates on a set of @dfn{databases}.  Each database
-contains a set of @dfn{headwords} with corresponding @dfn{articles},
-therefore it can be regarded as a dictionary, in which articles supply
-definitions (or translations) for headwords.
-
-@cindex name, database
-@cindex database name
-@cindex information, database
-@cindex database description
-@cindex description, database
-@cindex database description
-  Each database has a unique name -- a string of characters that serves
-to identify this particular database in a set of available databases.
-Two more pieces of textual data are associated with a database.  A
-@dfn{database information} string (or @dfn{info}, for short), supplies
-a short description of the database.  It is a sentence, tersely
-describing the database, e.g.@: @samp{English-German Dictionary}.  A
-@dfn{database description} provides a full description of the
-dictionary, with author credits and copyright information.  The length
-of this description is not limited.
-
-  Both pieces of information can be requested by the remote user.  The
-command @code{SHOW DB} lists all available databases along with their
-descriptions:
-
-@example
-SHOW DB
-110 3 databases present
-jargon "Jargon File (4.3.1, 29 Jun 2001)"
-deu-eng "German-English Freedict dictionary"
-en-pl-naut "English-Polish dictionary of nautical terms"
-.
-250 ok
-@end example
-
-Each line of output lists a name of the dictionary, and the
-corresponding description.
-
-The @code{SHOW INFO} command displays full information about a
-database, whose name is given as its argument:
-
-@example
-SHOW INFO en-pl-naut
-112 information for en-pl-naut
-An English-Polish dictionary of nautical terms
-
-Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.2 or
-any later version published by the Free Software Foundation; with no
-Invariant Sections, no Front-Cover and Back-Cover Texts
-.
-250 ok
-@end example
-
-  A definition for any given headword can be requested using the
-@code{DEFINE} command.  It takes two arguments, the name of the
-database and the headword to look for in that database, e.g.:
-
-@example
-DEFINE en-pl-naut sprit
-@end example
-
-If the headword is found in the database, its definition will be
-displayed, otherwise a diagnostic message will be returned, telling
-that the headword was not found.
-
-@cindex strategy
-  @FIXME{Describe strategies}
-  
 
 @cindex @command{dicod}, operation modes
 There are two @dfn{operation modes}: @samp{daemon} and @samp{inetd}.
@@ -2805,10 +2864,10 @@ initializing the module instance.
 @section @command{Gcide}
 @cindex GNU Collaborative International Dictionary of English
   The @command{gcide} module provides support for GNU Collaborative
-International Dictionary of English. This dictionary can be downloaded
-from @uref{http://download.gnu.org.ua/pub/gcide/gcide-0.46.zip}. It
-consists of a set of files named from @file{CIDE.A} through
-@file{CIDE.Z}, written using a special markup.
+International Dictionary of English.  This dictionary can be downloaded
+from @uref{ftp://ftp.gnu.org/gnu/gcide}.  It consists of a set of
+files named from @file{CIDE.A} through @file{CIDE.Z}, written using a
+special markup.
 
   The @command{gcide} module is started via the following statement:
 
@@ -2883,7 +2942,7 @@ database @{
 The dictionary was derived from the
          Webster's Revised Unabridged Dictionary
                  Version published 1913
-               by the  C. & G. Merriam Co.
+               by the  C. & G.  Merriam Co.
                    Springfield, Mass.
                  Under the direction of
                 Noah Porter, D.D., LL.D.
@@ -3497,9 +3556,8 @@ Extract the lookup word from the key object @var{key}.
 Create new key object from strategy @var{strat} and word @var{word}.
 @end defun
 
-
 @defun dico-strat-selector? @var{strat}
-Return true if @var{strat} has a selector.  @FIXME-pxref{selector}.
+Return true if @var{strat} has a selector (@pxref{Selector}).
 @end defun
 
 @defun dico-strat-select? @var{strat} @var{word} @var{key}
@@ -4183,7 +4241,238 @@ handle, obtained from a previous call to @code{dico_match} or
 
 @node Strategies
 @section Strategies
-@WRITEME
+
+A search strategy is described by the following structure:
+
+@example
+struct dico_strategy @{
+    char *name;          /* @r{Strategy name} */
+    char *descr;         /* @r{Strategy description} */
+    dico_select_t sel;   /* @r{Selector function} */
+    void *closure;       /* @r{Additional data for SEL} */ 
+    int is_default;      /* @r{True, if this is a default strategy} */
+    dico_list_t stratcl; /* @r{Strategy access control list} */  
+@};
+@end example
+
+The first two members are mandatory and must be defined for each strategy:
+
+@deftypecv {member} {struct dico_strategy} @code{char *} name
+Short name of the strategy.  It is used as second argument to the
+@command{MATCH} command (@pxref{MATCH}) and is displayed in the first
+column of output by the @command{SHOW STRAT} command (@pxref{SHOW,SHOW STRAT}).
+@end deftypecv
+
+@deftypecv {member} {struct dico_strategy} @code{char *} descr
+Strategy description.  It is the string shown in the second column of
+@command{SHOW STRAT} output (@pxref{SHOW,SHOW STRAT}).
+@end deftypecv
+
+@anchor{selector}
+@deftypecv {member} {struct dico_strategy} dico_select_t sel
+@kwindex dico_select_t
+A @dfn{selector function}, which is used in iterative matches to
+select matching headwords.  The @code{sel} function is called for each
+headword in the database with the headword and search key as its
+arguments and returns 1 if the headword matches the key and 0
+otherwise.  The @code{dico_select_t} type is defined as:
+
+@example
+typedef int (*dico_select_t) (int, dico_key_t,
+                              const char *);
+@end example
+
+@xref{Selector}, for a detailed description.
+@end deftypecv
+
+@deftypecv {member} {struct dico_strategy} @code{void *} closure
+An opaque data pointer intended for use by the selector function.
+@end deftypecv
+
+@deftypecv {member} {struct dico_strategy} int is_default
+This member is set to 1 by the server if this strategy is selected as
+the default one (@pxref{default strategy}).
+@end deftypecv
+
+@deftypecv {member} {struct dico_strategy} dico_list_t stratcl
+A control list associated with this strategy.  @xref{Strategies and
+Default Searches}.
+@end deftypecv
+
+@menu
+* Key::
+* Selector::
+@end menu
+
+@node Key
+@subsection Search Key Structure
+@anchor{dico_key}
+@kwindex dico_key_t
+@kwindex dico_key
+The @code{dico_key_t} is defined as a pointer to the structure
+@code{dico_key}:
+
+@example
+@group
+struct dico_key @{
+    char *word;
+    void *call_data;
+    dico_strategy_t strat;
+    int flags;
+@};
+@end group
+@end example
+
+The structure represents a search key for matching algorithms.  Its
+members are:
+
+@deftypecv {member} {struct dico_key} @code{char *} word
+The search word or expression.
+@end deftypecv
+
+@deftypecv {member} {struct dico_key} @code{void *} call_data
+A pointer to selector-specific data.  If necessary, it can be
+initialized by the selector when called with the
+@samp{DICO_SELECT_BEGIN} opcode and deallocated when called with the
+@samp{DICO_SELECT_END} opcode.
+@end deftypecv
+
+@deftypecv {member} {struct dico_key} dico_strategy_t strat
+A pointer to the strategy structure.
+@end deftypecv
+
+@deftypecv {member} {struct dico_key} int flags
+Key-specific flags.  These are used by the server.
+@end deftypecv
+
+@noindent
+The following functions are defined to operate on search keys:
+
+@deftypefn {function} int dico_key_init (struct dico_key *@var{key}, @
+                              dico_strategy_t @var{strat}, @
+                              const char *@var{word})
+Initialize the key structure @var{key} with the given strategy
+@var{strat} and search word @var{word}.  If @var{strat} has a selector
+function, it will be called with the @samp{DICO_SELECT_BEGIN} opcode
+(@pxref{Selector, DICO_SELECT_BEGIN}) to carry out the necessary
+initializations.
+
+The @var{key} itself may point to any kind of memory storage.
+@end deftypefn
+                              
+@deftypefn {function} void dico_key_deinit (struct dico_key *@var{key})
+Deinitialize the @code{dico_key} structure initialized by a prior call
+to @code{dico_key_init}.  If the key strategy has a selector, it will
+be called with the @samp{DICO_SELECT_END} opcode.
+
+Note that this function makes no assumptions about the storage type of
+@var{key}.  If it points to a dynamically allocated memory, it is the
+caller responsibility to free it.
+@end deftypefn
+
+@deftypefn {function} int dico_key_match (struct dico_key *@var{key}, @
+                               const char *@var{word})
+Match headword and key.  Return 1 if they match, 0 if they don't match
+and -1 in case of error.  This function calls the strategy selector with the
+@samp{DICO_SELECT_RUN} opcode (@pxref{Selector, DICO_SELECT_RUN}).  It
+is an error if the strategy selector is not defined.
+@end deftypefn
+                               
+@node Selector
+@subsection Strategy Selectors
+Wherever possible, modules should implement strategies using effective
+look up algorithms.  For example, @samp{exact} and @samp{prefix}
+strategies must normally be implemented using binary search in the
+database index.  The @samp{suffix} strategy can also be implemented
+using binary search if a special @dfn{reverse index} is built for the
+database (this is the approach taken by @command{outline} and
+@command{dictorg} modules.
+
+However, some strategies can only be implemented using an expensive
+iteration over all keys in the database index.  For example,
+@samp{soundex} and @samp{levenshtein} strategies cannot be implemented
+otherwise.
+
+A strategy that can be used in iterative look ups must define a
+@dfn{selector}.  Strategy selector is a function which is called for
+each database headword to determine whether it matches the search key.
+
+It is defined as follows:
+
+@deftypefn {selector} int select (int @var{opcode}, dico_key_t @var{key}, @
+                                  const char *@var{headword})
+A strategy selector.  Its arguments are:
+
+@table @var
+@item opcode
+The operation code.  Its possible values are @samp{DICO_SELECT_BEGIN},
+@samp{DICO_SELECT_RUN} and @samp{DICO_SELECT_END}, as described below.
+
+@item key
+The search key.
+
+@item headword
+The database headword.
+@end table
+@end deftypefn
+
+The selector function is called before entering the iteration loop
+with @samp{DICO_SELECT_BEGIN} as its argument.  If necessary, it can
+perform any additional initialization of the strategy, such as
+allocation of auxiliary data structures, etc.  The @code{call_data}
+member of @code{dico_key_t} structure (@pxref{dico_key,call_data})
+should be used to keep the pointer to the auxiliary data.  The
+function should return 0 if it successfully finished its
+initialization and non-zero otherwise.
+
+Once the iteration loop is finished, the selector will be called with
+@samp{DICO_SELECT_END} as its first argument.  This invocation is
+intended to deallocate any auxiliary memory and release any additional
+resources allocated at the initialization state.
+
+In these two additional invocations, the @var{headword} parameter will
+be @samp{NULL}.
+
+Once the iteration loop is entered, the selector function will be
+called for each headword.  Its @var{opcode} parameter will be
+@samp{DICO_SELECT_RUN} and the @var{headword} parameter will point to
+the headword.  The function should return 1 if the headword matches
+the key, 0 if it does not and a negative value in case of failure.
+
+To illustrate the concept of strategy selector, let's consider the
+implementation of the @samp{soundex} strategy in @command{dicod}.
+This strategy computes a four-character soundex code for both search
+key and the headword and returns 1 (match) if both codes coincide.  To
+speed up the process, the code for the search key is computed only
+once, at the initialization stage, and stored in a temporary memory
+assigned to the @code{key->call_data}.  This memory is reclaimed at
+the terminating call:
+
+@example
+int
+soundex_sel(int cmd, dico_key_t key, const char *dict_word)
+@{
+    char dcode[DICO_SOUNDEX_SIZE];
+
+    switch (cmd) @{
+    case DICO_SELECT_BEGIN:
+        key->call_data = malloc(DICO_SOUNDEX_SIZE);
+        if (!key->call_data)
+            return 1;
+        dico_soundex(key->word, key->call_data);
+        break;
+
+    case DICO_SELECT_RUN:
+        dico_soundex(dict_word, dcode);
+        return strcmp(dcode, key->call_data) == 0;
+
+    case DICO_SELECT_END:
+        free(key->call_data);
+        break;
+    @}
+    return 0;
+@}
+@end example
 
 @node Output
 @section Output
@@ -4195,7 +4484,6 @@ handle, obtained from a previous call to @code{dico_match} or
 
 @node dico client
 @chapter Dico --- a client program.
-@UNREVISED
 @cindex dico, a program
   The @command{dico} program is a console-based utility for querying
 dictionary servers.  It has two operation modes.  In @dfn{single query
@@ -4611,7 +4899,7 @@ suffix "Match word suffixes"
 rev-qu "Reverse search in Quechua databases"
 @end example
 
-@cindex .ld
+@kwindex ld
   The @code{ld} command lists available databases (@pxref{SHOW, SHOW
 DB}):
 
@@ -5090,7 +5378,7 @@ are separated with spaces, tabs, or newlines.  A valid statement must
 begin with one of the following:
 
 @table @code
-@kwindex machine, autologin keyword
+@kwindex machine@r{, autologin keyword}
 @item machine @var{name}
   This statement contains parameters for authenticating on machine
 @var{name}.

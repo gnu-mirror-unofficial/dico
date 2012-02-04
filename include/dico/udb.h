@@ -26,6 +26,8 @@ struct dico_udb_def {
     int (*_db_close) (void *);
     int (*_db_get_password) (void *, const char *, const char *, char **);
     int (*_db_get_groups) (void *, const char *, const char *, dico_list_t *);
+    int (*_db_check_password) (void *, const char *, const char *,
+			       const char *);
 };
 
 typedef struct dico_udb *dico_udb_t;
@@ -37,6 +39,7 @@ int dico_udb_create(dico_udb_t *pdb,
 
 int dico_udb_open(dico_udb_t db);
 int dico_udb_close(dico_udb_t db);
+int dico_udb_check_password(dico_udb_t db, const char *key, const char *pass);
 int dico_udb_get_password(dico_udb_t db, const char *key, char **pass);
 int dico_udb_get_groups(dico_udb_t db, const char *key, dico_list_t *groups);
 int dico_udb_define(struct dico_udb_def *dptr);

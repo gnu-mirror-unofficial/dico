@@ -175,6 +175,7 @@ Modules
 * nprefix::
 * pcre::
 * ldap::
+* pam::
 
 @command{Gcide}
 
@@ -2689,6 +2690,7 @@ distribution of GNU Dico version @value{VERSION}.
 * nprefix::
 * pcre::
 * ldap::
+* pam::
 @end menu
 
 @node outline
@@ -4035,6 +4037,48 @@ load-module ldap;
 @end example
 
 @xref{ldap userdb}, for a description of its use.
+
+@node pam
+@section @command{pam}
+@cindex PAM
+The @command{pam} module implements user authentication via PAM.
+It can be used only with @samp{LOGIN} and @samp{PLAIN} GSASL
+authentication methods.
+
+The module is loaded as follows:
+
+@example
+@group
+load-module pam @{
+    command "pam [service=@var{sname}]";
+@}
+@end group
+@end example
+
+@noindent
+where @var{sname} is the name of PAM service to use.  If not supplied,
+@samp{dicod} service will be used.
+
+The user database is normally initialized as:
+
+@example
+user-db "pam://localhost";
+@end example
+
+If @code{password-resource} statement is given, its value will be used
+as service name, instead of the one specified in the
+@code{load-module} statement, e.g.:
+
+@example
+@group
+user-db "pam://localhost" @{
+    password-resource "local";
+@}    
+@end group
+@end example
+
+The @code{group-resource} statement is not used, because there is no
+mechanism to return textual data from PAM.
 
 @node Interface
 @chapter Dico Module Interface

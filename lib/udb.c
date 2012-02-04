@@ -32,6 +32,8 @@ struct dico_udb {
     const char *options;
     int (*_db_open) (void **, dico_url_t, const char *);
     int (*_db_close) (void *);
+    int (*_db_check_password) (void *, const char *, const char *,
+			       const char *);
     int (*_db_get_password) (void *, const char *, const char *, char **);
     int (*_db_get_groups) (void *, const char *, const char *, dico_list_t *);
 };
@@ -57,6 +59,14 @@ dico_udb_close(dico_udb_t db)
 	rc = db->_db_close(db->handle);
     db->handle = NULL;
     return rc;
+}
+
+int
+dico_udb_check_password(dico_udb_t db, const char *key, const char *pass)
+{
+    if (!db->_db_check_password)
+	return ENOSYS;
+    return db->_db_check_password(db->handle, db->qpw, key, pass);
 }
 
 int
@@ -128,6 +138,7 @@ dico_udb_create(dico_udb_t *pdb,
     uptr->options = options;
     uptr->_db_open = def->_db_open;
     uptr->_db_close = def->_db_close;
+    uptr->_db_check_password = def->_db_check_password;
     uptr->_db_get_password = def->_db_get_password;
     uptr->_db_get_groups = def->_db_get_groups;
 

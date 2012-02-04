@@ -384,6 +384,37 @@ if test $status_ldap != no; then
 fi
 AM_CONDITIONAL([LDAP_COND], [test $status_ldap = yes])
 
+# PAM
+status_pam=maybe
+AC_ARG_ENABLE([pam],
+              AC_HELP_STRING([--enable-pam],
+                             [enable PAM]),
+              [
+case "${enableval}" in
+  yes) status_pam=yes ;;
+  no)  status_pam=no ;;
+  *)   AC_MSG_ERROR([bad value ${enableval} for --enable-pam]) ;;
+esac],[status_pam=maybe])
+
+AC_SUBST(PAM_LIBS)
+if test "$status_pam" != "no"; then
+  pam=$status_pam
+  AC_CHECK_HEADERS(security/pam_appl.h)
+  if test "$ac_cv_header_security_pam_appl_h" = "yes"; then
+    AC_CHECK_LIB(dl, dlopen, [PAM_LIBS=-ldl])
+    AC_CHECK_LIB(pam, pam_start,
+	         [status_pam=yes],
+	         [status_pam=no], $PAM_LIBS)
+  else
+    status_pam=no
+  fi
+  if test $pam = yes && test $pam != $status_pam; then
+      AC_MSG_ERROR([required module PAM cannot be built because of missing prerequisites])
+  fi
+fi
+
+AM_CONDITIONAL([PAM_COND], [test $status_pam = yes])
+
 # WordNet
 AC_SUBST(WORDNET_LOPT)
 AC_SUBST(WORDNET_IOPT)
@@ -430,6 +461,7 @@ Guile ........................... $status_guile
 Python .......................... $status_python
 GSASL ........................... $status_gsasl
 LDAP ............................ $status_ldap
+PAM ............................. $status_pam
 Readline ........................ $status_readline
 Preprocessor .................... $dicopp
 
@@ -445,6 +477,7 @@ EOT
 status_python=$status_python
 status_gsasl=$status_gsasl
 status_ldap=$status_ldap
+status_pam=$status_pam
 status_readline=$status_readline
 if test $use_ext_pp = no; then
   dicopp=no
@@ -487,6 +520,7 @@ AC_CONFIG_FILES([Makefile
 		 modules/substr/Makefile
 		 modules/pcre/Makefile
 		 modules/ldap/Makefile
+		 modules/pam/Makefile
 		 modules/word/Makefile
 		 modules/gcide/Makefile
 		 modules/wordnet/Makefile

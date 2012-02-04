@@ -14,37 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-if GUILE_COND
-  GUILE_DIR=guile
-endif
-if PYTHON_COND
-  PYTHON_DIR=python
-endif
-if LDAP_COND
-  LDAP_DIR=ldap
-endif
-if PCRE_COND
-  PCRE_DIR=pcre
-endif
-if WORDNET_COND
-  WORDNET_DIR=wordnet
-endif
-if PAM_COND
-  PAM_DIR=pam
-endif
+moddir=@DICO_MODDIR@
 
-SUBDIRS = \
- outline\
- dict.org\
- gcide\
- $(GUILE_DIR)\
- $(PYTHON_DIR)\
- stratall\
- substr\
- $(LDAP_DIR)\
- $(PAM_DIR)\
- $(PCRE_DIR)\
- $(WORDNET_DIR)\
- word\
- nprefix
-EXTRA_DIST = template.c template.py template.scm
+mod_LTLIBRARIES=pam.la
+
+pam_la_SOURCES = pam.c
+pam_la_LIBADD = ../../lib/libdico.la -lpam @PAM_LIBS@
+AM_LDFLAGS = -module -avoid-version -no-undefined
+INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include @GRECS_INCLUDES@

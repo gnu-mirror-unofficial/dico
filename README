@@ -92,6 +92,9 @@ The package comes with the following modules:
   
 - ldap
   Brings support for LDAP user databases.
+
+- pam
+  Implements PAM authentication.
   
 * Building
 ==========

@@ -232,15 +232,18 @@ cb_validate(Gsasl *ctx, Gsasl_session *sctx)
 	return GSASL_NO_AUTHID;
     if (!pass)
 	return GSASL_NO_PASSWORD;
-    
-    if (dico_udb_get_password(user_db, authid, &dbpass)) {
-	dico_log(L_ERR, 0,
-		 _("failed to get password for `%s' from the database"),
-		 authid);
-	return GSASL_AUTHENTICATION_ERROR;
+
+    rc = dico_udb_check_password(user_db, authid, pass);
+    if (rc == ENOSYS) {
+        if (dico_udb_get_password(user_db, authid, &dbpass)) {
+	    dico_log(L_ERR, 0,
+		     _("failed to get password for `%s' from the database"),
+		     authid);
+	    return GSASL_AUTHENTICATION_ERROR;
+	}
+	rc = dicod_check_password(dbpass, pass);
+	free(dbpass);
     }
-    rc = dicod_check_password(dbpass, pass);
-    free(dbpass);
     if (rc == 0) {
 	pdata->username = xstrdup(authid);
 	return GSASL_OK;

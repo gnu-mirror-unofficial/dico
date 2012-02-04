@@ -564,9 +564,14 @@ dicod_server(int argc, char **argv)
     
     dico_log(L_INFO, 0, _("%s started"), program_version);
 
-    if (user_id && switch_to_privs(user_id, group_id, group_list))
-	dico_die(EX_NOUSER, L_CRIT, 0, "exiting");
-
+    if (user_id) {
+	if (getuid())
+	    dico_log(L_NOTICE, 0,
+		     _("not running as root: ignoring user/group settings"));
+	else if (switch_to_privs(user_id, group_id, group_list))
+	    dico_die(EX_NOUSER, L_CRIT, 0, "exiting");
+    }
+    
     if (!foreground)
 	check_pidfile(pidfile_name);
 

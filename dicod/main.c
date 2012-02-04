@@ -811,6 +811,8 @@ user_db_config(enum grecs_callback_command cmd,
     switch (cmd) {
     case grecs_callback_section_begin:
 	cfg->locus = *locus;
+	cfg->locus.beg.file = xstrdup(cfg->locus.beg.file);
+	cfg->locus.end.file = xstrdup(cfg->locus.end.file);
 	if (value->type != GRECS_TYPE_STRING) 
 	    grecs_error(locus, 0, _("URL must be a string"));
 	else if (!value->v.string)

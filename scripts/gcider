@@ -107,7 +107,25 @@ grid [ttk::combobox .c.strategy -textvariable strategy -state readonly] \
 grid [text .c.article -state disabled -wrap word \
 	   -yscrollcommand ".c.artscroll set"] \
      -column 0 -row 1 -columnspan 2 -sticky nwes
-#FIXME:  -font -adobe-courier-medium-r-normal-*-*-120-*-*-*-*-*-*
+#FIXME:
+.c.article tag configure highlightline -background yellow -font "helvetica 14 bold"
+.c.article tag configure seealso -underline 1
+.c.article tag bind seealso <Button-1> {
+    set res [%W tag prevrange seealso @%x,%y]
+    if {[llength $res] != 0} {
+	defineword [%W get [lindex $res 0] [lindex $res 1]]
+    }
+}
+.c.article tag bind seealso <Button-3> {
+    set res [%W tag prevrange seealso @%x,%y]
+    if {[llength $res] != 0} {
+	catch {%W tag remove sel sel.first sel.last}
+	%W tag add sel [lindex $res 0] [lindex $res 1]
+	tk_popup .c.article.popupMenu %X %Y
+    }
+}
+.c.article tag bind seealso <Enter> [list %W config -cursor hand2]
+.c.article tag bind seealso <Leave> [list %W config -cursor xterm]
 
 grid [ttk::scrollbar .c.artscroll -command ".c.article yview" \
       -orient vertical] -column 2 -row 1 -sticky ns
@@ -609,7 +627,16 @@ proc readdefns {} {
 	incr num
 	set reply [dictread]
 	while {$reply != "."} {
+	    set endpos [.c.article count -chars 1.0 end]
 	    .c.article insert end "$reply\n"
+	    
+	    foreach xref [regexp -indices -all -inline {\{[^\}]+\}} $reply] {
+		set start [expr $endpos + [lindex $xref 0]]
+		set end [expr $endpos + [lindex $xref 1] - 1]
+		.c.article tag add seealso "1.0 + $start chars" "1.0 + $end chars"
+	    }
+	    
+	    
 	    set reply [dictread]
 	}
 	.c.article insert end "\n"
@@ -644,6 +671,7 @@ proc defineword {word} {
     } elseif {$code == 552} {
 	# FIXME: tags
 	.c.article insert end "No definition for \"$word\""
+	.c.article tag add highlightline 1.0 end
     } elseif {$code <= 0} {
 	tk_messageBox -title "GCIDER error" -icon error -type ok \
 	              -message "I/O error communicating with the server"

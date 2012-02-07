@@ -1,0 +1,791 @@
+#!/bin/sh 
+# Apart from these three lines, it is actually a -*- tcl -*- script \
+exec wish "$0" -- "$@"
+# This file is part of GNU Dico
+# Copyright (C) 2012 Sergey Poznyakoff
+#
+# GNU Dico is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3, or (at your option)
+# any later version.
+#
+# GNU Dico is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+package require Tk
+encoding system "utf-8"
+
+set traceoption 0
+set dicod_server ""
+set dbname "gcide"
+
+
+############################################################################
+# Set options
+############################################################################
+if {[tk windowingsystem] eq "aqua"} {
+    set mainfont {{Lucida Grande} 9}
+    set textfont {Monaco 9}
+    set uifont {{Lucida Grande} 9 bold}
+} else {
+    set mainfont {Helvetica 9}
+    set textfont {Courier 9}
+    set uifont {Helvetica 9 bold}
+}
+
+option add *tearOff 0
+option add *Button.font uifont startupFile
+option add *Checkbutton.font uifont startupFile
+option add *Radiobutton.font uifont startupFile
+option add *Menubutton.font uifont startupFile
+option add *Label.font uifont startupFile
+option add *Message.font uifont startupFile
+option add *Entry.font textfont startupFile
+option add *Text.font textfont startupFile
+option add *Labelframe.font uifont startupFile
+option add *Spinbox.font textfont startupFile
+option add *Listbox.font mainfont startupFile
+
+############################################################################
+# Define events 
+############################################################################
+event add <<Paste>> <Shift-Insert>
+event add <<Paste>> <Button-2>
+event add <<Paste>> <Control-V> 
+event add <<Copy>> <Control-C>
+event add <<Cut>> <Control-X>
+
+############################################################################
+# Setup main window structure
+############################################################################
+
+wm title . "GCIDER"
+wm protocol . WM_DELETE_WINDOW {savepick; destroy .}
+
+menu .menubar
+. configure -menu .menubar
+set m .menubar
+menu $m.file
+$m add cascade -menu $m.file -label File
+$m.file add command -label "Save article" -command save_article -underline 0
+$m.file add separator
+$m.file add command -label "Exit" -command { finish 0 } -underline 1	
+
+$m add cascade -label "Edit" -menu [menu $m.edit] -underline 0
+$m.edit add command -label "Preferences" -underline 0
+$m.edit add command -label "Configure" -command gcider_reconf -underline 0
+
+$m add cascade -label Help -menu [menu $m.help]
+$m.help add command -label "About" -command about -underline 1
+
+grid [ttk::frame .c -padding "3 3 12 12"] -column 0 -row 0 -sticky nwes
+grid columnconfigure . 0 -weight 1
+grid rowconfigure . 0 -weight 1
+grid columnconfigure .c 0 -weight 3
+grid columnconfigure .c 1 -weight 3
+
+grid columnconfigure .c 3 -weight 3
+grid columnconfigure .c 4 -weight 3
+
+grid [ttk::combobox .c.input -textvariable input -width 40 -exportselection true] \
+     -column 0 -row 0 -sticky ew
+
+grid [ttk::button .c.define -text "Define" -command define] \
+     -column 1 -row 0 -columnspan 2 -sticky e
+grid [ttk::button .c.match -text "Match" -command match] \
+     -column 3 -row 0 -sticky e
+
+grid [ttk::combobox .c.strategy -textvariable strategy -state readonly] \
+     -column 4 -row 0 -columnspan 2 -sticky ew
+
+grid [text .c.article -state disabled -wrap word \
+	   -yscrollcommand ".c.artscroll set"] \
+     -column 0 -row 1 -columnspan 2 -sticky nwes
+#FIXME:  -font -adobe-courier-medium-r-normal-*-*-120-*-*-*-*-*-*
+
+grid [ttk::scrollbar .c.artscroll -command ".c.article yview" \
+      -orient vertical] -column 2 -row 1 -sticky ns
+
+grid [listbox .c.matches -state disable -yscrollcommand ".c.matchscroll set"] \
+      -column 3 -columnspan 2 -row 1 -sticky nwes
+grid [ttk::scrollbar .c.matchscroll -command ".c.matches yview" \
+      -orient vertical] -column 5 -row 1 -sticky nse
+
+############################################################################
+# Create article popup menu
+############################################################################
+set m [menu .c.article.popupMenu]
+$m add command -label "Define" -command {
+    with_selected_word .c.article defineword
+}
+$m add command -label "Match" -command {
+    with_selected_word .c.article matchword
+}
+$m add command -label "Copy" -command {
+    tk_textCopy .c.article
+}
+
+# Arrange for it to pop up when the right button is clicked
+bind .c.article <Button-3> {
+    if {[catch {%W get sel.first sel.last} word] == 0 && $word != ""} {
+	tk_popup .c.article.popupMenu %X %Y
+    }
+}
+
+############################################################################
+# Set the focus and bind events
+############################################################################
+focus .c.input
+bind . <Return> {define}
+bind .c.input <<ComboboxSelected>> { define }
+bind .c.matches <Double-ButtonPress-1> {
+    set sel [.c.matches curselection]
+    if {$sel == ""} {
+	return
+    }
+    set word [.c.matches get [lindex $sel 0]]
+    .c.input set $word
+    defineword $word
+}
+
+bind .c.article <Double-2> {
+    with_selected_word %W defineword
+}
+
+############################################################################
+# Auxiliary functions
+############################################################################
+
+# Get selection from the widget W and interpret COM if it is not empty
+proc with_selected_word {w com} {
+    if {[catch {string map {"\n" ""} [$w get sel.first sel.last]} word] == 0} {
+	$com $word
+    }
+}
+
+# About box
+proc about {} {
+    if [winfo exist .aboutbox] {
+	raise .aboutbox
+	return
+    }
+    toplevel .aboutbox
+    wm title .aboutbox "About GCIDER Viewer"
+    wm resizable .aboutbox 0 0
+    grid [ttk::frame .aboutbox.c -padding "3 3 12 12"] \
+	  -column 0 -row 0 -sticky nwes
+    grid [label .aboutbox.c.name \
+          -justify center \
+          -font "-adobe-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*" \
+	      -text "GCIDER Version 0.1"] \
+	 -column 0 -row 0
+    grid [label .aboutbox.c.warranty \
+          -justify left \
+          -font "-adobe-helvetica-medium-r-*-*-*-100-*-*-*-*-*-*" \
+	      -text "GCIDER is a viewer for GNU Collaborative dictionary of English.\n\n\
+Copyright (C) 2012, Sergey Poznyakoff\n\
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n\
+This is free software: you are free to change and redistribute it.\n\
+There is NO WARRANTY, to the extent permitted by law."] \
+	 -column 0 -row 1
+    
+    grid [button .aboutbox.c.ok \
+          -text "Dismiss" \
+          -command {destroy .aboutbox}] -column 0 -row 2
+}
+
+# Pop up fatal error window
+proc terror {args} {
+    errorbox [lindex $args 0] [lindex $args 1]
+    exit 1
+}
+
+proc errorbox {args} {
+    tk_messageBox -title "GCIDER error" -icon error -type ok \
+	          -message [lindex $args 0] \
+	          -detail [lindex $args 1]
+}
+
+proc save_article {} {
+    set file [tk_getSaveFile -title "Save article to file" -initialdir ~]
+    if {$file == ""} { return }
+    set fd [open $file w]
+    puts $fd [.c.article get 1.0 end]
+    close $fd
+}
+
+proc gcider_reconf {} {
+    global dicod_server
+    global gcide_dbdir
+    global result
+    
+    gcide_configure {\
+Please supply new configuration values below.  Press "Cancel" to cancel or
+"OK" to submit.	
+} \
+	-ok { dict_connect errorbox } \
+	-canceltext "Cancel" \
+	-cancel [subst {
+	    set dicod_server $dicod_server
+	    set gcide_dbdir $gcide_dbdir
+	}]
+}
+
+proc gcider_reconfig_or_die {} {
+    global dicod_server
+    global gcide_dbdir
+    global result
+    
+    gcide_configure {\
+Please supply new configuration values below.  Press "Exit" to quit or
+"OK" to submit.	
+} \
+	-ok { dict_connect errorbox }
+}
+
+proc gcider_error_reconf {args} {
+    errorbox [lindex $args 0] [lindex $args 1]
+    gcider_reconfig_or_die
+}
+
+############################################################################
+# Configuration routines
+############################################################################
+
+# Directory where our configuration files are kept
+set cfgdir ~/.gcider
+# Directory where GCIDE files reside
+set gcide_dbdir ""
+
+# Dicod configuration template
+set dicod_config {/* Dicod configuration file created by GCIDER on [clock format [clock seconds] -gmt true] */
+capability (mime);
+mode inetd;
+pidfile "$cfgdir/dicod.pid";
+load-module (substr,word);
+load-module gcide;
+database {
+	name "gcide";
+        handler "gcide dbdir=$gcide_dbdir";
+}
+server-info "Local GCIDE server"; 
+/* End of dicod.conf */
+}
+
+# Check the validity of $dicod_server and $gcide_dbdir.  If the check fails,
+# return 1.  Otherwise, create the gcider configuration and return 0
+proc submit_config {} {
+    global gcide_dbdir
+    global cfgdir
+    global dicod_server
+    global dicod_config
+    
+    if {$dicod_server == ""} {
+	tk_messageBox -title "GCIDER error" -icon error -type ok \
+	              -message "Please select server program to use"
+	return 1
+    }
+	
+    if {![file executable $dicod_server]} {
+	tk_messageBox -title "GCIDER error" -icon error -type ok \
+	          -message "The server program you selected is not executable"
+	return 1
+    }
+
+    if {$gcide_dbdir == ""} {
+	tk_messageBox -title "GCIDER error" -icon error -type ok \
+	              -message "Please define the location of GCIDE"
+	return 1
+    }
+
+    if {![file isdirectory $gcide_dbdir]} {
+	tk_messageBox -title "GCIDER error" -icon error -type ok \
+	              -message "GCIDE location is not a directory"
+	return 1
+    }
+
+    foreach let {A B C D E F G H I J K L M N O P Q R S T U V W X Y Z} {
+	if {![file exists "$gcide_dbdir/CIDE.$let"]} {
+	    tk_messageBox -title "GCIDER error" -icon error -type ok \
+		    -message "$gcide_dbdir does not look like a valid GCIDE directory" \
+		    -detail "$gcide_dbdir/CIDE.$let does not exist"
+	    return 1;
+	}
+    }
+
+    if {![file isdirectory $cfgdir]} {
+	file mkdir $cfgdir
+    }
+    set fd [open $cfgdir/config "w"]
+    puts $fd "set dicod_server $dicod_server"
+    puts $fd "set gcide_dbdir $gcide_dbdir"
+    close $fd
+
+    set fd [open $cfgdir/dicod.conf "w"]
+    puts $fd [subst $dicod_config]
+    close $fd
+    
+    return 0
+}
+
+# Pop-up a configuration box.  When submitted, call submit_config to
+# create the configuration.  If it fails, retry.
+proc gcide_configure {args} {
+    global dicod_server
+    global env
+
+    set okcom {}
+    set exitcom "exit 1"
+    set exittext "Exit"
+
+    set text [lindex $args 0]
+    for {set i 1} {$i < [llength $args]} {incr i} {
+	if {[lindex $args $i] == "-ok"} {
+	    incr i
+	    set okcom [lindex $args $i]
+	} elseif {[lindex $args $i] == "-cancel"} {
+	    incr i
+	    set exitcom [lindex $args $i]
+	} elseif {[lindex $args $i] == "-canceltext"} {
+	    incr i
+	    set exittext [lindex $args $i]
+	}
+    }
+    
+    if {$dicod_server == ""} {
+	foreach dir [split $env(PATH) ":"] {
+	    if {[file executable $dir/dicod]} {
+		set dicod_server $dir/dicod
+		break
+	    }
+	}
+	if {$dicod_server == ""} {
+	    set dicod_server "dicod"
+	}
+    }
+    
+    if [winfo exists .initcfg] {
+	raise .initcfg
+	return
+    }
+    toplevel .initcfg
+    wm title .initcfg "GCIDER Viewer Configuration"
+    wm resizable .initcfg 0 0
+    grab .initcfg
+    wm transient .initcfg .
+    wm protocol .initcfg WM_DELETE_WINDOW {grab release .initcfg; destroy .initcfg}
+    
+    grid [ttk::frame .initcfg.c -padding "3 3 12 12"] \
+	  -column 0 -row 0 -sticky nwes
+    grid [label .initcfg.c.descr \
+          -justify left \
+	  -text $text] \
+	  -column 0 -columnspan 3 -row 0 -sticky new -padx 5
+    grid [label .initcfg.c.srvlabel \
+          -justify left \
+          -text "Path to dicod server"] \
+	  -column 0 -row 1 -sticky w -padx 5
+    grid [entry .initcfg.c.srventry \
+          -textvariable dicod_server] \
+	  -column 1 -row 1 -sticky e -padx 5
+    grid [button .initcfg.c.srvb -text "Browse" \
+	  -command {
+	      global dicod_server
+	      set dicod_server [tk_getOpenFile -title "Dicod server" -initialdir ~]
+              raise .initcfg}] \
+	-column 2 -row 1 -sticky e
+    
+    grid [label .initcfg.c.cidelabel \
+          -justify left \
+          -text "Path to GCIDE dictionary"] \
+	  -column 0 -row 2 -sticky w -padx 5
+    grid [entry .initcfg.c.cideentry \
+          -textvariable gcide_dbdir] \
+	  -column 1 -row 2 -sticky e -padx 5
+    grid [button .initcfg.c.cideb -text "Browse" \
+	  -command {
+	      global gcide_dbdir
+	      set gcide_dbdir [tk_chooseDirectory -initialdir ~]
+	      raise .initcfg}] \
+	-column 2 -row 2 -sticky e
+    
+    grid [ttk::frame .initcfg.c.buttons -padding "3 3 12 12"] \
+	  -column 0 -row 3 -columnspan 3 -sticky we
+    grid columnconfigure .initcfg.c.buttons 0 -weight 1
+    grid columnconfigure .initcfg.c.buttons 1 -weight 1
+    set res 1
+    grid [button .initcfg.c.buttons.ok \
+          -text "OK" \
+	      -command [subst {
+		  if {\[eval $okcom\] || \[submit_config\]} {
+		      raise .initcfg
+		  } else {
+		      grab release .initcfg
+		      destroy .initcfg
+		  }
+		  } ] ] -column 0 -row 0  -sticky e -padx 10
+    grid [button .initcfg.c.buttons.exit \
+	      -text $exittext \
+	      -command [subst { grab release .initcfg; destroy .initcfg; $exitcom }] ] -column 1 -row 0 -sticky w -padx 20
+    tkwait window .initcfg
+}
+
+# Save program setup to a "pick file"
+proc savepick {} {
+    global input
+    global cfgdir
+    global input
+    global stratname
+    
+    set fd [open $cfgdir/pick "w"]
+    if [info exists input] {
+	puts $fd "\[input\]"
+	puts $fd $input
+	foreach word [.c.input cget -values] {
+	    puts $fd $word
+	}
+    }
+    puts $fd "\[strategy\]"
+    puts $fd [lindex $stratname [.c.strategy current]]
+    puts $fd "\[matches\]"
+    puts $fd [.c.matches curselection]
+    foreach word [.c.matches get 0 end] {
+	puts $fd $word
+    }
+    
+    close $fd
+}
+
+##############################################
+# Additional routines used by loadpick below
+##############################################
+proc load_variable_input {args} {
+    .c.input set [lindex $args 0]
+    .c.input configure -values [lrange $args 1 end]    
+}
+
+proc load_variable_strategy {args} {
+    global strategy
+    
+    set strategy [lindex $args 0]
+}
+
+proc load_variable_matches {args} {
+    set num [lindex $args 0]
+    set values [lrange $args 1 end]
+    if {[llength $values]>0} {
+	.c.matches configure -state normal
+	foreach word $values {
+	    .c.matches insert end $word
+	}
+	.c.matches selection set $num
+	.c.matches yview $num
+    }
+}
+
+proc load_variable {args} {
+    set keyword [lindex $args 0]
+    set value [lindex $args 1]
+    set pn [join [list "load_variable_" $keyword] ""]
+    catch {
+	eval $pn $value
+    }    
+}
+
+# Load program setup from the pick file
+proc loadpick {} {
+    global input
+    global strategy
+    global cfgdir
+    global input
+
+    if {[catch {open $cfgdir/pick r} fd]} {
+	return
+    }
+    for {set res [gets $fd line]} {$res >= 0} {set res [gets $fd line]} {
+	if [regexp "^#.*" $line] {
+	    continue
+	} elseif [regexp "\\\[(.*)\\\]" $line dummy kw] {
+	    if [info exists keyword] {
+		load_variable $keyword $value
+	    }
+	    set keyword $kw
+	    set value {}
+	} else {
+	    lappend value $line
+	}
+    }
+    if [info exists keyword] {
+	load_variable $keyword $value
+    }
+    close $fd
+}
+    
+# Save configuration and exit the program
+proc finish {code} {
+    savepick
+    exit $code
+}
+
+############################################################################
+# Read the configuration or create it, if it does not exist.
+############################################################################
+if [file exists $cfgdir/config] {
+    catch {source $cfgdir/config}
+    loadpick
+} else {
+    gcide_configure {\
+Welcome to GCIDER, a viewer for GNU Collaborative Dictionary of English (GCIDE).
+This seems to be its first start up.  To operate, it needs to know two parameters,
+which this dialog box asks you to provide.  You will need to do this only once,
+GCIDER will save these data and reuse them on its next startup.
+}  "Exit" { exit 1 }
+}
+
+############################################################################
+# DICT protocol routines
+############################################################################
+# If $traceoption is set, print tracing information on stderr.  First argument
+# is the "state word", and will be followed by a colon and a space on output.
+# The rest of arguments are output verbatim.
+proc dict_trace {args} {
+    global traceoption
+    if {$traceoption} {
+	puts -nonewline stderr [lindex $args 0]
+	puts -nonewline stderr ": "
+	eval puts stderr [lrange $args 1 end]
+    }
+}
+
+# Read and return one line of response from the server
+proc dictread {} {
+    global pipe
+    
+    set reply [gets $pipe]
+    dict_trace RECV "$reply"
+    return $reply
+}
+
+# Get the server response and split it into initial 3-digit code and
+# textual string.
+proc getrepl {} {
+    set reply [dictread]
+    if [regexp {([1-5][0-9][0-9])\s+(.*)} $reply dummy code text] {
+	return [list $code $text]
+    } else {
+	return [list 0]
+    }
+}
+
+# Send command to the server.  Arguments are output one by one,
+# with a single space inserted between each pair of them.  The first argument
+# (the command verb) is output verbatim, the rest of them are quoted.
+# Output ends with a CRLF.
+proc dictwrite {args} {
+    global pipe
+
+    dict_trace SEND "$args"
+    puts -nonewline $pipe [lindex $args 0]
+    foreach word [lrange $args 1 end] {
+	set esc [string map {"\"" "\\\""} $word]
+	puts -nonewline $pipe " \"$esc\""
+    }
+    puts -nonewline $pipe "\r\n"
+}
+
+# Read definitions and insert them into the article widget.
+proc readdefns {} {
+    set num 1
+
+    set reply [dictread]
+    while {[regexp {151\s+.*} $reply]} {
+	.c.article insert end "$num. "
+	incr num
+	set reply [dictread]
+	while {$reply != "."} {
+	    .c.article insert end "$reply\n"
+	    set reply [dictread]
+	}
+	.c.article insert end "\n"
+	set reply [dictread]
+    }
+    # FIXME reply code: 250?
+    return 0
+}
+
+# Define $word
+proc defineword {word} {
+    global dbname
+
+    dictwrite "DEFINE" $dbname $word
+    set res [getrepl]
+    set code [lindex $res 0]
+    set text [lindex $res 1]
+    .c.article configure -state normal
+    .c.article delete 1.0 end
+    if {$code == 150} {
+	set values [.c.input cget -values]
+	if {[lsearch -exact $values $word] == -1} {
+	    .c.input configure -values [linsert $values 0 $word]
+	}
+
+	regexp {([1-5][0-9][0-9])\s+(.*)} $text dummy count rest
+	readdefns
+    } elseif {$code == 552} {
+	# FIXME: tags
+	.c.article insert end "No definition for \"$word\""
+    } elseif {$code <= 0} {
+	tk_messageBox -title "GCIDER error" -icon error -type ok \
+	              -message "I/O error communicating with the server"
+    } else {
+	tk_messageBox -title "GCIDER error" -icon error -type ok \
+	              -message "DICT protocol error" \
+	              -detail "$code $res"
+    }
+    .c.article configure -state disabled
+}
+
+# The "Define" button command
+proc define {} {
+    global input
+
+    if {![info exists input] || $input == ""} {
+	return
+    }
+    defineword $input
+}
+
+# Produce a list of matches of $headword using the currently selected
+# strategy and fill the match widget with them.
+proc matchword {headword} {
+    global dbname
+    global strategy
+    global stratname
+    
+    set strat [lindex $stratname [.c.strategy current]]
+    
+    .c.matches configure -state normal
+    .c.matches delete 0 end
+    dictwrite MATCH $dbname $strat $headword
+    set res [getrepl]
+    set code [lindex $res 0]
+    set text [lindex $res 1]
+    set matches {}
+    if {$code == 152} {
+	# Read matches
+	for {set reply [dictread]} {$reply != "."} {set reply [dictread]} {
+	    regexp {\S+\s+(.*)} $reply dummy word
+	    lappend matches [string trim $word "\""]
+	}
+	getrepl
+	lsort -nocase $matches
+	foreach word $matches {
+	    .c.matches insert end $word
+	}
+    } elseif {$code == 552} {
+	# No matches, skip it
+	.c.matches configure -state disabled
+    } else {
+	tk_messageBox -title "GCIDER error" -icon error -type ok \
+	              -message "Unexpected reply from server" \
+	              -detail "$res"
+	.c.matches configure -state disabled
+    }
+}
+
+# The "Match" button handler
+proc match {} {
+    global input
+    
+    if {[info exists input] && $input != ""} {
+	matchword $input
+    }
+}
+
+proc dict_connect {args} {
+    global pipe
+    global dicod_server
+    global cfgdir
+    global stratname
+    global stratdescr
+
+    if {[llength $args]} {
+	set errproc [lindex $args 0]
+    } else {
+	set errproc terror
+    }
+    set cmd [concat "$dicod_server --config " \
+		 [file normalize $cfgdir/dicod.conf] \
+		 " -i --stderr"]
+    if {[catch {open "| $cmd 2>$cfgdir/log" "r+"} pipe]} {
+	$errproc "Cannot connect to server" $::errorInfo
+	return 1
+    }
+    fconfigure $pipe -buffering line 
+
+    # Get initial reply
+    set res [getrepl]
+    set code [lindex $res 0]
+    if {$code <= 0} {
+	$errproc "Cannot connect to dicod server $dicod_server"
+	return 1
+    } elseif {$code != 220} {
+	set text [lindex $res 1]
+	$errproc "Dicod server refuses to talk to me" \
+	         "Its reply: $code $text"
+	return 1
+    }
+
+    # Fill in lists of strategies
+    # Two parallel lists are kept: $stratname contains strategy names, for use
+    # in MATCH command.  $stratdescr keeps the corresponding textual
+    # descriptions for use by humans.
+    dictwrite "SHOW STRAT"
+    set res [getrepl]
+    set code [lindex $res 0]
+    if {$code != 111} {
+	$errproc "Cannot get list of strategies" $res
+	return 0
+    }
+    regexp {([0-9]+)\s.*} [lindex $res 1] dummy count
+    set i 0
+    set stratname [list "."]
+    set stratdescr [list "Default"]
+    for {set reply [dictread]} {$reply != "."} {set reply [dictread]} {
+	incr i
+	regexp {(\S+)\s+(.*)} $reply dummy name descr
+	lappend stratname $name
+	lappend stratdescr [string trim $descr "\""]
+    }
+    getrepl
+
+    # Configure the strategy widget
+    .c.strategy configure -values $stratdescr
+    set ind 0
+    if [info exists strategy] {
+	set ind [lsearch $stratname $strategy]
+	if {$ind < 0} {
+	    set ind 0
+	}
+    }
+    .c.strategy current $ind
+    return 0
+}
+############################################################################
+# Launch the server
+############################################################################
+dict_connect gcider_error_reconf
+
+# Define the last defined word
+define
+
+# And enter the main event loop...
+# Local variables:
+# mode: tcl
+# End:

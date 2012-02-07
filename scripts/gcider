@@ -340,7 +340,7 @@ proc gcide_configure {args} {
     global dicod_server
     global env
 
-    set okcom {}
+    set okcom { set x 0 }
     set exitcom "exit 1"
     set exittext "Exit"
 
@@ -622,7 +622,8 @@ proc readdefns {} {
 # Define $word
 proc defineword {word} {
     global dbname
-
+    global input
+    
     dictwrite "DEFINE" $dbname $word
     set res [getrepl]
     set code [lindex $res 0]
@@ -634,7 +635,10 @@ proc defineword {word} {
 	if {[lsearch -exact $values $word] == -1} {
 	    .c.input configure -values [linsert $values 0 $word]
 	}
-
+	if {$word != $input} {
+	    .c.input set $word
+	}
+	
 	regexp {([1-5][0-9][0-9])\s+(.*)} $text dummy count rest
 	readdefns
     } elseif {$code == 552} {

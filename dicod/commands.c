@@ -25,7 +25,7 @@ dicod_quit(dico_stream_t str, int argc, char **argv)
     got_quit = 1;
     stream_writez(str, "221 bye");
     report_current_timing(str, "dicod");
-    stream_writez(str, "\r\n");
+    stream_writez(str, "\n");
 }
 
 void dicod_show_std_help(dico_stream_t str);
@@ -36,7 +36,7 @@ dicod_help(dico_stream_t str, int argc, char **argv)
     const char *text = help_text;
     dico_stream_t ostr;
 	
-    stream_writez(str, "113 help text follows\r\n");
+    stream_writez(str, "113 help text follows\n");
     ostr = dicod_ostream_create(str, NULL);
     
     if (text) {
@@ -48,12 +48,12 @@ dicod_help(dico_stream_t str, int argc, char **argv)
     } else
 	dicod_show_std_help(ostr);
 
-    stream_writez(ostr, "\r\n");
+    stream_writez(ostr, "\n");
     dico_stream_close(ostr);
     dico_stream_destroy(&ostr);
 
-    stream_writez(str, ".\r\n");
-    stream_writez(str, "250 ok\r\n");    
+    stream_writez(str, ".\n");
+    stream_writez(str, "250 ok\n");    
 }
 
 void
@@ -62,23 +62,23 @@ dicod_show_info(dico_stream_t str, int argc, char **argv)
     char *dbname = argv[2];
     dicod_database_t *dict = find_database(dbname);
     if (!dict) 
-	stream_writez(str, "550 invalid database, use SHOW DB for a list\r\n");
+	stream_writez(str, "550 invalid database, use SHOW DB for a list\n");
     else {
 	dico_stream_t ostr;
 	char *info = dicod_get_database_info(dict);
-	stream_printf(str, "112 information for %s\r\n", dbname);
+	stream_printf(str, "112 information for %s\n", dbname);
 	ostr = dicod_ostream_create(str, NULL);
 	if (info) {
 	    stream_write_multiline(ostr, info);
 	    dicod_free_database_info(dict, info);
 	} else
-	    stream_writez(ostr, "No information available.\r\n");
-	stream_writez(ostr, "\r\n");
+	    stream_writez(ostr, "No information available.\n");
+	stream_writez(ostr, "\n");
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);
 	
-	stream_writez(str, ".\r\n");
-	stream_writez(str, "250 ok\r\n");    
+	stream_writez(str, ".\n");
+	stream_writez(str, "250 ok\n");    
     }
 }
 
@@ -92,7 +92,7 @@ _show_database(void *item, void *data)
 
     if (utf8_quote(descr ? descr : "", &pdescr))
 	xalloc_die();
-    stream_printf(str, "%s \"%s\"\r\n", dict->name, pdescr);
+    stream_printf(str, "%s \"%s\"\n", dict->name, pdescr);
     dicod_free_database_descr(dict, descr);
     free(pdescr);
     return 0;
@@ -103,18 +103,18 @@ dicod_show_databases(dico_stream_t str, int argc, char **argv)
 {
     size_t count = database_count();
     if (count == 0) 
-	stream_printf(str, "554 No databases present\r\n");
+	stream_printf(str, "554 No databases present\n");
     else {
 	dico_stream_t ostr;
 	
-	stream_printf(str, "110 %lu databases present\r\n",
+	stream_printf(str, "110 %lu databases present\n",
 		      (unsigned long) count);
 	ostr = dicod_ostream_create(str, NULL);
 	database_iterate(_show_database, ostr);
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);
-	stream_writez(str, ".\r\n");
-	stream_writez(str, "250 ok\r\n");
+	stream_writez(str, ".\n");
+	stream_writez(str, "250 ok\n");
     }
 }
 
@@ -124,7 +124,7 @@ _show_strategy(void *item, void *data)
     dico_strategy_t sp = item;
     dico_stream_t str = data;
 
-    stream_printf(str, "%s \"%s\"\r\n",
+    stream_printf(str, "%s \"%s\"\n",
 		  sp->name, quotearg(sp->descr));
     return 0;
 }
@@ -134,18 +134,18 @@ dicod_show_strategies(dico_stream_t str, int argc, char **argv)
 {
     size_t count = dico_strategy_count();
     if (count == 0)
-	stream_printf(str, "555 No strategies available\r\n");
+	stream_printf(str, "555 No strategies available\n");
     else {
 	dico_stream_t ostr;
 	
-	stream_printf(str, "111 %lu strategies present: list follows\r\n",
+	stream_printf(str, "111 %lu strategies present: list follows\n",
 		      (unsigned long) count);
 	ostr = dicod_ostream_create(str, NULL);
 	dico_strategy_iterate(_show_strategy, ostr);
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);
-	stream_writez(str, ".\r\n");
-	stream_writez(str, "250 ok\r\n");
+	stream_writez(str, ".\n");
+	stream_writez(str, "250 ok\n");
     }
 }
 	
@@ -154,7 +154,7 @@ dicod_show_server(dico_stream_t str, int argc, char **argv)
 {
     dico_stream_t ostr;
     
-    stream_writez(str, "114 server information\r\n");
+    stream_writez(str, "114 server information\n");
     ostr = dicod_ostream_create(str, NULL);
     stream_writez(str, "dicod ");
     if (show_sys_info_p()) {
@@ -182,15 +182,15 @@ dicod_show_server(dico_stream_t str, int argc, char **argv)
 	    stream_printf(str, ", %lu forks (%.1f/hour)", total_forks, fph);
 	}
     }
-    stream_writez(str, "\r\n");
+    stream_writez(str, "\n");
     if (server_info) {
 	stream_write_multiline(ostr, server_info);
-	stream_writez(ostr, "\r\n");
+	stream_writez(ostr, "\n");
     }
     dico_stream_close(ostr);
     dico_stream_destroy(&ostr);
-    stream_writez(str, ".\r\n");
-    stream_writez(str, "250 ok\r\n");    
+    stream_writez(str, ".\n");
+    stream_writez(str, "250 ok\n");    
 }
 
 void
@@ -201,7 +201,7 @@ dicod_status(dico_stream_t str, int argc, char **argv)
 	report_timing(str, timer_stop("dicod"), &total_stat);
     else
 	stream_writez(str, " No timing data available");
-    stream_writez(str, "\r\n");
+    stream_writez(str, "\n");
 }
 
 void
@@ -216,7 +216,7 @@ dicod_client(dico_stream_t str, int argc, char **argv)
 	else
 	    dico_log(L_INFO, 0, "Client info: %s", client_id);
     }
-    stream_writez(str, "250 ok\r\n");
+    stream_writez(str, "250 ok\n");
 }
 
 void
@@ -229,7 +229,7 @@ dicod_match(dico_stream_t str, int argc, char **argv)
     total_bytes_out = 0;
     if (!strat) 
 	stream_writez(str,
-		      "551 Invalid strategy, use SHOW STRAT for a list\r\n");
+		      "551 Invalid strategy, use SHOW STRAT for a list\n");
     else if (strcmp(dbname, "!") == 0) 
 	dicod_match_word_first(str, strat, word);
     else if (strcmp(dbname, "*") == 0) 
@@ -239,7 +239,7 @@ dicod_match(dico_stream_t str, int argc, char **argv)
     
 	if (!db) 
 	    stream_writez(str,
-			  "550 invalid database, use SHOW DB for a list\r\n");
+			  "550 invalid database, use SHOW DB for a list\n");
 	else
 	    dicod_match_word_db(db, str, strat, word);
     }
@@ -262,7 +262,7 @@ dicod_define(dico_stream_t str, int argc, char **argv)
     
 	if (!db) 
 	    stream_writez(str,
-			  "550 invalid database, use SHOW DB for a list\r\n");
+			  "550 invalid database, use SHOW DB for a list\n");
 	else
 	    dicod_define_word_db(db, str, word);
     }
@@ -380,7 +380,7 @@ _print_help(void *item, void *data)
 	len = 31 - len;
     else
 	len = 0;
-    stream_printf(str, "%*.*s -- %s\r\n", len, len, "", p->help);
+    stream_printf(str, "%*.*s -- %s\n", len, len, "", p->help);
     return 0;
 }
 
@@ -413,12 +413,12 @@ dicod_handle_command(dico_stream_t str, int argc, char **argv)
 
     cmd = locate_command(argc, argv);
     if (!cmd) 
-	stream_writez(str, "500 unknown command\r\n");
+	stream_writez(str, "500 unknown command\n");
     else if (argc < cmd->minparam
 	     || (cmd->maxparam != DICOD_MAXPARAM_INF && argc > cmd->maxparam))
-	stream_writez(str, "501 wrong number of arguments\r\n");
+	stream_writez(str, "501 wrong number of arguments\n");
     else if (!cmd->handler)
-	stream_writez(str, "502 command is not yet implemented, sorry\r\n");
+	stream_writez(str, "502 command is not yet implemented, sorry\n");
     else
 	cmd->handler(str, argc, argv);
 

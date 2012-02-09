@@ -21,7 +21,7 @@ dicod_xversion(dico_stream_t str, int argc, char **argv)
 {
     stream_writez(str, "110 ");
     stream_writez(str, (char*)program_version);
-    dico_stream_write(str, "\r\n", 2);
+    dico_stream_write(str, "\n", 1);
 }
     
 void

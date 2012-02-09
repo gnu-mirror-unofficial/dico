@@ -73,7 +73,7 @@ initial_banner(dico_stream_t str)
 	     (unsigned long) time(NULL),
 	     hostname);
     stream_writez(str, msg_id);
-    dico_stream_write(str, "\r\n", 2);
+    dico_stream_write(str, "\n", 1);
 }
 
 int
@@ -365,11 +365,9 @@ dicod_loop(dico_stream_t str)
 int
 dicod_inetd()
 {
-    dico_stream_t str = dico_fd_io_stream_create(0, 1);
-
+    dico_stream_t str = dicod_iostream(0, 1);
     if (!str)
-        return 1;
-    dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
+	return 1;
 
     client_addrlen = sizeof(client_addr);
     if (getsockname (0, &client_addr, &client_addrlen) == -1)
@@ -381,3 +379,26 @@ dicod_inetd()
     
     return dicod_loop(str);
 }
+
+dico_stream_t
+dicod_iostream(int ifd, int ofd)
+{
+    dico_stream_t str = dico_fd_io_stream_create(ifd, ofd);
+	
+    if (!str)
+        return NULL;
+    dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
+    if (!isatty(ifd)) {
+	dico_stream_t s = dico_crlf_stream(str,
+					   DICO_STREAM_READ|DICO_STREAM_WRITE,
+					   0);
+	if (!s) {
+	    dico_stream_destroy(&str);
+	    return NULL;
+	}
+	str = s;
+	dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
+    }
+    return str;
+}
+

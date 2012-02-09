@@ -47,12 +47,12 @@ static void
 send_challenge(dico_stream_t str, char *data)
 {
     if (data[0]) { 
-	 stream_printf(str, "130 challenge follows\r\n");
+	 stream_printf(str, "130 challenge follows\n");
 	 /* FIXME: use dicod_ostream_create */
 	 stream_writez(str, data);
-	 stream_writez(str, "\r\n.\r\n");
+	 stream_writez(str, "\n.\n");
     }
-    stream_printf(str, "330 send response\r\n");
+    stream_printf(str, "330 send response\n");
 }    
 
 #define SASLRESP "SASLRESP"
@@ -190,7 +190,7 @@ dicod_saslauth(dico_stream_t str, int argc, char **argv)
 	dico_log(L_ERR, 0, _("failed to open user database"));
 	stream_writez(str,
 		      "531 Access denied, "
-		      "use \"SHOW INFO\" for server information\r\n");
+		      "use \"SHOW INFO\" for server information\n");
 	return;
     }
     rc = sasl_auth(str, argv[1], argv[2], &sess);
@@ -198,7 +198,7 @@ dicod_saslauth(dico_stream_t str, int argc, char **argv)
     switch (rc) {
     case RC_SUCCESS:
 	resp = "230 Authentication successful";
-	stream_printf(str, "%s\r\n", resp);
+	stream_printf(str, "%s\n", resp);
 	/* FIXME: If insert_gsasl_stream fails, client gets wrong response */
 	if (insert_gsasl_stream(sess, &str) == 0) {
 	    replace_io_stream(str);
@@ -215,7 +215,7 @@ dicod_saslauth(dico_stream_t str, int argc, char **argv)
 	resp = "532 Access denied, unknown mechanism";
 	break;
     }
-    stream_printf(str, "%s\r\n", resp);
+    stream_printf(str, "%s\n", resp);
 }
 
 

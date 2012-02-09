@@ -441,6 +441,7 @@ _stream_flush_buffer(dico_stream_t stream, int all)
 	    if (dico_stream_write_unbuffered(stream, stream->cur,
 					     stream->level, NULL))
 		return 1;
+	    _stream_advance_buffer(stream, stream->level);
 	    break;
 	    
 	case dico_buffer_line:
@@ -491,10 +492,14 @@ dico_stream_read(dico_stream_t stream, void *buf, size_t size, size_t *pread)
 	while (size) {
 	    size_t n;
 	    
-	    if (stream->level == 0 && _stream_fill_buffer(stream)) {
-		if (nbytes)
+	    if (stream->level == 0) {
+		if (_stream_fill_buffer(stream)) {
+		    if (nbytes)
+			break;
+		    return 1;
+		}
+		if (stream->level == 0)
 		    break;
-		return 1;
 	    }
 
 	    n = size;
@@ -653,7 +658,7 @@ dico_stream_writeln(dico_stream_t stream, const char *buf, size_t size)
 {
     int rc;
     if ((rc = dico_stream_write(stream, buf, size)) == 0)
-	rc = dico_stream_write(stream, "\r\n", 2);
+	rc = dico_stream_write(stream, "\n", 1);
     return rc;
 }
 

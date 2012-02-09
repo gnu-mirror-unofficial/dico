@@ -80,7 +80,7 @@ dicod_auth(dico_stream_t str, int argc, char **argv)
 	stream_writez(str,
 		      "531 Access denied, "
 		      "use \"SHOW INFO\" for server information");
-    dico_stream_write(str, "\r\n", 2);
+    dico_stream_write(str, "\n", 1);
 }
 
 static int

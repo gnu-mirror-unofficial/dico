@@ -116,5 +116,6 @@ dico_stream_t dico_mapfile_stream_create(const char *filename, int flags);
 
 dico_stream_t dico_linetrim_stream(dico_stream_t transport, size_t maxlen,
 				   int noclose);
+dico_stream_t dico_crlf_stream(dico_stream_t transport, int flags, int noclose);
 
 #endif

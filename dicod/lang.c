@@ -78,7 +78,7 @@ dicod_lang(dico_stream_t str, int argc, char **argv)
 	}
     }
     check_db_visibility();
-    stream_writez(str, "250 ok - set language preferences\r\n");
+    stream_writez(str, "250 ok - set language preferences\n");
 }
 
 static int
@@ -96,7 +96,7 @@ show_lang_lists(dico_stream_t str, dico_list_t list[2])
     dico_list_iterate(list[0], _display_pref, str);
     dico_stream_write(str, " :", 2);
     dico_list_iterate(list[1], _display_pref, str);
-    dico_stream_write(str, "\r\n", 2);
+    dico_stream_write(str, "\n", 1);
 }    
 
 void
@@ -105,7 +105,7 @@ dicod_show_lang_pref(dico_stream_t str, int argc, char **argv)
     stream_writez(str, "280");
     if (dicod_lang_lazy_prefs) {
 	dico_list_iterate(dicod_lang_lazy_prefs, _display_pref, str);
-	dico_stream_write(str, "\r\n", 2);
+	dico_stream_write(str, "\n", 1);
     } else 
 	show_lang_lists(str, dicod_lang_prefs);
 }
@@ -116,7 +116,7 @@ dicod_show_lang_info(dico_stream_t str, int argc, char **argv)
     dicod_database_t *db = find_database(argv[3]);
     if (!db) {
 	stream_writez(str,
-		      "550 invalid database, use SHOW DB for a list\r\n");
+		      "550 invalid database, use SHOW DB for a list\n");
     } else {
 	dico_list_t langlist[2];
 
@@ -143,18 +143,18 @@ dicod_show_lang_db(dico_stream_t str, int argc, char **argv)
 {
     size_t count = database_count();
     if (count == 0) 
-	stream_printf(str, "554 No databases present\r\n");
+	stream_printf(str, "554 No databases present\n");
     else {
 	dico_stream_t ostr;
 	
-	stream_printf(str, "110 %lu databases present\r\n",
+	stream_printf(str, "110 %lu databases present\n",
 		      (unsigned long) count);
 	ostr = dicod_ostream_create(str, NULL);
 	database_iterate(_show_database_lang, ostr);
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);
-	stream_writez(str, ".\r\n");
-	stream_writez(str, "250 ok\r\n");
+	stream_writez(str, ".\n");
+	stream_writez(str, "250 ok\n");
     }
 }
 

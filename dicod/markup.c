@@ -22,13 +22,13 @@ dicod_markup(dico_stream_t str, int argc, char **argv)
     const char *p;
     if (argc == 2) {
 	/* Report current markup type */
-	stream_printf(str, "280 %s is current markup type\r\n",
+	stream_printf(str, "280 %s is current markup type\n",
 		      dico_markup_type);
     } else if ((p = dico_markup_lookup(argv[2]))) {
 	dico_markup_type = p;
-	stream_printf(str, "250 markup type set to %s\r\n", dico_markup_type);
+	stream_printf(str, "250 markup type set to %s\n", dico_markup_type);
     } else
-	stream_writez(str, "500 invalid argument\r\n");
+	stream_writez(str, "500 invalid argument\n");
 }
 
 void

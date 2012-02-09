@@ -100,7 +100,8 @@ static int
 _linetrimstr_destroy(void *data)
 { 
     struct _linetrimstr *s = data;
-    dico_stream_destroy(&s->transport);
+    if (!s->noclose)
+	dico_stream_destroy(&s->transport);
     return 0;
 }
 

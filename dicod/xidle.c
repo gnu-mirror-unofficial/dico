@@ -19,7 +19,7 @@
 static void
 dicod_xidle(dico_stream_t str, int argc, char **argv)
 {
-    stream_printf(str, "110 %lu second(s)\r\n", inactivity_timeout);
+    stream_printf(str, "110 %lu second(s)\n", inactivity_timeout);
 }
     
 void

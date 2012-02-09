@@ -103,7 +103,7 @@ filter_flush(struct filter_stream *fs)
 	    fs->line_length += len;
 	    if (fs->line_length == fs->max_line_length) {
 		fs->line_length = 0;
-		rc = dico_stream_write(fs->transport, "\r\n", 2);
+		rc = dico_stream_write(fs->transport, "\n", 1);
 		if (rc)
 		    return 1;
 	    }
@@ -212,7 +212,7 @@ filter_wr_flush(void *data)
 		rc = filter_flush(fs);
 	    }
 	    if (!nl)
-		rc = dico_stream_write(fs->transport, "\r\n", 2);
+		rc = dico_stream_write(fs->transport, "\n", 1);
 	}
     }
     return rc;

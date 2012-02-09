@@ -186,6 +186,7 @@ typedef struct dicod_database {
 /* dicod.c */
 void dicod_server(int argc, char **argv);
 void replace_io_stream(dico_stream_t str);
+dico_stream_t dicod_iostream(int ifd, int ofd);
 int dicod_loop(dico_stream_t stream);
 int dicod_inetd(void);
 void dicod_init_strategies(void);

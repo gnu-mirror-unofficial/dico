@@ -22,7 +22,7 @@ void
 dicod_mime(dico_stream_t str, int argc, char **argv)
 {
     option_mime = 1;
-    stream_writez(str, "250 ok - using MIME headers\r\n");
+    stream_writez(str, "250 ok - using MIME headers\n");
 }
 
 void

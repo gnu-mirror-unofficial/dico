@@ -22,23 +22,39 @@
 #include <errno.h>
 #include <dico.h>
 
+#define CRLF_IN  1
+#define CRLF_OUT 2
+
 int
 main(int argc, char **argv)
 {
     int rc;
-    size_t maxlen = 76, sz;
     char *filename = NULL;
+    size_t sz;
     dico_stream_t in, out, s;
     char buf[512];
+    int flags = 0;
+    size_t in_bufsize = 1024, out_bufsize = 1024;
+    int buffered;
     
     dico_set_program_name(argv[0]);
 
     while (--argc) {
 	char *arg = *++argv;
-	if (strncmp(arg, "-length=", 8) == 0)
-	    maxlen = atoi(arg + 8);
-	else if (strncmp(arg, "-file=", 6) == 0)
+	if (strncmp(arg, "-file=", 6) == 0)
 	    filename = arg + 6;
+	else if (strcmp(arg, "-in") == 0)
+	    flags |= CRLF_IN;
+	else if (strcmp(arg, "-out") == 0)
+	    flags |= CRLF_OUT;
+	else if (strncmp(arg, "-bufsize=", 9) == 0) {
+	    in_bufsize = out_bufsize = atoi(arg + 9);
+	    buffered = CRLF_IN | CRLF_OUT;
+	} else if (strncmp(arg, "-outbufsize=", 12) == 0) {
+	    out_bufsize = atoi(arg + 12);
+	    buffered |= CRLF_OUT;
+	} else if (strncmp(arg, "-inbufsize=", 11) == 0)
+	    in_bufsize |= atoi(arg + 11);
 	else if (strcmp(arg, "--") == 0) {
 	    --argc;
 	    ++argv;
@@ -49,7 +65,7 @@ main(int argc, char **argv)
 	    break;
     }
     if (argc) {
-	fprintf(stderr, "Usage: %s [-length=N] [-file=S]\n", dico_program_name);
+	fprintf(stderr, "Usage: %s [-file=S]\n", dico_program_name);
 	return 1;
     }
 
@@ -76,6 +92,18 @@ main(int argc, char **argv)
 	return 2;
     }
 
+    if (flags & CRLF_IN) {
+	s = dico_crlf_stream(in, DICO_STREAM_READ, 0);
+	if (!s) {
+	    dico_log(L_ERR, errno, "cannot create filter stream");
+	    return 2;
+	}
+	if (filename || (buffered & CRLF_IN))
+	    dico_stream_set_buffer(s, dico_buffer_full, in_bufsize);
+
+	in = s;
+    }
+    
     out = dico_fd_stream_create(1, DICO_STREAM_WRITE, 1);
     if (!out) {
 	dico_log(L_ERR, errno, "cannot create stdout stream");
@@ -91,13 +119,17 @@ main(int argc, char **argv)
 	return 2;
     }
 
-    s = dico_linetrim_stream(out, maxlen, 0);
-    if (!s) {
-	dico_log(L_ERR, errno, "cannot create filter stream");
-	return 2;
+    if (flags & CRLF_OUT) {
+	s = dico_crlf_stream(out, DICO_STREAM_WRITE, 0);
+	if (!s) {
+	    dico_log(L_ERR, errno, "cannot create filter stream");
+	    return 2;
+	}
+	if (filename || (buffered & CRLF_OUT))
+	    dico_stream_set_buffer(s, dico_buffer_full, out_bufsize);
+	
+	out = s;
     }
-
-    out = s;
 
     while ((rc = dico_stream_read(in, buf, sizeof(buf), &sz)) == 0 && sz) {
 	rc = dico_stream_write(out, buf, sz);

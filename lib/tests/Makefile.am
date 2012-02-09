@@ -43,6 +43,7 @@ noinst_PROGRAMS = \
  levtest\
  linetrim\
  listop\
+ crlftool\
  utf8
 
 listop_SOURCES=listop.c itrsh.c itrsh.h
@@ -54,6 +55,12 @@ LDADD = ../libdico.la
 ## ------------ ##
 
 TESTSUITE_AT = \
+ crlf00.at\
+ crlf01.at\
+ crlf02.at\
+ crlf03.at\
+ crlf04.at\
+ crlf05.at\
  dlev00.at\
  dlev01.at\
  lev00.at\

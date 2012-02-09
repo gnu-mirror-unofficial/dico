@@ -41,4 +41,12 @@ m4_include([lntrim01.at])
 m4_include([lntrim02.at])
 m4_include([lntrim03.at])
 
+AT_BANNER([CR LF translation])
+m4_include([crlf00.at])
+m4_include([crlf01.at])
+m4_include([crlf02.at])
+m4_include([crlf03.at])
+m4_include([crlf04.at])
+m4_include([crlf05.at])
+
 m4_include([list.at])

@@ -54,13 +54,13 @@ static void
 dicod_xlevdist(dico_stream_t str, int argc, char **argv)
 {
     if (c_strcasecmp(argv[1], "tell") == 0) 
-	stream_printf(str, "280 %d\r\n", levenshtein_distance);
+	stream_printf(str, "280 %d\n", levenshtein_distance);
     else if (isdigit(argv[1][0]) && argv[1][0] != '0' && argv[1][1] == 0) {
 	levenshtein_distance = atoi(argv[1]);
-	stream_printf(str, "250 ok - Levenshtein threshold set to %d\r\n",
+	stream_printf(str, "250 ok - Levenshtein threshold set to %d\n",
 		      levenshtein_distance);
     } else
-	stream_writez(str, "500 invalid argument\r\n");
+	stream_writez(str, "500 invalid argument\n");
 }
 	
 void

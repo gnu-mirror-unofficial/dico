@@ -363,8 +363,8 @@ sig_child(int sig)
 struct sockaddr client_addr;
 socklen_t client_addrlen;
 
-#define ACCESS_DENIED_MSG "530 Access denied\r\n"
-#define TEMP_FAIL_MSG "420 Server temporarily unavailable\r\n"
+#define ACCESS_DENIED_MSG "530 Access denied\n"
+#define TEMP_FAIL_MSG "420 Server temporarily unavailable\n"
 #define SWRITE(fd, s) write(fd, s, sizeof(s)-1)
 
 int
@@ -401,13 +401,12 @@ handle_connection(int n)
 
     if (single_process) {
 	int status;
-	dico_stream_t str;
-
-	str = dico_fd_io_stream_create(connfd, connfd);
-	dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
-	status = dicod_loop(str);
-	dico_stream_close(str);
-	dico_stream_destroy(&str);
+	dico_stream_t str = dicod_iostream(connfd, connfd);
+	if (str) {
+	    status = dicod_loop(str);
+	    dico_stream_close(str);
+	    dico_stream_destroy(&str);
+	}
     } else {
 	pid_t pid = fork();
 	if (pid == -1) {
@@ -425,8 +424,9 @@ handle_connection(int n)
 	    signal(SIGCHLD, SIG_DFL);
 	    signal(SIGHUP, SIG_DFL);
         
-	    str = dico_fd_io_stream_create(connfd, connfd);
-	    dico_stream_set_buffer(str, dico_buffer_line, DICO_MAX_BUFFER);
+	    str = dicod_iostream(connfd, connfd);
+	    if (!str)
+		exit(EX_UNAVAILABLE);
 	    status = dicod_loop(str);
 	    dico_stream_close(str);
 	    dico_stream_destroy(&str);

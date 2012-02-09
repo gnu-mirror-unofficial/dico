@@ -627,16 +627,23 @@ proc readdefns {} {
 	incr num
 	set reply [dictread]
 	while {$reply != "."} {
-	    set endpos [.c.article count -chars 1.0 end]
-	    .c.article insert end "$reply\n"
-	    
-	    foreach xref [regexp -indices -all -inline {\{[^\}]+\}} $reply] {
-		set start [expr $endpos + [lindex $xref 0]]
-		set end [expr $endpos + [lindex $xref 1] - 1]
-		.c.article tag add seealso "1.0 + $start chars" "1.0 + $end chars"
+	    set beg 0
+	    foreach x [regexp -indices -all -inline {\{[^\{\}]+\}} $reply] {
+		set start [lindex $x 0]
+		set end [expr [lindex $x 1]]
+		if {$beg < $start} {
+		    .c.article insert end [string range $reply \
+					          $beg [expr $start - 1]]
+		}
+		.c.article insert end [string range $reply \
+					   [expr $start + 1] [expr $end - 1]]
+		set len [expr $end - $start ]
+		.c.article tag add seealso "end - $len chars" "end - 1 chars"
+		set beg [expr $end + 1]
+
 	    }
-	    
-	    
+	    .c.article insert end [string range $reply $beg end]
+	    .c.article insert end "\n"
 	    set reply [dictread]
 	}
 	.c.article insert end "\n"

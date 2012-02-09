@@ -41,6 +41,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 INCLUDES = -I${top_srcdir}/include @GRECS_INCLUDES@
 noinst_PROGRAMS = \
  levtest\
+ linetrim\
  listop\
  utf8
 
@@ -58,6 +59,10 @@ TESTSUITE_AT = \
  lev00.at\
  lev01.at\
  list.at\
+ lntrim00.at\
+ lntrim01.at\
+ lntrim02.at\
+ lntrim03.at\
  strcasecmp.at\
  strlen.at\
  strncasecmp.at\

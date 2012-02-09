@@ -38,6 +38,7 @@ libdico_la_SOURCES=\
  levenshtein.c\
  libi18n.c\
  list.c\
+ linetrimstr.c\
  logstream.c\
  mapstream.c\
  markup.c\

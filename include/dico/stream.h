@@ -103,6 +103,8 @@ int dico_stream_ioctl(dico_stream_t stream, int code, void *ptr);
 #define DICO_DBG_CTL_SET_TS      4
 #define DICO_IOCTL_BYTES_IN      5
 #define DICO_IOCTL_BYTES_OUT     6
+#define DICO_IOCTL_SET_LINELEN   7
+#define DICO_IOCTL_GET_LINELEN   8
 
 
 /* FD streams */
@@ -111,5 +113,8 @@ dico_stream_t dico_fd_io_stream_create(int ifd, int ofd);
 
 dico_stream_t dico_io_stream(dico_stream_t in, dico_stream_t out);
 dico_stream_t dico_mapfile_stream_create(const char *filename, int flags);
+
+dico_stream_t dico_linetrim_stream(dico_stream_t transport, size_t maxlen,
+				   int noclose);
 
 #endif

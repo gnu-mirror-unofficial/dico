@@ -136,7 +136,10 @@ dicod_ostream_create(dico_stream_t str, dico_assoc_list_t headers)
     int rc = dico_stream_create(&stream, DICO_STREAM_WRITE, ostr);
     if (rc)
 	xalloc_die();
-    ostr->transport = str;
+    
+    ostr->transport = dico_linetrim_stream(str, 1024, 1);
+    if (!ostr->transport)
+	xalloc_die();
     ostr->nout = dico_stream_bytes_out(str);
     ostr->flags = 0;
     ostr->headers = headers;

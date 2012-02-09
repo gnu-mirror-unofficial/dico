@@ -6,4 +6,5 @@ testsuite.dir
 testsuite.log
 levtest
 listop
+linetrim
 utf8

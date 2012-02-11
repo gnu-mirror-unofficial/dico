@@ -136,6 +136,49 @@ grid [ttk::scrollbar .c.matchscroll -command ".c.matches yview" \
       -orient vertical] -column 5 -row 1 -sticky nse
 
 ############################################################################
+# Create input widget popup
+############################################################################
+set m [menu .c.input.popupMenu]
+$m add command -label "Copy" -command {
+    ttk::entry::Copy .c.input
+}
+$m add command -label "Cut" -command {
+    ttk::entry::Cut .c.input
+}
+$m add command -label "Clear" -command {
+    ttk::entry::Clear .c.input
+}
+$m add command -label "Paste" -command {
+    if {![info exists tk::Priv(mouseMoved)] || !$tk::Priv(mouseMoved)} {
+	ttk::entry::Paste .c.input
+#        tk::TextPasteSelection %W %x %y
+    }
+}
+
+# Arrange for it to pop up when the right button is clicked
+bind .c.input <Button-3> {
+    if {[catch {string range [%W get] [%W index sel.first] \
+		    [expr {[%W index sel.last] - 1}]} word] == 0 &&\
+	    $word != ""} {
+	set state normal
+    } else {
+	set state disabled
+    }
+    %W.popupMenu entryconfigure Copy -state $state 
+    %W.popupMenu entryconfigure Cut -state $state
+    %W.popupMenu entryconfigure Clear -state $state 
+    if {[catch {::tk::GetSelection %W CLIPBOARD} sel] == 0 && $sel != ""} {
+	%W.popupMenu entryconfigure Paste -state normal
+    } elseif { $state == normal } {
+	%W.popupMenu entryconfigure Paste -state disabled
+    } else {
+	return
+    }
+
+    tk_popup %W.popupMenu %X %Y
+}
+
+############################################################################
 # Create article popup menu
 ############################################################################
 set m [menu .c.article.popupMenu]

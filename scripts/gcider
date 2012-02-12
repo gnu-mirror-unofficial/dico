@@ -138,159 +138,162 @@ proc seterrheader {args} {
 # Setup main window structure
 ############################################################################
 
-wm title . "GCIDER"
-wm protocol . WM_DELETE_WINDOW {savepick; destroy .}
+proc setupvisual {} {
+    wm title . "GCIDER"
+    wm protocol . WM_DELETE_WINDOW { finish 0 }
 
-menu .menubar
-. configure -menu .menubar
-set m .menubar
-menu $m.file
-$m add cascade -menu $m.file -label File
-$m.file add command -label "Save article" -command save_article -underline 0
-$m.file add separator
-$m.file add command -label "Exit" -command { finish 0 } -underline 1	
+    menu .menubar
+    . configure -menu .menubar
+    set m .menubar
+    menu $m.file
+    $m add cascade -menu $m.file -label File
+    $m.file add command -label "Save article" -command save_article -underline 0
+    $m.file add separator
+    $m.file add command -label "Exit" -command { finish 0 } -underline 1	
+    
+    $m add cascade -label "Edit" -menu [menu $m.edit] -underline 0
+    $m.edit add command -label "Appearance" -underline 0 -command appearance_box
+    $m.edit add command -label "Configure" -command gcider_reconf -underline 0
 
-$m add cascade -label "Edit" -menu [menu $m.edit] -underline 0
-$m.edit add command -label "Appearance" -underline 0 -command appearance_box
-$m.edit add command -label "Configure" -command gcider_reconf -underline 0
+    $m add cascade -label Help -menu [menu $m.help]
+    $m.help add command -label "About" -command about -underline 1
 
-$m add cascade -label Help -menu [menu $m.help]
-$m.help add command -label "About" -command about -underline 1
+    grid [ttk::frame .c -padding "3 3 12 12"] -column 0 -row 0 -sticky nwes
+    grid columnconfigure . 0 -weight 1
+    grid rowconfigure . 0 -weight 1
+    grid columnconfigure .c 0 -weight 3
+    grid columnconfigure .c 1 -weight 3
 
-grid [ttk::frame .c -padding "3 3 12 12"] -column 0 -row 0 -sticky nwes
-grid columnconfigure . 0 -weight 1
-grid rowconfigure . 0 -weight 1
-grid columnconfigure .c 0 -weight 3
-grid columnconfigure .c 1 -weight 3
+    grid columnconfigure .c 3 -weight 3
+    grid columnconfigure .c 4 -weight 3
 
-grid columnconfigure .c 3 -weight 3
-grid columnconfigure .c 4 -weight 3
+    grid [ttk::combobox .c.input -textvariable input -width 40 \
+	      -exportselection true -font uifont] \
+	-column 0 -row 0 -sticky ew
 
-grid [ttk::combobox .c.input -textvariable input -width 40 \
-	  -exportselection true -font uifont] \
-     -column 0 -row 0 -sticky ew
+    grid [button .c.define -text "Define" -command define] \
+	-column 1 -row 0 -columnspan 2 -sticky e
+    grid [button .c.match -text "Match" -command match] \
+	-column 3 -row 0 -sticky e
 
-grid [button .c.define -text "Define" -command define] \
-     -column 1 -row 0 -columnspan 2 -sticky e
-grid [button .c.match -text "Match" -command match] \
-     -column 3 -row 0 -sticky e
-
-grid [ttk::combobox .c.strategy -textvariable strategy -state readonly \
-	 -font uifont] \
+    grid [ttk::combobox .c.strategy -textvariable strategy -state readonly \
+	      -font uifont] \
      -column 4 -row 0 -columnspan 2 -sticky ew
-
-grid [text .c.article -state disabled -wrap word \
-	   -yscrollcommand ".c.artscroll set"] \
-     -column 0 -row 1 -columnspan 2 -sticky nwes
-
-.c.article tag configure seealso -underline 1
-.c.article tag bind seealso <Button-1> {
-    set res [%W tag prevrange seealso @%x,%y]
-    if {[llength $res] != 0} {
-	defineword [%W get [lindex $res 0] [lindex $res 1]]
+    
+    grid [text .c.article -state disabled -wrap word \
+	      -yscrollcommand ".c.artscroll set"] \
+	-column 0 -row 1 -columnspan 2 -sticky nwes
+    
+    .c.article tag configure seealso -underline 1
+    .c.article tag bind seealso <Button-1> {
+	set res [%W tag prevrange seealso @%x,%y]
+	if {[llength $res] != 0} {
+	    defineword [%W get [lindex $res 0] [lindex $res 1]]
+	}
     }
-}
-.c.article tag bind seealso <Button-3> {
-    set res [%W tag prevrange seealso @%x,%y]
-    if {[llength $res] != 0} {
-	catch {%W tag remove sel sel.first sel.last}
-	%W tag add sel [lindex $res 0] [lindex $res 1]
-	tk_popup .c.article.popupMenu %X %Y
+    .c.article tag bind seealso <Button-3> {
+	set res [%W tag prevrange seealso @%x,%y]
+	if {[llength $res] != 0} {
+	    catch {%W tag remove sel sel.first sel.last}
+	    %W tag add sel [lindex $res 0] [lindex $res 1]
+	    tk_popup .c.article.popupMenu %X %Y
+	}
     }
-}
-.c.article tag bind seealso <Enter> [list %W config -cursor hand2]
-.c.article tag bind seealso <Leave> [list %W config -cursor xterm]
-
-grid [scrollbar .c.artscroll -command ".c.article yview" \
-      -orient vertical] -column 2 -row 1 -sticky ns
-
-grid [listbox .c.matches -state disable -yscrollcommand ".c.matchscroll set"] \
-      -column 3 -columnspan 2 -row 1 -sticky nwes
-grid [scrollbar .c.matchscroll -command ".c.matches yview" \
-      -orient vertical] -column 5 -row 1 -sticky nse
-
-############################################################################
-# Create input widget popup
-############################################################################
-set m [menu .c.input.popupMenu]
-$m add command -label "Copy" -command {
-    entry::Copy .c.input
-}
-$m add command -label "Cut" -command {
-    entry::Cut .c.input
-}
-$m add command -label "Clear" -command {
-    entry::Clear .c.input
-}
-$m add command -label "Paste" -command {
-    if {![info exists tk::Priv(mouseMoved)] || !$tk::Priv(mouseMoved)} {
-	entry::Paste .c.input
-#        tk::TextPasteSelection %W %x %y
+    .c.article tag bind seealso <Enter> [list %W config -cursor hand2]
+    .c.article tag bind seealso <Leave> [list %W config -cursor xterm]
+    
+    grid [scrollbar .c.artscroll -command ".c.article yview" \
+	      -orient vertical] -column 2 -row 1 -sticky ns
+    
+    grid [listbox .c.matches -state disable \
+	      -yscrollcommand ".c.matchscroll set"] \
+	-column 3 -columnspan 2 -row 1 -sticky nwes
+    grid [scrollbar .c.matchscroll -command ".c.matches yview" \
+	      -orient vertical] -column 5 -row 1 -sticky nse
+    
+    ############################################################################
+    # Create input widget popup
+    ############################################################################
+    set m [menu .c.input.popupMenu]
+    $m add command -label "Copy" -command {
+	entry::Copy .c.input
     }
-}
-
-# Arrange for it to pop up when the right button is clicked
-bind .c.input <Button-3> {
-    if {[catch {string range [%W get] [%W index sel.first] \
-		    [expr {[%W index sel.last] - 1}]} word] == 0 &&\
-	    $word != ""} {
-	set state normal
-    } else {
-	set state disabled
+    $m add command -label "Cut" -command {
+	entry::Cut .c.input
     }
-    %W.popupMenu entryconfigure Copy -state $state 
-    %W.popupMenu entryconfigure Cut -state $state
-    %W.popupMenu entryconfigure Clear -state $state 
-    if {[catch {::tk::GetSelection %W CLIPBOARD} sel] == 0 && $sel != ""} {
-	%W.popupMenu entryconfigure Paste -state normal
-    } elseif { $state == normal } {
-	%W.popupMenu entryconfigure Paste -state disabled
-    } else {
-	return
+    $m add command -label "Clear" -command {
+	entry::Clear .c.input
     }
-
-    tk_popup %W.popupMenu %X %Y
-}
-
-############################################################################
-# Create article popup menu
-############################################################################
-set m [menu .c.article.popupMenu]
-$m add command -label "Define" -command {
-    with_selected_word .c.article defineword
-}
-$m add command -label "Match" -command {
-    with_selected_word .c.article matchword
-}
-$m add command -label "Copy" -command {
-    tk_textCopy .c.article
-}
-
-# Arrange for it to pop up when the right button is clicked
-bind .c.article <Button-3> {
-    if {[catch {%W get sel.first sel.last} word] == 0 && $word != ""} {
-	tk_popup .c.article.popupMenu %X %Y
+    $m add command -label "Paste" -command {
+	if {![info exists tk::Priv(mouseMoved)] || !$tk::Priv(mouseMoved)} {
+	    entry::Paste .c.input
+	    #        tk::TextPasteSelection %W %x %y
+	}
     }
-}
-
-############################################################################
-# Set the focus and bind events
-############################################################################
-focus .c.input
-bind . <Return> {define}
-bind .c.input <<ComboboxSelected>> { define }
-bind .c.matches <Double-ButtonPress-1> {
-    set sel [.c.matches curselection]
-    if {$sel == ""} {
-	return
+    
+    # Arrange for it to pop up when the right button is clicked
+    bind .c.input <Button-3> {
+	if {[catch {string range [%W get] [%W index sel.first] \
+			[expr {[%W index sel.last] - 1}]} word] == 0 &&\
+		$word != ""} {
+	    set state normal
+	} else {
+	    set state disabled
+	}
+	%W.popupMenu entryconfigure Copy -state $state 
+	%W.popupMenu entryconfigure Cut -state $state
+	%W.popupMenu entryconfigure Clear -state $state 
+	if {[catch {::tk::GetSelection %W CLIPBOARD} sel] == 0 && $sel != ""} {
+	    %W.popupMenu entryconfigure Paste -state normal
+	} elseif { $state == normal } {
+	    %W.popupMenu entryconfigure Paste -state disabled
+	} else {
+	    return
+	}
+	
+	tk_popup %W.popupMenu %X %Y
     }
-    set word [.c.matches get [lindex $sel 0]]
-    .c.input set $word
-    defineword $word
-}
-
-bind .c.article <Double-2> {
-    with_selected_word %W defineword
+    
+    ############################################################################
+    # Create article popup menu
+    ############################################################################
+    set m [menu .c.article.popupMenu]
+    $m add command -label "Define" -command {
+	with_selected_word .c.article defineword
+    }
+    $m add command -label "Match" -command {
+	with_selected_word .c.article matchword
+    }
+    $m add command -label "Copy" -command {
+	tk_textCopy .c.article
+    }
+    
+    # Arrange for it to pop up when the right button is clicked
+    bind .c.article <Button-3> {
+	if {[catch {%W get sel.first sel.last} word] == 0 && $word != ""} {
+	    tk_popup .c.article.popupMenu %X %Y
+	}
+    }
+    
+    ############################################################################
+    # Set the focus and bind events
+    ############################################################################
+    focus .c.input
+    bind . <Return> {define}
+    bind .c.input <<ComboboxSelected>> { define }
+    bind .c.matches <Double-ButtonPress-1> {
+	set sel [.c.matches curselection]
+	if {$sel == ""} {
+	    return
+	}
+	set word [.c.matches get [lindex $sel 0]]
+	.c.input set $word
+	defineword $word
+    }
+    
+    bind .c.article <Double-2> {
+	with_selected_word %W defineword
+    }
 }
 
 ############################################################################
@@ -415,10 +418,10 @@ proc fontok {w cmd} {
     if {$fontparam(slant) eq "italic"} {
 	lappend fontpref($f) "italic"
     }
-    $w.lb conf -text $fontparam(family) -font $fontpref($f)
+    $w conf -text $fontparam(family) -font $fontpref($f)
 
     if {[info exists colparam(name)]} {
-	$w.lb conf -foreground [getfg $colparam(color)] \
+	$w conf -foreground [getfg $colparam(color)] \
 	    -background [getbg $colparam(color)]
 	set appcache($f,color) $colparam(color)
     }
@@ -461,6 +464,8 @@ proc choosefont {cvar w which cmd} {
 	set colparam(name) $appcache($cvar,colorname)
 	set colparam(color) $appcache($cvar,color)
     } else {
+	unset -nocomplain colparam(name)
+	unset -nocomplain colparam(color)
 	set color { black white }
     }
 
@@ -495,14 +500,15 @@ proc choosefont {cvar w which cmd} {
 	font create sample
 	eval font config sample [font actual $font]
 	
-	grid [ttk::frame $top.c -padding "3 3 12 12"] \
+	grid [ttk::frame $top.c] \
 	    -column 0 -row 0 -sticky nwes
 	
 	grid [label $top.c.l -textvariable fontparam(which)] \
 	    -row 0 -column 0 -sticky we
 	
 	set fontlist [lsort [font families]]
-	grid [ttk::frame $top.c.f] -row 1 -column 0 -sticky we
+	grid [ttk::frame $top.c.f -padding "5 0 5 0"] \
+	    -row 1 -column 0 -sticky we
 	grid [listbox $top.c.f.fam -listvariable fontlist \
 		  -font uifont \
 		  -yscrollcommand [list $top.c.f.sb set]] \
@@ -542,14 +548,14 @@ proc choosefont {cvar w which cmd} {
 	if {[info exists appcache($cvar,color)]} {
 	    grid [ttk::frame $top.colbtn] -row 4
 	    grid [button $top.colbtn.fg \
-		      -text "Fg" \
+		      -text "Foreground" \
 		      -command [subst {
 			  choosecolor $top.samp $textid \
 			      "Choose foreground for $which" \
 			      $cvar -fill {}
 	      }] ]  -row 0 -column 1 -sticky w
 	    grid [button $top.colbtn.bg \
-		      -text "Bg" \
+		      -text "Background" \
 		      -command [subst {
 			  choosecolor $top.samp {} \
 			      "Choose background for $which" \
@@ -585,21 +591,23 @@ parsefont hdrfont $hdrfont
 proc editfont {base row descr cvar cmd} {
     global appcache
 
-    set w [ttk::frame "$base.editfont$appcache($cvar,fontname)" -padding "3 3 12 12"]
-    grid $w -column 0 -row $row -sticky we
-    grid columnconfigure $w 0 -weight 3
-    grid columnconfigure $w 1 -weight 3
+    set w "$base.editfont$appcache($cvar,fontname)"
+#    set w [pack "$base.editfont$appcache($cvar,fontname)" -side top -fill x -padx 2 -pady 2]
+#    set w [ttk::frame "$base.editfont$appcache($cvar,fontname)" -padding "3 3 12 12"]
+#    grid $w -column 0 -row $row -sticky we
+#    grid columnconfigure $w 0 -weight 3
+#    grid columnconfigure $w 1 -weight 3
 
-    grid [button $w.btn \
+    grid [button ${w}btn \
 	      -text $descr \
-	      -command [list choosefont $cvar $w "$descr" seterrheader]] \
-	-row 0 -column 0 -sticky w
+	      -command [list choosefont $cvar ${w}lb "$descr" seterrheader]] \
+	-row $row -column 0 -padx 2 -sticky ew
     if {[info exists appcache($cvar,color)]} {
 	set color $appcache($cvar,color)
     } else {
 	set color { black white }
     }
-    grid [label $w.lb \
+    grid [label ${w}lb \
 	      -justify center \
 	      -relief sunk \
 	      -text [font actual $appcache($cvar,font) -family] \
@@ -607,7 +615,7 @@ proc editfont {base row descr cvar cmd} {
 	      -foreground [getfg $color] \
 	      -background [getbg $color] \
 	      -padx 40 \
-	     ] -row 0 -column 1 -sticky w
+	     ] -row $row -column 1 -padx 2 -sticky ew
 }
 
 
@@ -705,14 +713,16 @@ proc appearance_box {} {
 	grab release .appbox;
 	destroy .appbox}
 
-    grid [ttk::frame .appbox.c -padding "3 3 12 12"] \
-	  -column 0 -row 0 -sticky nwes
+    set f [ttk::frame .appbox.c -padding "3 3 12 12"]
+    grid $f -column 0 -row 0 -sticky nwes
+    grid columnconfigure $f 0 -weight 1
+    grid columnconfigure $f 1 -weight 1    
     
-    editfont .appbox.c 2 "GUI font" uifont {}
-    editfont .appbox.c 3 "Text font" textfont {}
-    editfont .appbox.c 4 "Header font" hdrfont {}
+    editfont $f 2 "GUI font" uifont {}
+    editfont $f 3 "Text font" textfont {}
+    editfont $f 4 "Header font" hdrfont {}
     
-    grid [ttk::frame .appbox.c.buttons -padding "3 3 12 12"] \
+    grid [ttk::frame .appbox.c.buttons -padding "3 15 3 0"] \
 	-column 0 -row 5 -columnspan 2 -sticky we
     grid columnconfigure .appbox.c.buttons 0 -weight 3
     grid columnconfigure .appbox.c.buttons 1 -weight 3    
@@ -865,7 +875,7 @@ proc gcide_configure {args} {
           -text "Path to dicod server"] \
 	  -column 0 -row 1 -sticky w -padx 5
     grid [entry .initcfg.c.srventry \
-          -textvariable dicod_server] \
+          -textvariable dicod_server  -width 40] \
 	  -column 1 -row 1 -sticky e -padx 5
     grid [button .initcfg.c.srvb -text "Browse" \
 	  -command {
@@ -877,9 +887,9 @@ proc gcide_configure {args} {
     grid [label .initcfg.c.cidelabel \
           -justify left \
           -text "Path to GCIDE dictionary"] \
-	  -column 0 -row 2 -sticky w -padx 5
+	  -column 0 -row 2 -sticky w -padx 5 
     grid [entry .initcfg.c.cideentry \
-          -textvariable gcide_dbdir] \
+          -textvariable gcide_dbdir  -width 40] \
 	  -column 1 -row 2 -sticky e -padx 5
     grid [button .initcfg.c.cideb -text "Browse" \
 	  -command {
@@ -887,8 +897,8 @@ proc gcide_configure {args} {
 	      set gcide_dbdir [tk_chooseDirectory -initialdir ~]
 	      raise .initcfg}] \
 	-column 2 -row 2 -sticky e
-    
-    grid [ttk::frame .initcfg.c.buttons -padding "3 3 12 12"] \
+
+    grid [ttk::frame .initcfg.c.buttons -padding "12 12 12 1"] \
 	  -column 0 -row 3 -columnspan 3 -sticky we
     grid columnconfigure .initcfg.c.buttons 0 -weight 1
     grid columnconfigure .initcfg.c.buttons 1 -weight 1
@@ -905,13 +915,12 @@ proc gcide_configure {args} {
 		  } ] ] -column 0 -row 0  -sticky e -padx 10
     grid [button .initcfg.c.buttons.exit \
 	      -text $exittext \
-	      -command [subst { grab release .initcfg; destroy .initcfg; $exitcom }] ] -column 1 -row 0 -sticky w -padx 20
+	      -command [subst { grab release .initcfg; destroy .initcfg; $exitcom }] ] -column 1 -row 0 -sticky w -padx 10
     tkwait window .initcfg
 }
 
 # Save program setup to a "pick file"
 proc savepick {} {
-    global input
     global cfgdir
     global input
     global stratname
@@ -1020,25 +1029,6 @@ proc finish {code} {
     savepick
     exit $code
 }
-
-############################################################################
-# Read the configuration or create it, if it does not exist.
-############################################################################
-if [file exists $cfgdir/config] {
-    catch {source $cfgdir/config}
-    foreach font {textfont uifont} {flushfont $font}
-    seterrheader
-    loadpick
-} else {
-    gcide_configure {\
-Welcome to GCIDER, a viewer for GNU Collaborative Dictionary of English (GCIDE).
-This seems to be its first start up.  To operate, it needs to know two parameters,
-which this dialog box asks you to provide.  You will need to do this only once,
-GCIDER will save these data and reuse them on its next startup.
-}  "Exit" { exit 1 }
-}
-
-# Update fonts
 
 ############################################################################
 # DICT protocol routines
@@ -1290,9 +1280,30 @@ proc dict_connect {args} {
     .c.strategy current $ind
     return 0
 }
+
 ############################################################################
+# MAIN
+############################################################################
+
+# Set up application structure
+setupvisual
+
+# Read configuration file, or create it if it doesn't exist
+if [file exists $cfgdir/config] {
+    catch {source $cfgdir/config}
+    foreach font {textfont uifont} {flushfont $font}
+    seterrheader
+    loadpick
+} else {
+    gcide_configure {\
+Welcome to GCIDER, a viewer for GNU Collaborative Dictionary of English (GCIDE).
+This seems to be its first start up.  To operate, it needs to know two parameters,
+which this dialog box asks you to provide.  You will need to do this only once,
+GCIDER will save these data and reuse them on its next startup.
+}  "Exit" { exit 1 }
+}
+
 # Launch the server
-############################################################################
 dict_connect gcider_error_reconf
 
 # Define the last defined word

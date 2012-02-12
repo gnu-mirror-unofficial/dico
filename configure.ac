@@ -526,6 +526,7 @@ AC_CONFIG_FILES([Makefile
 		 modules/wordnet/Makefile
 		 modules/nprefix/Makefile
 		 dico/Makefile
+		 scripts/Makefile
 		 doc/Makefile
 		 po/Makefile.in])
 

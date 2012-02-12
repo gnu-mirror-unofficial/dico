@@ -25,21 +25,65 @@ set traceoption 0
 set dicod_server ""
 set dbname "gcide"
 
+proc fontflags {f {isbold 0}} {
+    global fontattr
+
+    return [list -family $fontattr($f,family) -size $fontattr($f,size) \
+		-weight [expr {$isbold? "bold": $fontattr($f,weight)}] \
+		-slant $fontattr($f,slant)]
+}
+
+proc parsefont {f n} {
+    global fontattr $f
+    
+    set fontattr($f,family) [lindex $n 0]
+    set s [lindex $n 1]
+    if {$s eq {} || $s == 0} {
+	set s 10
+    } elseif {$s < 0} {
+	set s [expr {int(-$s / [winfo fpixels . 1p] + 0.5)}]
+    }
+    set fontattr($f,size) $s
+    set fontattr($f,weight) normal
+    set fontattr($f,slant) roman
+    foreach style [lrange $n 2 end] {
+	switch -- $style {
+	    "normal" -
+	    "bold"   {set fontattr($f,weight) $style}
+	    "roman" -
+	    "italic" {set fontattr($f,slant) $style}
+	}
+    }
+}
 
 ############################################################################
 # Set options
 ############################################################################
 if {[tk windowingsystem] eq "aqua"} {
-    set mainfont {{Lucida Grande} 9}
     set textfont {Monaco 9}
-    set uifont {{Lucida Grande} 9 bold}
+    set uifont {{Lucida Grande} 9}
+    set hdrfont {{Lucida Grande} 14 bold}
 } else {
-    set mainfont {Helvetica 9}
-    set textfont {Courier 9}
-    set uifont {Helvetica 9 bold}
+    set textfont {Helvetica 14}
+    set uifont {Helvetica 11}
+    set hdrfont {Helvetica 14 bold}
 }
 
+set colors {green red blue magenta darkgrey brown orange}
+set errorcolor { black yellow }
+
+parsefont textfont $textfont
+eval font create textfont [fontflags textfont]
+
+parsefont uifont $uifont
+eval font create uifont [fontflags uifont]
+
 option add *tearOff 0
+
+option add *Text.font textfont startupFile
+option add *Listbox.font textfont startupFile
+
+option add *Menu.font uifont startupFile
 option add *Button.font uifont startupFile
 option add *Checkbutton.font uifont startupFile
 option add *Radiobutton.font uifont startupFile
@@ -47,10 +91,9 @@ option add *Menubutton.font uifont startupFile
 option add *Label.font uifont startupFile
 option add *Message.font uifont startupFile
 option add *Entry.font textfont startupFile
-option add *Text.font textfont startupFile
+option add *Combobox.font textfont startupFile
 option add *Labelframe.font uifont startupFile
-option add *Spinbox.font textfont startupFile
-option add *Listbox.font mainfont startupFile
+option add *Spinbox.font uifont startupFile
 
 ############################################################################
 # Define events 
@@ -60,6 +103,36 @@ event add <<Paste>> <Button-2>
 event add <<Paste>> <Control-V> 
 event add <<Copy>> <Control-C>
 event add <<Cut>> <Control-X>
+
+############################################################################
+# Color compound manipulation
+############################################################################
+
+proc getfg {col} {
+    lindex $col 0
+}
+proc getbg {col} {
+    lindex $col 1
+}
+
+proc setfg {colname val} {
+    global $colname
+    lset [set $colname] 0 $val
+}
+proc setbg {colname val} {
+    global $colname
+    lset [set $colname] 1 $val
+}
+    
+# Set error header tag
+proc seterrheader {args} {
+    global errorcolor
+    global hdrfont
+    
+    .c.article tag configure errheader \
+	-foreground [getfg $errorcolor] -background [getbg $errorcolor] \
+	-font $hdrfont
+}
 
 ############################################################################
 # Setup main window structure
@@ -78,7 +151,7 @@ $m.file add separator
 $m.file add command -label "Exit" -command { finish 0 } -underline 1	
 
 $m add cascade -label "Edit" -menu [menu $m.edit] -underline 0
-$m.edit add command -label "Preferences" -underline 0
+$m.edit add command -label "Appearance" -underline 0 -command appearance_box
 $m.edit add command -label "Configure" -command gcider_reconf -underline 0
 
 $m add cascade -label Help -menu [menu $m.help]
@@ -93,22 +166,23 @@ grid columnconfigure .c 1 -weight 3
 grid columnconfigure .c 3 -weight 3
 grid columnconfigure .c 4 -weight 3
 
-grid [ttk::combobox .c.input -textvariable input -width 40 -exportselection true] \
+grid [ttk::combobox .c.input -textvariable input -width 40 \
+	  -exportselection true -font uifont] \
      -column 0 -row 0 -sticky ew
 
-grid [ttk::button .c.define -text "Define" -command define] \
+grid [button .c.define -text "Define" -command define] \
      -column 1 -row 0 -columnspan 2 -sticky e
-grid [ttk::button .c.match -text "Match" -command match] \
+grid [button .c.match -text "Match" -command match] \
      -column 3 -row 0 -sticky e
 
-grid [ttk::combobox .c.strategy -textvariable strategy -state readonly] \
+grid [ttk::combobox .c.strategy -textvariable strategy -state readonly \
+	 -font uifont] \
      -column 4 -row 0 -columnspan 2 -sticky ew
 
 grid [text .c.article -state disabled -wrap word \
 	   -yscrollcommand ".c.artscroll set"] \
      -column 0 -row 1 -columnspan 2 -sticky nwes
-#FIXME:
-.c.article tag configure highlightline -background yellow -font "helvetica 14 bold"
+
 .c.article tag configure seealso -underline 1
 .c.article tag bind seealso <Button-1> {
     set res [%W tag prevrange seealso @%x,%y]
@@ -127,12 +201,12 @@ grid [text .c.article -state disabled -wrap word \
 .c.article tag bind seealso <Enter> [list %W config -cursor hand2]
 .c.article tag bind seealso <Leave> [list %W config -cursor xterm]
 
-grid [ttk::scrollbar .c.artscroll -command ".c.article yview" \
+grid [scrollbar .c.artscroll -command ".c.article yview" \
       -orient vertical] -column 2 -row 1 -sticky ns
 
 grid [listbox .c.matches -state disable -yscrollcommand ".c.matchscroll set"] \
       -column 3 -columnspan 2 -row 1 -sticky nwes
-grid [ttk::scrollbar .c.matchscroll -command ".c.matches yview" \
+grid [scrollbar .c.matchscroll -command ".c.matches yview" \
       -orient vertical] -column 5 -row 1 -sticky nse
 
 ############################################################################
@@ -140,17 +214,17 @@ grid [ttk::scrollbar .c.matchscroll -command ".c.matches yview" \
 ############################################################################
 set m [menu .c.input.popupMenu]
 $m add command -label "Copy" -command {
-    ttk::entry::Copy .c.input
+    entry::Copy .c.input
 }
 $m add command -label "Cut" -command {
-    ttk::entry::Cut .c.input
+    entry::Cut .c.input
 }
 $m add command -label "Clear" -command {
-    ttk::entry::Clear .c.input
+    entry::Clear .c.input
 }
 $m add command -label "Paste" -command {
     if {![info exists tk::Priv(mouseMoved)] || !$tk::Priv(mouseMoved)} {
-	ttk::entry::Paste .c.input
+	entry::Paste .c.input
 #        tk::TextPasteSelection %W %x %y
     }
 }
@@ -237,7 +311,11 @@ proc about {} {
 	return
     }
     toplevel .aboutbox
-    wm title .aboutbox "About GCIDER Viewer"
+    grab .aboutbox
+    wm transient .aboutbox .
+    wm protocol .aboutbox WM_DELETE_WINDOW {
+	grab release .aboutbox;
+	destroy .aboutbox}
     wm resizable .aboutbox 0 0
     grid [ttk::frame .aboutbox.c -padding "3 3 12 12"] \
 	  -column 0 -row 0 -sticky nwes
@@ -316,6 +394,343 @@ proc gcider_error_reconf {args} {
 }
 
 ############################################################################
+# Font selection
+proc selfontfam {} {
+    global fonttop fontparam
+
+    set i [$fonttop.c.f.fam curselection]
+    if {$i ne {}} {
+	set fontparam(family) [$fonttop.c.f.fam get $i]
+    }
+}
+
+proc fontok {w cmd} {
+    global fontparam fontpref appcache colparam
+
+    set f $fontparam(font)
+    set fontpref($f) [list $fontparam(family) $fontparam(size)]
+    if {$fontparam(weight) eq "bold"} {
+	lappend fontpref($f) "bold"
+    }
+    if {$fontparam(slant) eq "italic"} {
+	lappend fontpref($f) "italic"
+    }
+    $w.lb conf -text $fontparam(family) -font $fontpref($f)
+
+    if {[info exists colparam(name)]} {
+	$w.lb conf -foreground [getfg $colparam(color)] \
+	    -background [getbg $colparam(color)]
+	set appcache($f,color) $colparam(color)
+    }
+    
+    fontcan
+
+    set appcache($f,font) $fontpref($f)
+
+    
+    if {$cmd != {}} $cmd
+}
+
+proc fontcan {} {
+    global fonttop fontparam
+
+    if {[info exists fonttop]} {
+	catch {destroy $fonttop}
+	catch {font delete sample}
+	unset fonttop
+	unset fontparam
+    }
+}
+
+proc centertext {w} {
+    $w coords text [expr {[winfo width $w] / 2}] [expr {[winfo height $w] / 2}]
+}
+
+proc chg_fontparam {v sub op} {
+    global fontparam
+
+    font config sample -$sub $fontparam($sub)
+}
+
+proc choosefont {cvar w which cmd} {
+    global fontparam fontlist fonttop fontattr
+    global appcache colparam
+
+    if {[info exists appcache($cvar,color)]} {
+	set color $appcache($cvar,color)
+	set colparam(name) $appcache($cvar,colorname)
+	set colparam(color) $appcache($cvar,color)
+    } else {
+	set color { black white }
+    }
+
+    set fontname $appcache($cvar,fontname)
+    set font $appcache($cvar,font)
+    parsefont $fontname $font
+    
+    set fontparam(which) $which
+    set fontparam(font) $fontname
+    set fontparam(family) [font actual $font -family]
+    set fontparam(size) $fontattr($fontname,size)
+    set fontparam(weight) $fontattr($fontname,weight)
+    set fontparam(slant) $fontattr($fontname,slant)
+
+    set top .fontbox
+    set fonttop $top
+    
+    if [winfo exist $top] {
+	raise $top
+	$top.samp itemconf text -text $which
+	return
+    } else {
+	toplevel $top
+	wm resizable $top 0 0
+	grab $top
+	wm transient $top .
+	wm protocol $top WM_DELETE_WINDOW {
+	    grab release $top;
+	    destroy $top
+	}
+
+	font create sample
+	eval font config sample [font actual $font]
+	
+	grid [ttk::frame $top.c -padding "3 3 12 12"] \
+	    -column 0 -row 0 -sticky nwes
+	
+	grid [label $top.c.l -textvariable fontparam(which)] \
+	    -row 0 -column 0 -sticky we
+	
+	set fontlist [lsort [font families]]
+	grid [ttk::frame $top.c.f] -row 1 -column 0 -sticky we
+	grid [listbox $top.c.f.fam -listvariable fontlist \
+		  -font uifont \
+		  -yscrollcommand [list $top.c.f.sb set]] \
+	    -row 0 -column 0 -sticky w
+	bind $top.c.f.fam <<ListboxSelect>> selfontfam
+	grid [scrollbar $top.c.f.sb -command [list $top.c.f.fam yview]] \
+	    -row 0 -column 1 -sticky ns
+#
+	grid [ttk::frame $top.c.sf] -row 2 -column 0 -sticky we
+	grid columnconfigure $top.c.sf 0 -weight 3
+	grid columnconfigure $top.c.sf 1 -weight 0
+	grid columnconfigure $top.c.sf 2 -weight 3
+	
+	grid [spinbox $top.c.sf.size -from 4 -to 40 -width 4 \
+		  -textvariable fontparam(size) \
+		  -validatecommand {string is integer -strict %s}] \
+	    -row 0 -column 0 -sticky e
+	grid [checkbutton $top.c.sf.bold -padx 5 \
+		  -font {{Times New Roman} 12 bold} -text "B" -indicatoron 0 \
+		  -variable fontparam(weight) -onvalue bold -offvalue normal] \
+	    -row 0 -column 1 
+	grid [checkbutton $top.c.sf.ital -padx 5 \
+		  -font {{Times New Roman} 12 italic} -text "I" \
+		  -indicatoron 0  \
+		  -variable fontparam(slant) -onvalue italic -offvalue roman] \
+	    -row 0 -column 2 -sticky w
+
+	canvas $top.samp -width 150 -height 50 -border 2 -relief sunk \
+	    -background [getbg $color]
+	set textid [$top.samp create text 100 25 -anchor center \
+			-text $which -font sample \
+			-fill [getfg $color] -tags text]
+	
+	grid $top.samp -row 3 -column 0 -sticky we
+	bind $top.samp <Configure> [list centertext $top.samp]
+
+	if {[info exists appcache($cvar,color)]} {
+	    grid [ttk::frame $top.colbtn] -row 4
+	    grid [button $top.colbtn.fg \
+		      -text "Fg" \
+		      -command [subst {
+			  choosecolor $top.samp $textid \
+			      "Choose foreground for $which" \
+			      $cvar -fill {}
+	      }] ]  -row 0 -column 1 -sticky w
+	    grid [button $top.colbtn.bg \
+		      -text "Bg" \
+		      -command [subst {
+			  choosecolor $top.samp {} \
+			      "Choose background for $which" \
+			      $cvar -background {}}]] \
+		-row 0 -column 2 -sticky w
+	}
+	
+	grid [ttk::frame $top.buts] -row 5
+	grid [button $top.buts.ok -text "OK" \
+		  -command [list fontok $w $cmd] \
+		  -default active] \
+	    -row 0 -column 0
+	grid [button $top.buts.can -text "Cancel" -command fontcan \
+		  -default normal] \
+	    -row 0 -column 1
+	bind $top <Key-Return> fontok
+	bind $top <Key-Escape> fontcan
+	grid $top.buts.ok $top.buts.can
+	grid columnconfigure $top.buts 0 -weight 1 -uniform a
+	grid columnconfigure $top.buts 1 -weight 1 -uniform a
+
+	trace add variable fontparam write chg_fontparam
+    }
+    set i [lsearch -exact $fontlist $fontparam(family)]
+    if {$i >= 0} {
+	$top.c.f.fam selection set $i
+	$top.c.f.fam see $i
+    }
+}
+
+parsefont hdrfont $hdrfont 
+
+proc editfont {base row descr cvar cmd} {
+    global appcache
+
+    set w [ttk::frame "$base.editfont$appcache($cvar,fontname)" -padding "3 3 12 12"]
+    grid $w -column 0 -row $row -sticky we
+    grid columnconfigure $w 0 -weight 3
+    grid columnconfigure $w 1 -weight 3
+
+    grid [button $w.btn \
+	      -text $descr \
+	      -command [list choosefont $cvar $w "$descr" seterrheader]] \
+	-row 0 -column 0 -sticky w
+    if {[info exists appcache($cvar,color)]} {
+	set color $appcache($cvar,color)
+    } else {
+	set color { black white }
+    }
+    grid [label $w.lb \
+	      -justify center \
+	      -relief sunk \
+	      -text [font actual $appcache($cvar,font) -family] \
+	      -font $appcache($cvar,font) \
+	      -foreground [getfg $color] \
+	      -background [getbg $color] \
+	      -padx 40 \
+	     ] -row 0 -column 1 -sticky w
+}
+
+
+############################################################################
+# Color selection
+
+proc choosecolor {w id title cvar opt cmd} {
+    global colparam
+
+    set color $colparam(color)
+    
+    if {$opt == "-background"} {
+	set n 1
+    } else {
+	set n 0
+    }
+    
+    set c [tk_chooseColor -initialcolor [lindex $color $n] \
+	       -title $title]
+    if {$c eq {}} return
+    if {$id == {}} {
+	$w conf $opt $c
+    } else {
+	$w itemconfigure $id $opt $c
+    }
+    lset colparam(color) $n $c
+    if {$cmd !={}} $cmd
+}
+
+proc appok {} {
+    global appcache 
+
+    foreach name [lsort [array names appcache -regexp ".*,\[a-z_\]+name$"]] {
+	set kv [split $name ","]
+	set key [lindex $kv 0]
+	set val [lindex $kv 1]
+
+	set subkey [string replace $val end-3 end ""]
+	set varname $appcache($key,$val)
+	global $varname
+	set $varname $appcache($key,$subkey)
+
+	if [info exists appcache($key,flush)] {
+	    $appcache($key,flush) $varname
+	}
+    }
+
+    appcan
+}
+
+proc appcan {} {
+    grab release .appbox;
+    destroy .appbox
+}
+
+proc flushfont {fontname} {
+    global fontattr
+
+    global $fontname
+    set font [set $fontname]
+    parsefont $fontname $font
+    eval font configure $fontname [fontflags $fontname]
+    
+}
+
+# Create appearance configuration box
+proc appearance_box {} {
+    global errorcolor hdrfont textfont uifont
+    global appcache
+
+    set appcache(uifont,fontname) uifont
+    set appcache(uifont,font) $uifont
+    set appcache(uifont,flush) flushfont
+
+    set appcache(textfont,fontname) textfont
+    set appcache(textfont,font) $textfont
+    set appcache(textfont,flush) flushfont
+    
+    set appcache(hdrfont,fontname) hdrfont
+    set appcache(hdrfont,font) $hdrfont
+    set appcache(hdrfont,colorname) errorcolor
+    set appcache(hdrfont,color) $errorcolor
+    set appcache(hdrfont,flush)  seterrheader
+    
+
+    if [winfo exist .appbox] {
+	raise .appbox
+	return
+    }
+    toplevel .appbox
+    wm resizable .appbox 0 0
+    grab .appbox
+    wm transient .appbox .
+    wm protocol .appbox WM_DELETE_WINDOW {
+	grab release .appbox;
+	destroy .appbox}
+
+    grid [ttk::frame .appbox.c -padding "3 3 12 12"] \
+	  -column 0 -row 0 -sticky nwes
+    
+    editfont .appbox.c 2 "GUI font" uifont {}
+    editfont .appbox.c 3 "Text font" textfont {}
+    editfont .appbox.c 4 "Header font" hdrfont {}
+    
+    grid [ttk::frame .appbox.c.buttons -padding "3 3 12 12"] \
+	-column 0 -row 5 -columnspan 2 -sticky we
+    grid columnconfigure .appbox.c.buttons 0 -weight 3
+    grid columnconfigure .appbox.c.buttons 1 -weight 3    
+    
+    grid [button .appbox.c.buttons.ok \
+	      -text "OK" \
+	      -command appok ]\
+	-row 0 -column 0 -sticky e -padx 5
+
+    grid [button .appbox.c.buttons.cancel \
+	      -text "Cancel" \
+	      -command appcan ]\
+	-row 0 -column 1 -sticky w -padx 5
+
+    tkwait window .appbox
+}
+
+############################################################################
 # Configuration routines
 ############################################################################
 
@@ -383,11 +798,8 @@ proc submit_config {} {
     if {![file isdirectory $cfgdir]} {
 	file mkdir $cfgdir
     }
-    set fd [open $cfgdir/config "w"]
-    puts $fd "set dicod_server $dicod_server"
-    puts $fd "set gcide_dbdir $gcide_dbdir"
-    close $fd
-
+    saveconf
+    
     set fd [open $cfgdir/dicod.conf "w"]
     puts $fd [subst $dicod_config]
     close $fd
@@ -587,9 +999,24 @@ proc loadpick {} {
     }
     close $fd
 }
+
+proc saveconf {} {
+    global cfgdir
     
+    set fd [open $cfgdir/config "w"]
+
+    foreach var { dicod_server gcide_dbdir textfont uifont \
+		      hdrfont errorcolor } {
+	global $var
+	set value [set $var]
+	puts $fd [list set $var $value]
+    }
+    close $fd
+}
+
 # Save configuration and exit the program
 proc finish {code} {
+    saveconf
     savepick
     exit $code
 }
@@ -599,6 +1026,8 @@ proc finish {code} {
 ############################################################################
 if [file exists $cfgdir/config] {
     catch {source $cfgdir/config}
+    foreach font {textfont uifont} {flushfont $font}
+    seterrheader
     loadpick
 } else {
     gcide_configure {\
@@ -608,6 +1037,8 @@ which this dialog box asks you to provide.  You will need to do this only once,
 GCIDER will save these data and reuse them on its next startup.
 }  "Exit" { exit 1 }
 }
+
+# Update fonts
 
 ############################################################################
 # DICT protocol routines
@@ -719,9 +1150,9 @@ proc defineword {word} {
 	regexp {([1-5][0-9][0-9])\s+(.*)} $text dummy count rest
 	readdefns
     } elseif {$code == 552} {
-	# FIXME: tags
+	# FIXME: font?
 	.c.article insert end "No definition for \"$word\""
-	.c.article tag add highlightline 1.0 end
+	.c.article tag add errheader 1.0 end
     } elseif {$code <= 0} {
 	tk_messageBox -title "GCIDER error" -icon error -type ok \
 	              -message "I/O error communicating with the server"

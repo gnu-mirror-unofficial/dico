@@ -315,6 +315,7 @@ proc about {} {
     }
     toplevel .aboutbox
     grab .aboutbox
+    wm title .aboutbox "About GCIDER"
     wm transient .aboutbox .
     wm protocol .aboutbox WM_DELETE_WINDOW {
 	grab release .aboutbox;
@@ -496,6 +497,7 @@ proc choosefont {cvar w which cmd} {
 	    grab release $top;
 	    destroy $top
 	}
+        wm title $top "Font"
 
 	font create sample
 	eval font config sample [font actual $font]
@@ -712,6 +714,8 @@ proc appearance_box {} {
     wm protocol .appbox WM_DELETE_WINDOW {
 	grab release .appbox;
 	destroy .appbox}
+
+    wm title .appbox "GCIDER Appearance"
 
     set f [ttk::frame .appbox.c -padding "3 3 12 12"]
     grid $f -column 0 -row 0 -sticky nwes

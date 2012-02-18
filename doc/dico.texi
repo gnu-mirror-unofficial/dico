@@ -99,6 +99,7 @@ documents Dico Version @value{VERSION}.
 * Modules::              Dicod modules shipped with Dico.
 * Interface::            How to write your own Dico module.
 * dico client::          The client program.
+* gcider::               A window-based browser for GCIDE.
 * Reporting Bugs::       How to Report a Bug.
 
 Appendices
@@ -5716,6 +5717,10 @@ Display a short usage message
 @item --version
 Print program version.
 @end table
+
+@node gcider
+@chapter GCIDER
+@WRITEME
 
 @node Reporting Bugs
 @chapter How to Report a Bug

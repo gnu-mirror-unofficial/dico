@@ -376,7 +376,7 @@ struct gcide_iterator {
 gcide_iterator_t
 gcide_idx_locate(struct gcide_idx_file *file, char *headword, size_t hwlen)
 {
-    size_t pageno, refno, pn;
+    size_t pageno, refno, pn, rn;
     struct gcide_idx_page *page;
     struct gcide_iterator *itr;
 
@@ -391,21 +391,19 @@ gcide_idx_locate(struct gcide_idx_file *file, char *headword, size_t hwlen)
     if (refno == REF_NOT_FOUND)
 	return NULL;
     
-    for (pn = pageno; pn > 0; ) {
-	size_t i;
-	
-	for (i = refno; i > 0; i--) {
-	    if (_compare(file, headword, &page->ipg_ref[i], hwlen) > 0)
+    for (pn = pageno, rn = refno;;) {
+	for (; rn > 0; rn--) {
+	    if (_compare(file, headword, &page->ipg_ref[rn-1], hwlen) > 0)
 		goto end;
-	    refno = i;
+	    refno = rn - 1;
 	}
+	pageno = pn;
 	if (pn == 0)
 	    break;
-	pageno = pn;
 	page = _idx_get_page(file, --pn);
 	if (!page)
 	    return NULL;
-	refno = page->ipg_header.hdr.phdr_numentries - 1;
+	rn = page->ipg_header.hdr.phdr_numentries;
     }
   end:
     itr = malloc(sizeof(*itr));

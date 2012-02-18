@@ -24,6 +24,7 @@ encoding system "utf-8"
 set traceoption 0
 set dicod_server ""
 set dbname "gcide"
+set history_length 500
 
 proc fontflags {f {isbold 0}} {
     global fontattr
@@ -125,18 +126,17 @@ proc setbg {colname val} {
 }
     
 # Set error header tag
-proc seterrheader args {
+proc setwidgeterrheader {w} {
     global errorcolor
     global hdrfont
 
-    if {[llength $args] == 1} {
-	set widget [lindex $args 0]
-    } else {
-	set widget .c.article
-    }    
-    $widget tag configure errheader \
+    $w tag configure errheader \
 	-foreground [getfg $errorcolor] -background [getbg $errorcolor] \
 	-font $hdrfont
+}
+
+proc seterrheader {args} {
+    setwidgeterrheader .c.article
 }
 
 ############################################################################
@@ -470,7 +470,7 @@ proc helpbox {title type arg} {
 	}
 	catch { close $fd } err
 	if {[$tw count -chars 1.0 end] <= 1} {
-	    seterrheader $tw
+	    setwidgeterrheader $tw
 	    $tw insert 0.1 $err
 	    set nlines [llength [split $err \n]]
 	    $tw tag add errheader 1.0 "1.0 + $nlines lines"
@@ -776,7 +776,7 @@ proc editfont {base row descr cvar cmd} {
 
     grid [button ${w}btn \
 	      -text $descr \
-	      -command [list choosefont $cvar ${w}lb "$descr" seterrheader]] \
+	      -command [list choosefont $cvar ${w}lb "$descr" {}]] \
 	-row $row -column 0 -padx 2 -sticky ew
     if {[info exists appcache($cvar,color)]} {
 	set color $appcache($cvar,color)
@@ -859,7 +859,7 @@ proc flushfont {fontname} {
 
 # Create appearance configuration box
 proc appearance_box {} {
-    global errorcolor hdrfont textfont uifont
+    global errorcolor hdrfont textfont uifont history_length
     global appcache
 
     set appcache(uifont,fontname) uifont
@@ -875,7 +875,9 @@ proc appearance_box {} {
     set appcache(hdrfont,colorname) errorcolor
     set appcache(hdrfont,color) $errorcolor
     set appcache(hdrfont,flush)  seterrheader
-    
+
+    set appcache(history,var) $history_length
+    set appcache(history,varname) history_length
 
     if [winfo exist .appbox] {
 	raise .appbox
@@ -891,7 +893,7 @@ proc appearance_box {} {
 
     wm title .appbox "GCIDER Appearance"
 
-    set f [ttk::frame .appbox.c -padding "3 3 12 12"]
+    set f [ttk::frame .appbox.c -padding "3 3 3 3"]
     grid $f -column 0 -row 0 -sticky nwes
     grid columnconfigure $f 0 -weight 1
     grid columnconfigure $f 1 -weight 1    
@@ -899,9 +901,16 @@ proc appearance_box {} {
     editfont $f 2 "GUI font" uifont {}
     editfont $f 3 "Text font" textfont {}
     editfont $f 4 "Header font" hdrfont {}
+
+    grid [label $f.histlab -justify center -text "History length"] \
+	-column 0 -row 5 -sticky we
+    grid [spinbox $f.histval -from 1 -to 10000 -width 10 \
+	      -textvariable appcache(history,var) \
+	      -validatecommand {string is integer -strict %s}] \
+	-column 1 -row 5 -sticky w
     
     grid [ttk::frame .appbox.c.buttons -padding "3 15 3 0"] \
-	-column 0 -row 5 -columnspan 2 -sticky we
+	-column 0 -row 7 -columnspan 2 -sticky we
     grid columnconfigure .appbox.c.buttons 0 -weight 3
     grid columnconfigure .appbox.c.buttons 1 -weight 3    
     
@@ -1202,7 +1211,7 @@ proc saveconf {} {
     set fd [open $cfgdir/config "w"]
 
     foreach var { dicod_server gcide_dbdir textfont uifont \
-		      hdrfont errorcolor } {
+		      hdrfont errorcolor history_length } {
 	global $var
 	set value [set $var]
 	puts $fd [list set $var $value]
@@ -1309,6 +1318,7 @@ proc defineword {word} {
     global dbname
     global input
     global status
+    global history_length
     
     dictwrite "DEFINE" $dbname $word
     set res [getrepl]
@@ -1323,7 +1333,14 @@ proc defineword {word} {
     if {$code == 150} {
 	set values [.c.input cget -values]
 	if {[lsearch -exact $values $word] == -1} {
-	    .c.input configure -values [linsert $values 0 $word]
+	    if {[llength $values] >= $history_length} {
+		.c.input configure -values \
+		    [linsert [lrange $values 0 \
+				  [expr $history_length - 2]] \
+			 0 $word]
+	    } else {
+		.c.input configure -values [linsert $values 0 $word]
+	    }
 	}
 	if {$word != $input} {
 	    .c.input set $word

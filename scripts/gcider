@@ -978,6 +978,7 @@ proc appearance_box {} {
 set cfgdir ~/.gcider
 # Directory where GCIDE files reside
 set gcide_dbdir ""
+set idxdir_param ""
 
 # Dicod configuration template
 set dicod_config {/* Dicod configuration file created by GCIDER on [clock format [clock seconds] -gmt true] */
@@ -988,7 +989,7 @@ load-module (substr,word);
 load-module gcide;
 database {
 	name "gcide";
-        handler "gcide dbdir=$gcide_dbdir";
+        handler "gcide dbdir=$gcide_dbdir$idxdir_param";
 }
 server-info "Local GCIDE server"; 
 /* End of dicod.conf */
@@ -1001,7 +1002,8 @@ proc submit_config {} {
     global cfgdir
     global dicod_server
     global dicod_config
-    
+    global idxdir_param idxingcide
+
     if {$dicod_server == ""} {
 	tk_messageBox -title "GCIDER error" -icon error -type ok \
 	              -message "Please select server program to use"
@@ -1035,6 +1037,16 @@ proc submit_config {} {
 	}
     }
 
+    set cfgdir [file normalize $cfgdir]
+    set gcide_dbdir [file normalize $gcide_dbdir]
+
+    if {$idxingcide != 0 && [file writable $gcide_dbdir]} {
+	set idxdir_param ""
+    } else {
+	set idxdir_param " idxdir=$cfgdir"
+	set idxingcide 0
+    }
+    
     if {![file isdirectory $cfgdir]} {
 	file mkdir $cfgdir
     }
@@ -1050,7 +1062,7 @@ proc submit_config {} {
 # Pop-up a configuration box.  When submitted, call submit_config to
 # create the configuration.  If it fails, retry.
 proc gcide_configure {args} {
-    global dicod_server
+    global dicod_server idxingcide
     global env
 
     set okcom { set x 0 }
@@ -1094,7 +1106,7 @@ proc gcide_configure {args} {
     wm transient .initcfg .
     wm protocol .initcfg WM_DELETE_WINDOW {grab release .initcfg; destroy .initcfg}
     
-    grid [ttk::frame .initcfg.c -padding "3 3 12 12"] \
+    grid [ttk::frame .initcfg.c -padding "3 3 3 3"] \
 	  -column 0 -row 0 -sticky nwes
     grid [label .initcfg.c.descr \
           -justify left \
@@ -1112,7 +1124,7 @@ proc gcide_configure {args} {
 	      global dicod_server
 	      set dicod_server [tk_getOpenFile -title "Dicod server" -initialdir ~]
               raise .initcfg}] \
-	-column 2 -row 1 -sticky e
+	-column 2 -row 1 -padx 5 -sticky e
     
     grid [label .initcfg.c.cidelabel \
           -justify left \
@@ -1126,13 +1138,28 @@ proc gcide_configure {args} {
 	      global gcide_dbdir
 	      set gcide_dbdir [tk_chooseDirectory -initialdir ~]
 	      raise .initcfg}] \
-	-column 2 -row 2 -sticky e
+	-column 2 -row 2 -padx 5 -sticky e
+    grid [label .initcfg.c.idxdescr \
+          -justify left \
+	  -text "By default the GCIDE index file will be created in GCIDER configuration directory (~/.gcider).  Select this if you want it to be created in the directory where the dictionary files are located.  Note, that if the latter is not writable, this setting will be ignored.  If you're not sure, leave this untouched:" \
+	      -wraplength "20 chars"] \
+	  -column 0 -columnspan 3 -row 3 -sticky new -padx 5
 
+    grid [label .initcfg.c.idxlabel \
+	      -justify left \
+	      -text "Create index in the GCIDE directory"] \
+	-column 0 -row 4 -sticky w -padx 5
+
+    grid [checkbutton .initcfg.c.idxcheck \
+	      -variable idxingcide] \
+	-column 1 -row 4 -sticky w
+	  
+    
     grid [ttk::frame .initcfg.c.buttons -padding "12 12 12 1"] \
-	  -column 0 -row 3 -columnspan 3 -sticky we
+	  -column 0 -row 5 -columnspan 3 -sticky we
     grid columnconfigure .initcfg.c.buttons 0 -weight 1
     grid columnconfigure .initcfg.c.buttons 1 -weight 1
-    set res 1
+
     grid [button .initcfg.c.buttons.ok \
           -text "OK" \
 	      -command [subst {
@@ -1254,7 +1281,7 @@ proc saveconf {} {
     set fd [open $cfgdir/config "w"]
 
     foreach var { dicod_server gcide_dbdir textfont uifont \
-		      hdrfont errorcolor history_length } {
+		      hdrfont errorcolor history_length idxingcide } {
 	global $var
 	set value [set $var]
 	puts $fd [list set $var $value]
@@ -1541,6 +1568,9 @@ proc dict_connect {args} {
     global stratname
     global stratdescr
 
+    if {[info exists pipe]} {
+	catch { close $pipe }
+    }
     if {[llength $args]} {
 	set errproc [lindex $args 0]
     } else {

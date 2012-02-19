@@ -221,10 +221,36 @@ proc setupvisual {} {
     grid columnconfigure .c 3 -weight 3
     grid columnconfigure .c 4 -weight 3
 
-    grid [ttk::combobox .c.input -textvariable input -width 40 \
+    grid [ttk::frame .c.wf] \
+	-column 0 -row 0 -sticky ew 
+    grid [ttk::combobox .c.wf.input -textvariable input -width 60 \
 	      -exportselection true -font uifont] \
 	-column 0 -row 0 -sticky ew
-
+    image create bitmap bm-prev -data {
+	#define left_width 19
+	#define left_height 19
+	static unsigned char left_bits[] = {
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x06, 0x00,
+	0x00, 0x07, 0x00, 0x80, 0x07, 0x00, 0xc0, 0x07, 0x00, 0xe0, 0xff, 0x01,
+	0xf0, 0xff, 0x01, 0xf8, 0xff, 0x01, 0xf0, 0xff, 0x01, 0xe0, 0xff, 0x01,
+	0xc0, 0x07, 0x00, 0x80, 0x07, 0x00, 0x00, 0x07, 0x00, 0x00, 0x06, 0x00,
+	0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    }
+    image create bitmap bm-next -data {
+	#define right_width 19
+	#define right_height 19
+	static unsigned char right_bits[] = {
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x06, 0x00,
+        0x00, 0x0e, 0x00, 0x00, 0x1e, 0x00, 0x00, 0x3e, 0x00, 0xf8, 0x7f, 0x00,
+        0xf8, 0xff, 0x00, 0xf8, 0xff, 0x01, 0xf8, 0xff, 0x00, 0xf8, 0x7f, 0x00,
+        0x00, 0x3e, 0x00, 0x00, 0x1e, 0x00, 0x00, 0x0e, 0x00, 0x00, 0x06, 0x00,
+        0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    }
+    grid [button .c.wf.prev -image bm-prev -command defineprev] \
+	-column 1 -row 0 -sticky ew
+    grid [button .c.wf.next -image bm-next -command definenext] \
+	-column 2 -row 0 -sticky ew
+    
     grid [button .c.define -text "Define" -command define] \
 	-column 1 -row 0 -columnspan 2 -sticky e
     grid [button .c.match -text "Match" -command match] \
@@ -281,25 +307,25 @@ proc setupvisual {} {
     ############################################################################
     # Create input widget popup
     ############################################################################
-    set m [menu .c.input.popupMenu]
+    set m [menu .c.wf.input.popupMenu]
     $m add command -label "Copy" -command {
-	ttk::entry::Copy .c.input
+	ttk::entry::Copy .c.wf.input
     }
     $m add command -label "Cut" -command {
-	ttk::entry::Cut .c.input
+	ttk::entry::Cut .c.wf.input
     }
     $m add command -label "Clear" -command {
-	ttk::entry::Clear .c.input
+	ttk::entry::Clear .c.wf.input
     }
     $m add command -label "Paste" -command {
 	if {![info exists tk::Priv(mouseMoved)] || !$tk::Priv(mouseMoved)} {
-	    ttk::entry::Paste .c.input
+	    ttk::entry::Paste .c.wf.input
 	    #        tk::TextPasteSelection %W %x %y
 	}
     }
     
     # Arrange for it to pop up when the right button is clicked
-    bind .c.input <Button-3> {
+    bind .c.wf.input <Button-3> {
 	if {[catch {string range [%W get] [%W index sel.first] \
 			[expr {[%W index sel.last] - 1}]} word] == 0 &&\
 		$word != ""} {
@@ -345,10 +371,29 @@ proc setupvisual {} {
     ############################################################################
     # Status line
     ############################################################################
-    bind .c.input <Enter> {
+    bind .c.wf.input <Enter> {
 	.status.bar configure -text "Enter search word and press return or click on Define to define the word.  Click on Match to find closest matches. Right click to bring menu."
     }
-    bind .c.input <Leave> +defstatus
+    bind .c.wf.input <Leave> +defstatus
+    
+    bind .c.wf.prev <Enter> {
+	if {[%W cget -state] == "disabled"} {
+	    defstatus
+	} else {
+	    .status.bar configure -text "Return to previous definition."
+	}
+    }
+    bind .c.wf.prev <Leave> +defstatus
+    
+    bind .c.wf.next <Enter> {
+	if {[%W cget -state] == "disabled"} {
+	    defstatus
+	} else {
+	    .status.bar configure -text "Pick next definition from the history."
+	}
+    }
+    bind .c.wf.next <Leave> +defstatus
+    
     bind .c.define <Enter> {
         .status.bar configure -text "Click to define word."
     }
@@ -387,20 +432,23 @@ proc setupvisual {} {
 	    .status.bar configure -text [lindex $stratdescr [%W nearest %y]]
 	}
     }
+    bind .c.strategy <<ComboboxSelected>> {
+	%W selection clear
+    }
     
     ############################################################################
     # Set the focus and bind events
     ############################################################################
-    focus .c.input
+    focus .c.wf.input
     bind . <Return> {define}
-    bind .c.input <<ComboboxSelected>> { define }
+    bind .c.wf.input <<ComboboxSelected>> { define }
     bind .c.matches <Double-ButtonPress-1> {
 	set sel [.c.matches curselection]
 	if {$sel == ""} {
 	    return
 	}
 	set word [.c.matches get [lindex $sel 0]]
-	.c.input set $word
+	.c.wf.input set $word
 	defineword $word
     }
     
@@ -768,11 +816,6 @@ proc editfont {base row descr cvar cmd} {
     global appcache
 
     set w "$base.editfont$appcache($cvar,fontname)"
-#    set w [pack "$base.editfont$appcache($cvar,fontname)" -side top -fill x -padx 2 -pady 2]
-#    set w [ttk::frame "$base.editfont$appcache($cvar,fontname)" -padding "3 3 12 12"]
-#    grid $w -column 0 -row $row -sticky we
-#    grid columnconfigure $w 0 -weight 3
-#    grid columnconfigure $w 1 -weight 3
 
     grid [button ${w}btn \
 	      -text $descr \
@@ -1117,7 +1160,7 @@ proc savepick {} {
     if [info exists input] {
 	puts $fd "\[input\]"
 	puts $fd $input
-	foreach word [.c.input cget -values] {
+	foreach word [.c.wf.input cget -values] {
 	    puts $fd $word
 	}
     }
@@ -1139,8 +1182,8 @@ proc savepick {} {
 # Additional routines used by loadpick below
 ##############################################
 proc load_variable_input {args} {
-    .c.input set [lindex $args 0]
-    .c.input configure -values [lrange $args 1 end]    
+    .c.wf.input set [lindex $args 0]
+    .c.wf.input configure -values [lrange $args 1 end]    
 }
 
 proc load_variable_strategy {args} {
@@ -1331,20 +1374,41 @@ proc defineword {word} {
     .c.article configure -state normal
     .c.article delete 1.0 end
     if {$code == 150} {
-	set values [.c.input cget -values]
-	if {[lsearch -exact $values $word] == -1} {
+	set values [.c.wf.input cget -values]
+	set idx [lsearch -exact $values $word]
+	if {$idx == -1} {
 	    if {[llength $values] >= $history_length} {
-		.c.input configure -values \
+		.c.wf.input configure -values \
 		    [linsert [lrange $values 0 \
 				  [expr $history_length - 2]] \
 			 0 $word]
 	    } else {
-		.c.input configure -values [linsert $values 0 $word]
+		.c.wf.input configure -values [linsert $values 0 $word]
+	    }
+	    .c.wf.prev configure -state disabled
+	    if {[llength $values] > 0} {
+		.c.wf.next configure -state normal
+	    } else {
+		.c.wf.next configure -state disabled
+	    }
+	} else {
+	    if {$idx == 0} {
+		.c.wf.prev configure -state disabled
+	    } else {
+		.c.wf.prev configure -state normal
+	    }
+	    incr idx
+	    if {$idx == [llength $values]} {
+		.c.wf.next configure -state disabled
+	    } else {
+		.c.wf.next configure -state normal
 	    }
 	}
+	
 	if {$word != $input} {
-	    .c.input set $word
+	    .c.wf.input set $word
 	}
+	.c.wf.input selection clear
 	regexp {([0-9]+)\s+(.*)} $text dummy count rest
 	set status(define,count) $count
 	readdefns
@@ -1368,9 +1432,52 @@ proc define {} {
     global input
 
     if {![info exists input] || $input == ""} {
+	.c.wf.prev configure -state disabled
+	.c.wf.next configure -state disabled
 	return
     }
     defineword $input
+}
+
+# Pick up a previous word from the input history and define it.
+proc defineprev {} {
+    global input
+
+    if {![info exists input] || $input == ""} {
+	return
+    }
+    
+    set values [.c.wf.input cget -values]
+    set pos [lsearch -exact $values $input]
+    if {$pos <= 0} {
+	return
+    }
+
+    incr pos -1
+    defineword [lindex $values $pos] 
+}
+
+# Pick up a next word from the input history and define it.
+proc definenext {} {
+    global input
+
+    if {![info exists input] || $input == ""} {
+	return
+    }
+    
+    set values [.c.wf.input cget -values]
+    set pos [lsearch -exact $values $input]
+    if {$pos == -1} {
+	return
+    }
+
+    incr pos
+
+    if {$pos == [llength $values]} {
+	return
+    }
+    
+    defineword [lindex $values $pos] 
 }
 
 # Produce a list of matches of $headword using the currently selected

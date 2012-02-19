@@ -5720,7 +5720,79 @@ Print program version.
 
 @node gcider
 @chapter GCIDER
-@WRITEME
+@cindex GCIDE
+@cindex GNU Collaborative International Dictionary of English
+@command{Gcider} is a window-based application for browsing the
+@dfn{GNU Collaborative International Dictionary of English}
+(@acronym{GCIDE}).  When started, it launches a copy of @command{dicod}
+with a specially crafted configuration file and interfaces with it via
+stdin/stdout. For operation, it needs to know the location of the
+@command{dicod} binary and of the directory where @acronym{GCIDE}
+files reside.  When started for the first time it will present you
+with a dialog box to help it locate the needed components.  The
+location of the @command{dicod} binary is normally guessed by scanning
+the @env{PATH} environment variable.  The only parameter you need to
+supply is the directory where the dictionary files reside.  Once these
+data are entered, the program will save them in its configuration file
+(located in @file{~/.gcider}) and will reuse them in subsequent
+invocations.
+
+The program display is organized in three areas, ordered vertically.
+The topmost area is the @dfn{menubar}, which contains pull-down menus.
+It is followed by a @dfn{search control} area.  It provides an input
+line for you to enter the term to look-up in the dictionary, a set
+of widgets for revoking prior inputs from the history and for
+controlling the search types and matching strategies.  The area that
+follows presents two windows, side by side.  The leftmost one is the
+@dfn{article window}, where definitions of the search terms are
+shown.  The rightmost one is the @dfn{match list}, which will present
+the results of the recent @dfn{match} command.  Finally, at the very
+bottom of the @command{gcider} window is located the @dfn{status
+bar}. Its purpose is twofold.  First, it displays a status of the last
+search.  Secondly, it provides a terse contextual help describing what
+you can do using the widget your mouse pointer points to.
+
+To look up a word, type it in the input line in the search area and
+hit enter or click on the @samp{Define} button.  The definition, if
+found, is then displayed in the article window.  This text may contain
+@dfn{cross-references} to other words in the dictionary, which are shown
+underlined, to draw your attention.  To define a cross-reference,
+click on it with your mouse.  You can also define any other word from
+the text.  To do so, select it and click on the right button.  Then,
+in the menu that will appear, select @samp{Define}. 
+
+If you are not sure about the exact spelling of your search term, try
+searching for the closest matches first. To do so, click on
+@samp{Match} instead of @samp{Define}. To find closest matches for a
+word in a definition, select the word (or part of it) and select
+@samp{Match} in the contextual menu.  In both cases, the program will
+try to match the word using the @dfn{strategy} selected currently in
+the strategy widget at the right of the search control area.  Matching
+headwords will then be displayed in a listbox to the right of the
+article window.  Clicking on a headword will bring its definition to
+the article window.
+
+To select a matching strategy, click on the strategy widget and select
+the desired strategy in the pop-down list that will appear.  The list
+contains short strategy names.  To help you select the right one, the
+status line will show a full description of the curently highlighted
+strategy.
+
+Those search terms for which a definition was found are saved in a
+@dfn{history list}.  Several ways are provided to retrieve definitions
+from that list.  First, clicking on the input widget brings a popdown
+list with all headwords from the history list shown in a reverse
+chronological order.  Selecting a word from that list brings back its
+definition.  Secondly, two special buttons to the right of the input
+widget can be used to navigate through the history.  The button marked
+with a left arrow brings back previous definition, whereas the one
+marked with a right arrow brings back next definition.
+
+By default the history list can accomodate up to 500 search terms.
+Once this limit reached, adding a new term to the list discards the
+oldest item, so that the total list length remains the same.  Actual
+length of the history list can be configured using the
+@file{Edit/Appearance} menu.
 
 @node Reporting Bugs
 @chapter How to Report a Bug

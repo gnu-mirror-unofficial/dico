@@ -493,7 +493,7 @@ proc helpbox {title type arg} {
 		  -font textfont \
 		  -wrap word \
 		  -relief sunken \
-		  -padx 10 \
+		  -padx [font measure textfont "nn"] \
 		  -yscrollcommand "$top.f.scroll set"]
     grid $tw -row 0 -column 0 -sticky news
     grid [scrollbar $top.f.scroll -command "$tw yview"] \

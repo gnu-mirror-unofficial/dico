@@ -1385,23 +1385,23 @@ proc defineword {word} {
 	    } else {
 		.c.wf.input configure -values [linsert $values 0 $word]
 	    }
-	    .c.wf.prev configure -state disabled
+	    .c.wf.next configure -state disabled
 	    if {[llength $values] > 0} {
-		.c.wf.next configure -state normal
+		.c.wf.prev configure -state normal
 	    } else {
-		.c.wf.next configure -state disabled
+		.c.wf.prev configure -state disabled
 	    }
 	} else {
 	    if {$idx == 0} {
-		.c.wf.prev configure -state disabled
-	    } else {
-		.c.wf.prev configure -state normal
-	    }
-	    incr idx
-	    if {$idx == [llength $values]} {
 		.c.wf.next configure -state disabled
 	    } else {
 		.c.wf.next configure -state normal
+	    }
+	    incr idx
+	    if {$idx == [llength $values]} {
+		.c.wf.prev configure -state disabled
+	    } else {
+		.c.wf.prev configure -state normal
 	    }
 	}
 	
@@ -1439,8 +1439,8 @@ proc define {} {
     defineword $input
 }
 
-# Pick up a previous word from the input history and define it.
-proc defineprev {} {
+# Pick up a next word from the input history and define it.
+proc definenext {} {
     global input
 
     if {![info exists input] || $input == ""} {
@@ -1457,8 +1457,8 @@ proc defineprev {} {
     defineword [lindex $values $pos] 
 }
 
-# Pick up a next word from the input history and define it.
-proc definenext {} {
+# Pick up a previous word from the input history and define it.
+proc defineprev {} {
     global input
 
     if {![info exists input] || $input == ""} {

@@ -1,4 +1,4 @@
-GNU Dico NEWS -- history of user-visible changes. 2012-02-05
+GNU Dico NEWS -- history of user-visible changes. 2012-02-20
 Copyright (C) 2008-2010, 2012 Sergey Poznyakoff
 See the end of file for copying conditions.
 
@@ -64,6 +64,12 @@ Provides matching strategy based on Perl regular expressions.
 ** pam
 
 Implements PAM authentication.
+
+* New utility: gcider 
+
+"Gcider" is a window-based application for browsing the GNU
+Collaborative International Dictionary of English (see
+http://www.gnu.org/software/gcide).
 
 
 Version 2.1, 2010-07-07

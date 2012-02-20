@@ -525,44 +525,64 @@ proc helpbox {title type arg} {
 #	    errorbox "Error reading documentation" $err
 	}
     }
+
+    bind $top <Return> "destroy $top"
+    bind $top <Escape> "destroy $top"
+
+    bind $top <Home> "$tw yview moveto 0.0"
+    bind $top <End> "$tw yview moveto 100"
+    bind $top <Up> "$tw yview scroll -1 units"
+    bind $top <Down> "$tw yview scroll 1 units"
+    bind $top <Prior> "$tw yview scroll -1 pages"
+    bind $top <Next> "$tw yview scroll 1 pages"
+    
     
     $tw configure -state disabled
 }
 
 # About box
 proc about {} {
-    if [winfo exist .aboutbox] {
-	raise .aboutbox
+    set top .aboutbox
+    if [winfo exist $top] {
+	raise $top
 	return
     }
-    toplevel .aboutbox
-    grab .aboutbox
-    wm title .aboutbox "About GCIDER"
-    wm transient .aboutbox .
-    wm protocol .aboutbox WM_DELETE_WINDOW {
-	grab release .aboutbox;
-	destroy .aboutbox}
-    wm resizable .aboutbox 0 0
-    grid [ttk::frame .aboutbox.c -padding "3 3 12 12"] \
+    toplevel $top
+    grab $top
+    wm title $top "About GCIDER"
+    wm transient $top .
+    wm protocol $top WM_DELETE_WINDOW {
+	grab release $top;
+	destroy $top}
+    wm resizable $top 0 0
+    grid [ttk::frame $top.c -padding "3 3 3 3"] \
 	  -column 0 -row 0 -sticky nwes
-    grid [label .aboutbox.c.name \
+    grid [label $top.c.name \
           -justify center \
           -font "-adobe-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*" \
 	      -text "GCIDER Version 0.1"] \
 	 -column 0 -row 0
-    grid [label .aboutbox.c.warranty \
+    grid [label $top.c.descr \
+          -justify center \
+          -font "-adobe-helvetica-medium-r-*-*-*-100-*-*-*-*-*-*" \
+	      -text "GCIDER is a viewer for the GNU Collaborative dictionary of English."] \
+	-column 0 -row 1
+    grid [label $top.c.warranty \
           -justify left \
           -font "-adobe-helvetica-medium-r-*-*-*-100-*-*-*-*-*-*" \
-	      -text "GCIDER is a viewer for GNU Collaborative dictionary of English.\n\n\
+	      -text "\n\n\
 Copyright (C) 2012, Sergey Poznyakoff\n\
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n\
 This is free software: you are free to change and redistribute it.\n\
-There is NO WARRANTY, to the extent permitted by law."] \
-	 -column 0 -row 1
+There is NO WARRANTY, to the extent permitted by law.\n"] \
+	 -column 0 -row 2
     
-    grid [button .aboutbox.c.ok \
+    grid [button $top.c.ok \
           -text "Dismiss" \
-          -command {destroy .aboutbox}] -column 0 -row 2
+          -command "destroy $top"] -column 0 -row 3
+
+    bind $top <Return> "destroy $top"
+    bind $top <Escape> "destroy $top"
 }
 
 # Pop up fatal error window
@@ -591,8 +611,7 @@ proc gcider_reconf {} {
     global result
     
     gcide_configure {\
-Please supply new configuration values below.  Press "Cancel" to cancel or
-"OK" to submit.	
+Please supply new configuration values below.  Press "Cancel" to discard your changes or "OK" to submit.	
 } \
 	-ok { dict_connect errorbox } \
 	-canceltext "Cancel" \
@@ -795,8 +814,8 @@ proc choosefont {cvar w which cmd} {
 	grid [button $top.buts.can -text "Cancel" -command fontcan \
 		  -default normal] \
 	    -row 0 -column 1
-	bind $top <Key-Return> fontok
-	bind $top <Key-Escape> fontcan
+	bind $top <Return> fontok
+	bind $top <Escape> fontcan
 	grid $top.buts.ok $top.buts.can
 	grid columnconfigure $top.buts 0 -weight 1 -uniform a
 	grid columnconfigure $top.buts 1 -weight 1 -uniform a
@@ -966,6 +985,9 @@ proc appearance_box {} {
 	      -text "Cancel" \
 	      -command appcan ]\
 	-row 0 -column 1 -sticky w -padx 5
+
+    bind .appbox <Return> appok
+    bind .appbox <Escape> appcan
 
     tkwait window .appbox
 }
@@ -1156,23 +1178,41 @@ proc gcide_configure {args} {
 	  
     
     grid [ttk::frame .initcfg.c.buttons -padding "12 12 12 1"] \
-	  -column 0 -row 5 -columnspan 3 -sticky we
-    grid columnconfigure .initcfg.c.buttons 0 -weight 1
-    grid columnconfigure .initcfg.c.buttons 1 -weight 1
+	  -column 0 -row 5 -columnspan 3 
+    grid columnconfigure .initcfg.c.buttons 0 -weight 1 -uniform a
+    grid columnconfigure .initcfg.c.buttons 1 -weight 1 -uniform a
+    grid columnconfigure .initcfg.c.buttons 2 -weight 1 -uniform a
 
+    set okcommand [subst {
+	if {\[eval $okcom\] || \[submit_config\]} {
+	    raise .initcfg
+	} else {
+	    grab release .initcfg
+	    destroy .initcfg
+	}
+    } ]
+
+    set exitcommand [subst {
+	grab release .initcfg;
+	destroy .initcfg;
+	$exitcom }]
+    
     grid [button .initcfg.c.buttons.ok \
           -text "OK" \
-	      -command [subst {
-		  if {\[eval $okcom\] || \[submit_config\]} {
-		      raise .initcfg
-		  } else {
-		      grab release .initcfg
-		      destroy .initcfg
-		  }
-		  } ] ] -column 0 -row 0  -sticky e -padx 10
+	      -command $okcommand ] -column 0 -row 0  -sticky ew -padx 10
     grid [button .initcfg.c.buttons.exit \
 	      -text $exittext \
-	      -command [subst { grab release .initcfg; destroy .initcfg; $exitcom }] ] -column 1 -row 0 -sticky w -padx 10
+	      -command $exitcommand ] -column 1 -row 0 -sticky ew -padx 10
+    grid [button .initcfg.c.buttons.help \
+	      -text "Help" \
+	      -command { helpbox "Manual" \
+			     -file "| info -o - --subnodes Dico gcider" } \
+	     ] \
+	-column 2 -row 0 -sticky we -padx 10
+
+    bind .initcfg <Return> $okcommand
+    bind .initcfg <Escape> $exitcommand
+    
     tkwait window .initcfg
 }
 

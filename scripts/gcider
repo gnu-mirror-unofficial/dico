@@ -1675,8 +1675,56 @@ proc dict_connect {args} {
 }
 
 ############################################################################
+# Command line informational output
+############################################################################
+
+proc cmdline_help {} {
+    global argv0
+    
+    puts "Usage: $argv0 \[OPTIONS\]"
+    puts {A browser for GNU Collaborative International Dictionary of English.
+
+OPTIONS are:
+  -V, --version               Print program version
+  -h, --help                  Give this help list
+	
+Report bugs to <bug-dico@gnu.org>.
+GNU dico home page: <http://www.gnu.org/software/dico/>
+General help using GNU software: <http://www.gnu.org/gethelp/>
+    }
+    exit 0
+}
+
+proc cmdline_version {} {
+    global argv0
+    # FIXME: Hardcoded version number
+    puts "$argv0 (GNU dico) 2.1.90"
+    puts {
+Copyright (C) 2005-2012 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+}
+    exit 0
+}
+
+############################################################################
 # MAIN
 ############################################################################
+
+# Parse command line options
+foreach arg $argv {
+    switch -- $arg {
+	"-h" -
+	"--help" cmdline_help
+	"-V" -
+	"--version" cmdline_version
+	default {
+	    puts stderr "$argv0: unrecognized argument $arg; try $argv0 --help for more info"
+	    exit 1
+	}
+    }
+}
 
 # Set up application structure
 setupvisual

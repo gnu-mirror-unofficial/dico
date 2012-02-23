@@ -5727,7 +5727,7 @@ Print program version.
 (@acronym{GCIDE}).  When started, it launches a copy of @command{dicod}
 with a specially crafted configuration file and interfaces with it via
 stdin/stdout. For operation, it needs to know the location of the
-@command{dicod} binary and of the directory where @acronym{GCIDE}
+@command{dicod} binary and of the directory where the @acronym{GCIDE}
 files reside.  When started for the first time it will present you
 with a dialog box to help it locate the needed components.  The
 location of the @command{dicod} binary is normally guessed by scanning

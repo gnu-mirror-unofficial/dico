@@ -14,5 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-bin_SCRIPTS = gcider
+if TK_WISH_COND
+  GCIDER=gcider
+endif
+bin_SCRIPTS = $(GCIDER)
 EXTRA_DIST = gcider

@@ -266,6 +266,25 @@ if test "$status_python" = yes; then
 fi
 AM_CONDITIONAL([PYTHON_COND],[test $status_python = yes])
 
+# Tcl/tk
+AC_ARG_WITH([tk],
+            AC_HELP_STRING([--with-tk],
+	                   [build Tcl/Tk-based applications (GCIDER)]),
+	    [
+case "${withval}" in
+  yes) status_tk=yes ;;
+  no)  status_tk=no;;
+  *) AC_MSG_ERROR([bad value ${withval} for --with-tk])
+esac],[status_tk=yes])
+
+if test $status_tk=yes; then
+  AC_PATH_PROG([WISH], wish)
+  if test -z "$WISH"; then
+    status_tk=no
+  fi
+  AM_CONDITIONAL([TK_WISH_COND],[test $status_tk = yes])
+fi
+
 # Check for libpcre
 AC_ARG_WITH([pcre],
             AC_HELP_STRING([--with-pcre],

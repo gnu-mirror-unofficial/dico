@@ -214,13 +214,15 @@ proc setupvisual {} {
 
     grid [ttk::frame .c -padding "3 3 3 3"] -column 0 -row 0 -sticky nwes
     grid columnconfigure . 0 -weight 1
-    grid rowconfigure . 0 -weight 1
     grid columnconfigure .c 0 -weight 3
     grid columnconfigure .c 1 -weight 3
+    grid rowconfigure . 0 -weight 1
 
     grid columnconfigure .c 3 -weight 3
     grid columnconfigure .c 4 -weight 3
+    grid rowconfigure .c 1 -weight 1
 
+    
     grid [ttk::frame .c.wf] \
 	-column 0 -row 0 -sticky ew 
     grid [ttk::combobox .c.wf.input -textvariable input -width 60 \

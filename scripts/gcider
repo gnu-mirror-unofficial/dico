@@ -79,8 +79,6 @@ eval font create textfont [fontflags textfont]
 parsefont uifont $uifont
 eval font create uifont [fontflags uifont]
 
-option add *tearOff 0
-
 option add *Text.font textfont startupFile
 option add *Listbox.font textfont startupFile
 
@@ -193,7 +191,7 @@ proc setupvisual {} {
     . configure -menu .menubar
     set m .menubar
     menu $m.file
-    $m add cascade -menu $m.file -label File
+    $m add cascade -menu $m.file -label File -underline 0
     $m.file add command -label "Save article" -command save_article -underline 0
     $m.file add separator
     $m.file add command -label "Exit" -command { finish 0 } -underline 1	
@@ -202,7 +200,7 @@ proc setupvisual {} {
     $m.edit add command -label "Appearance" -underline 0 -command appearance_box
     $m.edit add command -label "Configure" -command gcider_reconf -underline 0
 
-    $m add cascade -label Help -menu [menu $m.help]
+    $m add cascade -label Help -underline 0 -menu [menu $m.help]
     $m.help add command -label "Manual" -underline 0 \
 	-command { helpbox "Manual" \
 		       -file "| info -o - --subnodes Dico gcider" }
@@ -214,11 +212,9 @@ proc setupvisual {} {
 
     grid [ttk::frame .c -padding "3 3 3 3"] -column 0 -row 0 -sticky nwes
     grid columnconfigure . 0 -weight 1
-    grid columnconfigure .c 0 -weight 3
-    grid columnconfigure .c 1 -weight 3
     grid rowconfigure . 0 -weight 1
-
-    grid columnconfigure .c 3 -weight 3
+    
+    grid columnconfigure .c 0 -weight 3
     grid columnconfigure .c 4 -weight 3
     grid rowconfigure .c 1 -weight 1
 
@@ -1325,9 +1321,12 @@ proc saveconf {} {
     foreach var { dicod_server gcide_dbdir textfont uifont \
 		      hdrfont errorcolor history_length idxingcide } {
 	global $var
-	set value [set $var]
-	puts $fd [list set $var $value]
+	if [info exists $var] {
+	    set value [set $var]
+	    puts $fd [list set $var $value]
+	}
     }
+    puts $fd "set geometry [wm geometry .]"
     close $fd
 }
 
@@ -1734,6 +1733,17 @@ setupvisual
 # Read configuration file, or create it if it doesn't exist
 if [file exists $cfgdir/config] {
     catch {source $cfgdir/config}
+    if {[info exists geometry]} {
+	if {[scan $geometry "%dx%d" w h] >= 2} {
+	    if {$w > [winfo screenwidth .]} {
+		set w [winfo screenwidth .]
+	    }
+	    if {$h > [winfo screenheight .]} {
+		set h [winfo screenheight .]
+	    }
+	    wm geometry . "${w}x$h"
+	}
+    }
     foreach font {textfont uifont} {flushfont $font}
     seterrheader
     loadpick

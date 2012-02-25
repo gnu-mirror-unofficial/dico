@@ -26,7 +26,7 @@ access_log_status(const char *first, const char *last)
     memcpy(status[0], first, 3);
     status[0][3] = 0;
     if (last[0] == '.')
-	last += 3;
+	last += 2;
     memcpy(status[1], last, 3);
     status[1][3] = 0;
 }

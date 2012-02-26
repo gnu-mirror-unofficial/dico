@@ -104,6 +104,7 @@ documents Dico Version @value{VERSION}.
 
 Appendices
 
+* Available Strategies::
 * Dictionary Server Protocol::
 * Time and Date Formats::
 * Libdico::
@@ -352,14 +353,15 @@ that the headword was not found.
 @cindex strategy
 A special mechanism is provided for looking up the headword in a
 database (or databases).  The @code{MATCH} command returns the
-headwords that match given string (the @dfn{search key}) using a
+headwords that matches a given string (the @dfn{search key}) using a
 particular @dfn{strategy}.  In other words, the strategy identifies
-algorithm used to compare headwords with the key.  For example, the
-strategy called @samp{exact} means literal comparison and returns only
-those headwords that match the key exactly.  The strategy
+algorithm used to compare headwords with the search key.  For example,
+the strategy called @samp{exact} means literal comparison and returns
+only those headwords that match the key exactly.  The strategy
 @samp{prefix} matches word prefixes.  These two strategies are always
 present.  Depending on the configuration, the server may offer other
-strategies as well.
+strategies as well.  @xref{Available Strategies}, for a complete list
+of strategies implemented in GNU Dico @value{VERSION}.
 
 @anchor{default strategy}
 @cindex default strategy
@@ -437,7 +439,8 @@ University and distributed under a BSD style license.
 English}.  This dictionary derived from Webster's Revised Unabridged
 Dictionary, supplemented with some of the definitions from WordNet.
 It was edited by Patrick J.@: Cassidy, proof-read and supplemented by
-volunteers from around the world.
+volunteers from around the world.  It is available from
+@uref{http://gcide.gnu.org.ua}.
 
 @item guile
   This module provides an interface to Guile, the @dfn{GNU's
@@ -2865,12 +2868,14 @@ initializing the module instance.
 
 @node gcide
 @section @command{Gcide}
+@cindex gcide module
 @cindex GNU Collaborative International Dictionary of English
   The @command{gcide} module provides support for GNU Collaborative
 International Dictionary of English.  This dictionary can be downloaded
 from @uref{ftp://ftp.gnu.org/gnu/gcide}.  It consists of a set of
 files named from @file{CIDE.A} through @file{CIDE.Z}, written using a
-special markup.
+special markup.  See @uref{http://gcide.gnu.org.ua}, for a detailed
+information about the dictionary.
 
   The @command{gcide} module is started via the following statement:
 
@@ -2922,7 +2927,7 @@ useful for the module developers.
 @deffn {gcide parameter} suppress-pr
 This paramenter suppresses the output of @samp{pr} (pronunciation)
 tags.  According to GCIDE docs, @cite{very few of the pronunciation
-fields have been filled in}, so it is usually better to avoid
+fields have been filled in}, so it might be reasonable to avoid
 displaying them at all.
 @end deffn
 
@@ -3010,6 +3015,7 @@ The default page size is 10240 bytes.
 
 @node wordnet
 @section @command{Wordnet}
+@cindex wordnet module
 @dfn{WordNet} is a lexical database for the English language, created
 and maintained at the Cognitive Science Laboratory of Princeton
 University@footnote{See @uref{http://wordnet.princeton.edu/wordnet/},
@@ -3138,6 +3144,7 @@ database @{
 
 @node guile
 @section @command{Guile}
+@cindex guile module
 @cindex Guile
 @cindex Scheme
   @dfn{Guile} is an acronym for @dfn{GNU's Ubiquitous Intelligent
@@ -3857,12 +3864,12 @@ needed.
 @node python
 @section @command{Python}
 @cindex Python
+@cindex python module
 @WRITEME
 
 @node stratall
 @section @command{Stratall}
-@cindex stratall
-@cindex all, strategy
+@cindex stratall module
   The @command{stratall} module provides a new strategy, called @samp{all}.
 This strategy always returns a full list of headwords from the
 database, no matter what the actual search word is.
@@ -3886,7 +3893,7 @@ strategy all @{
 
 @node substr
 @section @command{Substr}
-@cindex substr, strategy
+@cindex substr module
   The @command{substr} module provides a @samp{substr} search
 strategy.  This strategy matches a substring anywhere in the
 keyword.  For example:
@@ -3909,7 +3916,7 @@ load-module substr;
 
 @node word
 @section @command{Word}
-@cindex word, strategy
+@cindex word module
   The @command{word} module provides the following strategies:
 
 @table @asis  
@@ -3950,6 +3957,7 @@ S: 250 Command complete [d/m/c = 0/1/995 0.003r 0.004u 0.000s]
 
 @node nprefix
 @section @command{Nprefix}
+@cindex nprefix module
 The @command{nprefix} module provides a strategy similar to
 @samp{prefix}, but which returns the specified range of bytes.  For
 example, the statement
@@ -3975,7 +3983,7 @@ load-module nprefix;
 
 @node pcre
 @section @command{Pcre}
-@cindex pcre
+@cindex pcre module
 @cindex regexp, Perl-compatible
 @cindex Perl-compatible regular expressions
 The @command{pcre} module provides a matching strategy using
@@ -4027,6 +4035,7 @@ MATCH ! pcre "/\\stext/i"
 
 @node ldap
 @section @command{Ldap}
+@cindex ldap module
 The @command{ldap} module loads the support for @acronym{LDAP} user
 databases.  It is available if Dico has been configured with
 @acronym{LDAP}.
@@ -4042,6 +4051,7 @@ load-module ldap;
 @node pam
 @section @command{pam}
 @cindex PAM
+@cindex pam module
 The @command{pam} module implements user authentication via PAM.
 It can be used only with @samp{LOGIN} and @samp{PLAIN} GSASL
 authentication methods.
@@ -4083,7 +4093,7 @@ mechanism to return textual data from PAM.
 
 @node Interface
 @chapter Dico Module Interface
-@UNREVISED
+This chapter describes the API for Dico loadable modules.
 
 @menu
 * dico_database_module::
@@ -4094,7 +4104,27 @@ mechanism to return textual data from PAM.
 
 @node dico_database_module
 @section dico_database_module
-@UNREVISED
+@cindex dico_database_module, a structure
+@kwindex DICO_EXPORT
+Each module must export exactly one symbol of type @code{struct
+dico_database_module}.  This symbol must be declared as
+
+@example
+DICO_EXPORT(@var{name}, module)
+@end example
+
+@noindent
+where @var{name} is the name of the module file (without suffix).
+For example, a module @file{word.so} would have in its sourse the
+following declaration:
+
+@example
+struct dico_database_module DICO_EXPORT(word, module) = @{
+@dots{}
+@};
+@end example
+
+The @code{dico_database_module} has the following members:
 
 @deftypevr {dico_database_module} unsigned dico_version
 @vrindex DICO_MODULE_VERSION
@@ -4120,7 +4150,6 @@ member of the structure.
 This capability is used by modules defining new matching strategies or
 authentication methods.
 @end table
-
 @end deftypevr
 
 @anchor{dico_init}
@@ -4137,9 +4166,9 @@ The command line given by @code{command} configuration statement
 (@pxref{Handlers, command}), split into words.  The element
 @code{@var{argv}[0]} is the name of the module.  The element
 @code{@var{argv}[@var{argc}]} is @samp{NULL}.  Word splitting
-follows the rules similar to those used in shell, in particular,
-quoted strings (using both single and double quotes) are parsed as a
-single word.
+follows the rules similar to those used in shell. In particular,
+a quoted string (using both single and double quotes) is handled
+as a single word.
 @end table
 
 If @code{dico_capabilities} is @code{DICO_CAPA_DEFAULT}, this
@@ -4179,29 +4208,29 @@ mechanism.  Another method, @code{dico_open} is responsible for that.
 
 @deftypefn {Dico Callback} int dico_free_db (dico_handle_t @var{dh})
 Reclaim any resources associated with database handle @var{dh}.  This
-method is called as a part of exit cleanup routine, before the main
+method is called as part of exit cleanup routine, before the main
 @command{dicod} process terminates.
 
-Return @samp{0} on success, or any non-@samp{0} value on failure.
+It shall return @samp{0} on success, or any non-@samp{0} value on failure.
 @end deftypefn
 
 @deftypefn {Dico Callback} int dico_open (dico_handle_t @var{dh})
 Open the database identified by the handle @var{dh}.  This method is
-called as a part of child process initialization routine.
+called as part of child process initialization routine.
 
-Return @samp{0} on success, or any non-@samp{0} value on failure.
+It shall return @samp{0} on success, or any non-@samp{0} value on failure.
 
 The @code{dico_open} method is optional.
 @end deftypefn
 
 @deftypefn {Dico Callback} int dico_close (dico_handle_t @var{dh})
 Close the database identified by the handle @var{dh}.  This method is
-called as a part of child process termination routine.
+called as part of child process termination routine.
 
-Return @samp{0} on success, or any non-@samp{0} value on failure.
+It shall return @samp{0} on success, or any non-@samp{0} value on failure.
 
-The @code{dico_close} method is optional, but it must be defined, if
-@code{dico_open} is defined.
+The @code{dico_close} method is optional, but if @code{dico_open} is
+defined, @code{dico_close} must be defined as well.
 @end deftypefn
 
 @anchor{dico_db_info}
@@ -4209,9 +4238,9 @@ The @code{dico_close} method is optional, but it must be defined, if
 Return a database information string for the database identified by
 @var{dh}.  This function is called on each @code{SHOW INFO} command,
 unless an informational text for this database is supplied in the
-configuration file (@pxref{Databases, info}).  After use, the value
-returned by @code{dico_db_info} shall be freed using the @code{free}
-function.
+configuration file (@pxref{Databases, info}).  This value must be
+allocated using malloc(3).  The caller is responsible for freeing it
+when no longer needed. 
 
 This method is optional.
 @end deftypefn
@@ -4220,16 +4249,16 @@ This method is optional.
 Return a short database description string for the database identified
 by @var{dh}.  This function is called on each @code{SHOW DB} command,
 unless a description for this database is supplied in the
-configuration file (@pxref{Databases, descr}).  After use, the value
-returned by @code{dico_db_descr} shall be freed using the @file{libc}
-@code{free} function.
+configuration file (@pxref{Databases, descr}).  This value must be
+allocated using malloc(3).  The caller is responsible for freeing it
+when no longer needed.
 
 This method is optional.
 @end deftypefn
 
 @deftypefn {Dico Callback} dico_result_t dico_match (dico_handle_t @var{dh}, @
   const dico_strategy_t @var{strat}, const char *@var{word})
-Use the strategy @var{strat} to search the database @var{dh}, and
+Use the strategy @var{strat} to search in the database @var{dh}, and
 return all headwords matching @var{word}.
 
 This method returns a @dfn{result handle}, an opaque pointer that can
@@ -4254,7 +4283,7 @@ The @code{dico_output_result} method outputs to stream @var{str} the
 handle, obtained from a previous call to @code{dico_match} or
 @code{dico_define}.
 
-Return @samp{0} on success, or any non-@samp{0} value on failure.
+Returns @samp{0} on success, or any non-@samp{0} value on failure.
 
 It is guaranteed that the @code{dico_output_result} callback is
 called as many times as there are elements in @var{rp} (as determined by the
@@ -4265,6 +4294,7 @@ previous call incremented by one.
 At the first call @var{n} equals 0.
 @end deftypefn
 
+@anchor{dico_result_count}
 @deftypefn {Dico Callback} size_t dico_result_count (dico_result_t @var{rp})
 Return the number of distinct elements in the result set identified by
 @var{rp}.  The latter is a result handle, obtained from a previous
@@ -4282,6 +4312,14 @@ This method is optional.
 Free any resources used by the result set @var{rp}, which is a result
 handle, obtained from a previous call to @code{dico_match} or
 @code{dico_define}. 
+@end deftypefn
+
+@deftypefn {Dico Callback} int dico_result_headers (dico_result_t @var{rp}, @
+         dico_assoc_list_t @var{hdr})
+Populate associative list @var{hdr} with the headers describing result
+set @var{rp}.  This callback is optional.  If defined, it will be
+called before outputting the result set @var{rp} if @code{OPTION MIME}
+is in effect (@pxref{OPTION, OPTION MIME}).
 @end deftypefn
 
 @node Strategies
@@ -4521,7 +4559,54 @@ soundex_sel(int cmd, dico_key_t key, const char *dict_word)
 
 @node Output
 @section Output
-@WRITEME
+@cindex output
+@kwindex dico_output_result
+The @code{dico_output_result} method is called when the server needs
+to output the result of a @samp{define} or @samp{match} command.  It
+must be defined as follows:
+
+@example
+int output_result (dico_result_t @var{rp}, size_t @var{n},
+                   dico_stream_t @var{str});
+@end example
+
+The @var{rp} argument points to the result in question.  From the server's
+point of view it is an opaque pointer.  The application shall define
+its own result structure, so the first operation the
+@code{dico_output_result} method does is often typecasting @var{rp} to
+a pointer to that structure in order to be able to access its
+members.
+
+A result can conceptually contain several @dfn{parts}.  For example,
+the result of a @samp{DEFINE} command can contain several definitions
+of the term.  Similarly, the result of @samp{MATCH} contains one or
+more matches.  The server obtains the exact number of parts in a
+result by calling the @code{dico_result_count} method
+(@pxref{dico_result_count}).
+
+When outputting a result, the server calls the @code{dico_output_result}
+in a loop, once for each result part.  It passes the ordinal
+(zero-based) number of the part that needs to be output in the @var{n}
+parameter.  It is guaranteed that @var{n} increases by one for each
+subsequent call of @code{dico_output_result} with the same @var{rp}
+parameter.
+
+The @var{str} parameter identifies the @dfn{output stream}.  The
+@code{dico_output_result} function must format the requested part from
+the result and output it to that stream.  To do so it should use one
+of the following functions:
+
+@deftypefn Function int dico_stream_write (dico_stream_t @var{str}, @
+              const void *@var{buf}, size_t @var{count})
+Writes @var{count} bytes from the buffer pointed to by @var{buf} to the
+output stream @var{str}.  Returns 0 on success, and non-zero on error.
+@end deftypefn
+              
+@deftypefn Function int dico_stream_writeln (dico_stream_t @var{str}, @
+              const char *@var{buf}, size_t @var{size})
+Same as @code{dico_stream_write}, but ends the output with a
+@kbd{newline} character (ASCII 10).              
+@end deftypefn
 
 @node Error Reporting
 @section Error Reporting
@@ -5721,12 +5806,13 @@ Print program version.
 @node gcider
 @chapter GCIDER
 @cindex GCIDE
+@cindex gcider
 @cindex GNU Collaborative International Dictionary of English
 @command{Gcider} is a window-based application for browsing the
 @dfn{GNU Collaborative International Dictionary of English}
 (@acronym{GCIDE}).  When started, it launches a copy of @command{dicod}
 with a specially crafted configuration file and interfaces with it via
-stdin/stdout. For operation, it needs to know the location of the
+stdin/stdout. For operation it needs to know the locations of the
 @command{dicod} binary and of the directory where the @acronym{GCIDE}
 files reside.  When started for the first time it will present you
 with a dialog box to help it locate the needed components.  The
@@ -5741,7 +5827,7 @@ The program display is organized in three areas, ordered vertically.
 The topmost area is the @dfn{menubar}, which contains pull-down menus.
 It is followed by a @dfn{search control} area.  It provides an input
 line for you to enter the term to look-up in the dictionary, a set
-of widgets for revoking prior inputs from the history and for
+of widgets for bringing back prior inputs from the history and for
 controlling the search types and matching strategies.  The area that
 follows presents two windows, side by side.  The leftmost one is the
 @dfn{article window}, where definitions of the search terms are
@@ -5753,7 +5839,7 @@ search.  Secondly, it provides a terse contextual help describing what
 you can do using the widget your mouse pointer points to.
 
 To look up a word, type it in the input line in the search area and
-hit enter or click on the @samp{Define} button.  The definition, if
+hit @kbd{CR} or click on the @samp{Define} button.  The definition, if
 found, is then displayed in the article window.  This text may contain
 @dfn{cross-references} to other words in the dictionary, which are shown
 underlined, to draw your attention.  To define a cross-reference,
@@ -5772,7 +5858,7 @@ headwords will then be displayed in a listbox to the right of the
 article window.  Clicking on a headword will bring its definition to
 the article window.
 
-To select a matching strategy, click on the strategy widget and select
+To select a match strategy, click on the strategy widget and select
 the desired strategy in the pop-down list that will appear.  The list
 contains short strategy names.  To help you select the right one, the
 status line will show a full description of the curently highlighted
@@ -5812,6 +5898,10 @@ shows the basic set of information that is needed in order to find the bug:
 file along with your bug report.  This file is created after running
 @command{./configure} in the source root directory of GNU Dico.
 @end itemize
+
+@node Available Strategies
+@appendix Available Strategies
+@include strat.texi
 
 @node Dictionary Server Protocol
 @appendix Dictionary Server Protocol

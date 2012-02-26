@@ -70,7 +70,7 @@ mod_descr(dico_handle_t hp)
 }
 
 int
-mod_lang (dico_handle_t hp, dico_list_t list[2])
+mod_lang(dico_handle_t hp, dico_list_t list[2])
 {
     /* FIXME */
     return 1;

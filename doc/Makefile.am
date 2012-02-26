@@ -20,6 +20,7 @@ dico_TEXINFOS=\
  libdico.texi\
  macros.texi\
  proto.texi\
+ strat.texi\
  strftime.texi
 
 EXTRA_DIST = \

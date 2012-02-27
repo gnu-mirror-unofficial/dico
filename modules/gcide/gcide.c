@@ -36,6 +36,7 @@ struct gcide_db {
     char *tmpl_letter;
     char *idxgcide;
     int flags;
+    time_t latest_change;
     
     int file_letter;
     dico_stream_t file_stream;
@@ -148,6 +149,8 @@ static int
 gcide_check_files(struct gcide_db *db)
 {
     int i;
+    time_t t = 0;
+    struct stat st;
     
     for (i = 0; letters[i]; i++) {
 	char *p = gcide_template_name(db, letters[i]);
@@ -155,28 +158,58 @@ gcide_check_files(struct gcide_db *db)
 	    dico_log(L_ERR, 0, _("gcide: `%s' is not readable"), p);
 	    return 1;
 	}
+	if (stat(p, &st)) {
+	    dico_log(L_ERR, errno, _("gcide: can't stat `%s'"), p);
+	    return 1;
+	}
+	if (st.st_mtime > t)
+	    t = st.st_mtime;
     }
+    db->latest_change = t;
     return 0;
 }
 
+/* Try to access IDXNAME.  Return 0 on success, 1 if it should be (re)created
+   and -1 on error */
+static int
+gcide_access_idx(struct gcide_db *db, char *idxname)
+{
+    int rc = 1;
+    struct stat st;
+
+    if (access(idxname, R_OK) == 0) {
+	if (stat(idxname, &st)) {
+	    dico_log(L_ERR, errno, _("gcide: can't stat `%s'"), idxname);
+	    /* try to create it, anyway */
+	} else if (db->latest_change <= st.st_mtime)
+	    rc = 0;
+	else
+	    dico_log(L_NOTICE, 0,
+		     _("gcide: index file older than database, reindexing"));
+    } else if (errno != ENOENT) {
+	dico_log(L_ERR, errno, _("gcide_open_idx: cannot access %s"),
+		 idxname);
+	rc = -1;
+    }
+    return rc;
+}
+    
 static int
 gcide_open_idx(struct gcide_db *db)
 {
     int rc = 1;
     char *idxname;
-
+    
     idxname = dico_full_file_name(db->idx_dir, "GCIDE.IDX");
     if (!idxname) {
 	dico_log(L_ERR, errno, "gcide_open_idx");
 	return 1;
     }
-    if (access(idxname, R_OK) == 0)
-	rc = 0;
-    else if (errno == ENOENT)
+    
+    rc = gcide_access_idx(db, idxname);
+    if (rc == 1)
 	rc = run_idxgcide(idxname, db);
-    else
-	dico_log(L_ERR, errno, _("gcide_open_idx: cannot access %s"),
-		 idxname);
+	
     if (rc == 0) {
 	db->idx = gcide_idx_file_open(idxname, db->idx_cache_size);
 	if (!db->idx)

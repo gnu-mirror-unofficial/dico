@@ -203,14 +203,14 @@ XD [0-9a-f]
   \n         line++;
 }
 <HEADWORD>{
-  "</"[a-z][a-z]*">" {
+  "</"[a-zA-Z][a-zA-Z]*">" {
       if (yyleng == strlen(endtag) + 3 &&
 	  memcmp(endtag, yytext + 2, yyleng-3) == 0) {
 	  BEGIN(retstate);
 	  obstack_1grow(&stk, 0);
       }
   }
-  "<"[a-z?][a-z0-9]*"/" {
+  "<"[a-zA-Z?][a-zA-Z0-9]*"/" {
       char const *s = gcide_entity_to_utf8(yytext);
       if (s) {
 	  if (strcmp(s, "<?>") == 0)
@@ -222,7 +222,7 @@ XD [0-9a-f]
 	  dico_log(L_WARN, 0, _("%s:%u: unrecognized entity: %s"),
 		   infile, line, yytext);
   }
-  "<"[a-z][^/>]*">"   /* ignore tag */;
+  "<"[a-zA-Z][^/>]*">"   /* ignore tag */;
   [""*`]      ;
   "\\'d8"     ;       /* ignore double vertical bar */
   "\\'"{XD}{XD} {

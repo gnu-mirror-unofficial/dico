@@ -152,6 +152,7 @@ main(int argc, char **argv)
     struct gcide_parse_tree *tree;
     struct output_closure clos;
     int show_struct = 0;
+    int dbglex = 0;
     
     dico_set_program_name(argv[0]);
     clos.flags = 0;
@@ -161,7 +162,7 @@ main(int argc, char **argv)
 	char *arg = *++argv;
 
 	if (strcmp(arg, "-debug") == 0)
-	    gcide_markup_debug = 1;
+	    dbglex = 1;
 	else if (strcmp(arg, "-h") == 0 || strcmp(arg, "-help") == 0) {
 	    usage(stdout);
 	    exit(0);
@@ -227,7 +228,7 @@ main(int argc, char **argv)
 	exit(EX_UNAVAILABLE);
     }
 	
-    tree = gcide_markup_parse(textbuf, size);
+    tree = gcide_markup_parse(textbuf, size, dbglex);
     if (!tree)
 	exit(EX_UNAVAILABLE);
 

@@ -48,7 +48,22 @@
 #define yyalloc		      gcide_markup_yyalloc                
 #define yyrealloc	      gcide_markup_yyrealloc              
 #define yyfree                gcide_markup_yyfree
-#define yyunput               gcide_markup_yyunput    
+#define yyunput               gcide_markup_yyunput
+
+#define yylex_destroy         gcide_markup_yylex_destroy  
+#define yyget_debug	      gcide_markup_yyget_debug    
+#define yyset_debug	      gcide_markup_yyset_debug    
+#define yyget_extra	      gcide_markup_yyget_extra    
+#define yyset_extra	      gcide_markup_yyset_extra    
+#define yyget_in	      gcide_markup_yyget_in       
+#define yyset_in	      gcide_markup_yyset_in       
+#define yyget_out	      gcide_markup_yyget_out      
+#define yyset_out	      gcide_markup_yyset_out      
+#define yyget_leng	      gcide_markup_yyget_leng     
+#define yyget_text	      gcide_markup_yyget_text     
+#define yyget_lineno	      gcide_markup_yyget_lineno   
+#define yyset_lineno	      gcide_markup_yyset_lineno   
+    
 }
 %{
 
@@ -233,7 +248,8 @@ pop_tag(const char *tagstr, size_t taglen)
     if (len == 3 && memcmp(tagstr, "grk", 3) == 0)
 	in_grk = 0;
     
-    if (strlen(current_tag->tag_name) == len &&
+    if (TAG_HAS_NAME(current_tag) &&
+	strlen(current_tag->tag_name) == len &&
 	memcmp(current_tag->tag_name, tagstr, len) == 0)
 	current_tag = dico_list_pop(tagstk);
     else
@@ -252,7 +268,7 @@ XD [0-9a-f]
   "<--"    BEGIN_COMMENT("-->");
   "<!"     BEGIN_COMMENT("!>");
   "<p>"|"</p>" ;
-  "<"[a-z][^/>]*">" {
+  "<"[a-zA-Z][^/>]*">" {
       struct gcide_tag *tag;
 
       if (text_segment_length()) {
@@ -266,7 +282,7 @@ XD [0-9a-f]
       
       push_tag(alloc_tag(yytext + 1, yyleng - 2));
   }
-  "</"[a-z][^>]*">" {
+  "</"[a-zA-Z][^>]*">" {
       if (text_segment_length()) {
 	  struct gcide_tag *tag = calloc(1, sizeof(*tag));
 	  if (!tag)
@@ -277,7 +293,7 @@ XD [0-9a-f]
       }
       pop_tag(yytext + 2, yyleng - 3);
   }
-  "<"[a-z?][a-z0-9]*"/" {
+  "<"[a-zA-Z?][a-zA-Z0-9]*"/" {
       char const *s = gcide_entity_to_utf8(yytext);
       if (s)
 	  text_add_str(s, strlen(s));
@@ -317,8 +333,6 @@ yywrap()
 {
     return 1;
 }
-
-int gcide_markup_debug;
 
 struct walk_closure {
     int (*fun)(int, struct gcide_tag *, void *);
@@ -412,7 +426,7 @@ early_fixup(void *item, void *data)
 }
 
 struct gcide_parse_tree *
-gcide_markup_parse(char const *text, size_t len)
+gcide_markup_parse(char const *text, size_t len, int dbg)
 {
     struct gcide_parse_tree *tp;
     struct gcide_tag *p;
@@ -441,7 +455,7 @@ gcide_markup_parse(char const *text, size_t len)
     if (!current_tag)
 	memerr("gcide_markup_parse");
 
-    yy_flex_debug = gcide_markup_debug;
+    yy_flex_debug = dbg;
     BEGIN(INITIAL);
     while (yylex ())
         ;

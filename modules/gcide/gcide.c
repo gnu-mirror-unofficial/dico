@@ -26,7 +26,8 @@
 #include <errno.h>
 #include <appi18n.h>
 
-#define GCIDE_NOPR 0x01
+#define GCIDE_NOPR     0x01
+#define GCIDE_DBGLEX   0x02
 
 struct gcide_db {
     char *db_dir;
@@ -202,6 +203,7 @@ gcide_init_db(const char *dbname, int argc, char **argv)
 	{ DICO_OPTSTR(index-program), dico_opt_string, &idxgcide },
 	{ DICO_OPTSTR(index-cache-size), dico_opt_long, &idx_cache_size },
 	{ DICO_OPTSTR(suppress-pr), dico_opt_bitmask, &flags, { value: GCIDE_NOPR } },
+	{ DICO_OPTSTR(debug-lex), dico_opt_bitmask, &flags, { value: GCIDE_DBGLEX } },
 	{ NULL }
     };
     
@@ -637,7 +639,7 @@ output_def(dico_stream_t str, struct gcide_db *db, struct gcide_ref *ref)
 	return 1;
     }
 
-    tree = gcide_markup_parse(buffer, ref->ref_size);
+    tree = gcide_markup_parse(buffer, ref->ref_size, db->flags & GCIDE_DBGLEX);
     if (!tree)
 	rc = dico_stream_write(str, buffer, ref->ref_size);
     else {

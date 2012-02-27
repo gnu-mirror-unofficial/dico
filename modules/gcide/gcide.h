@@ -104,15 +104,16 @@ struct gcide_tag {
     } tag_v;
 };
 
+#define TAG_HAS_NAME(t) ((t) && (t)->tag_parmv && (t)->tag_name)
+
 struct gcide_parse_tree {
     char *textspace;
     size_t textsize;
     struct gcide_tag *root;
 };
 
-extern int gcide_markup_debug;
-
-struct gcide_parse_tree *gcide_markup_parse(char const *text, size_t len);
+struct gcide_parse_tree *gcide_markup_parse(char const *text, size_t len,
+					    int dbg);
 void gcide_parse_tree_free(struct gcide_parse_tree *tp);
 int gcide_parse_tree_inorder(struct gcide_parse_tree *tp,
 			     int (*fun)(int, struct gcide_tag *, void *),

@@ -236,7 +236,18 @@ static struct gcide_entity gcide_entity[] = {
     { "lsquo",    "‘" },
     { "ldquo",    "“" },
     { "rdquo",    "”" },
-    
+
+    { "dagger",   "†" },
+    { "dag",      "†" },
+    { "Dagger",   "‡" },
+    { "ddag",     "‡" },
+    { "para",     "§" },
+    { "gt",       ">" },
+    { "lt",       "<" },
+    { "rarr",     "→" },
+    { "larr",     "←" },
+    { "schwa",    "ə" },
+      
     { "br",       "\n" },
     { "and",      "and" },
     { "or",       "or" },

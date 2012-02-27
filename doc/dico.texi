@@ -135,6 +135,7 @@ Configuration
 * Syntax::               Configuration file syntax.
 * Server Settings::
 * Authentication::
+* SASL::                 SASL Authentication.
 * ACL::                  Access Control Lists
 * Security Settings::
 * Logging and Debugging::
@@ -156,8 +157,8 @@ Configuration File Syntax
 
 Authentication
 
-* text userdb::        Flat Text Databases.
-* ldap userdb::        LDAP Databases.
+* text userdb::       Flat Text Databases.
+* ldap userdb::       LDAP Databases.
 
 Databases
 
@@ -196,7 +197,6 @@ Dico Module Interface
 * dico_database_module::
 * Strategies::
 * Output::
-* Error Reporting::
 
 Strategies
 
@@ -266,7 +266,17 @@ The Libdico Library
 
 @node Preface
 @unnumbered Preface
-@WRITEME
+  A @dfn{dictionary server} is a program that provides dictionary
+services to other computers using the client-server model.  The
+dictionary services include listing the available databases, searching
+for a specific term in one or more databases, displaying the definitions
+found, etc.  
+
+  GNU Dico is an implementation of dictionary server, which supports a
+wide variety of database formats and is easily extensible using
+several scripting languages.  Apart from the server, the package
+contains a console dictionary client and a window-based browser for
+GCIDE dictionary.
 
 @node Overview
 @chapter Overview
@@ -414,7 +424,8 @@ does not impose any specific dictionary database format.  A single
 server can handle databases in various formats, provided that
 appropriate modules are available.  Several database modules are
 shipped with GNU Dico.  The following is a short introductions for
-some of them.  For more information, see @ref{Modules}.
+some of them.  @xref{Modules}, for a complete list of available
+modules with detailed descriptions.
 
 @table @asis
 @item dictorg
@@ -445,7 +456,7 @@ volunteers from around the world.  It is available from
 @item guile
   This module provides an interface to Guile, the @dfn{GNU's
 Ubiquitous Intelligent Language for Extensions}
-(@uref{http://www.gnu.org/software/guile}) and allows to write
+(@uref{http://www.gnu.org/software/guile}) and allows you to write
 database modules in Scheme programming language.
 
 @item python
@@ -547,7 +558,7 @@ enable its use if its version number is high enough.
 disable it.
 
 @node Python Support
-@section Pyhton Support
+@section Python Support
 @cindex python, configuration
   The support for Python (@uref{http://www.python.org}) is enabled
 automatically if @command{configure} detects that Python version 2.5 or
@@ -699,6 +710,7 @@ directives any time by running @command{dicod --config-help}.
 * Syntax::               Configuration file syntax.
 * Server Settings::
 * Authentication::
+* SASL::                 SASL Authentication.
 * ACL::                  Access Control Lists
 * Security Settings::
 * Logging and Debugging::
@@ -873,7 +885,7 @@ with a single character according to the following rules:
 @end float
 
   In addition, the sequence @samp{\@var{newline}} is removed from
-the string.  This allows to split long strings over several
+the string.  This allows you to split long strings over several
 physical lines, e.g.:
 
 @example
@@ -901,8 +913,8 @@ result as the example above:
 @anchor{here-document}
 @item Here-document
 @cindex here-document
-  A @dfn{here-document} is a special construct that allows to introduce
-strings of text containing embedded newlines.  
+  A @dfn{here-document} is a special construct that allows the user to
+introduce strings of text containing embedded newlines.  
 
   The @code{<<@var{word}} construct instructs the parser to read all
 the following lines up to the line containing only @var{word}, with
@@ -926,7 +938,7 @@ the text is read as is, without interpretation of escape sequences.
   If @var{word} is prefixed with @code{-} (a dash), then all leading
 tab characters are stripped from input lines and the line containing
 @var{word}.  Furthermore, if @code{-} is followed by a single space,
-all leading whitespace is stripped from them.  This allows to indent
+all leading whitespace is stripped from them.  This allows for indenting
 here-documents in a natural fashion.  For example:
 
 @example
@@ -1095,10 +1107,6 @@ pidfile /var/run/dict/dicod.pid;
 Another solution is to make @acronym{PID} directory group-writable and
 to add the owner group to the @code{group} statement (@pxref{group
 statement}).
-
-@FIXME{I am not sure this is quite right.  Should `make install'
-create the $localstate/run/dict directory?  But then, make doesn't
-know what user to set as its owner...}
 @end deffn
 
 @deffn {Configuration} max-children @var{number}
@@ -1114,7 +1122,7 @@ will disconnect automatically if remote client did not send any
 command within this number of seconds.  Setting timeout to 0 disables
 inactivity timeout (the default).
 
-Using this statement along with @code{max-children} allows to control
+This statement along with @code{max-children} allows you to control
 the server load.
 @end deffn
 
@@ -1148,6 +1156,10 @@ of seconds.  Default timeout is 3 seconds.
 make some databases or some additional information available to the
 user.  Another possible use of authentication is to minimize resource
 utilization on the server machine.
+
+  GNU Dico supports two types of authentication: the traditional
+APOP-style authentication (@pxref{AUTH}) and a more advanced SASL
+authentication.  The latter is described separately, see @ref{SASL}. 
 
   Authentication setup is simple: first, you define a user
 authentication database, then you enable it by declaring @code{auth}
@@ -1261,8 +1273,8 @@ user-db @var{url} @{
 @end example
 
 @menu
-* text userdb::        Flat Text Databases.
-* ldap userdb::        LDAP Databases.
+* text userdb::       Flat Text Databases.
+* ldap userdb::       LDAP Databases.
 @end menu
 
 @node text userdb
@@ -1418,6 +1430,69 @@ text} form.  The use of encrypted passwords (e.g.@: MD5 or SHA1) is
 possible only with @samp{LOGIN} and @samp{PLAIN} GSASL authentication
 methods.
 
+@node SASL
+@subsection SASL Authentication
+@cindex SASL
+@cindex gsasl
+The SASL authentication is available if the server was compiled with
+GNU SASL.
+
+@deffn {Configuration} sasl @{ @var{statements} @}
+This block statement configures SASL authentication.  The following
+is a short summary of its syntax and the available substatements:
+
+@example
+sasl @{
+  # @r{Disable SASL mechanisms listed in @var{mech}}.
+  disable-mechanism @var{mech};
+  # @r{Enable SASL mechanisms listed in @var{mech}}.
+  enable-mechanism @var{mech};
+  # @r{Set service name for GSSAPI and Kerberos.}
+  service @var{name};
+  # @r{Set realm name for GSSAPI and Kerberos.}
+  realm @var{name};
+  # @r{Define groups for anonymous users.}
+  anon-group @var{group-list};
+@}
+@end example
+@end deffn
+
+The list of available authentication mechanisms is configured using
+two statements:
+
+@deffn {sasl} disable-mechanism mech
+Disables SASL mechanisms listed in @var{mech}, which is a list of names.
+@end deffn
+
+@deffn {sasl} enable-mechanism mech
+Enables SASL mechanisms listed in @var{mech}, which is a list of names.
+@end deffn
+
+The server builds the list of available mechanisms using the following
+algorithm.  First, a list of implemented mechanisms is retrieved from
+the SASL library.  If the @code{enable-mechanism} statement is
+defined, the resulting list is filtered so that only mechanisms listed
+in @code{enable-mechanism} remain.  Further, if the
+@code{disable-mechanism} statement is defined, the names listed there
+are removed from the list.
+
+@deffn {sasl} service name
+Sets the service name for GSSAPI and Kerberos mechanisms.
+@end deffn
+
+@deffn {sasl} realm name
+Sets the realm name.
+@end deffn
+
+@deffn {sasl} anon-group list
+Sets the list of user groups considered anonymous.
+@end deffn
+
+The database of user credentials depends on the authentication
+mechanism used.  For GSSAPI or Kerberos it is managed by appropriate
+servers.  Other mechanisms use the standard @command{dicod} user database
+configuration (@pxref{Authentication}).
+
 @node ACL
 @subsection Access Control Lists
 @cindex @acronym{ACL}
@@ -1474,8 +1549,8 @@ Authenticated users which are members of at least one of groups listed in
 @var{group-list}.
 @end table
 
-The @var{sub-acl} part, if present, allows to branch to another
-@acronym{ACL}.  The syntax of this group is:
+The @var{sub-acl} part, if present, branches to another @acronym{ACL}.
+The syntax of this group is: 
 
 @example
 acl @var{name}
@@ -1484,7 +1559,7 @@ acl @var{name}
 @noindent
 where @var{name} is the name of a previously defined @acronym{ACL}.
 
-Finally, the @var{host-list} group allows to match client addresses.
+Finally, the @var{host-list} group matches client IP addresses.
 It consists of a @code{from} keyword followed by a list of
 @dfn{address specifiers}.  Allowed address specifiers are:
 
@@ -1656,9 +1731,9 @@ some remote client.  Never use it in a production environment.
 @cindex logging requests
 @cindex Apache
   GNU Dico provides a feature similar to Apache's @code{CustomLog}, which
-allows to keep a log of @code{MATCH} and @code{DEFINE} requests.  To
-enable this feature, specify the name of the log file using the
-following directive:
+keeps a log of @code{MATCH} and @code{DEFINE} requests.  To enable
+this feature, specify the name of the log file using the following
+directive:
   
 @deffn {Configuration} access-log-file @var{string}
 Set access log file name.
@@ -1858,8 +1933,8 @@ Set the server description to be shown in reply to @code{SHOW SERVER}
 
 The first line of the reply, after the usual @samp{114} response line,
 shows the name of host where the server is running.  If the settings
-of @code{show-sys-info} (@pxref{Security Settings, show-sys-info}) allow, some
-additional information about the system is printed.
+of @code{show-sys-info} (@pxref{Security Settings, show-sys-info})
+permit, some additional information about the system is printed.
 
 The lines that follow are taken from the @code{server-info}
 directive.  It is common to specify @var{string} using
@@ -1941,9 +2016,9 @@ displays the @command{dicod} implementation and version number.
 @xref{Extended Commands, XVERSION}.
 
 @item xlev
-The @code{XLEV} command is supported.  This command allows to set and
-query maximal Levenshtein distance for @code{lev} matching strategy.
-@xref{MATCH, strategy}.  @xref{Extended Commands, XLEV}.
+The @code{XLEV} command is supported.  This command allows the remote
+party to set and query maximal Levenshtein distance for @code{lev}
+matching strategy.  @xref{MATCH, strategy}.  @xref{Extended Commands, XLEV}.
 @end table
 
   Capabilities set using the @command{capability} directive are
@@ -2261,7 +2336,7 @@ strain on the server.  For example, the command @code{MATCH * priefix
 consume a lot of resources both on the server and on the client side.
 
   To minimize harmful effects from such potentially dangerous
-requests, Dico allows to limit the use of certain strategies in
+requests, it is possible to limit the use of certain strategies in
 default searches.
 
 @deffn {Configuration} strategy @var{name} @{ @var{statements} @}
@@ -2386,9 +2461,9 @@ Create a new alias.
 @end deffn
 
   Aliases are useful to facilitate manual interaction with the server,
-as they allow to create abbreviations for some frequently typed
-commands.  For example, the following alias creates new command
-@code{d} which is equivalent to @code{DEFINE *}:
+as they allow the administrator to create abbreviations for some
+frequently typed commands.  For example, the following alias creates
+new command @code{d} which is equivalent to @code{DEFINE *}:
 
 @example
 alias d DEFINE "*";
@@ -2524,7 +2599,7 @@ Server exited due to some error not otherwise described in this table.
 
 @item 70
 @item EX_SOFTWARE
-Some internal software error occured.
+Some internal software error occurred.
 
 @item 71
 @itemx EX_OSERR
@@ -2615,7 +2690,7 @@ mode in @command{dico}, the client program.
 @opsummary{no-transcript}
 @item --no-transcript
 Disable transcript mode.  This is the default.  Use this option if you
-wish to temporarly disable transcript mode, enabled in the
+wish to temporarily disable transcript mode, enabled in the
 configuration file (@pxref{Logging and Debugging, transcript}).
 
 @opsummary{inetd}
@@ -2674,7 +2749,7 @@ Print program version and exit.
   GNU Dico comes with a set of loadable modules for handling various
 database formats and extending the server functionality.  Modules
 are binary loadable files, installed in
-@file{@var{$prefix}/lib/dico}.  Thet are configurable on per-module
+@file{@var{$prefix}/lib/dico}.  They are configurable on per-module
 (@pxref{Handlers, command}) and per-database (@pxref{Databases,
 handler}) basis.
 
@@ -2925,7 +3000,7 @@ useful for the module developers.
 @end deffn
 
 @deffn {gcide parameter} suppress-pr
-This paramenter suppresses the output of @samp{pr} (pronunciation)
+This parameter suppresses the output of @samp{pr} (pronunciation)
 tags.  According to GCIDE docs, @cite{very few of the pronunciation
 fields have been filled in}, so it might be reasonable to avoid
 displaying them at all.
@@ -3155,8 +3230,8 @@ functions.  For information about the language, refer to
 For a detailed description of Guile and its features, see
 @ref{Top,,Overview,guile,The Guile Reference Manual}.
 
-  The @command{guile} module provides an interface to Guile that allows writing
-GNU Dico modules in Scheme.  The module is loaded
+  The @command{guile} module provides an interface to Guile that
+allows for writing GNU Dico modules in Scheme.  The module is loaded
 using the following configuration file statement:
 
 @example
@@ -3340,7 +3415,7 @@ file named @file{@var{script}}.  The file is loaded using
 guile, The Guile Reference Manual}), i.e. the load paths are not
 searched, so @var{script} must be an absolute path name.  The
 @code{init-fun} parameter supplies the name of the @dfn{initialization
-function}.  This Scheme function constructd virtual 
+function}.  This Scheme function constructs virtual 
 function tables for the module itself and for each database that uses
 this module.  It must be declared as follows:
 
@@ -3479,7 +3554,16 @@ the string @samp{No information available} is used.
 
 @deffn {Guile Callback} lang dbh
 Virtual Table: @code{(cons "lang" lang)}@*
-@FIXME{Returns (cons (list @var{source}) (list @var{dest}))}
+
+Return a @code{cons} of languages supported by this database:
+Its @code{car} is a list of source languages, and its @code{cdr} is a
+list of destination languages.  For example, the following return
+value indicates that the database contains translations from English
+to French and Spanish:
+
+@example
+ (cons (list "en") (list "fr" "es"))
+@end example
 @end deffn
 
 A database is searched in a two-phase process.  First, an appropriate
@@ -3865,7 +3949,462 @@ needed.
 @section @command{Python}
 @cindex Python
 @cindex python module
-@WRITEME
+  The @command{python} module provides an interface which allows
+programmers to write loadable modules in Python.  The syntax for
+loading the module is:
+
+@example
+load-module @var{name} @{
+  command "python"
+          " init-script=@var{name}"
+          " load-path=@var{path}"
+          " root-class=@var{name}";
+@}
+@end example
+
+All parameters are optional:
+
+@deffn {python module} load-path=@var{path}
+Augments the default search path for Python modules.  The format of
+@var{path} is the usual UNIX path specification: a colon-separated
+list of directory names.
+@end deffn
+
+@deffn {python module} init-script=@var{name}
+Specifies the name of the initial Python source file.  This file will
+be loaded and interpreted immediately after loading the module.
+@end deffn
+
+@deffn {python module} root-class=@var{name}
+Sets the name of the Python root class, which is responsible for the
+dictionary operations.
+@end deffn
+
+A particular instance of the @command{python} module is loaded using
+the @code{handler} statement within a @code{database} block.  This
+statement takes the same parameters as described above, plus any
+number of command line arguments, which will be passed to the root
+class constructor.
+
+@menu
+* Dictionary Class::
+* Dico Python Primitives::
+* Python Example::    An Example of Python Module
+@end menu
+
+@node Dictionary Class
+@subsection Python Dictionary Class
+
+The dictionary class must define the following methods:
+
+@defop Method DictionaryClass __init__ self *argv
+Class constructor.  The @var{argv} array supplies positional arguments
+from the @code{handler} statement in the configuration file.
+@end defop
+
+@defop Method DictionaryClass open self dbname
+Opens the database named @var{dbname}.  Returns @samp{True} on success
+and @samp{False} on failure.
+@end defop
+
+@defop Method DictionaryClass close self
+Closes the database.
+@end defop
+
+@defop Method DictionaryClass descr self
+Returns a short description of the database.
+@end defop
+
+@defop Method DictionaryClass info self
+Returns a text describing the database.
+@end defop
+
+@defop Method DictionaryClass lang self
+Optional.  Returns supported languages as @samp{(@var{src}, @var{dst})}.
+@end defop
+
+@defop Method DictionaryClass define_word self word
+Defines @var{word}.  Returns a result (an opaque Python object) if the
+definition was found or @samp{False} otherwise.
+@end defop
+
+@defop Method DictionaryClass match_word self strat word
+Searches for @var{word} in the database using strategy @var{strat}.
+Returns a result (an opaque Python object) if some matches were found
+or @samp{False} otherwise.
+@end defop
+
+@defop Method DictionaryClass output self result n
+Outputs @var{n}th result from the result set @var{result}.
+@end defop
+
+@defop Method DictionaryClass result_count self result
+Returns number of elements in the result set.
+@end defop
+
+@defop Method DictionaryClass compare_count self result
+Optional.  Returns the number of comparisons performed when
+constructing the result set.
+@end defop
+
+@defop Method DictionaryClass result_headers self result hdr
+Optional.  Returns a dictionary of MIME headers.
+@end defop
+
+@defop Method DictionaryClass free_result self result
+Reclaims any resources used by the result set.
+@end defop
+
+@node Dico Python Primitives
+@subsection Dico Python Primitives
+
+@deffn {Python primitive} register_strat name descr [proc]
+Register new match strategy.  The arguments are:
+
+@table @var
+@item name
+Strategy name for use in the @code{MATCH} command.
+
+@item descr
+The dscription, which will appear in the output of @code{SHOW STRAT}
+command.
+
+@item proc
+Optional selector procedure.
+@end table
+
+@anchor{Python Selector}
+If the @var{proc} argument is present, it must be the name of a Python
+function declared as:
+
+@example
+def select(opcode key headword):
+@end example
+
+Its arguments are:
+
+@table @var
+@item opcode
+Integer operation code.
+@item key
+An @code{DicoSelectionKey} object identifying the search term
+(@pxref{DicoSelectionKey}).
+@item headword
+The headword being examined.
+@end table
+
+@kwindex DICO_SELECT_BEGIN, @r{Python}
+At the beginning of the search, the function is called with the
+@samp{DICO_SELECT_BEGIN} as its @var{opcode} argument.  It must
+perform the necessary initialization and return.
+
+@kwindex DICO_SELECT_END, @r{Python}
+At the end of the search loop, the function is called with @var{opcode}
+@samp{DICO_SELECT_END}.  It must perform the necessary
+deinitialization procedures and exit.
+
+In both cases, the @var{key} and @var{headword} arguments are not
+defined.
+
+@kwindex DICO_SELECT_RUN, @r{Python}
+Within the search loop, the function will be called for each headword
+from the database.  The @var{opcode} parameter will be
+@samp{DICO_SELECT_RUN}.  In this case the function must return
+@samp{True} if the @var{headword} matches the @var{key} and
+@samp{False} otherwise.
+@end deffn
+
+@deffn {Python primitive} register_markup name
+Register a markup @var{name}.
+@end deffn
+
+@deffn {Python primitive} current_markup
+Return the name of the current markup.
+@end deffn
+
+@menu
+* DicoSelectionKey::
+* DicoStrategy::
+@end menu
+
+@node DicoSelectionKey
+@subsubsection The @code{DicoSelectionKey} class
+
+The @code{DicoSelectionKey} class represents a search key and is used
+when looking for matches.  Calling @code{str} on the object of that
+class returns the search term itself, as does the @code{word} method:
+
+@defcv {Variable} DicoSelectionKey word
+Returns the search term.  It is equivalent to the @code{__str__} attribute.
+@end defcv
+
+@node DicoStrategy
+@subsubsection The @code{DicoStrategy} class
+
+A match strategy is represented by an object of the
+@code{DicoStrategy} class.
+
+@defcv {Variable} DicoStrategy name
+Returns the name of that strategy.
+@end defcv
+
+@defcv {Variable} DicoStrategy descr
+Returns textual description of the strategy.
+@end defcv
+
+@defcv {Variable} DicoStrategy has_selector
+Returns @samp{True} if this strategy has a selector (@pxref{Python Selector}).
+@end defcv
+
+@defcv {Variable} DicoStrategy name is_default
+Returns @samp{True} if this is the default strategy.
+@end defcv
+
+@defop Method DicoStrategy select headword key
+Returns @samp{True} if @var{key} matches @var{headword} as per
+this strategy.
+@end defop
+
+@node Python Example
+@subsection Python Example
+  In this subsection we will show a simple database module written in
+Python.  This module handles simple textual databases of the following
+format:
+
+@itemize @bullet
+@item Lines beginning with double dash and empty lines are ignored.
+@item A line beginning with @samp{descr:} introduces a short
+dictionary description for @code{SHOW DB}.  The @samp{descr:} prefix
+and white space immediately following it are removed.  E.g.:
+
+@example
+descr: Short English-Norwegian numerals dictionary
+@end example
+
+@item Lines beginning with @samp{info:} provide a verbose description
+of the database.  This lines are concatenated after removing the
+@samp{info:} prefix and white space immediately following it.  E.g.:
+
+@example
+info: A short English-Norwegian (Bokm@ringaccent{a}l) dictionary
+info: of numerals.
+info: 
+info: This dictionary is public domain.
+@end example
+
+@item A line beginning with @samp{lang:} defines source and
+destination languages for this dictionary.  E.g.:
+
+@example
+lang: en : nb
+@end example
+
+@item Any line consisting of exactly two words defines a dictionary
+entry.  E.g.:
+
+@example
+one     en
+two     to
+three   tre
+four    fire
+@end example
+@end itemize
+
+Now, let's create a module for handling this format.  First, we need
+to import Dico primitives (@pxref{Dico Python Primitives}) and the
+@samp{sys} module.  The latter is needed for output functions:
+
+@example
+import dico
+import sys
+@end example
+
+@noindent
+Then, a result class will be needed for @code{match_word} and
+@code{define_word} methods.  It will contain the actual data in
+the variable @samp{result}:
+
+@example
+class DicoResult:
+    # @r{actual data.}
+    result = @{@}
+    # @r{number of comparisons.}
+    compcount = 0
+    
+    def __init__ (self, *argv):
+        self.result = argv[0]
+        if len (argv) == 2:
+             self.compcount = argv[1]
+
+    def count (self):
+        return len (self.result)
+
+    def output (self, n):
+        pass
+
+    def append (self, elt):
+        self.result.append (elt)
+@end example
+
+@noindent
+The following two classes extend @samp{DicoResult} for use with
+@samp{DEFINE} and @samp{MATCH} operations.  The @code{define_word}
+method will return an instance of the @samp{DicoDefineResult} class:
+
+@example        
+class DicoDefineResult (DicoResult):
+    def output (self, n):
+        print "%d. %s" % (n + 1, self.result[n])
+        print "---------",
+@end example
+
+@noindent
+The @code{match_word} method will return an instance of the
+@samp{MatchResult} class:
+
+@example
+class DicoMatchResult (DicoResult):
+    def output (self, n):
+        sys.stdout.softspace = 0
+        print self.result[n],
+@end example
+
+@noindent
+Now, let's define the dictionary class:
+
+@example
+class DicoModule:
+    # @r{The dictionary converted to associative array.}
+    adict =  @{@}
+    # @r{The database name.}
+    dbname = ''
+    # @r{The name of the corresponding disk file.}
+    filename = ''
+    # @r{A sort information about the database.}
+    mod_descr = ''
+    # @r{A verbose description of the database is kept.}
+    # @r{as an array of strings.}
+    mod_info = []
+    # @r{A list of source and destination languages:}
+    langlist = ()
+@end example
+
+@noindent
+The class constructor will take a single argument, defining the name
+of the database file:
+
+@example
+    def __init__ (self, *argv):
+        self.filename = argv[0]
+        pass
+@end example
+
+@noindent
+The @samp{open} method opens the database and reads its data:
+
+@example
+    def open (self, dbname):
+        self.dbname = dbname
+        file = open (self.filename, "r")
+        for line in file:
+            if line.startswith ('--'):
+                continue
+            if line.startswith ('descr: '):
+                self.mod_descr = line[7:].strip (' \n')
+                continue
+            if line.startswith ('info: '):
+                self.mod_info.append (line[6:].strip (' \n'))
+                continue
+            if line.startswith ('lang: '):
+                s = line[6:].strip (' \n').split(':', 2)
+                if (len(s) == 1):
+                    self.langlist = (s[0].split (), \
+                                     s[0].split ())
+                else:
+                    self.langlist = (s[0].split (), \
+                                     s[1].split ())
+                continue
+            f = line.strip (' \n').split (' ', 1)
+            if len (f) == 2:
+                self.adict[f[0].lower()] = f[1].strip (' ')
+        file.close()
+        return True
+@end example
+
+@noindent
+The database is kept entirely in memory, so there is no need for
+@samp{close} method.  However, it must be declared anyway:
+
+@example
+    def close (self):
+        return True
+@end example
+
+@noindent
+The methods returning database information are trivial:
+
+@example
+    def descr (self):
+        return self.mod_descr
+
+    def info (self):
+        return '\n'.join (self.mod_info)
+    
+    def lang (self):
+        return self.langlist
+@end example
+
+@noindent
+The @samp{define_word} method checks if the search term is present in
+the dictionary, and, if so, converts it to the @code{DicoDefineResult}:
+
+@example
+    def define_word (self, word):
+        if self.adict.has_key (word):
+            return DicoDefineResult ([self.adict[word]])
+        return False
+@end example
+
+The @samp{match_word} method supports the @samp{exact} strategy
+natively via the @code{has_key} attribute of @code{adict}:
+
+@example
+    def match_word (self, strat, key):
+        if strat.name == "exact":
+            if self.adict.has_key (key.word.lower ()):
+                return DicoMatchResult \
+                        ([self.adict[key.word.lower()]])
+@end example
+
+@noindent
+Other strategies are supported as long as they have selectors:
+
+@example
+        elif strat.has_selector:
+            res = DicoMatchResult ([], len (self.adict))
+            for k in self.adict:
+                if strat.select (k, key):
+                    res.append (k)
+            if res.count > 0:
+                return res
+        return False
+@end example
+
+@noindent
+The rest of methods rely on the result object to do the right thing:
+
+@example
+    def output (self, rh, n):
+        rh.output (n)
+        return True
+
+    def result_count (self, rh):
+        return rh.count ()
+
+    def compare_count (self, rh):
+        return rh.compcount
+@end example
+
 
 @node stratall
 @section @command{Stratall}
@@ -4099,7 +4638,6 @@ This chapter describes the API for Dico loadable modules.
 * dico_database_module::
 * Strategies::
 * Output::
-* Error Reporting::
 @end menu
 
 @node dico_database_module
@@ -4166,7 +4704,7 @@ The command line given by @code{command} configuration statement
 (@pxref{Handlers, command}), split into words.  The element
 @code{@var{argv}[0]} is the name of the module.  The element
 @code{@var{argv}[@var{argc}]} is @samp{NULL}.  Word splitting
-follows the rules similar to those used in shell. In particular,
+follows the rules similar to those used in shell.  In particular,
 a quoted string (using both single and double quotes) is handled
 as a single word.
 @end table
@@ -4414,6 +4952,8 @@ The search word or expression.
 @end deftypecv
 
 @deftypecv {member} {struct dico_key} @code{void *} call_data
+@kwindex DICO_SELECT_BEGIN
+@kwindex DICO_SELECT_END
 A pointer to selector-specific data.  If necessary, it can be
 initialized by the selector when called with the
 @samp{DICO_SELECT_BEGIN} opcode and deallocated when called with the
@@ -4434,6 +4974,7 @@ The following functions are defined to operate on search keys:
 @deftypefn {function} int dico_key_init (struct dico_key *@var{key}, @
                               dico_strategy_t @var{strat}, @
                               const char *@var{word})
+@kwindex DICO_SELECT_BEGIN
 Initialize the key structure @var{key} with the given strategy
 @var{strat} and search word @var{word}.  If @var{strat} has a selector
 function, it will be called with the @samp{DICO_SELECT_BEGIN} opcode
@@ -4444,6 +4985,7 @@ The @var{key} itself may point to any kind of memory storage.
 @end deftypefn
                               
 @deftypefn {function} void dico_key_deinit (struct dico_key *@var{key})
+@kwindex DICO_SELECT_END
 Deinitialize the @code{dico_key} structure initialized by a prior call
 to @code{dico_key_init}.  If the key strategy has a selector, it will
 be called with the @samp{DICO_SELECT_END} opcode.
@@ -4455,6 +4997,7 @@ caller responsibility to free it.
 
 @deftypefn {function} int dico_key_match (struct dico_key *@var{key}, @
                                const char *@var{word})
+@kwindex DICO_SELECT_RUN                               
 Match headword and key.  Return 1 if they match, 0 if they don't match
 and -1 in case of error.  This function calls the strategy selector with the
 @samp{DICO_SELECT_RUN} opcode (@pxref{Selector, DICO_SELECT_RUN}).  It
@@ -4499,6 +5042,7 @@ The database headword.
 @end table
 @end deftypefn
 
+@kwindex DICO_SELECT_BEGIN
 The selector function is called before entering the iteration loop
 with @samp{DICO_SELECT_BEGIN} as its argument.  If necessary, it can
 perform any additional initialization of the strategy, such as
@@ -4508,6 +5052,7 @@ should be used to keep the pointer to the auxiliary data.  The
 function should return 0 if it successfully finished its
 initialization and non-zero otherwise.
 
+@kwindex DICO_SELECT_END
 Once the iteration loop is finished, the selector will be called with
 @samp{DICO_SELECT_END} as its first argument.  This invocation is
 intended to deallocate any auxiliary memory and release any additional
@@ -4516,6 +5061,7 @@ resources allocated at the initialization state.
 In these two additional invocations, the @var{headword} parameter will
 be @samp{NULL}.
 
+@kwindex DICO_SELECT_RUN
 Once the iteration loop is entered, the selector function will be
 called for each headword.  Its @var{opcode} parameter will be
 @samp{DICO_SELECT_RUN} and the @var{headword} parameter will point to
@@ -4608,10 +5154,6 @@ Same as @code{dico_stream_write}, but ends the output with a
 @kbd{newline} character (ASCII 10).              
 @end deftypefn
 
-@node Error Reporting
-@section Error Reporting
-@WRITEME
-
 @node dico client
 @chapter Dico --- a client program.
 @cindex dico, a program
@@ -4656,7 +5198,7 @@ matches in that database''.
 command line options.  Secondly, you can use a @acronym{DICT URL}.
 Which method to use depends on your preferences.  Both methods provide
 the same functionality for querying word definitions.  However,
-command line options allow to query additional data from the server,
+command line options allow the user to query additional data from the server,
 which is impossible using @acronym{URL}s.   
 
 @menu
@@ -4758,9 +5300,9 @@ are used to obtain authentication credentials.
 A shared key (password) for that user.  This part is similar to the
 @option{--key} command line option.
 
-For compatibility with other @acronym{URL}s, @command{dico} allows to
-delimit @var{user} and @var{pass} with a colon (@samp{:}), instead of
-semicolon.
+For compatibility with other @acronym{URL}s, @command{dico} tolerates
+a colon (instead of semicolon) as a delimiter between @var{user} and
+@var{pass}.
 
 If @var{user} is given, but @var{pass} is not, @command{dico} will ask
 you to supply a password interactively (@pxref{Autologin}).
@@ -5314,9 +5856,7 @@ Set or display autologin file name.
 @item sasl [@var{bool}]
 Without argument, show whether the @acronym{SASL} authentication is
 enabled.  With argument, enable or disable it, depending on the value
-of @var{bool}.
-
-@FIXME-xref{SASL}.
+of @var{bool}.  @xref{Autologin}.
 
 @item database [@var{name}]
 Set or display the current database name.
@@ -5360,8 +5900,8 @@ Set or display session transcript mode.
 @xref{Session Transcript}.
 
 @item verbose [@var{number}]
-Set or display debugging verbosity level.
-@FIXME{cross-reference, maybe?}
+Set or display debugging verbosity level.  Currently (as of version
+@value{VERSION}) it is a no-op.
 
 @item prompt @var{string}
 Change command line prompt.
@@ -5449,16 +5989,16 @@ this example.
 @node Autologin
 @section Autologin
 @cindex autologin feature
-@UNREVISED
+@cindex authentication
+@cindex credentials
+  After connecting to a remote server, @command{dico} checks if
+the server supports authentication and attempts to authenticate itself
+if so.  To do this @command{dico} needs a set of parameters called
+@dfn{user credentials}.  The exact set of credentials depends on the
+authentication mechanism being used, with user name and password being
+the two most important ones.
 
-@FIXME{The following paragraph is inaccurate.  It should also describe SASL
-authentication and its credentials.}
-
-  After connecting to a remote server, @command{dico} checks if it
-announces the @samp{auth} capability, and if so, it attempts to authenticate
-to the remote server.  To do so @command{dico} needs two parameters:
-user name and password.  These parameters can be supplied from
-the following sources:
+The user credentials can be supplied from the following sources:
 
 @enumerate 1
 @item
@@ -5484,9 +6024,13 @@ If it is, @command{dico} will ask the user to supply a password.
 If it is not, authentication is aborted and connection to the server
 is closed.
 
+  Some authentication mechanisms require additional credentials.  For
+example, GSSAPI authentication requires a @dfn{service name}.  These
+credentials can be supplied only in autologin file.
+
 @findex .dicologin
 @cindex autologin file
-  An @dfn{autologin file} is a plaintext file that contains
+  @dfn{Autologin file} is a plaintext file that contains
 authentication information for various @acronym{DICT} servers.  At
 most two autologin files are consulted: first the session-specific
 file, if it is supplied by @command{autologin} command (@pxref{Program
@@ -5741,10 +6285,11 @@ Disable authentication.
 @xref{Autologin}.
 
 @item --sasl
-Enable @acronym{SASL} authentication.  @FIXME-xref{SASL}.
+Enable @acronym{SASL} authentication, if the server supports it.
+@xref{Autologin}.
 
 @item --nosasl
-Disable @acronym{SASL} authentication.  @FIXME-xref{SASL}.
+Disable @acronym{SASL} authentication.  @xref{Autologin}.
 
 @item --user=@var{name}
 @item -u @var{name}
@@ -5812,7 +6357,7 @@ Print program version.
 @dfn{GNU Collaborative International Dictionary of English}
 (@acronym{GCIDE}).  When started, it launches a copy of @command{dicod}
 with a specially crafted configuration file and interfaces with it via
-stdin/stdout. For operation it needs to know the locations of the
+stdin/stdout.  For operation it needs to know the locations of the
 @command{dicod} binary and of the directory where the @acronym{GCIDE}
 files reside.  When started for the first time it will present you
 with a dialog box to help it locate the needed components.  The
@@ -5824,7 +6369,7 @@ data are entered, the program will save them in its configuration file
 invocations.
 
 The program display is organized in three areas, ordered vertically.
-The topmost area is the @dfn{menubar}, which contains pull-down menus.
+The topmost area is the @dfn{menu bar}, which contains pull-down menus.
 It is followed by a @dfn{search control} area.  It provides an input
 line for you to enter the term to look-up in the dictionary, a set
 of widgets for bringing back prior inputs from the history and for
@@ -5834,7 +6379,7 @@ follows presents two windows, side by side.  The leftmost one is the
 shown.  The rightmost one is the @dfn{match list}, which will present
 the results of the recent @dfn{match} command.  Finally, at the very
 bottom of the @command{gcider} window is located the @dfn{status
-bar}. Its purpose is twofold.  First, it displays a status of the last
+bar}.  Its purpose is twofold.  First, it displays a status of the last
 search.  Secondly, it provides a terse contextual help describing what
 you can do using the widget your mouse pointer points to.
 
@@ -5848,8 +6393,8 @@ the text.  To do so, select it and click on the right button.  Then,
 in the menu that will appear, select @samp{Define}. 
 
 If you are not sure about the exact spelling of your search term, try
-searching for the closest matches first. To do so, click on
-@samp{Match} instead of @samp{Define}. To find closest matches for a
+searching for the closest matches first.  To do so, click on
+@samp{Match} instead of @samp{Define}.  To find closest matches for a
 word in a definition, select the word (or part of it) and select
 @samp{Match} in the contextual menu.  In both cases, the program will
 try to match the word using the @dfn{strategy} selected currently in
@@ -5861,7 +6406,7 @@ the article window.
 To select a match strategy, click on the strategy widget and select
 the desired strategy in the pop-down list that will appear.  The list
 contains short strategy names.  To help you select the right one, the
-status line will show a full description of the curently highlighted
+status line will show a full description of the currently highlighted
 strategy.
 
 Those search terms for which a definition was found are saved in a
@@ -5874,7 +6419,7 @@ widget can be used to navigate through the history.  The button marked
 with a left arrow brings back previous definition, whereas the one
 marked with a right arrow brings back next definition.
 
-By default the history list can accomodate up to 500 search terms.
+By default the history list can accommodate up to 500 search terms.
 Once this limit reached, adding a new term to the list discards the
 oldest item, so that the total list length remains the same.  Actual
 length of the history list can be configured using the

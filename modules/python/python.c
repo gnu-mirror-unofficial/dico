@@ -133,7 +133,7 @@ strat_select_method (PyObject *self, PyObject *args)
 
 static PyMethodDef strategy_methods[] = {
     { "select", strat_select_method, METH_VARARGS,
-      "Return True if KEY matches WORD as per strategy selector STRAT." },
+      "Return True if KEY matches WORD as per this strategy." },
     { NULL, NULL, 0, NULL }
 };
 
@@ -292,7 +292,7 @@ dico_register_strat (PyObject *self, PyObject *args)
 
     strat.name = name;
     strat.descr = descr;
-    if (fnc) {
+    if (!fnc) {
 	strat.sel = NULL;
 	strat.closure = NULL;
     } else {
@@ -393,6 +393,25 @@ insert_load_path (const char *dir)
     Py_DECREF (py_sys);
 }
 
+static struct {
+    char *name;
+    int value;
+} constab[] = {
+    { "DICO_SELECT_BEGIN", DICO_SELECT_BEGIN },
+    { "DICO_SELECT_RUN", DICO_SELECT_RUN },
+    { "DICO_SELECT_END", DICO_SELECT_END },
+    { NULL }
+};
+
+static void
+declare_constants(PyObject *module)
+{
+    int i;
+    
+    for (i = 0; constab[i].name; i++)
+	PyModule_AddIntConstant (module, constab[i].name, constab[i].value);
+}
+
 static dico_handle_t
 mod_init_db (const char *dbname, int argc, char **argv)
 {
@@ -431,8 +450,8 @@ mod_init_db (const char *dbname, int argc, char **argv)
     PyThreadState_Swap (py_ths);
     db->py_ths = py_ths;
 
-    Py_InitModule ("dico", dico_methods);
-
+    declare_constants (Py_InitModule ("dico", dico_methods));
+    
     PyRun_SimpleString ("import sys");
     if (load_path)
 	insert_load_path (load_path);
@@ -704,53 +723,59 @@ _make_python_result (struct _python_database *db, PyObject *res)
     return (dico_result_t)rp;
 }
 
-static dico_result_t
-mod_match (dico_handle_t hp, const dico_strategy_t strat, const char *word)
+dico_result_t
+do_match(struct _python_database *db, const dico_strategy_t strat,
+	 struct dico_key *key)
 {
     PyStrategy *py_strat;
     PySelectionKey *py_key;
     PyObject *py_args, *py_fnc, *py_res;
-    struct _python_database *db = (struct _python_database *)hp;
-    struct dico_key key;
-
-    PyThreadState_Swap (db->py_ths);
-
-    if (dico_key_init(&key, strat, word)) {
-	dico_log (L_ERR, 0, _("mod_match: key initialization failed"));
-	return NULL;
-    }
-
-    py_key = PyObject_NEW (PySelectionKey, &PySelectionKeyType);
+    
+    py_key = PyObject_NEW(PySelectionKey, &PySelectionKeyType);
     if (!py_key)
 	return NULL;
-    py_key->key = &key;
+    py_key->key = key;
     
-    py_strat = PyObject_NEW (PyStrategy, &PyStrategyType);
+    py_strat = PyObject_NEW(PyStrategy, &PyStrategyType);
     if (py_strat) {
 	py_strat->strat = strat;
 	
-	py_args = PyTuple_New (2);
-	PyTuple_SetItem (py_args, 0, (PyObject *)py_strat);
-	PyTuple_SetItem (py_args, 1, (PyObject *)py_key);
-	py_fnc = PyObject_GetAttrString (db->py_instance, "match_word");
-	if (py_fnc && PyCallable_Check (py_fnc)) {
-	    py_res = PyObject_CallObject (py_fnc, py_args);
-	    Py_DECREF (py_args);
-	    Py_DECREF (py_fnc);
+	py_args = PyTuple_New(2);
+	PyTuple_SetItem(py_args, 0, (PyObject *)py_strat);
+	PyTuple_SetItem(py_args, 1, (PyObject *)py_key);
+	py_fnc = PyObject_GetAttrString(db->py_instance, "match_word");
+	if (py_fnc && PyCallable_Check(py_fnc)) {
+	    py_res = PyObject_CallObject(py_fnc, py_args);
+	    Py_DECREF(py_args);
+	    Py_DECREF(py_fnc);
 	    if (py_res) {
-		if (PyBool_Check (py_res) && py_res == Py_False)
+		if (PyBool_Check(py_res) && py_res == Py_False)
 		    return NULL;
-		else {
-		    if (strat->sel) {
-			strat->sel (DICO_SELECT_END, &key, word);
-		    }
-		    return _make_python_result (db, py_res);
-		}
-	    } else if (PyErr_Occurred ())
-		PyErr_Print ();
+		else
+		    return _make_python_result(db, py_res);
+	    } else if (PyErr_Occurred())
+		PyErr_Print();
 	}
     }
     return NULL;
+}
+
+static dico_result_t
+mod_match (dico_handle_t hp, const dico_strategy_t strat, const char *word)
+{
+    struct _python_database *db = (struct _python_database *)hp;
+    struct dico_key key;
+    dico_result_t res;
+    
+    PyThreadState_Swap(db->py_ths);
+
+    if (dico_key_init(&key, strat, word)) {
+	dico_log(L_ERR, 0, _("mod_match: key initialization failed"));
+	return NULL;
+    }
+    res = do_match(db, strat, &key);
+    dico_key_deinit(&key);
+    return res;
 }
 
 static dico_result_t

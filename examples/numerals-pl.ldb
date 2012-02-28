@@ -1,4 +1,5 @@
 ;; -*- scheme -*-
+;; To handle this file use the listdict.scm module.
 (; Short info (for show db):
  "Short English-Polish numerals dictionary"
  ; Complete info (for show info):

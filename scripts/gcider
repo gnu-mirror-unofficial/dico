@@ -1356,7 +1356,9 @@ proc dict_trace {args} {
 proc dictread {} {
     global pipe
     
-    set reply [gets $pipe]
+    if {[gets $pipe reply] == -1} {
+	error "unexpected eof while reading server reply" "gets" "BROKENPIPE"
+    }
     dict_trace RECV "$reply"
     return $reply
 }
@@ -1424,8 +1426,32 @@ proc readdefns {} {
     return 0
 }
 
+proc docmd {cmd word} {
+    global pipe
+  
+    set res [catch { $cmd $word } result opt]
+#    puts "RES $res"
+    if {$res == 1} {
+	if {[dict get $opt -errorcode] == "BROKENPIPE"} {
+	    set answer [tk_messageBox -title "I/O error" \
+			    -icon error -type retrycancel \
+			    -message "The dictionary server has gone away\nPress Retry to reconnect or Cancel to exit"]
+	    if {$answer == "retry"} {
+		catch { close $pipe }
+		dict_connect gcider_error_reconf
+		return 1
+	    } else {
+		exit 1
+	    }
+	} else {
+	    terror $result $opt [dict get $opt -errorinfo]
+	}
+    }
+    return 0
+}
+
 # Define $word
-proc defineword {word} {
+proc defineword_lazy {word} {
     global dbname
     global input
     global status
@@ -1495,6 +1521,12 @@ proc defineword {word} {
     .c.article configure -state disabled
 }
 
+proc defineword {word} {
+    if {[docmd defineword_lazy $word] == 1} {
+	.c.article delete 1.0 end
+    }
+}
+
 # The "Define" button command
 proc define {} {
     global input
@@ -1550,7 +1582,7 @@ proc defineprev {} {
 
 # Produce a list of matches of $headword using the currently selected
 # strategy and fill the match widget with them.
-proc matchword {headword} {
+proc matchword_lazy {headword} {
     global dbname
     global strategy
     global stratname
@@ -1590,6 +1622,14 @@ proc matchword {headword} {
 	              -detail "$res"
 	.c.matches configure -state disabled
 	set status(match,count) 0
+    }
+}
+
+proc matchword {word} {
+    if {[docmd matchreedword_lazy $word] == 1} {
+	.c.matches configure -state normal
+	.c.matches delete 0 end
+	.c.matches configure -state disabled 
     }
 }
 

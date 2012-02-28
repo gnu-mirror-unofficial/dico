@@ -7,11 +7,11 @@ Copyright (C) 2008-2010, 2012 Sergey Poznyakoff
 This file contains brief information about configuring, testing
 and running GNU Dico.  It is *not* intended as a replacement
 for the documentation, but is provided as a brief reference only.
-The (almost) complete documentation for Dico is available in
-doc/ subdirectory. To read it without installing the package
-run `info -f doc/dico.info'. After the package is installed
-the documentation can be accessed running `info Dico'.  Invoking
-`info dico' and `info dicod' (with a lower-case `d') will show you a
+The complete documentation for Dico is available in doc/
+subdirectory. To read it without installing the package run
+`info -f doc/dico.info'. After the package is installed the
+documentation can be accessed running `info Dico'.  Invoking
+`info dico' and `info dicod' (with a lower-case `d') will show you a 
 concise description of the command line syntax (similar to a man-page
 style) of `dico' and `dicod' programs, correspondingly.
 
@@ -28,8 +28,7 @@ searches are performed by functions supplied in loadable modules.  A
 single module can handle any number of database instances. 
 
 The package includes several modules for searching in different
-dictionary databases, among them a module for dict.org databases and a
-module for databases in Emacs "outline" format.
+dictionary databases, such as dict.org, WordNet and others.
 
 The server can be configured to handle both anonymous and authorized
 access.  It supports a wide variety of authentication algorithms.

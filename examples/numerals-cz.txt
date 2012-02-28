@@ -1,3 +1,5 @@
+-- To handle this file use textdict.py from this directory.
+-- Format:
 -- Comments begin with double-dash.
 -- Empty lines are ignored.
 -- There may be at most one `descr:' entry.

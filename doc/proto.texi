@@ -3,7 +3,7 @@
 @c This file is distributed under GFDL 1.1 or any later version
 @c published by the Free Software Foundation.
   This appendix describes commands understood by Dico dictionary
-server.  Provided examples follow the convention used in @acronym{RFC}
+server.  The examples provided follow the convention used in @acronym{RFC}
 documents: a text sent by the server is prefixed with @samp{S}, whereas
 a text sent by the client is prefixed with @samp{C}.
   
@@ -15,7 +15,7 @@ a text sent by the client is prefixed with @samp{C}.
 
 @node Initial Reply
 @section Initial Reply
-  When connection is established, the server sends an @dfn{initial reply}
+  When a connection is established, the server sends an @dfn{initial reply}
 to the client.  This reply has the following format:
 
 @smallexample
@@ -131,45 +131,9 @@ S: 250 Command complete [d/m/c = 1/0/12 0.000r 0.000u 0.000s]
 @node MATCH
 @subsection The MATCH Command
 
-@cindex matching strategy
-@cindex strategy
 The @code{MATCH} command searches for word in the database index.
-The searching algorithm is called @dfn{strategy}.  The following
-strategies are supported by the server: 
-
-@table @asis
-@item exact
-Match a word exactly.
-
-@item prefix
-Match a word prefix.
-
-@item soundex
-Match using @acronym{SOUNDEX} algorithm.
-
-@item lev
-Match headwords within given Levenshtein distance.  That distance,
-called a @dfn{Levenshtein threshold} is by default 1.  It can be
-modified using the @code{XLEV} extension command (@pxref{Extended
-Commands, XLEV}).
-
-@item dlev
-Match headwords within given Damerau-Levenshtein distance.  That
-distance is the same as for the @samp{lev} strategy.
-
-@item re
-Match using POSIX 1003.2 (a.k.a @samp{extended}) regular expressions.
-
-@item regexp
-Match using basic regular expressions.
-
-@item suffix
-Match word suffixes.
-@end table
-
-Note, that all strategies are case-insensitive.
-
-Other modules may provide more matching strategies.
+The searching algorithm is determined by @dfn{strategy}.  @xref{Strategies},
+for a list of strategies offered by GNU Dico.
 
 @deffn Command MATCH database strategy word
 Match @var{word} in @var{database} using @var{strategy}.  As with
@@ -180,8 +144,8 @@ The @var{strategy} is either the name of a strategy to use, or
 a dot (@samp{.}), meaning to use default strategy.  The default
 strategy is set using @code{default-strategy} configuration file
 statement (@pxref{General Settings, default-strategy}.  Its default
-value is @samp{lev}, which means @samp{use Levenshtein algorithm} (see
-above).
+value is @samp{lev}, which means @samp{use Levenshtein algorithm}
+(@xref{Strategies}).
 
 If no matches are found in any of the searched databases, then response
 code 552 will be returned.     Otherwise, response code 152 will be

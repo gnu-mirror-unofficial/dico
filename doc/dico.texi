@@ -5021,10 +5021,10 @@ strategies must normally be implemented using binary search in the
 database index.  The @samp{suffix} strategy can also be implemented
 using binary search if a special @dfn{reverse index} is built for the
 database (this is the approach taken by @command{outline} and
-@command{dictorg} modules.
+@command{dictorg} modules).
 
-However, some strategies can only be implemented using an expensive
-iteration over all keys in the database index.  For example,
+However, some strategies can only be implemented using a relatively
+expensive iteration over all keys in the database index.  For example,
 @samp{soundex} and @samp{levenshtein} strategies cannot be implemented
 otherwise.
 
@@ -5127,8 +5127,8 @@ int output_result (dico_result_t @var{rp}, size_t @var{n},
 
 The @var{rp} argument points to the result in question.  From the server's
 point of view it is an opaque pointer.  The application shall define
-its own result structure, so the first operation the
-@code{dico_output_result} method does is often typecasting @var{rp} to
+its own result structure, so normally the first operation the
+@code{dico_output_result} method does is typecasting @var{rp} to
 a pointer to that structure in order to be able to access its
 members.
 
@@ -5299,9 +5299,9 @@ explained in the table below:
 
 @table @var
 @item user
-User name to use in authentication.  Similar to the @option{--user}
+The user name to use in authentication.  Similar to the @option{--user}
 option.  If @var{user} is omitted and cannot be retrieved by other
-means, no authentication is performed.  @xref{Autologin}, for a
+means, no authentication is attempted.  @xref{Autologin}, for a
 detailed description of authentication procedure and sources which
 are used to obtain authentication credentials.
 
@@ -5370,7 +5370,7 @@ dict://dict.org/m:sun:::
   If neither word nor @acronym{URL} nor any operation mode option were
 given on the command line, @command{dico} enters interactive mode.  In
 this mode it reads commands from the standard input, executes them and
-displays the results on the standard output.  If the standard input is
+displays results on the standard output.  If the standard input is
 connected to a terminal, the readline and history facilities are
 enabled (@pxref{Command Line Editing, , Command Line Editing,
 readline, GNU Readline Library}).
@@ -5432,7 +5432,7 @@ men <n.>
 @end example
 
   Define and match are two basic actions.  To discern from them, the
-rest of @command{dico} commands begins with a @dfn{command prefix}, a
+rest of @command{dico} commands begin with a @dfn{command prefix}, a
 single punctuation character selected for this purpose.  The default
 command prefix is a dot, but it can be changed using the @code{prefix}
 command (@pxref{Other Commands, prefix}).
@@ -5455,7 +5455,7 @@ subsections.
 @node Server Commands
 @subsection Server Commands
 @cindex open
-  The @code{open} command establishes connection with a remote
+  The @code{open} command establishes connection to a remote
 server.  It takes up to two arguments, first of them specifying
 the IP or host name of the server, and the optional second one
 specifying the port number to connect to.  For example:
@@ -5541,7 +5541,7 @@ dico> .strategy dlev
 
 @cindex distance
   If the remote server supports @samp{xlev} experimental capability 
-(@pxref{Extended Commands, XLEV}), you can use @code{distance} command
+(@pxref{Extended Commands, XLEV}), you can use the @code{distance} command
 to set the maximum Levenshtein distance for strategies that use
 Levenshtein algorithm.  If used without arguments, this command
 displays the distance reported by the server and the configured
@@ -5642,7 +5642,7 @@ history, GNU History User Manual}.
 
 @cindex pager
 @vindex PAGER
-  When any command produces an output that contains more lines than
+  When a command produces output that contains more lines than
 there are rows on the terminal, @command{dico} attempts to use a
 @dfn{pager program} to display it.  The name (and arguments) of
 the pager program are taken from the @command{dico} internal variable,
@@ -5738,8 +5738,8 @@ displayed on standard error output, for example:
 
 @example
 dico> .open
-dico: Debug: S:220 Pirx.gnu.org.ua dicod (dico 1.99.90)
-<mime.xversion.xlev> <32004.1216639476@@Pirx.gnu.org.ua>
+dico: Debug: S:220 Pirx.gnu.org.ua dicod (dico @value{VERSION})
+  <mime.xversion.xlev> <32004.1216639476@@gnu.org.ua>
 dico: Debug: C:CLIENT "dico 1.99.91"
 dico: Debug: S:250 ok
 dico: Debug: C:SHOW DATABASES
@@ -5782,7 +5782,7 @@ transcript is on
 @subsection Other Commands
 
 @cindex prefix
-The @code{prefix} command allows you to change command prefix:
+The @code{prefix} command queries or changes the current command prefix:
 
 @example
 @group
@@ -5858,7 +5858,7 @@ Close the connection.
 @xref{Server Commands, close}.
 
 @item autologin [@var{file}]
-Set or display autologin file name.
+Set or display the autologin file name.
 
 @xref{Autologin}.
 
@@ -5895,11 +5895,11 @@ List all accessible databases.
 @xref{Informational Commands, ld}.
 
 @item info [@var{db}]
-Display information about database @var{db}, or the current
+Display information about the database @var{db}, or the current
 database, if used without argument.
 
 @item prefix [@var{c}]
-Set or display command prefix.
+Set or display the command prefix.
 
 @xref{Other Commands, prefix}.
 
@@ -5977,9 +5977,10 @@ terminal.}.
 invocation.  Consider, for example, this init file:
 
 @example
+@group
 # An example init file for @command{dico}
 
-# Turn welcome banner off
+# Turn the welcome banner off
 quiet yes
 # Set the location of autologin file
 autologin ~/.dicologin
@@ -5989,6 +5990,7 @@ open dict.org
 database *
 # Finally, set the custom command prefix
 prefix :
+@end group
 @end example
 
 Notice, that if you wish to change your command prefix, it is
@@ -6026,7 +6028,7 @@ supplied with the @option{--user} command line option takes precedence
 over the one found in an @acronym{URL} and over any names supplied by
 autologin files.
 
-  If, after consulting the above data source, the user name is
+  If, after consulting all these sources, the user name is
 established, while the password is not, the resulting action
 depends on whether the standard input is connected to a terminal.
 If it is, @command{dico} will ask the user to supply a password.
@@ -6079,7 +6081,7 @@ explicit @code{machine} statements.
 @code{machine} statement whose @var{name} matches the remote server
 name as given by @option{--host} command line option, host part of an
 @acronym{URL} (@pxref{urls}), or the argument to the @code{open}
-command (@pxref{Server Commands, open}).  If it reaches the end of
+command (@pxref{Server Commands, open}).  If it reaches end of the
 file without having found such an entry, it uses the @code{default}
 value, if available.
 
@@ -6148,7 +6150,7 @@ default noauth
 the usual @acronym{APOP} authentication as user @samp{smith} with password
 @samp{guessme}.  When connecting to the machine @samp{b.net}, it will
 use @acronym{SASL} authentication, via either @acronym{GSSAPI} or
-@acronym{DIGEST-MD5} mechanisms, realm name @samp{example.net},
+@acronym{DIGEST-MD5} mechanisms, with realm name @samp{example.net},
 service name @samp{dico} and the same user name and password, as for
 @samp{a.net}.
 
@@ -6366,7 +6368,7 @@ Print program version.
 @dfn{GNU Collaborative International Dictionary of English}
 (@acronym{GCIDE}).  When started, it launches a copy of @command{dicod}
 with a specially crafted configuration file and interfaces with it via
-stdin/stdout.  For operation it needs to know the locations of the
+stdin/stdout.  For operation it needs to know the location of the
 @command{dicod} binary and of the directory where the @acronym{GCIDE}
 files reside.  When started for the first time it will present you
 with a dialog box to help it locate the needed components.  The
@@ -6376,6 +6378,9 @@ supply is the directory where the dictionary files reside.  Once these
 data are entered, the program will save them in its configuration file
 (located in @file{~/.gcider}) and will reuse them in subsequent
 invocations.
+
+The @command{gcider} user documentation is available online on
+@uref{http://dico.gnu.org.ua/gcider.html}.
 
 The program display is organized in three areas, ordered vertically.
 The topmost area is the @dfn{menu bar}, which contains pull-down menus.
@@ -6402,7 +6407,7 @@ the text.  To do so, select it and click on the right button.  Then,
 in the menu that will appear, select @samp{Define}. 
 
 If you are not sure about the exact spelling of your search term, try
-searching for the closest matches first.  To do so, click on
+searching for closest matches first.  To do so, click on
 @samp{Match} instead of @samp{Define}.  To find closest matches for a
 word in a definition, select the word (or part of it) and select
 @samp{Match} in the contextual menu.  In both cases, the program will
@@ -6441,7 +6446,7 @@ length of the history list can be configured using the
 @email{bug-dico@@gnu.org.ua}.  Please include a detailed description
 of the bug and information about the conditions under which it occurs,
 so we can reproduce it.  To facilitate the task, the following list
-shows the basic set of information that is needed in order to find the bug:
+shows the basic set of information needed in order to find the bug:
 
 @itemize
 @item Package version you use.  The output of @command{dicod

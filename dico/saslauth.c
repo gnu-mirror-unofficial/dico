@@ -55,20 +55,6 @@ get_implemented_mechs(Gsasl *ctx)
     return supp;
 }
 
-static char *
-mech_intersect_first(dico_iterator_t itr, struct dict_connection *conn)
-{
-    char *p;
-    
-    for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) {
-	int i;
-	for (i = 0; i < conn->capac; i++)
-	    if (xdico_sasl_capa_match_p(p, conn->capav[i]))
-		return xstrdup(p);
-    }
-    return NULL;
-}
-
 static int
 str_str_cmp(const void *item, void *data)
 {
@@ -80,31 +66,6 @@ upcase(char *str)
 {
     for (; *str; str++)
 	*str = toupper(*str);
-}
-
-static char *
-selectmech(struct dict_connection *conn, Gsasl *ctx, struct auth_cred *cred)
-{
-    dico_list_t impl;
-    dico_iterator_t itr;
-    char *mech;
-
-    impl = get_implemented_mechs(ctx);
-    if (!impl)
-	return NULL;
-    if (cred->mech) {
-	dico_list_t supp = dico_list_intersect(cred->mech, impl, str_str_cmp);
-	dico_list_destroy(&impl);
-	impl = supp;
-    }
-    itr = xdico_list_iterator(impl);
-    mech = mech_intersect_first(itr, conn);
-    dico_iterator_destroy(&itr);
-    /* FIXME: Revise impl->free_item. */
-    dico_list_destroy(&impl);
-    if (mech)
-	upcase(mech);
-    return mech;
 }
 
 #define CRED_HOSTNAME(c) ((c)->hostname ? (c)->hostname :  \
@@ -243,35 +204,107 @@ do_gsasl_auth(Gsasl *ctx, struct dict_connection *conn, char *mech)
     
     return 1;
 }
+
+struct authctx {
+    Gsasl *ctx;
+    dico_list_t mech;
+};
 
-int
-saslauth0(struct dict_connection *conn, struct auth_cred *cred)
+static int
+match_capa(struct dict_connection *conn, const char *p)
+{
+    int i;
+
+    for (i = 0; i < conn->capac; i++)
+	if (xdico_sasl_capa_match_p(p, conn->capav[i]))
+	    return 1;
+    return 0;
+}
+
+static int
+getauthcontext(struct dict_connection *conn, struct authctx *authctx)
 {
     Gsasl *ctx;
     int rc;
-    char *mech;
-
-    XDICO_DEBUG(1, _("Trying SASL\n"));
+    dico_list_t mechs;
+    dico_iterator_t itr;
+    char *p;
+    
+    XDICO_DEBUG(1, _("Initializing SASL\n"));
     rc = gsasl_init(&ctx);
     if (rc != GSASL_OK)	{
 	dico_log(L_ERR, 0, _("Cannot initialize libgsasl: %s"),
 		 gsasl_strerror(rc));
-	free(mech);
-	return AUTH_FAIL;
+	return 1;
     }
-    gsasl_callback_hook_set(ctx, cred);
-    gsasl_callback_set(ctx, callback);
 
-    mech = selectmech(conn, ctx, cred);
-    if (!mech) {
+    mechs = get_implemented_mechs(ctx);
+    if (!mechs) {
+	gsasl_done(ctx);
+	return 1;
+    }
+
+    itr = xdico_list_iterator(mechs);
+    for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) {
+	if (!match_capa(conn, p))
+	    dico_iterator_remove_current(itr, NULL);
+    }
+    dico_iterator_destroy(&itr);
+
+    if (dico_list_count(mechs) == 0) {
+	dico_list_destroy(&mechs);
+	gsasl_done(ctx);
+	return 1;
+    }
+
+    authctx->ctx = ctx;
+    authctx->mech = mechs;
+    
+    return 0;
+}
+
+static void
+freeauthcontext(struct authctx *authctx)
+{
+    gsasl_done(authctx->ctx);
+    dico_list_destroy(&authctx->mech);
+}
+
+int
+saslauth0(struct dict_connection *conn, struct auth_cred *cred,
+	  struct authctx *authctx)
+{
+    int rc;
+    char *mech;
+    dico_list_t mechlist;
+    
+    XDICO_DEBUG(1, _("Trying SASL\n"));
+    gsasl_callback_hook_set(authctx->ctx, cred);
+    gsasl_callback_set(authctx->ctx, callback);
+
+    if (cred->mech)
+	mechlist = dico_list_intersect(cred->mech, authctx->mech,
+				       str_str_cmp);
+    else
+	mechlist = cred->mech;
+    if (!mechlist || dico_list_count(mechlist) == 0) {
 	dico_log(L_ERR, 0, _("No suitable SASL mechanism found"));
+	if (mechlist && mechlist != cred->mech)
+	    dico_list_destroy(&mechlist);
 	return AUTH_CONT;
     }
+
+    mech = dico_list_item(mechlist, 0);
+    upcase(mech);
+    
     dico_log(L_DEBUG, 0, _("Selected authentication mechanism %s"),
 	     mech);
     
-    rc = do_gsasl_auth(ctx, conn, mech);
+    rc = do_gsasl_auth(authctx->ctx, conn, mech);
 
+    if (mechlist != cred->mech)
+	dico_list_destroy(&mechlist);
+    
     XDICO_DEBUG_F1(1, "%s\n",
 		   rc == 0 ?
 		   _("SASL authentication succeeded") :
@@ -284,13 +317,17 @@ saslauth0(struct dict_connection *conn, struct auth_cred *cred)
 int
 saslauth(struct dict_connection *conn, dico_url_t url)
 {
+    struct authctx authctx;
     int rc = AUTH_FAIL;
     struct auth_cred cred;
+
+    if (getauthcontext(conn, &authctx))
+	return AUTH_CONT;
     
     switch (auth_cred_get(url->host, &cred)) {
     case GETCRED_OK:
 	if (cred.sasl) {
-	    rc = saslauth0(conn, &cred);
+	    rc = saslauth0(conn, &cred, &authctx);
 	    auth_cred_free(&cred);
 	} else
 	    rc = AUTH_CONT;
@@ -299,13 +336,14 @@ saslauth(struct dict_connection *conn, dico_url_t url)
     case GETCRED_FAIL:
 	dico_log(L_WARN, 0,
 		 _("Not enough credentials for authentication"));
-	rc = AUTH_CONT;
+	rc = AUTH_FAIL;
 	break;
 
     case GETCRED_NOAUTH:
 	XDICO_DEBUG(1, _("Skipping authentication\n"));
 	rc = AUTH_OK;
     }
+    freeauthcontext(&authctx);
     return rc;
 }
 

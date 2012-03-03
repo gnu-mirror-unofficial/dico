@@ -611,7 +611,8 @@ dicod_server(int argc, char **argv)
     if (rc) 
 	dico_log(L_NOTICE, errno, _("Exit code = %d, last error status"), rc);
 
-    remove_pidfile(pidfile_name);
+    if (!foreground)
+	remove_pidfile(pidfile_name);
 
     if (restart) {
 	int i;

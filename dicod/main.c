@@ -827,6 +827,8 @@ user_db_config(enum grecs_callback_command cmd,
 	
     case grecs_callback_set_value:
 	cfg->locus = *locus;
+	cfg->locus.beg.file = xstrdup(cfg->locus.beg.file);
+	cfg->locus.end.file = xstrdup(cfg->locus.end.file);
 	if (value->type != GRECS_TYPE_STRING) 
 	    grecs_error(locus, 0, _("URL must be a string"));
 	else if (!value->v.string)
@@ -839,12 +841,14 @@ user_db_config(enum grecs_callback_command cmd,
 static void
 init_user_db()
 {
-    if (user_db_cfg.url &&
-	dico_udb_create(&user_db,
-			user_db_cfg.url, user_db_cfg.get_pw,
-			user_db_cfg.get_groups, user_db_cfg.options)) {
+    if (!user_db_cfg.url)
+	sasl_enable = 0;
+    else if (dico_udb_create(&user_db,
+			     user_db_cfg.url, user_db_cfg.get_pw,
+			     user_db_cfg.get_groups, user_db_cfg.options)) {
 	grecs_error(&user_db_cfg.locus, errno,
-		     _("cannot create user database"));
+		    _("cannot create user database"));
+	sasl_enable = 0;
     }
 }
 
@@ -1635,7 +1639,6 @@ main(int argc, char **argv)
 
     apply_conf_override(&ovr);
     
-    register_sasl();
     compile_access_log();
 
     dicod_loader_init();
@@ -1643,6 +1646,7 @@ main(int argc, char **argv)
     begin_timing("server");
     dicod_server_init();
     init_user_db();
+    register_sasl();
     flush_strat_forward();
     if (default_strategy_name
 	&& dico_set_default_strategy(default_strategy_name)) {

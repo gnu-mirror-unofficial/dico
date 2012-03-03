@@ -145,7 +145,7 @@ a dot (@samp{.}), meaning to use default strategy.  The default
 strategy is set using @code{default-strategy} configuration file
 statement (@pxref{General Settings, default-strategy}.  Its default
 value is @samp{lev}, which means @samp{use Levenshtein algorithm}
-(@xref{Strategies}).
+(@pxref{Strategies}).
 
 If no matches are found in any of the searched databases, then response
 code 552 will be returned.     Otherwise, response code 152 will be

@@ -1622,6 +1622,9 @@ utf8_wctomb(char *r, unsigned int wc)
     return count;
 }
 
+#ifndef ENODATA
+# define ENODATA EINVAL
+#endif
 int
 utf8_mbtowc_internal(void *data, int (*read) (void *), unsigned int *pwc)
 {

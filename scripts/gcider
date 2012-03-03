@@ -21,6 +21,8 @@ exec wish "$0" -- "$@"
 package require Tk
 encoding system "utf-8"
 
+# FIXME: Hardcoded version number
+set version "2.2"
 set traceoption 0
 set dicod_server ""
 set dbname "gcide"
@@ -540,6 +542,8 @@ proc helpbox {title type arg} {
 
 # About box
 proc about {} {
+    global version
+    
     set top .aboutbox
     if [winfo exist $top] {
 	raise $top
@@ -558,12 +562,12 @@ proc about {} {
     grid [label $top.c.name \
           -justify center \
           -font "-adobe-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*" \
-	      -text "GCIDER Version 0.1"] \
+	      -text "GCIDER Version $version"] \
 	 -column 0 -row 0
     grid [label $top.c.descr \
           -justify center \
           -font "-adobe-helvetica-medium-r-*-*-*-100-*-*-*-*-*-*" \
-	      -text "GCIDER is a viewer for the GNU Collaborative dictionary of English."] \
+	      -text "A viewer for the GNU Collaborative dictionary of English."] \
 	-column 0 -row 1
     grid [label $top.c.warranty \
           -justify left \
@@ -1737,9 +1741,9 @@ General help using GNU software: <http://www.gnu.org/gethelp/>
 }
 
 proc cmdline_version {} {
-    global argv0
-    # FIXME: Hardcoded version number
-    puts "$argv0 (GNU dico) 2.1.90"
+    global argv0 version
+    
+    puts "[file tail $argv0] (GNU dico) $version"
     puts {
 Copyright (C) 2005-2012 Free Software Foundation, Inc.
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>

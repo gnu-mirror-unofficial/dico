@@ -50,8 +50,8 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 ## ------------ ##
 
 noinst_PROGRAMS=degcide greek exgrk
-degcide_LDADD = ../libgcide.la ../../../lib/libdico.la $(LIBICONV)
-greek_LDADD = ../libgcide.la ../../../lib/libdico.la $(LIBICONV)
+degcide_LDADD = ../libgcide.la ../../../lib/libdico.la $(LIBICONV) @LIBINTL@
+greek_LDADD = ../libgcide.la ../../../lib/libdico.la $(LIBICONV) @LIBINTL@
 INCLUDES = \
  -I$(top_srcdir)/include\
  -I$(top_builddir)/include\

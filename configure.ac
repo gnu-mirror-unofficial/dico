@@ -16,7 +16,7 @@ dnl Process this file with -*- autoconf -*- to produce a configure script.
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
 AC_PREREQ(2.63)
-AC_INIT([GNU dico], 2.1.90, [bug-dico@gnu.org])
+AC_INIT([GNU dico], 2.2, [bug-dico@gnu.org])
 AC_CONFIG_SRCDIR([dicod/main.c])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
@@ -128,104 +128,6 @@ if test -n "$LOG_FACILITY"; then
 fi		      
 AC_DEFINE_UNQUOTED([LOG_FACILITY],$LOG_FACILITY,
                    [Default syslog facility.])
-	
-
-# Check for Berkeley DB
-db_path=
-db_version=4
-status_dbm=no
-
-AC_ARG_WITH([berkeley-db],
-            AC_HELP_STRING([--with-berkeley-db=version],
-                           [use this Berkeley DB version]),
-            [
-case "${withval}" in
-  /*)       db_path=${withval};;
-  [[0-9]]*) db_version=${withval}
-            ver=`echo $withval | tr -d '.'`
-	    if test "$ver" -lt 4; then
-	      AC_MSG_ERROR([Berkeley DB version 4 or greater is required])
-	    fi;;
-  *)        AC_MSG_ERROR([erroneous or missing argument to --with-berkeley-db]);;
-esac])
-
-## Set the variable status_dbm to $1 if:
-##
-##  1. Function $3 is defined in the library $2;
-##  2. Header file db.h is available;
-##  3. Version triplets defined in db.h and in the library match.        
-##
-## Then check if the major version, minor version and patchlevel of the
-## library matches those from the header. If so, define WITH_BDB
-## to the version (i.e. $1 with all dots removed). Otherwise, report
-## an error and stop.
-##
-check_bdb() {
-        ver=`echo $1 | tr -d '.'`
-	major=`expr $ver : '\(.\).*'`
-	save_LIBS=$LIBS
-	AC_CHECK_LIB($2, $3,
-                     [AC_CHECK_HEADERS(db.h)
-                      if test $ac_cv_header_db_h = yes; then
-		        LIBS="$LIBS -l$2"
-                        status_dbm=$1
-                      fi])
-	if test $status_dbm = no; then
-	  :
-	else
-	  AC_RUN_IFELSE(
-           [AC_LANG_PROGRAM([#include "db.h"],
-            [int v_major, v_minor, v_patch;
-             db_version(&v_major, &v_minor, &v_patch);
-             return !(DB_VERSION_MAJOR == $major
-                       && v_major == DB_VERSION_MAJOR
-                       && v_minor == DB_VERSION_MINOR
-                       && v_patch == DB_VERSION_PATCH);
-            ])],
-           [DB_LIBS="-l$2"],
-           [unset ac_cv_header_db_h
-	    status_dbm=no])
-	   LIBS=$save_LIBS
-	fi
-}
-
-AC_SUBST(DB_INCLUDES)
-AC_SUBST(DB_LIBS)
-	
-## Check for the Berkeley DB library version $1, assuming Slackware-like
-## installation layout (header files in /usr/incude/db$vn and library named
-## libdb-$version.so, where $version is the library version and $vn is
-## $version with all dots removed.
-##
-check_slackware_bdb() {
-	dir=db`echo $1|tr -d '.'`
-	save_CPPFLAGS=$CPPFLAGS
-	while test -n "$dir"
-	do
-		if test -d /usr/include/$dir; then
-			CPPFLAGS="$CPPFLAGS -I/usr/include/$dir"
-			break
-		elif test -d /usr/local/include/$dir; then
-			CPPFLAGS="$CPPFLAGS -I/usr/local/include/$dir"
-			break
-		fi		
-		dir=`expr "$dir" : '\(.*\)[[0-9]]$'`
-	done
-	check_bdb $1 db-$1 db_create
-	CPPFLAGS=$save_CPPFLAGS
-	if test $status_dbm = "$1"; then
-	    DB_INCLUDES="$DB_INCLUDES -I/usr/include/$dir"
-	fi
-}
-	
-check_bdb $db_version db db_create
-if test $status_dbm = no; then
-   check_slackware_bdb $db_version
-fi   	  
-
-if test $status_dbm != no; then
-  AC_SUBST(BUILD_JDICT_PROGS,'$(JDICT_PROGS)')
-fi
 
 AC_ARG_VAR([DEFAULT_DICT_SERVER],
            [Set the name of the default DICT server for dico utility])

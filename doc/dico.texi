@@ -6379,7 +6379,7 @@ data are entered, the program will save them in its configuration file
 (located in @file{~/.gcider}) and will reuse them in subsequent
 invocations.
 
-The @command{gcider} user documentation is available online on
+The @command{gcider} user documentation is available online at
 @uref{http://dico.gnu.org.ua/gcider.html}.
 
 The program display is organized in three areas, ordered vertically.

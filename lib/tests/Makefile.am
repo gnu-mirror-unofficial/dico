@@ -48,7 +48,7 @@ noinst_PROGRAMS = \
 
 listop_SOURCES=listop.c itrsh.c itrsh.h
 
-LDADD = ../libdico.la
+LDADD = ../libdico.la $(LIBINTL)
 
 ## ------------ ##
 ## Test suite.  ##

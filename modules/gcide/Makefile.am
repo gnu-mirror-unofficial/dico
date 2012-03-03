@@ -23,7 +23,7 @@ noinst_LTLIBRARIES=libgcide.la
 libgcide_la_SOURCES=webchr.c ent.c markup.l grk.c
 
 gcide_la_SOURCES = gcide.c idx.c 
-gcide_la_LIBADD = ./libgcide.la ../../lib/libdico.la $(LIBICONV)
+gcide_la_LIBADD = ./libgcide.la ../../lib/libdico.la $(LIBICONV) @LTLIBINTL@
 gcide_la_LDFLAGS = -module -avoid-version -no-undefined
 
 libexec_PROGRAMS=idxgcide 
@@ -33,14 +33,20 @@ idxgcide_LDADD = \
  ./libgcide.la\
  ../../lib/libxdico.a\
  ../../lib/libdico.la\
- $(LIBICONV)
+ $(LIBICONV) \
+ @LIBINTL@
 
 noinst_HEADERS = gcide.h
 
 AM_LFLAGS=-d
 AM_CPPFLAGS=-DLIBEXECDIR=\"${libexecdir}\"
 
-INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include @GRECS_INCLUDES@
+INCLUDES = \
+ -I$(top_srcdir)/include\
+ -I$(top_builddir)/include\
+ @GRECS_INCLUDES@\
+ -I$(top_srcdir)/gnu\
+ -I$(top_builddir)/gnu
 
 SUFFIXES=.opt .h
 

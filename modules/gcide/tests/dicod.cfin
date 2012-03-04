@@ -5,7 +5,6 @@ load-module gcide;
 load-module stratall;
 database {
 	name "gcide";
-	description "A mock GCIDE dictionary";
 	handler "gcide dbdir=~dictdir~ idxdir=~idxdir~ index-program=~moddir~/gcide/idxgcide";
 }
 

@@ -21,7 +21,7 @@ quit
 ],
 [220
 150 1 definitions found: list follows
-151 "GNU" gcide "A mock GCIDE dictionary"
+151 "GNU" gcide "A mock GCIDE dictionary for GNU Dico test suite"
 GNU n. GNU's Not UNIX.
 
 [[Dico testsuite]]

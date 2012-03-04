@@ -21,7 +21,7 @@ quit
 ],
 [220
 150 1 definitions found: list follows
-151 "cyclical" gcide "A mock GCIDE dictionary"
+151 "cyclical" gcide "A mock GCIDE dictionary for GNU Dico test suite"
 { Cyclic, Cyclical} a.
 [[Gr. κυκλικός, fr. κύκλος See {Cycle}.]]
 Going in cycles

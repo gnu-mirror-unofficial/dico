@@ -34,6 +34,10 @@ m4_include(greek.at)
 m4_include(idx.at)
 m4_include(autoidx.at)
 
+AT_BANNER([Dictionary info])
+m4_include(descr.at)
+m4_include(info.at)
+
 AT_BANNER(Match)
 m4_include(exact.at)
 m4_include(prefix.at)

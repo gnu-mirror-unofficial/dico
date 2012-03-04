@@ -27,7 +27,7 @@ noinst_DATA = dicod.conf
 CLEANFILES = dicod.conf
 
 dist-hook:
-	tar -C $(srcdir) -c -f - dict/CIDE.[A-Z] | \
+	tar -C $(srcdir) -c -f - dict/CIDE.[A-Z] dict/INFO | \
 	      tar -C $(distdir) -x -f -
 
 ## ------------ ##
@@ -71,9 +71,11 @@ TESTSUITE_AT = \
  def03.at\
  def04.at\
  def05.at\
+ descr.at\
  exact.at\
  greek.at\
  idx.at\
+ info.at\
  markup.at\
  nopr.at\
  prefix.at\

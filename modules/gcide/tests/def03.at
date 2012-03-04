@@ -21,7 +21,7 @@ quit
 ],
 [220
 150 1 definitions found: list follows
-151 "telamones" gcide "A mock GCIDE dictionary"
+151 "telamones" gcide "A mock GCIDE dictionary for GNU Dico test suite"
 ||Atlantes, n. pl. A definition with alternate name telamones.
 
 [[Dico testsuite]]

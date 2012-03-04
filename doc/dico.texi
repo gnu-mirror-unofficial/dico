@@ -2990,7 +2990,8 @@ for the user @command{dicod} is started as.
 Other options are:
 
 @deffn {gcide parameter} idxdir directory
-Specifies alternate directory for the @file{CIDE.IDX} index file.
+Specifies the directory where the @file{CIDE.IDX} index file resides
+or should reside.
 @end deffn
 
 @deffn {gcide parameter} index-cache-size size
@@ -3014,6 +3015,12 @@ fields have been filled in}, so it might be reasonable to avoid
 displaying them at all.
 @end deffn
 
+  Starting from version 0.51, GCIDE contains the file @file{INFO},
+which provides basic information about the dictionary.  The
+@command{gcide} module returns contents of this file at the
+@samp{SHOW INFO} request.  The first line of this file (with the
+trailing newline and final point removed) is returned as the short
+database description.
 
   Here's a full example of a @samp{gcide} as used in
 @indicateurl{dico.gnu.org.ua}:
@@ -3024,27 +3031,12 @@ load-module gcide;
 
 database @{
     name "gcide";
-    handler "gcide dbdir=/var/dictdb/gcide suppress-pr";
+    handler "gcide dbdir=/var/dictdb/gcide-0.51 suppress-pr";
     languages-from "en";
     languages-to "en";
-    description "Collaborative International Dictionary"
-                " of English";
-    info <<EOT
-The dictionary was derived from the
-         Webster's Revised Unabridged Dictionary
-                 Version published 1913
-               by the  C. & G.  Merriam Co.
-                   Springfield, Mass.
-                 Under the direction of
-                Noah Porter, D.D., LL.D.
-@dots{}
-EOT;
 @}
 @end group
 @end example
-
-  The dots represent further content of the description which is too
-big and irrelevant to copy it here.
 
 @menu
 * idxgcide::

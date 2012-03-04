@@ -21,14 +21,14 @@ quit
 ],
 [220
 150 2 definitions found: list follows
-151 "kludge" gcide "A mock GCIDE dictionary"
+151 "kludge" gcide "A mock GCIDE dictionary for GNU Dico test suite"
 kludge n. A working solution, not particularly elegant.
 
 [[Dico testsuite]]
 
 
 .
-151 "kludge" gcide "A mock GCIDE dictionary"
+151 "kludge" gcide "A mock GCIDE dictionary for GNU Dico test suite"
 kludge v. To use such a solution.
 
 [[Dico testsuite]]

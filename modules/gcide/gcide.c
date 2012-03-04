@@ -296,7 +296,94 @@ gcide_free_db(dico_handle_t hp)
     free_db(db);
     return 0;
 }
+
+static int
+_is_nl_or_punct(int c)
+{
+    return !!strchr("\r\n!,-./:;?", c);
+}
 
+static char *
+read_info_file(const char *fname, int first_line)
+{
+    dico_stream_t stream;
+    int rc;
+    char *bufptr = NULL;
+    size_t bufsize = 0;
+    
+    stream = dico_mapfile_stream_create(fname, DICO_STREAM_READ);
+    if (!stream) {
+	dico_log(L_NOTICE, errno, _("cannot create stream `%s'"), fname);
+	return NULL;
+    }
+
+    rc = dico_stream_open(stream);
+    if (rc) {
+	dico_log(L_ERR, 0,
+		 _("cannot open stream `%s': %s"),
+		 fname, dico_stream_strerror(stream, rc));
+	dico_stream_destroy(&stream);
+	return NULL;
+    }
+
+    if (first_line) {
+	size_t n;
+	
+	rc = dico_stream_getline(stream, &bufptr, &bufsize, &n);
+	if (rc) {
+	    dico_log(L_ERR, 0,
+		     _("read error in stream `%s': %s"),
+		     fname, dico_stream_strerror(stream, rc));
+	} else
+	    dico_string_trim(bufptr, n, _is_nl_or_punct);
+    } else {
+	off_t size;
+	rc = dico_stream_size(stream, &size);
+	if (rc) {
+	    dico_log(L_ERR, 0,
+		     _("cannot get size of stream `%s': %s"),
+		     fname, dico_stream_strerror(stream, rc));
+	} else {
+	    bufsize = size;
+	    bufptr = malloc (bufsize + 1);
+	    if (!bufptr) {
+		dico_log(L_ERR, errno,
+			 _("cannot allocate dictionary information buffer"));
+	    } else if ((rc = dico_stream_read(stream, bufptr, bufsize, NULL))) {
+		dico_log(L_ERR, 0,
+			 _("read error in stream `%s': %s"),
+			 fname, dico_stream_strerror(stream, rc));
+		free(bufptr);
+		bufptr = NULL;
+	    } else
+		bufptr[bufsize] = 0;
+	}
+    }
+    
+    dico_stream_destroy(&stream);
+    return bufptr;
+}
+
+static char *
+read_dictionary_info(struct gcide_db *db, int first_line)
+{
+    char *fname = dico_full_file_name(db->db_dir, "INFO");
+    char *info = read_info_file(fname, first_line);
+    free(fname);
+    return info;
+}
+
+char *
+gcide_info(dico_handle_t hp)
+{
+    return read_dictionary_info((struct gcide_db *) hp, 0);
+}
+
+char *
+gcide_descr(dico_handle_t hp)
+{
+    return read_dictionary_info((struct gcide_db *) hp, 1);
+}
 
 static gcide_iterator_t
 exact_match(struct gcide_db *db, const char *hw)
@@ -748,8 +835,8 @@ struct dico_database_module DICO_EXPORT(gcide, module) = {
     gcide_free_db,
     NULL,
     NULL,
-    NULL,
-    NULL,
+    gcide_info,
+    gcide_descr,
     NULL,
     gcide_match,
     gcide_define,

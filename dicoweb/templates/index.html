@@ -6,10 +6,10 @@
 
 <div id="searchform">
   <form id="form" method="get" action="">
-    <table width="600">
+    <table>
       <tbody>
 	<tr>
-          <td align="right" style="width:25%">{% trans "Search term:" %}</td>
+          <td align="right" class="label">{% trans "Search term:" %}</td>
 	  <td>
 	    <input type="text" id="q" name="q" size="35" value="{{ q|escape }}" />
             <a href="./#" id="toggle_options">{% trans "more options" %}</a>
@@ -46,8 +46,8 @@
       </tbody>
       <tbody>
 	<tr>
-	  <td></td>
-	  <td>
+	  <td id="action-pad"></td>
+	  <td id="action" colspan="2">
 	    <input type="submit" name="search" value="{% trans "Search" %}" />
 	    <input type="submit" name="define" value="{% trans "Define (I'm feeling lucky)" %}" />
 	  </td>

@@ -1,5 +1,5 @@
 #  This file is part of GNU Dico.
-#  Copyright (C) 2008-2009, 2012 Wojciech Polak
+#  Copyright (C) 2008-2009, 2012, 2013 Wojciech Polak
 #
 #  GNU Dico is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -16,9 +16,10 @@
 
 from django.template import Library
 
-register = Library ()
+register = Library()
 
-def media_prefix ():
+
+def media_prefix():
     """Return the string contained in the setting MEDIA_URL."""
     try:
         from django.conf import settings
@@ -26,4 +27,4 @@ def media_prefix ():
         return ''
     return settings.MEDIA_URL
 
-media_prefix = register.simple_tag (media_prefix)
+media_prefix = register.simple_tag(media_prefix)

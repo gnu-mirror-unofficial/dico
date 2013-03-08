@@ -1,5 +1,5 @@
 #  This file is part of GNU Dico.
-#  Copyright (C) 2008-2009, 2012 Wojciech Polak
+#  Copyright (C) 2008-2009, 2012, 2013 Wojciech Polak
 #
 #  GNU Dico is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -17,9 +17,9 @@
 import os
 import sys
 
-SITE_ROOT = os.path.dirname (os.path.realpath (__file__))
+SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'dicoweb.settings'
-sys.path.insert (0, os.path.join (SITE_ROOT, '../'))
+sys.path.insert(0, os.path.join(SITE_ROOT, '../'))
 
 from django.core.handlers.wsgi import WSGIHandler
-application = WSGIHandler ()
+application = WSGIHandler()

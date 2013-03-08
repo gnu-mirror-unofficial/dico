@@ -9,16 +9,16 @@
 <meta name="keywords" content="gnu dico web search interface, dicoweb, dictionaries, dict protocol" />
 <meta name="description" content="GNU Dico WebSearch Interface" />
 <meta name="robots" content="{{ page.robots }}" />
-<link rel="stylesheet" type="text/css" href="{% media_prefix %}/dicoweb.css" />
+<link rel="stylesheet" type="text/css" href="{% media_prefix %}dicoweb.css" />
 <link rel="search" type="application/opensearchdescription+xml" title="GNU Dico WebSearch" href="{% url opensearch %}" />
-<script type="text/javascript" src="{% media_prefix %}/dicoweb.js"></script>
+<script type="text/javascript" src="{% media_prefix %}dicoweb.js"></script>
 </head>
 
 <body>
   <div id="wrap">
     <div id="logo">
       <h1><a href="{% url views.index %}" accesskey="1">GNU Dico</a></h1>
-      <img src="{% media_prefix %}/gnu-head-sm.jpg" width="129" height="122" alt="GNU" />
+      <img src="{% media_prefix %}gnu-head-sm.jpg" width="129" height="122" alt="GNU" />
     </div>
     <div id="main">
       {% block search %}{% endblock %}

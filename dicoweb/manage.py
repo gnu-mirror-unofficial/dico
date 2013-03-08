@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #  This file is part of GNU Dico.
-#  Copyright (C) 2008-2009, 2012 Wojciech Polak
+#  Copyright (C) 2008-2009, 2012, 2013 Wojciech Polak
 #
 #  GNU Dico is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -20,4 +20,4 @@ from django.core.management import execute_manager
 import settings
 
 if __name__ == '__main__':
-    execute_manager (settings)
+    execute_manager(settings)

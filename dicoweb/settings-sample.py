@@ -1,7 +1,7 @@
 #  Django settings for Dicoweb project.
 #
 #  This file is part of GNU Dico.
-#  Copyright (C) 2008-2010, 2012 Wojciech Polak
+#  Copyright (C) 2008-2010, 2012, 2013 Wojciech Polak
 #
 #  GNU Dico is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 #  along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-SITE_ROOT = os.path.dirname (os.path.realpath (__file__))
+SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
 
 DEBUG = True
 TEMPLATE_DEBUG = True
@@ -46,13 +46,20 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.file'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # Caching, see http://docs.djangoproject.com/en/dev/topics/cache/#topics-cache
-CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+        'KEY_PREFIX': 'dicoweb',
+    },
+}
+CACHE_MIDDLEWARE_ANONYMOUS_ONLY = True
 
 # Absolute path to the directory that holds media/static files.
-MEDIA_ROOT = os.path.join (SITE_ROOT, 'static')
+MEDIA_ROOT = os.path.join(SITE_ROOT, 'static')
 
 # URL that handles the media served from MEDIA_ROOT.
-MEDIA_URL = 'static'
+MEDIA_URL = 'static/'
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'SET THIS TO A RANDOM STRING'
@@ -75,7 +82,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'dicoweb.urls'
 
 TEMPLATE_DIRS = (
-    os.path.join (SITE_ROOT, 'templates'),
+    os.path.join(SITE_ROOT, 'templates'),
 )
 
 INSTALLED_APPS = (

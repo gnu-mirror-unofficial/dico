@@ -14,6 +14,9 @@ Copyright (C) 2008-2010, 2012, 2013 Wojciech Polak
 Rename 'settings-sample.py' to 'settings.py' and edit your
 local Dicoweb site configuration.
 
+See https://docs.djangoproject.com/en/dev/howto/deployment/
+for usual Django applications deployment.
+
 
 ** The development/test server
 ------------------------------
@@ -35,40 +38,11 @@ the following output:
 Apache configuration:
 
   LoadModule wsgi_module modules/mod_wsgi.so
-  WSGIScriptAlias / /usr/local/django/dicoweb/dicoweb.wsgi
+  WSGIScriptAlias / /usr/local/django/dicoweb/wsgi.py
   Alias /static "/usr/local/django/dicoweb/static"
 
 More detailed information is available at:
 http://code.google.com/p/modwsgi/wiki/IntegrationWithDjango
-
-** Production server with mod_python
-------------------------------------
-
-Apache configuration:
-
- LoadModule python_module modules/mod_python.so
- <Location "/">
-   SetHandler python-program
-   PythonHandler django.core.handlers.modpython
-   PythonPath "sys.path + ['/usr/local/django', '/usr/local/django/dicoweb']"
-   SetEnv DJANGO_SETTINGS_MODULE dicoweb.settings
-   PythonInterpreter dicoweb
-   PythonDebug Off
- </Location>
-
- <Location "/static">
-   SetHandler None
- </Location>
- <Location "/favicon.ico">
-   SetHandler None
- </Location>
-
- <Directory "/usr/local/django/dicoweb/">
-   AllowOverride All
-   Options None
-   Order allow,deny
-   Allow from all
- </Directory>
 
 
 

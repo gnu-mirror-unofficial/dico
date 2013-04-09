@@ -15,7 +15,7 @@
 #  along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf import settings
-from django.conf.urls.defaults import *
+from django.conf.urls import patterns
 import views
 
 urlpatterns = patterns(

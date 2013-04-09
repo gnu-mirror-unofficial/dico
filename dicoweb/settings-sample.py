@@ -27,17 +27,10 @@ ADMINS = (
 )
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = ''
-DATABASE_NAME = ''
-DATABASE_USER = ''
-DATABASE_PASSWORD = ''
-DATABASE_HOST = ''
-DATABASE_PORT = ''
-
 SITE_ID = 1
 USE_I18N = True
 
-TIME_ZONE = 'Europe/Warsaw'
+TIME_ZONE = 'UTC'
 LANGUAGE_CODE = 'en-us'
 LANGUAGE_COOKIE_NAME = 'dicoweb_lang'
 
@@ -59,7 +52,7 @@ CACHE_MIDDLEWARE_ANONYMOUS_ONLY = True
 MEDIA_ROOT = os.path.join(SITE_ROOT, 'static')
 
 # URL that handles the media served from MEDIA_ROOT.
-MEDIA_URL = 'static/'
+MEDIA_URL = '/static/'
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'SET THIS TO A RANDOM STRING'
@@ -91,6 +84,39 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'dicoweb',
 )
+
+# A sample logging configuration. The only tangible logging
+# performed by this configuration is to send an email to
+# the site admins on every HTTP 500 error when DEBUG=False.
+# See http://docs.djangoproject.com/en/dev/topics/logging for
+# more details on how to customize your logging configuration.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse'
+        }
+    },
+    'handlers': {
+        'mail_admins': {
+            'level': 'ERROR',
+            'filters': ['require_debug_false'],
+            'class': 'django.utils.log.AdminEmailHandler'
+        }
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    }
+}
+
+#
+# Dicoweb specific settings.
+#
 
 DICT_SERVERS = ('gnu.org.ua',)
 DICT_TIMEOUT = 10

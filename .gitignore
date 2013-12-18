@@ -8,7 +8,7 @@
 *~
 .bootstrap
 .deps
-.emacs.desktop
+.emacs.*
 .emacsrc
 .libs
 .libs/*
@@ -29,6 +29,7 @@ configure
 core
 gmon.out
 gnu
+gnulib
 libltdl
 libtool
 local-tests

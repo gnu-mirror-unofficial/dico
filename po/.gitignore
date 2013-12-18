@@ -1,6 +1,7 @@
 *.gmo
 *.mo
 *.po
+.pot
 .reference
 LINGUAS
 Makefile

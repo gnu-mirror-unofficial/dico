@@ -40,7 +40,7 @@ dico_levenshtein_distance(const char *astr, const char *bstr, int flags)
     int blen;
     unsigned *rowptr;
     unsigned *row[3];
-    int i, j, idx, nrows;
+    int i, j, idx, prev, nrows;
     int dist;
     int (*conv) (const char *, unsigned **, size_t *) =
 	(flags & DICO_LEV_NORM) ? utf8_mbstr_to_norm_wc : utf8_mbstr_to_wc;
@@ -70,13 +70,13 @@ dico_levenshtein_distance(const char *astr, const char *bstr, int flags)
     }
     DEBUGNL();
     idx = 1;
+    prev = 0;
     
-    for (i = 0; i < alen; i++, idx = (idx + 1) % nrows ) {
+    for (i = 0; i < alen; i++, prev = idx, idx = (idx + 1) % nrows ) {
 	row[idx][0] = i + 1;	
 	DEBUG(row[idx][0]);
 	for (j = 0; j < blen; j++) { 
 	    unsigned n, cost;
-	    int prev = (idx + nrows - 1) % nrows;
 	    
 	    cost = !(utf8_wc_toupper(a[i]) == utf8_wc_toupper(b[j]));
 	    n = MIN(row[prev][j+1] + 1,   /* Deletion */
@@ -92,9 +92,9 @@ dico_levenshtein_distance(const char *astr, const char *bstr, int flags)
 	    row[idx][j+1] = n;
 	    DEBUG(row[idx][j+1]);
 	}
-	dist = row[idx][blen];
 	DEBUGNL();
     }
+    dist = row[prev][blen];
 
     free(rowptr);
     free(a);

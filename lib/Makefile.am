@@ -16,7 +16,7 @@
 
 SUBDIRS = . tests
 
-INCLUDES = -I${top_srcdir}/include -I${top_srcdir}/gnu -I../gnu
+AM_CPPFLAGS = -I${top_srcdir}/include -I${top_srcdir}/gnu -I../gnu
 
 lib_LTLIBRARIES = libdico.la
 

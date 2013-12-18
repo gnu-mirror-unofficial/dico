@@ -30,7 +30,8 @@ OPTIONS_BEGIN("dicod",
 	      [<gnu>],
 	      [<gnupackage>],
 	      [<copyright_year=2005-2012>],
-	      [<copyright_holder=Free Software Foundation, Inc.>])
+	      [<copyright_holder=Free Software Foundation, Inc.>],
+	      [<program_version>])
 
 GROUP(Select program mode)
 OPTION(,E,,

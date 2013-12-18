@@ -38,7 +38,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 ## Non-installable programs
 ## -------------------------- ##
 
-INCLUDES = -I${top_srcdir}/include @GRECS_INCLUDES@
+AM_CPPFLAGS = -I${top_srcdir}/include @GRECS_INCLUDES@
 noinst_PROGRAMS = \
  levtest\
  linetrim\

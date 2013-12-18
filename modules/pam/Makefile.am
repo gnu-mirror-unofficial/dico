@@ -21,4 +21,4 @@ mod_LTLIBRARIES=pam.la
 pam_la_SOURCES = pam.c
 pam_la_LIBADD = ../../lib/libdico.la -lpam @PAM_LIBS@
 AM_LDFLAGS = -module -avoid-version -no-undefined
-INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include @GRECS_INCLUDES@
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include @GRECS_INCLUDES@

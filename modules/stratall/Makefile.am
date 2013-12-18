@@ -23,4 +23,4 @@ mod_LTLIBRARIES=stratall.la
 stratall_la_SOURCES = stratall.c
 stratall_la_LIBADD = ../../lib/libdico.la
 AM_LDFLAGS = -module -avoid-version -no-undefined
-INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include

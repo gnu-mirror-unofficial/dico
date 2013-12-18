@@ -23,4 +23,4 @@ mod_LTLIBRARIES=python.la
 python_la_SOURCES = python.c
 python_la_LIBADD = ../../lib/libdico.la @PYTHON_LIBS@
 AM_LDFLAGS = -module -avoid-version -no-undefined -rpath $(moddir)
-INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include @PYTHON_INCLUDES@
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include @PYTHON_INCLUDES@

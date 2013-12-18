@@ -105,6 +105,8 @@ extern socklen_t server_addrlen;
 extern struct sockaddr client_addr;
 extern socklen_t client_addrlen;
 
+extern const char *program_version;
+
 struct dico_stat {
     unsigned long defines;
     unsigned long matches;

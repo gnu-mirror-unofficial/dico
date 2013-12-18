@@ -36,7 +36,7 @@ LDADD=\
  ../lib/libdico.la\
  @DB_LIBS@
 
-INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu @DB_INCLUDES@
+AP_CPPFLAGS=-I$(top_srcdir)/include -I$(top_srcdir)/gnu @DB_INCLUDES@
 
 SUFFIXES=.opt .c
 

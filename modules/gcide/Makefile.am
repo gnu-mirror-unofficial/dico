@@ -39,9 +39,8 @@ idxgcide_LDADD = \
 noinst_HEADERS = gcide.h
 
 AM_LFLAGS=-d
-AM_CPPFLAGS=-DLIBEXECDIR=\"${libexecdir}\"
-
-INCLUDES = \
+AM_CPPFLAGS=\
+ -DLIBEXECDIR=\"${libexecdir}\"\
  -I$(top_srcdir)/include\
  -I$(top_builddir)/include\
  @GRECS_INCLUDES@\

@@ -47,13 +47,17 @@ dicod_SOURCES=\
 noinst_HEADERS=dicod.h
 
 incdir=$(pkgdatadir)/$(VERSION)/include
-AM_CFLAGS = \
+AM_CPPFLAGS = \
  -DSYSCONFIG=\"$(sysconfdir)\"\
  -DLOCALSTATEDIR=\"$(localstatedir)\"\
  -DDICO_MODDIR=\"$(DICO_MODDIR)\"\
  -DDEFAULT_VERSION_INCLUDE_DIR=\"$(incdir)\"\
  -DDEFAULT_INCLUDE_DIR=\"$(pkgdatadir)/include\"\
- -DDEFAULT_PREPROCESSOR="$(DEFAULT_PREPROCESSOR)"
+ -DDEFAULT_PREPROCESSOR="$(DEFAULT_PREPROCESSOR)"\
+ -I$(top_srcdir)/include\
+ -I$(top_srcdir)/gnu\
+ -I../gnu\
+ @GRECS_INCLUDES@ @LTDLINCL@
 
 AM_YFLAGS = -dtv
 AM_LFLAGS = -dvp
@@ -68,7 +72,6 @@ LDADD=\
  @GSASL_LIBS@\
  @LIBLTDL@  
 
-INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu -I../gnu @GRECS_INCLUDES@ @LTDLINCL@
 # dicod_DEPENDENCIES=@LTDLDEPS@
 
 SUFFIXES=.opt .c

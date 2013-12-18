@@ -65,7 +65,7 @@ apopauth_LDADD=\
  @GSASL_LIBS@\
  @LIBLTDL@
 
-INCLUDES = \
+AM_CPPFLAGS = \
  -I$(top_srcdir)/include\
  -I$(top_builddir)/include\
  -I$(top_srcdir)/gnu\

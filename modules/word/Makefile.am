@@ -22,4 +22,4 @@ mod_LTLIBRARIES=word.la
 word_la_SOURCES = word.c
 word_la_LIBADD = ../../lib/libdico.la
 AM_LDFLAGS = -module -avoid-version -no-undefined
-INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include

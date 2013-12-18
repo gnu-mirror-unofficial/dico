@@ -38,9 +38,12 @@ LDADD=\
  @GSASL_LIBS@\
  @LIBLTDL@  
 
-AM_CPPFLAGS=-DDEFAULT_DICT_SERVER="\"$(DEFAULT_DICT_SERVER)\""
-
-INCLUDES=-I$(top_srcdir)/include -I$(top_srcdir)/gnu -I../gnu @GRECS_INCLUDES@ @LTDLINCL@
+AM_CPPFLAGS=\
+ -DDEFAULT_DICT_SERVER="\"$(DEFAULT_DICT_SERVER)\""\
+ -I$(top_srcdir)/include\
+ -I$(top_srcdir)/gnu\
+ -I../gnu\
+ @GRECS_INCLUDES@ @LTDLINCL@
 
 SUFFIXES=.opt .c
 

@@ -21,4 +21,4 @@ mod_LTLIBRARIES=ldap.la
 ldap_la_SOURCES = ldap.c
 ldap_la_LIBADD = ../../lib/libdico.la -lldap
 AM_LDFLAGS = -module -avoid-version -no-undefined
-INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include @GRECS_INCLUDES@
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include @GRECS_INCLUDES@

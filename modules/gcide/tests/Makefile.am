@@ -52,7 +52,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 noinst_PROGRAMS=degcide greek exgrk
 degcide_LDADD = ../libgcide.la ../../../lib/libdico.la $(LIBICONV) @LIBINTL@
 greek_LDADD = ../libgcide.la ../../../lib/libdico.la $(LIBICONV) @LIBINTL@
-INCLUDES = \
+AM_CPPFLAGS = \
  -I$(top_srcdir)/include\
  -I$(top_builddir)/include\
  -I$(top_srcdir)/modules/gcide\

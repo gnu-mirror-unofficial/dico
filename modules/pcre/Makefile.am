@@ -21,4 +21,4 @@ mod_LTLIBRARIES=pcre.la
 pcre_la_SOURCES = pcre.c
 pcre_la_LIBADD = ../../lib/libdico.la -lpcre
 AM_LDFLAGS = -module -avoid-version -no-undefined
-INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include

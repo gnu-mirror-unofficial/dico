@@ -37,7 +37,7 @@ AC_PROG_AWK
 AC_PROG_YACC
 AC_PROG_LEX
 
-LT_PREREQ(2.2.5a)
+LT_PREREQ(2.4)
 LT_CONFIG_LTDL_DIR([libltdl])
 LT_INIT([dlopen])
 LTDL_INIT([recursive])
@@ -102,7 +102,7 @@ AC_CHECK_LIB(crypt, crypt)
 # Gettext.
 AM_ICONV
 AM_GNU_GETTEXT([external], [need-formatstring-macros])
-AM_GNU_GETTEXT_VERSION([0.17])
+AM_GNU_GETTEXT_VERSION([0.18])
 AC_CONFIG_LINKS(include/gettext.h:gnu/gettext.h)
 
 # Check for zlib

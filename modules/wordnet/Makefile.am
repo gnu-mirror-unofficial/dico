@@ -21,7 +21,7 @@ mod_LTLIBRARIES=wordnet.la
 wordnet_la_SOURCES = wordnet.c
 wordnet_la_LIBADD = ../../lib/libdico.la @WORDNET_LOPT@ -lWN
 AM_LDFLAGS = -module -avoid-version -no-undefined
-INCLUDES = \
+AM_CPPFLAGS = \
  -I$(top_srcdir)/include\
  -I$(top_builddir)/include\
  @WORDNET_IOPT@\

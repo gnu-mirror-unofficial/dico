@@ -638,13 +638,6 @@ shell_getline(void *data, char **buf)
 }
 
 void
-shell_banner()
-{
-    print_version(PACKAGE_STRING, stdout);
-    printf("%s\n\n", _("Type ? for help summary"));
-}
-
-void
 dico_shell()
 {
     struct init_script dat;

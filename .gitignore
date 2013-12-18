@@ -5,6 +5,9 @@
 *.pyc
 *.tar.bz2
 *.tar.gz
+*.tar.xz
+*.rej
+*.orig
 *~
 .bootstrap
 .deps

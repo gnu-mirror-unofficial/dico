@@ -1,6 +1,6 @@
 dnl Process this file with -*- autoconf -*- to produce a configure script. 
 # This file is part of GNU Dico
-# Copyright (C) 1998-2000, 2008-2010, 2012 Sergey Poznyakoff
+# Copyright (C) 1998-2000, 2008-2010, 2012, 2013 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@ dnl Process this file with -*- autoconf -*- to produce a configure script.
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
 AC_PREREQ(2.63)
-AC_INIT([GNU dico], 2.2, [bug-dico@gnu.org])
+AC_INIT([GNU dico], 2.2.90, [bug-dico@gnu.org])
 AC_CONFIG_SRCDIR([dicod/main.c])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR([build-aux])

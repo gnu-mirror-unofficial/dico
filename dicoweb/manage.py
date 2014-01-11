@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #  This file is part of GNU Dico.
-#  Copyright (C) 2008-2009, 2012, 2013 Wojciech Polak
+#  Copyright (C) 2008-2009, 2012-2014 Wojciech Polak
 #
 #  GNU Dico is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -16,8 +16,15 @@
 #  You should have received a copy of the GNU General Public License
 #  along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.core.management import execute_manager
-import settings
+import os
+import sys
 
 if __name__ == '__main__':
-    execute_manager(settings)
+    SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
+    sys.path.insert(0, os.path.join(SITE_ROOT, '../'))
+
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dicoweb.settings')
+
+    from django.core.management import execute_from_command_line
+
+    execute_from_command_line(sys.argv)

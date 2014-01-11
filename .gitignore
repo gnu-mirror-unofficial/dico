@@ -38,3 +38,6 @@ libtool
 local-tests
 m4
 stamp-h1
+dicoweb/bin
+dicoweb/lib
+dicoweb/include

@@ -1,7 +1,7 @@
 #  Django settings for Dicoweb project.
 #
 #  This file is part of GNU Dico.
-#  Copyright (C) 2008-2010, 2012, 2013 Wojciech Polak
+#  Copyright (C) 2008-2010, 2012-2014 Wojciech Polak
 #
 #  GNU Dico is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -22,6 +22,11 @@ SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
 DEBUG = True
 TEMPLATE_DEBUG = True
 
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+]
+
 ADMINS = (
     ('Your Name', 'Your e-mail address'),
 )
@@ -29,6 +34,11 @@ MANAGERS = ADMINS
 
 SITE_ID = 1
 USE_I18N = True
+
+# Directories where Django looks for translation files.
+LOCALE_PATHS = (
+    os.path.join(SITE_ROOT, 'locale'),
+)
 
 TIME_ZONE = 'UTC'
 LANGUAGE_CODE = 'en-us'
@@ -73,6 +83,8 @@ MIDDLEWARE_CLASSES = (
 )
 
 ROOT_URLCONF = 'dicoweb.urls'
+
+WSGI_APPLICATION = 'dicoweb.wsgi.application'
 
 TEMPLATE_DIRS = (
     os.path.join(SITE_ROOT, 'templates'),

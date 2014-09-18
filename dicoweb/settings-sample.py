@@ -18,6 +18,7 @@
 
 import os
 SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
+BASE_DIR = SITE_ROOT
 
 DEBUG = True
 TEMPLATE_DEBUG = True
@@ -56,7 +57,6 @@ CACHES = {
         'KEY_PREFIX': 'dicoweb',
     },
 }
-CACHE_MIDDLEWARE_ANONYMOUS_ONLY = True
 
 # Absolute path to the directory that holds media/static files.
 MEDIA_ROOT = os.path.join(SITE_ROOT, 'static')

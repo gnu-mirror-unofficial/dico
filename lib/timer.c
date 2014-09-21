@@ -1,5 +1,5 @@
 /* This file is part of GNU Dico
-   Copyright (C) 2008, 2010, 2012 Sergey Poznyakoff
+   Copyright (C) 2008, 2010, 2012, 2014 Sergey Poznyakoff
  
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ hash_string_ci (const char *string, size_t n_buckets)
 
 /* Calculate the hash of a string.  */
 static size_t
-timer_hasher(void const *data, unsigned n_buckets)
+timer_hasher(void const *data, size_t n_buckets)
 {
     const struct timer_slot *t = data;
     return hash_string_ci(t->name, n_buckets);

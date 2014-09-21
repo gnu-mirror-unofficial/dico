@@ -1,6 +1,6 @@
 dnl Process this file with -*- autoconf -*- to produce a configure script. 
 # This file is part of GNU Dico
-# Copyright (C) 1998-2000, 2008-2010, 2012, 2013 Sergey Poznyakoff
+# Copyright (C) 1998-2000, 2008-2010, 2012, 2013, 2014 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ AC_CONFIG_SRCDIR([dicod/main.c])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR(m4)	
-AM_INIT_AUTOMAKE([1.11 gnits tar-ustar dist-bzip2 dist-xz std-options])
+AM_INIT_AUTOMAKE([1.11 gnits tar-ustar dist-bzip2 dist-xz std-options subdir-objects])
 
 dnl Enable silent rules by default:
 AM_SILENT_RULES([yes])

@@ -473,7 +473,7 @@ static Hash_table *acl_table;
 
 /* Calculate the hash of a string.  */
 static size_t
-acl_hasher(void const *data, unsigned n_buckets)
+acl_hasher(void const *data, size_t n_buckets)
 {
     const struct dicod_acl *p = data;
     return hash_string(p->name, n_buckets);

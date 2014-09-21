@@ -1,5 +1,5 @@
 # This file is part of GNU Dico -*- Autotest -*-
-# Copyright (C) 2012 Sergey Poznyakoff
+# Copyright (C) 2012, 2014 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,19 +42,21 @@ AT_CLEANUP
 ])
 
 dnl ------------------------------------------------------------
-dnl DICOD_RUN([config])
+dnl DICOD_RUN([config],[errflt])
 dnl
 m4_define([DICOD_RUN],[dnl
-dicod --config m4_if($1,,.,$1)/dicod.conf --stderr -i < input | dnl
-    tr -d '\r' | sed 's/^\(2[[25][0-9]]\) .*/\1/;s/ *$//'])
+m4_if($2,,,[(])dicod --config m4_if($1,,.,$1)/dicod.conf --stderr -i < input dnl
+ m4_if($2,,,[2>dicod.err])|dnl
+ tr -d '\r' | sed 's/^\(2[[25][0-9]]\) .*/\1/;s/ *$//'dnl
+ m4_if($2,,,[; cat dicod.err|$2 >&2)])])
     
 
 m4_define([dico_quote], [m4_if([$#], [0], [], [[$*]])])
 
-dnl AT_DICOD([TEXT],[OUTPUT],[ERROR])
+dnl AT_DICOD([TEXT],[OUTPUT],[ERROR],[ERRFLT])
 m4_define([AT_DICOD],[
 AT_DATA([input],dico_quote($1))
-AT_CHECK([DICOD_RUN($abs_builddir)],
+AT_CHECK([DICOD_RUN($abs_builddir,$4)],
 [0],
 [$2],
 [$3])])

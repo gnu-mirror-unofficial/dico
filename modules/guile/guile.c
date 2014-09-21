@@ -1,5 +1,5 @@
 /* This file is part of GNU Dico.
-   Copyright (C) 2008, 2010, 2012 Sergey Poznyakoff
+   Copyright (C) 2008, 2010, 2012, 2014 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -77,9 +77,15 @@ guile_safe_exec(SCM (*handler) (void *data), void *data, SCM *result)
 	return 1;
     ed.handler = handler;
     ed.data = data;
+#if GUILE_VERSION_NUMBER < 2000
     scm_internal_lazy_catch(SCM_BOOL_T,
 			    scheme_safe_exec_body, (void*)&ed,
 			    eval_catch_handler, &jmp_env);
+#else
+    scm_c_with_throw_handler(SCM_BOOL_T,
+			     scheme_safe_exec_body, (void*)&ed,
+			     eval_catch_handler, &jmp_env, 0);
+#endif
     if (result)
 	*result = ed.result;
     return 0;
@@ -190,9 +196,15 @@ guile_call_proc(SCM *result, SCM proc, SCM arglist)
     }
     adata.proc = proc;
     adata.arg = arglist;
+#if GUILE_VERSION_NUMBER < 2000
     *result = scm_internal_lazy_catch(SCM_BOOL_T,
 				      apply_catch_body, &adata,
 				      eval_catch_handler, &jmp_env);
+#else
+    *result = scm_c_with_throw_handler(SCM_BOOL_T,
+				      apply_catch_body, &adata,
+				       eval_catch_handler, &jmp_env, 0);
+#endif
     return 0;
 }
 

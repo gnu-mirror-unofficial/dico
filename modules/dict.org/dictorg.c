@@ -483,8 +483,8 @@ init_suffix_index(struct dictdb *db)
 	for (i = 0; i < db->numwords; i++) {
 	    char *p = malloc(db->index[i].length + 1);
 	    if (!p) {
-		while (i-- >= 0)
-		    free(db->suf_index[i].word);
+		while (i > 0)
+		    free(db->suf_index[--i].word);
 		free(db->suf_index);
 		return 1;
 	    }

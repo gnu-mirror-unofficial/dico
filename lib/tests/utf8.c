@@ -206,7 +206,7 @@ op_wc_strchr(int argc, char **argv)
     p = utf8_wc_strchr(wa, wb[0]);
     if (!p)
 	return 2;
-    printf("%d\n", p - wa);
+    printf("%ld\n", p - wa);
     return 0;
 }
 
@@ -227,7 +227,7 @@ op_wc_strchr_ci(int argc, char **argv)
     p = utf8_wc_strchr_ci(wa, wb[0]);
     if (!p)
 	return 2;
-    printf("%d\n", p - wa);
+    printf("%ld\n", p - wa);
     return 0;
 }
 
@@ -248,7 +248,7 @@ op_wc_strstr(int argc, char **argv)
     p = utf8_wc_strstr(wa, wb);
     if (!p)
 	return 2;
-    printf("%d\n", p - wa);
+    printf("%ld\n", p - wa);
     return 0;
 }
 

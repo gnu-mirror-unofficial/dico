@@ -237,8 +237,8 @@ gcide_init_db(const char *dbname, int argc, char **argv)
 	{ DICO_OPTSTR(idxdir), dico_opt_string, &idx_dir },
 	{ DICO_OPTSTR(index-program), dico_opt_string, &idxgcide },
 	{ DICO_OPTSTR(index-cache-size), dico_opt_long, &idx_cache_size },
-	{ DICO_OPTSTR(suppress-pr), dico_opt_bitmask, &flags, { value: GCIDE_NOPR } },
-	{ DICO_OPTSTR(debug-lex), dico_opt_bitmask, &flags, { value: GCIDE_DBGLEX } },
+	{ DICO_OPTSTR(suppress-pr), dico_opt_bitmask, &flags, .v.value = GCIDE_NOPR },
+	{ DICO_OPTSTR(debug-lex), dico_opt_bitmask, &flags, .v.value = GCIDE_DBGLEX },
 	{ NULL }
     };
     

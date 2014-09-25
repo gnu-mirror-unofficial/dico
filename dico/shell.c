@@ -457,7 +457,7 @@ _command_generator(const char *text, int state)
 }
 
 static char **
-_command_completion(char *cmd, int start, int end)
+_command_completion(const char *cmd, int start, int end)
 {
     char **ret;
     struct wordsplit ws;
@@ -600,7 +600,7 @@ shell_init(struct init_script *p)
 #ifdef WITH_READLINE
     if (interactive) {
 	rl_readline_name = dico_program_name;
-	rl_attempted_completion_function = (CPPFunction*) _command_completion;
+	rl_attempted_completion_function = _command_completion;
 	read_history (get_history_file_name());
     } 
 #endif

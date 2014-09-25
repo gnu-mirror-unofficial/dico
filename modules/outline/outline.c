@@ -285,8 +285,8 @@ init_suffix_index(struct outline_file *file)
 	for (i = 0; i < file->count; i++) {
 	    char *p = malloc(file->index[i].length + 1);
 	    if (!p) {
-		while (i-- >= 0)
-		    free(file->suf_index[i].word);
+		while (i > 0)
+		    free(file->suf_index[--i].word);
 		free(file->suf_index);
 		return 1;
 	    }

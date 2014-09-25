@@ -198,7 +198,7 @@ _cache_alloc(struct gcide_idx_file *file)
 static void
 _cache_promote(struct gcide_idx_file *file, int n)
 {
-    size_t i;
+    int i;
     unsigned refcount = ++file->cache[n]->refcount;
 
     if (n == 0)

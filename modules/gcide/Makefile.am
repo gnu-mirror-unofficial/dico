@@ -23,14 +23,14 @@ noinst_LTLIBRARIES=libgcide.la
 libgcide_la_SOURCES=webchr.c ent.c markup.l grk.c
 
 gcide_la_SOURCES = gcide.c idx.c 
-gcide_la_LIBADD = ./libgcide.la ../../lib/libdico.la $(LIBICONV) @LTLIBINTL@
+gcide_la_LIBADD = libgcide.la ../../lib/libdico.la $(LIBICONV) @LTLIBINTL@
 gcide_la_LDFLAGS = -module -avoid-version -no-undefined
 
 libexec_PROGRAMS=idxgcide 
 idxgcide_SOURCES=idxgcide.l idxgcide-cli.h
 idxgcide_LDADD = \
  ../../gnu/libgnu.a\
- ./libgcide.la\
+ libgcide.la\
  ../../lib/libxdico.a\
  ../../lib/libdico.la\
  $(LIBICONV) \

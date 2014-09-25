@@ -28,7 +28,7 @@ static Hash_table *alias_table;
 
 /* Calculate the hash of a struct input_file_ident.  */
 static size_t
-alias_hasher(void const *data, unsigned n_buckets)
+alias_hasher(void const *data, size_t n_buckets)
 {
     const struct alias *ap = data;
     return hash_string(ap->kw, n_buckets);

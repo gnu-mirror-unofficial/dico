@@ -99,9 +99,9 @@ dicod_load_module(dicod_module_instance_t *inst)
 {
     struct wordsplit ws;
     int rc;
-
+    
     if (wordsplit(inst->command, &ws, WRDSF_DEFFLAGS)) {
-	dico_log(L_ERR, rc, _("cannot parse command line `%s': %s"),
+	dico_log(L_ERR, 0, _("cannot parse command line `%s': %s"),
 		 inst->command, wordsplit_strerror (&ws));
 	return 1;
     }

@@ -380,7 +380,6 @@ query_ident_name(struct sockaddr_in *srv_addr, struct sockaddr_in *clt_addr)
     struct sockaddr_in s;
     struct io_buffer ib, ob;
     char *name = NULL;
-    RETSIGTYPE (*sighan) (int);
     enum socket_io_retval retval;
     
     fd = socket(PF_INET, SOCK_STREAM, 0);
@@ -418,8 +417,6 @@ query_ident_name(struct sockaddr_in *srv_addr, struct sockaddr_in *clt_addr)
 	}
     } else
 	conflag = 1;
-
-    sighan = signal(SIGPIPE, SIG_IGN);
 
     io_buffer_init(&ib);
     io_buffer_init(&ob);

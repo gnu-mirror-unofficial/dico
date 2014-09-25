@@ -64,7 +64,7 @@ char *initial_banner_text;
 char *help_text;
 
 /* List of sockets to listen on for the requests */
-dico_list_t /* of struct sockaddr */ listen_addr;
+dico_list_t /* of struct grecs_sockaddr */ listen_addr;
 
 /* User database for AUTH */
 dico_udb_t user_db;
@@ -193,13 +193,15 @@ cb_dico_sockaddr_list(enum grecs_callback_command cmd,
     
     switch (value->type) {
     case GRECS_TYPE_STRING:
-	sp = xmalloc(sizeof(*sp));
-	if (grecs_string_convert(sp, grecs_type_sockaddr,
-				 value->v.string, locus)) {
-	    free(sp);
+	if (grecs_string_convert(&sp, grecs_type_sockaddr,
+				 value->v.string, locus))
 	    return 1;
+	while (sp) {
+	    struct grecs_sockaddr *next = sp->next;
+	    sp->next = NULL;
+	    xdico_list_append(list, sp);
+	    sp = next;
 	}
-	xdico_list_append(list, sp);
 	break;
 
     case GRECS_TYPE_LIST: {
@@ -213,13 +215,15 @@ cb_dico_sockaddr_list(enum grecs_callback_command cmd,
 			    _("list element must be a socket specification"));
 		return 1;
 	    }
-	    sp = xmalloc(sizeof(*sp));
-	    if (grecs_string_convert(sp, grecs_type_sockaddr,
-				     vp->v.string, &vp->locus)) {
-		free(sp);
+	    if (grecs_string_convert(&sp, grecs_type_sockaddr,
+				     vp->v.string, &vp->locus))
 		return 1;
+	    while (sp) {
+		struct grecs_sockaddr *next = sp->next;
+		sp->next = NULL;
+		xdico_list_append(list, sp);
+		sp = next;
 	    }
-	    xdico_list_append(list, sp);
 	}
 	break;
     }
@@ -230,7 +234,6 @@ cb_dico_sockaddr_list(enum grecs_callback_command cmd,
     }
     return 0;
 }
-
 
 int
 allow_cb(enum grecs_callback_command cmd,
@@ -333,7 +336,7 @@ apply_acl_cb(enum grecs_callback_command cmd,
 	grecs_error(locus, 0, _("expected scalar value"));
 	return 1;
     }
-    if ((*pacl =  dicod_acl_lookup(value->v.string)) == NULL) {
+    if ((*pacl = dicod_acl_lookup(value->v.string)) == NULL) {
 	grecs_error(locus, 0, _("no such ACL: `%s'"), value->v.string);
 	return 1;
     }
@@ -625,7 +628,6 @@ set_dict_handler(enum grecs_callback_command cmd,
 {
     dicod_module_instance_t *inst;
     dicod_database_t *db = varptr;
-    int rc;
     struct wordsplit ws;
     
     if (cmd != grecs_callback_set_value) {
@@ -639,7 +641,7 @@ set_dict_handler(enum grecs_callback_command cmd,
     }
 
     if (wordsplit(value->v.string, &ws, WRDSF_DEFFLAGS)) {
-	grecs_error(locus, rc, _("cannot parse command line `%s': %s"),
+	grecs_error(locus, 0, _("cannot parse command line `%s': %s"),
 		    value->v.string, wordsplit_strerror (&ws));
 	dicod_database_free(db); 
 	return 1;

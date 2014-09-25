@@ -122,15 +122,9 @@ void
 ds_open(int argc, char **argv)
 {
     if (argc > 1) {
-	if (argc == 3) {
-	    int n = str2port(argv[2]);
-	    if (n == -1) {
-		script_error(_("Invalid port number or service name"));
-		return;
-	    }
-	    dico_url.port = n;
-	}
 	xdico_assign_string(&dico_url.host, argv[1]);
+	xdico_assign_string(&dico_url.port,
+			    argc == 3 ? argv[2] : DICO_DICT_PORT_STR);
     }
 
     if (!dico_url.host) {

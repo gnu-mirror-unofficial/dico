@@ -35,80 +35,6 @@
 #include <xdico.h>
 #include <xalloc.h>
 
-/*
- *	Return an IP address in host long notation from a host
- *	name or address in dot notation.
- */
-IPADDR
-get_ipaddr(char *host)
-{
-    struct hostent *hp;
-    struct in_addr addr;
-
-    if (inet_aton(host, &addr))
-	return ntohl(addr.s_addr);
-    else if ((hp = gethostbyname(host)) == NULL)
-	return 0;
-    else
-	return ntohl(*(UINT4 *) hp->h_addr);
-}
-
-/*
- *	Return a printable host name (or IP address in dot notation)
- *	for the supplied IP address.
- */
-char *
-ip_hostname(IPADDR ipaddr)
-{
-    struct hostent *hp;
-    UINT4 n_ipaddr;
-
-    n_ipaddr = htonl(ipaddr);
-    hp = gethostbyaddr((char *) &n_ipaddr, sizeof(struct in_addr),
-		       AF_INET);
-    if (!hp) {
-	struct in_addr in;
-	in.s_addr = htonl(ipaddr);
-	return inet_ntoa(in);
-    }
-    return (char *) hp->h_name;
-}
-
-IPADDR
-getmyip()
-{
-    char myname[256];
-
-    gethostname(myname, sizeof(myname));
-    return get_ipaddr(myname);
-}
-
-int
-str2port(char *str)
-{
-    struct servent *serv;
-    char *p;
-    int port;
-
-    /* First try to read it from /etc/services */
-    serv = getservbyname(str, "tcp");
-
-    if (serv != NULL)
-	port = ntohs(serv->s_port);
-    else {
-	long l;
-	/* Not in services, maybe a number? */
-	l = strtol(str, &p, 0);
-
-	if (*p || l < 0 || l > USHRT_MAX)
-	    return -1;
-
-	port = l;
-    }
-
-    return port;
-}
-
 static size_t
 mu_stpcpy (char **pbuf, size_t *psize, const char *src)
 {
@@ -143,12 +69,30 @@ sockaddr_to_str (const struct sockaddr *sa, int salen,
     size_t len = 0;
     switch (sa->sa_family) {
     case AF_INET:
+    case AF_INET6:
     {
-	struct sockaddr_in s_in = *(struct sockaddr_in *)sa;
-	len += mu_stpcpy (&bufptr, &buflen, inet_ntoa(s_in.sin_addr));
-	len += mu_stpcpy (&bufptr, &buflen, ":");
-	len += mu_stpcpy (&bufptr, &buflen, umaxtostr(ntohs (s_in.sin_port),
-						      buf));
+	char host[NI_MAXHOST];
+	char srv[NI_MAXSERV];
+	if (getnameinfo(sa, salen,
+			host, sizeof(host), srv, sizeof(srv),
+			NI_NUMERICHOST|NI_NUMERICSERV) == 0) {
+	    if (sa->sa_family == AF_INET6) {
+		len += mu_stpcpy(&bufptr, &buflen, "inet6://[");
+		len += mu_stpcpy(&bufptr, &buflen, host);
+		len += mu_stpcpy(&bufptr, &buflen, "]:");
+		len += mu_stpcpy(&bufptr, &buflen, srv);
+	    } else {
+		len += mu_stpcpy(&bufptr, &buflen, "inet://");
+		len += mu_stpcpy(&bufptr, &buflen, host);
+		len += mu_stpcpy(&bufptr, &buflen, ":");
+		len += mu_stpcpy(&bufptr, &buflen, srv);
+	    }
+	} else {
+	    if (sa->sa_family == AF_INET6)
+		len += mu_stpcpy(&bufptr, &buflen, "inet6://[getnameinfo failed]");
+	    else
+		len += mu_stpcpy(&bufptr, &buflen, "inet://[getnameinfo failed]");
+	}
 	break;
     }
 

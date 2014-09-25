@@ -33,6 +33,8 @@
 #endif
 
 #define DICO_DICT_PORT 2628
+#define DICO_DICT_PORT_STR "2628"
+
 /* Maximum size of I/O buffer as per RFC2229 */
 #define DICO_MAX_BUFFER 6144
 

@@ -102,7 +102,7 @@ extern long ident_timeout;
 
 extern struct sockaddr server_addr;
 extern socklen_t server_addrlen;
-extern struct sockaddr client_addr;
+extern struct sockaddr_storage client_addr;
 extern socklen_t client_addrlen;
 
 extern const char *program_version;

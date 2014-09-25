@@ -28,7 +28,6 @@ dico_qp_decode(const char *iptr, size_t isize, char *optr, size_t osize,
 	       size_t *pnbytes)
 {
     char c;
-    int last_char = 0;
     size_t consumed = 0;
     size_t wscount = 0;
     size_t nbytes = 0;
@@ -112,7 +111,6 @@ dico_qp_decode(const char *iptr, size_t isize, char *optr, size_t osize,
 		consumed++;
 	    }
 	}	  
-	last_char = c;
     }
     *pnbytes = nbytes;
     return consumed - wscount;

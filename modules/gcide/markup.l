@@ -148,7 +148,7 @@ alloc_tag(const char *text, size_t len)
 
     if (wordsplit_len(text, len, &ws, WRDSF_DEFFLAGS & ~WRDSF_CESCAPES)) {
 	dico_log(L_ERR, 0, _("cannot parse line %.*s: %s"),
-		 len, text, wordsplit_strerror(&ws));
+		 (int)len, text, wordsplit_strerror(&ws));
 	longjmp(errbuf, 1);
     }
     tag = calloc(1, sizeof(*tag));

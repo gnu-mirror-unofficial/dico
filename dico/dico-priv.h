@@ -140,7 +140,7 @@ extern struct auth_cred default_cred;
 extern char *client;
 extern enum dico_client_mode mode;
 extern int transcript;
-extern IPADDR source_addr;
+extern char *source_addr;
 extern int noauth_option;
 extern unsigned levenshtein_threshold;
 extern char *autologin_file;
@@ -246,3 +246,4 @@ int sasl_enabled_p(void);
 /* cmdline.c */
 void print_version(const char *program_version, FILE *stream);
 void print_version_only(const char *program_version, FILE *stream);
+void shell_banner(void);

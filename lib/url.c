@@ -125,11 +125,9 @@ url_get_host(dico_url_t url, char **str)
     size_t len = strcspn(s, "/:");
 
     if (s[len] == ':') {
-	char *q;
-	unsigned long n = strtoul(s + len + 1, &q, 10);
-	if ((*q && !strchr("/;:", *q)) || n > USHRT_MAX)
-	    return 1;
-	url->port = n;
+	char *q = s + len + 1;
+	size_t qlen = strcspn(q, "/;:");
+	alloc_string_len(&url->port, q, qlen);
 	*str = q + strcspn(q, "/");
     } else
 	*str = s + len;
@@ -144,7 +142,7 @@ url_get_host(dico_url_t url, char **str)
 
 /* On input str points past the mech:// part */
 static int
-url_get_user (dico_url_t url, char **str)
+url_get_user(dico_url_t url, char **str)
 {
     size_t len = strcspn(*str, ":;@/");
     char *p = *str + len;
@@ -262,6 +260,7 @@ dico_url_destroy(dico_url_t *purl)
     free(url->string);
     free(url->proto);
     free(url->host);
+    free(url->port);
     free(url->path);
     free(url->user);
     free(url->passwd);

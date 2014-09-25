@@ -22,3 +22,5 @@
 # define N_(String) gettext_noop (String)
 #endif
 
+void appi18n_init(void);
+

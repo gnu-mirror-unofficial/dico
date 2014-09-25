@@ -45,6 +45,9 @@ address_family_to_domain (int family)
     case AF_INET:
 	return PF_INET;
 
+    case AF_INET6:
+	return PF_INET6;
+	
     default:
 	abort();
     }
@@ -117,6 +120,7 @@ open_sockets()
 	}
 	    
 	case AF_INET:
+	case AF_INET6:
 	    t = 1;	 
 	    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &t, sizeof(t));
 	    break;
@@ -360,7 +364,7 @@ sig_child(int sig)
     need_cleanup = 1;
 }
 
-struct sockaddr client_addr;
+struct sockaddr_storage client_addr;
 socklen_t client_addrlen;
 
 #define ACCESS_DENIED_MSG "530 Access denied\n"
@@ -378,7 +382,8 @@ handle_connection(int n)
     server_addrlen = srvtab[n].addrlen;
     
     client_addrlen = sizeof(client_addr);
-    connfd = accept(listenfd, &client_addr, &client_addrlen);
+    connfd = accept(listenfd, (struct sockaddr*) &client_addr,
+		    &client_addrlen);
 
     if (connfd == -1) {
 	if (errno == EINTR)
@@ -389,7 +394,8 @@ handle_connection(int n)
     }
 
     if (dicod_acl_check(connect_acl, 1) == 0) {
-	char *p = sockaddr_to_astr(&client_addr, client_addrlen);
+	char *p = sockaddr_to_astr((struct sockaddr *)&client_addr,
+				   client_addrlen);
 	dico_log(L_NOTICE, 0,
 		 _("connection from %s denied"),
 		 p);

@@ -193,7 +193,7 @@ alog_remote_ip(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 	if (client_addrlen == 0) 
 	    instr->cache = xstrdup("stdin");
 	else 
-	    instr->cache = sockaddr_to_hostname(&client_addr, 0);
+	    instr->cache = sockaddr_to_hostname((struct sockaddr *)&client_addr, 0);
     }
     print_str(fp, instr->cache);
 }
@@ -250,7 +250,7 @@ alog_remote_host(FILE *fp, struct alog_instr *instr, int argc, char **argv)
 	if (client_addrlen == 0) 
 	    instr->cache = xstrdup("stdin");
 	else
-	    instr->cache = sockaddr_to_hostname(&client_addr, 1);
+	    instr->cache = sockaddr_to_hostname((struct sockaddr*) &client_addr, 1);
     }
     print_str(fp, instr->cache);
 }
@@ -484,7 +484,7 @@ compile_access_log()
 	    
 	    if (!q) {
 		dico_log(L_ERR, 0,
-			 _("log format error (near char %d): "
+			 _("log format error (near char %ld): "
                            "missing terminating `}'"),
 			 p - access_log_format);
 		add_instr(alog_print, p - 1, 2);
@@ -499,7 +499,7 @@ compile_access_log()
 	tptr = find_alog_entry(*p);
 	if (!tptr) {
 	    dico_log(L_ERR, 0,
-		     _("log format error (near char %d): "
+		     _("log format error (near char %ld): "
 		       "unknown format char `%c'"),
 		     p - access_log_format,
 		     *p);
@@ -507,7 +507,7 @@ compile_access_log()
 	} else {
 	    if (arg && !tptr->allow_fmt) {
 		dico_log(L_ERR, 0,
-			 _("log format warning (near char %d): "
+			 _("log format warning (near char %ld): "
 			   "format char `%c' does not "
 			   "take arguments"),
 			 p - access_log_format,

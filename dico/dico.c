@@ -21,7 +21,7 @@ struct auth_cred default_cred;
 char *client = DICO_CLIENT_ID;
 enum dico_client_mode mode = mode_define;
 int transcript;
-IPADDR source_addr = INADDR_ANY;
+char *source_addr;
 int noauth_option;
 unsigned levenshtein_threshold;
 char *autologin_file;
@@ -38,6 +38,8 @@ fixup_url()
     xdico_assign_string(&dico_url.proto, "dict");
     if (!dico_url.host)
 	xdico_assign_string(&dico_url.host, DEFAULT_DICT_SERVER);
+    if (!dico_url.port)
+	xdico_assign_string(&dico_url.port, DICO_DICT_PORT_STR);
     if (!dico_url.req.database)
 	xdico_assign_string(&dico_url.req.database, "!");
     if (!dico_url.req.strategy)

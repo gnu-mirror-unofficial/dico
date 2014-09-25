@@ -22,14 +22,6 @@
 #endif
 #include <dico.h>
 
-typedef unsigned long UINT4;
-typedef UINT4 IPADDR;
-
-
-char * ip_hostname(IPADDR ipaddr);
-IPADDR get_ipaddr(char *host);
-int str2port(char *str);
-
 
 struct sockaddr;
 void sockaddr_to_str(const struct sockaddr *sa, int salen,

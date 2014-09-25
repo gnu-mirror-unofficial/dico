@@ -295,7 +295,8 @@ static void
 log_connection(const char *msg)
 {
     if (debug_level) {
-	char *p = sockaddr_to_astr(&client_addr, client_addrlen);
+	char *p = sockaddr_to_astr((struct sockaddr*)&client_addr,
+				   client_addrlen);
 	if (debug_source_info)						
 	    DICO_DEBUG_SINFO(debug_stream);
 	stream_writez(debug_stream, msg);
@@ -370,7 +371,7 @@ dicod_inetd()
 	return 1;
 
     client_addrlen = sizeof(client_addr);
-    if (getsockname (0, &client_addr, &client_addrlen) == -1)
+    if (getsockname (0, (struct sockaddr*)&client_addr, &client_addrlen) == -1)
 	client_addrlen = 0;
 
     server_addrlen = sizeof(server_addr);

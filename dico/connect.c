@@ -272,45 +272,69 @@ dict_transcript(struct dict_connection *conn, int state)
 int
 dict_connect(struct dict_connection **pconn, dico_url_t url)
 {
-    struct sockaddr_in s;
-    int fd;
-    IPADDR ip;
+    int fd, rc, family;
+    struct addrinfo hints, *res, *rp;
     dico_stream_t str;
     struct dict_connection *conn;
     
-    XDICO_DEBUG_F2(1, _("Connecting to %s:%d\n"), url->host,
-		   url->port ? url->port : DICO_DICT_PORT);
-    fd = socket(PF_INET, SOCK_STREAM, 0);
-    if (fd == -1) {
-	dico_log(L_ERR, errno,
-		 _("cannot create dict socket"));
-	return 1;
+    XDICO_DEBUG_F2(1, _("Connecting to %s:%s\n"), url->host,
+		   url->port ? url->port : DICO_DICT_PORT_STR);
+
+    if (source_addr) {
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_STREAM;
+	rc = getaddrinfo(source_addr, NULL, &hints, &res);
+	if (rc) {
+	    dico_log(L_ERR, 0,
+		     _("bad source address: %s"), gai_strerror(rc));
+	    return 1;
+	}
+    
+	for (rp = res; rp; rp = rp->ai_next) {
+	    fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+	    if (fd == -1)
+		continue;
+	    if (bind(fd, rp->ai_addr, rp->ai_addrlen) == 0)
+		break;
+	    close(fd);
+	}
+	
+	if (!rp) {
+	    dico_log(L_ERR, 0,
+		     _("can't bind to the source address"));
+	    return 1;
+	}
+    } else {
+	fd = -1;
     }
 
-    s.sin_family = AF_INET;
-    s.sin_addr.s_addr = htonl(source_addr);
-    s.sin_port = 0;
-    if (bind(fd, (struct sockaddr*) &s, sizeof(s)) < 0) {
-	dico_log(L_ERR, errno,
-		 _("cannot bind AUTH socket"));
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_socktype = SOCK_STREAM;
+    rc = getaddrinfo(url->host, url->port, &hints, &res);
+    for (rp = res; rp; rp = rp->ai_next) {
+	if (fd != -1 && family != rp->ai_family) {
+	    close(fd);
+	    fd = -1;
+	}
+	if (fd == -1) {
+	    family = rp->ai_family;
+	    fd = socket(family, SOCK_STREAM, 0);
+	    if (fd == -1) {
+		dico_log(L_ERR, errno,
+			 _("cannot create dict socket"));
+		continue;
+	    }
+	}
+
+	if (connect(fd, rp->ai_addr, rp->ai_addrlen) != -1)
+	    break;
     }
 
-    ip = get_ipaddr(url->host);
-    if (ip == 0) {
-	dico_log(L_ERR, 0, _("%s: Invalid IP or unknown host name"),
-		 url->host);
+    if (!rp) {
+	dico_log(L_ERR, 0, _("%s: cannot connect"), url->host);
 	return 1;
     }
-    s.sin_addr.s_addr = htonl(ip);
-    s.sin_port = htons(url->port ? url->port : DICO_DICT_PORT);
-    if (connect(fd, (struct sockaddr*) &s, sizeof(s)) == -1) {
-	dico_log(L_ERR, errno,
-		 _("cannot connect to DICT server %s:%d"),
-		 url->host, url->port ? url->port : DICO_DICT_PORT);
-	close(fd);
-	return 1;
-    }
-
+    
     if ((str = dico_fd_io_stream_create(fd, fd)) == NULL) {
 	dico_log(L_ERR, errno,
 		 _("cannot create dict stream: %s"),

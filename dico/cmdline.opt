@@ -37,9 +37,7 @@ END
 OPTION(port,p,SERVICE,
        [<Specify port to connect to.>])
 BEGIN
-  dico_url.port = str2port(optarg);
-  if (dico_url.port == -1)
-      dico_die(1, L_ERR, 0, _("Invalid port"));  
+  xdico_assign_string(&dico_url.port, optarg);
 END
 
 OPTION(database,d,NAME,
@@ -51,10 +49,7 @@ END
 OPTION(source,,ADDR,
        [<Set a source address for TCP connections.>])
 BEGIN
-  source_addr = get_ipaddr(optarg);
-  if (source_addr == 0)
-    dico_die(1, 0, L_ERR, _("%s: Invalid IP or unknown host name"),
-             optarg);
+  source_addr = optarg;
 END
 
 GROUP([<Operation modes>])

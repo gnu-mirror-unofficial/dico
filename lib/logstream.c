@@ -32,7 +32,7 @@ log_write(void *data, const char *buf, size_t size, size_t *pret)
     while (size > 0 && (buf[size-1] == '\n' || buf[size-1] == '\r'))
 	size--;
     if (size)
-	dico_log(p->level, 0, "%.*s", size, buf);
+        dico_log(p->level, 0, "%.*s", (int)size, buf);
     return 0;
 }
 

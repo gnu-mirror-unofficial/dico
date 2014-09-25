@@ -34,7 +34,7 @@ struct dico_url {
     char *string;
     char *proto;
     char *host;
-    int port;
+    char *port;
     char *path;
     char *user;
     char *passwd;

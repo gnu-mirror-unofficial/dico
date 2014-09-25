@@ -30,6 +30,15 @@ struct dicod_sockaddr {
     struct sockaddr sa;
 };    
 
+union acl_value {
+    int family;
+    struct {
+	struct sockaddr_un s_un;
+	int s_len;
+    } s;
+    struct grecs_cidr cidr;
+};
+
 struct acl_entry {
     grecs_locus_t locus;
     int allow;
@@ -37,7 +46,7 @@ struct acl_entry {
     int dflt;
     dicod_acl_t acl;
     dico_list_t groups;
-    dico_list_t sockaddrs;
+    dico_list_t values;
 };
 
 struct dicod_acl {
@@ -80,15 +89,6 @@ dicod_acl_create(const char *name, grecs_locus_t *locus)
     return acl;
 }
 
-static struct dicod_sockaddr *
-create_acl_sockaddr(int family, int len)
-{
-    struct dicod_sockaddr *p = xzalloc(sizeof(*p));
-    p->salen = len;
-    p->sa.sa_family = family;
-    return p;
-}
-
 /* allow|deny [all|authenticated|group <grp: list>]
               [acl <name: string>] [from <addr: list>] */
 
@@ -107,18 +107,18 @@ _parse_token (struct acl_entry *entry, grecs_value_t *value)
 }
 
 static int
-_parse_sockaddr(struct acl_entry *entry, grecs_value_t *value)
+_parse_acl_value(struct acl_entry *entry, grecs_value_t *value)
 {
-    struct dicod_sockaddr *sptr;
+    union acl_value *val;
     const char *string;
-
+    
     if (value->type != GRECS_TYPE_STRING) {
 	grecs_error(&entry->locus, 0, _("expected string but found list"));
 	return 1;
     }
 
     string = value->v.string;
-    
+
     if (string[0] == '/') {
 	size_t len;
 	struct sockaddr_un *s_un;
@@ -130,69 +130,21 @@ _parse_sockaddr(struct acl_entry *entry, grecs_value_t *value)
 			 string);
 	    return 1;
 	}
-	sptr = create_acl_sockaddr(AF_UNIX, sizeof(s_un));
-	s_un = (struct sockaddr_un *) &sptr->sa;
+	val = grecs_malloc(sizeof(*val));
+	s_un = (struct sockaddr_un *) &val->s.s_un;
+	s_un->sun_family = AF_UNIX;
 	memcpy(s_un->sun_path, string, len);
 	s_un->sun_path[len] = 0;
+	val->s.s_len = offsetof(struct sockaddr_un,sun_path) + len;
     } else {
-	struct in_addr addr;
-	struct sockaddr_in *s_in;
-	char *p = strchr(string, '/');
-
-	if (p)
-	    *p = 0;
-
-	if (inet_aton(string, &addr) == 0) {
-	    struct hostent *hp = gethostbyname(string);
-	    if (!hp) {
-		grecs_error(&entry->locus, 0,
-			     _("cannot resolve host name: `%s'"),
-			     string);
-		if (p)
-		    *p = '/';
-		return 1;
-	    }
-	    memcpy(&addr.s_addr, hp->h_addr, sizeof(addr.s_addr));
-	}
-	addr.s_addr = ntohl(addr.s_addr);
-
-	sptr = create_acl_sockaddr(AF_INET, sizeof(s_in));
-	s_in = (struct sockaddr_in *) &sptr->sa;
-	s_in->sin_addr = addr;
-
-	if (p) {
-	    *p++ = '/';
-	    char *q;
-	    unsigned netlen;
-	  
-	    netlen = strtoul(p, &q, 10);
-	    if (*q == 0) {
-		if (netlen == 0)
-		    sptr->netmask = 0;
-		else {
-		    sptr->netmask = 0xfffffffful >> (32 - netlen);
-		    sptr->netmask <<= (32 - netlen);
-		}
-	    } else if (*q == '.') {
-		struct in_addr addr;
-	      
-		if (inet_aton(p, &addr) == 0) {
-		    grecs_error(&entry->locus, 0,
-				 _("invalid netmask: `%s'"),
-				 p);
-		    return 1;
-		}
-		sptr->netmask = addr.s_addr;
-	    } else {
-		grecs_error(&entry->locus, 0,
-			     _("invalid netmask: `%s'"),
-			     p);
-		return 1;
-	    }
-	} else
-	    sptr->netmask = 0xfffffffful;
+	struct grecs_cidr cidr;
+	
+	if (grecs_str_to_cidr(&cidr, string, &value->locus))
+	    return -1;
+	val = grecs_malloc(sizeof(*val));
+	val->cidr = cidr;
     }
-    xdico_list_append(entry->sockaddrs, sptr);
+    xdico_list_append(entry->values, val);
     return 0;
 }
 
@@ -222,9 +174,9 @@ _parse_from(struct acl_entry *entry, size_t argc, grecs_value_t **argv)
 	strcmp(argv[0]->v.string, "any") == 0) {
 	entry->dflt = 1;
     } else {
-	entry->sockaddrs = xdico_list_create();
+	entry->values = xdico_list_create();
 	if (argv[0]->type == GRECS_TYPE_STRING) {
-	    if (_parse_sockaddr(entry, argv[0]))
+	    if (_parse_acl_value(entry, argv[0]))
 		return 1;
 	} else {
 	    int rc = 0;
@@ -232,7 +184,7 @@ _parse_from(struct acl_entry *entry, size_t argc, grecs_value_t **argv)
 	    
 	    for (ep = argv[0]->v.list->head; ep; ep = ep->next) {
 		grecs_value_t *p = ep->data;
-		rc += _parse_sockaddr(entry, p);
+		rc += _parse_acl_value(entry, p);
 	    }
 	    if (rc)
 		return rc;
@@ -364,38 +316,34 @@ cmp_group_name(const void *item, void *data)
 }
 
 #define S_UN_NAME(sa, salen) \
-  ((salen < offsetof (struct sockaddr_un,sun_path)) ? "" : (sa)->sun_path)
+  ((salen < offsetof(struct sockaddr_un,sun_path)) ? "" : (sa)->sun_path)
 
 static int
-_check_sockaddr(void *item, void *data)
+_check_value(void *item, void *data)
 {
-    struct dicod_sockaddr *sptr = item;
+    union acl_value *vptr = item;
     int *pres = data;
     
-    if (sptr->sa.sa_family != client_addr.sa_family)
+    if (vptr->family != client_addr.ss_family)
 	return 0;
     
-    switch (sptr->sa.sa_family) {
+    switch (vptr->family) {
     case AF_INET:
-        {
-	    struct sockaddr_in *sin_clt = (struct sockaddr_in *)&client_addr;
-	    struct sockaddr_in *sin_item = (struct sockaddr_in *)&sptr->sa;
-	    
-	    if (sin_item->sin_addr.s_addr ==
-		(ntohl (sin_clt->sin_addr.s_addr) & sptr->netmask)) {
-		*pres = 1;
-		return 1;
-	    }
-	    break;
+    case AF_INET6:
+	if (grecs_sockadd_cidr_match((struct sockaddr*)&client_addr,
+				     &vptr->cidr) == 0) {
+	    *pres = 1;
+	    return 1;
 	}
+	break;
 	
     case AF_UNIX:
         {
 	    struct sockaddr_un *sun_clt = (struct sockaddr_un *)&client_addr;
-	    struct sockaddr_un *sun_item = (struct sockaddr_un *)&sptr->sa;
+	    struct sockaddr_un *sun_item = &vptr->s.s_un;
 	    
-	    if (S_UN_NAME (sun_clt, client_addrlen)[0]
-		&& S_UN_NAME (sun_item, sptr->salen)[0]
+	    if (S_UN_NAME(sun_clt, client_addrlen)[0]
+		&& S_UN_NAME(sun_item, vptr->s.s_len)[0]
 		&& strcmp (sun_clt->sun_path, sun_item->sun_path) == 0) {
 		*pres = 1;
 		return 1;
@@ -429,9 +377,9 @@ _acl_check(struct acl_entry *ent)
 
     if (ent->dflt)
 	result = 1;
-    else if (ent->sockaddrs) {
+    else if (ent->values) {
 	result = 0;
-	dico_list_iterate(ent->sockaddrs, _check_sockaddr, &result);
+	dico_list_iterate(ent->values, _check_value, &result);
     }
     
     return result;

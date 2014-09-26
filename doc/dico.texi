@@ -1061,35 +1061,68 @@ Elements of @var{list} can have the following forms:
 
 @table @asis
 @item @var{host}:@var{port}
-  Specifies an @acronym{IP}v4 socket to listen on.  The @var{host}
-part is either a host name or an @acronym{IP} in ``dotted-quad''
-form.  The @var{port} part is either a numeric port number or a
+  Specifies an @acronym{IP} (version 4 or 6) socket to listen on.  The
+@var{host} part is either an @acronym{IPv4} in ``dotted-quad''
+notation, or an @acronym{IPv6} address in square brackets, or a host
+name.  In the latter case, @command{dicod} will listen on all IP
+addresses corresponding to its @samp{A} or @samp{AAAA}
+@acronym{DNS} records.
+
+The @var{port} part is either a numeric port number or a
 symbolic service name which is found in @file{/etc/services} file.
 
   Either of the two parts may be omitted.  If @var{host} is omitted,
-it defaults to @samp{0.0.0.0}, which means ``listen on all
-interfaces''.  If @var{port} is omitted, it defaults to 2628.  In this
-case the colon may be omitted, too.
+@command{dicod} will listen on all interfaces.  If @var{port} is
+omitted, it defaults to 2628.  In this case the colon may be omitted,
+too.
 
   Examples:
   
 @example
-listen localhost:2628;
-listen 127.0.0.1;
+listen dict.example.org:2628;
+listen 198.51.100.10;
+listen [2001:DB8::11];
 listen :2628;
 @end example
 
-@item @var{filename}
-  Specifies the name of a @acronym{UNIX} socket to listen on.
-@end table
+@item inet://@var{host}:@var{port}
+@itemx inet4://@var{host}:@var{port}
+  Listen on @acronym{IPv4} socket.  The @var{host} is either an
+@acronym{IP} address or a host name.  In the latter case,
+@command{dicod} will start listening on all @acronym{IP} addresses
+from the @samp{A} records for this host.
 
-  The following statement instructs @command{dicod} to listen on
-the address @samp{10.10.10.1}, port 2628 and on the @acronym{UNIX}
-socket @file{/var/run/dict}:
+  Either @var{host} or @var{port} (but not both) can be omitted.
+Missing @var{host} defaults to @acronym{IPv4} addresses on all available
+network interfaces, and missing @var{port} defaults to 2628.
+
+  Example:
 
 @example
-listen (10.10.10.1, /var/run/dict);
+listen inet4://198.51.100.10;
 @end example
+
+@item inet6://@var{host}:@var{port}
+  Listen on @acronym{IPv6} socket.  The @var{host} is either an
+@acronym{IPv6} address in square brackets, or a host name.  In the
+latter case, @command{dicod} will start listening on all @acronym{IP}
+addresses from the @samp{AAAA} records for this host.
+
+  Either @var{host} or @var{port} (but not both) can be omitted.
+Missing @var{host} defaults to @acronym{IPv6} addresses on all available
+network interfaces, and missing @var{port} defaults to 2628.
+
+  Example:
+
+@example
+listen inet6://[2001:DB8::11];
+@end example
+
+@item @var{filename}
+@itemx unix://@var{filename}
+  Specifies the name of a @acronym{UNIX} socket to listen on.
+@var{Filename} must be an absolute file name of the socket.
+@end table
 
 @end deffn
 

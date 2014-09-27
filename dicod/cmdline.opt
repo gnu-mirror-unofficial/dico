@@ -98,7 +98,7 @@ BEGIN
    conf->transcript = 0;
 END
 
-OPTION(debug, x, LEVEL-SPEC,
+OPTION(debug, x, NUMBER,
        [<Set debug verbosity level.>])
 BEGIN
    debug_level_str = optarg;

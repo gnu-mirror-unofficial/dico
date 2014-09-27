@@ -1,0 +1,1045 @@
+.\" This file is part of GNU Dico                                        
+.\" Copyright (C) 2014 Sergey Poznyakoff                     
+.\"                                                                      
+.\" GNU Dico is free software; you can redistribute it and/or modify     
+.\" it under the terms of the GNU General Public License as published by 
+.\" the Free Software Foundation; either version 3, or (at your option)  
+.\" any later version.                                                   
+.\"                                                                      
+.\" GNU Dico is distributed in the hope that it will be useful,          
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of       
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        
+.\" GNU General Public License for more details.                         
+.\"                                                                      
+.\" You should have received a copy of the GNU General Public License    
+.\" along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.    
+.so config.man
+.TH DICOD.CONF 5 "September 26, 2014" "GNU DICO" "GNU Dico Reference"
+dicod.conf \- configuration file for
+.BR dicod (8).
+.SH DESCRIPTION
+.B dicod.conf
+is the configuration file for
+.BR dicod (8).
+.SH NOTE
+This manpage is a short description of the
+.B dicod.conf
+configuration file.  For a detailed discussion, including examples and
+usage recommendations, refer to the \fBGNU Dico Manual\fR available in
+texinfo format.  If the \fBinfo\fR reader and \fBGNU Dico\fR documentation
+are properly installed on your system, the command
+.PP
+.RS +4
+.B info dico
+.RE
+.PP
+should give you access to the complete manual.
+.PP
+You can also view the manual using the info mode in
+.BR emacs (1),
+or find it in various formats online at
+.PP
+.RS +4
+.B http://www.gnu.org.ua/software/dico/manual
+.RE
+.PP
+If any discrepancies occur between this manpage and the
+\fBGNU Dico Manual\fR, the later shall be considered the authoritative
+source.
+.SH LEXICAL STRUCTURE
+There are three classes of lexical tokens: words, quoted strings, and
+separators. Blanks, tabs, newlines and comments, collectively called
+\fIwhite space\fR are ignored except as they serve to separate
+tokens. Some white space is required to separate otherwise adjacent 
+keywords and values.
+.SS Words
+A \fIword\fR is a sequence of letters, digits, and any of the
+following characters: \fB_\fR, \fB\-\fR, \fB.\fR, \fB/\fR,
+\fB@\fR, \fB*\fR, \fB:\fR, \fB[\fR, \fB]\fR.
+.SS Strings
+A \fIquoted string\fR is any sequence of characters enclosed in
+double-quotes (\fB\(dq\fR).  A backslash appearing within a quoted
+string introduces an \fIescape sequence\fR, which is replaced
+with a single character according to the following rules:
+.sp
+.nf
+.ta 8n 18n 42n
+.ul
+	Sequence	Expansion	ASCII
+	\fB\\\\\fR	\fB\\\fR	134
+	\fB\\"\fR	\fB"\fR	042
+	\fB\\a\fR	audible bell	007	
+	\fB\\b\fR	backspace	010
+	\fB\\f\fR	form-feed	014
+	\fB\\n\fR	new line	012
+	\fB\\r\fR	charriage return	015
+	\fB\\t\fR	horizontal tabulation	011
+	\fB\\v\fR	vertical tabulation	013
+.fi
+.PP
+In addition, the sequence \fB\\\fInewline\fR is removed from
+the string.  This allows to split long strings over several
+physical lines, e.g.:
+.PP
+.EX
+"a long string may be\\
+ split over several lines"
+.EE
+.PP
+If the character following a backslash is not one of those specified
+above, the backslash is ignored and a warning is issued.
+
+Two or more adjacent quoted strings are concatenated, which gives
+another way to split long strings over several lines to improve
+readability.  The following fragment produces the same result as the
+example above:
+.PP
+.EX
+"a long string may be"
+" split over several lines"
+.EE
+.PP
+A \fIhere-document\fR is a special construct that allows to introduce
+strings of text containing embedded newlines.  
+.PP
+The
+.BI "<<" "word"
+construct instructs the parser to read all the following lines up to
+the line containing only \fIword\fR, with possible trailing blanks.
+Any lines thus read are concatenated together into a single string.
+For example: 
+.PP
+.EX
+<<EOT
+A multiline
+string
+EOT
+.EE
+.PP
+The body of a here-document is interpreted the same way as a
+double\-quoted string, unless \fIword\fR is preceded by a backslash
+(e.g.  \fB<<\\EOT\fR) or enclosed in double\-quotes, in which case
+the text is read as is, without interpretation of escape sequences.
+.PP
+If \fIword\fR is prefixed with \fB\-\fR (a dash), then all leading
+tab characters are stripped from input lines and the line containing
+\fIword\fR.  Furthermore, \fB\-\fR is followed by a single space,
+all leading whitespace is stripped from them.  This allows to indent
+here-documents in a natural fashion.  For example:
+.PP
+.EX
+<<\- TEXT
+    The leading whitespace will be
+    ignored when reading these lines.
+TEXT
+.EE
+.PP
+It is important that the terminating delimiter be the only token on
+its line.  The only exception to this rule is allowed if a
+here-document appears as the last element of a statement.  In this
+case a semicolon can be placed on the same line with its terminating 
+delimiter, as in: 
+.PP
+.EX
+help\-text <<\-EOT
+    A sample help text.
+EOT;
+.EE
+.PP
+.SS Comments
+The usual comment styles are supported:
+.PP
+C style:
+.B /* */
+.PP
+C++ style:
+.B //
+to end of line
+.PP
+Unix style:
+.B #
+to end of line
+.PP
+.I Pragmatic comments
+are similar to the usual single-line comments,
+except that they cause some changes in the way the configuration is
+parsed.  Pragmatic comments begin with a
+.B #
+sign and end with the next physical newline character.
+.TP
+.BI "#include <" "FILE" >
+.PD 0
+.TP
+.BI "#include " "FILE"
+.PD
+Include the contents of the file \fIfile\fR.  Both forms are
+equivalent.  The \fIFILE\fR must be an absolute file name.
+.\" If it is an
+.\" absolute file name, both forms are equivalent.  Otherwise, the form
+.\" with angle brackets searches for the file in the \fIinclude 
+.\" search path\fR, while the second one looks for it in the current working
+.\" directory first, and, if not found there, in the include search
+.\" path.
+.\" .sp
+.\" The default include search path is:  \fBFIXME\fR.
+.TP
+.BI "#include_once <" "FILE" >
+.PD 0
+.TP
+.BR "#include_once " "FILE"
+.PD
+Same as \fB#include\fR, except that, if the \fIFILE\fR has already
+been included, it will not be included again.
+.TP
+.BI "#line " "num"
+.PD 0
+.TP
+.BI "#line " "num" " \(dq" "FILE" "\(dq"
+.PD
+This line causes the parser to believe, for purposes of error
+diagnostics, that the line number of the next source line
+is given by \fInum\fR and the current input file is named by
+\fIFILE\fR. If the latter is absent, the remembered file name
+does not change.
+.TP
+.BI "# " "num" " \(dq" "FILE" "\(dq"
+This is a special form of the \fB#line\fR statement, understood for
+compatibility with the C preprocessor.
+.SH STATEMENTS
+A \fIsimple statement\fR consists of a keyword and value
+separated by any amount of whitespace.  Some statements take more than one
+value.  Simple statement is terminated with a semicolon (\fB;\fR).
+.PP
+The following is a simple statement:
+.sp
+.RS 4
+.nf
+pidfile /var/run/direvent.pid;
+.RE
+.fi
+.PP
+See below for a list of valid simple statements.
+.PP
+A \fIvalue\fR can be one of the following:
+.TP
+.I number
+A number is a sequence of decimal digits.
+.TP
+.I boolean
+A boolean value is one of the following: \fByes\fR, \fBtrue\fR,
+\fBt\fR or \fB1\fR, meaning \fItrue\fR, and \fBno\fR,
+\fBfalse\fR, \fBnil\fR, \fB0\fR meaning \fIfalse\fR.
+.TP
+.I word
+.TP
+.I quoted string
+.TP
+.I list
+A comma-separated list of values, enclosed in parentheses.
+.PP
+.SS "Block Statement"
+A block statement introduces a logical group of 
+statements.  It consists of a keyword, followed by an optional value,
+called a \fBtag\fR, and a sequence of statements enclosed in curly
+braces, as shown in the example below:
+.PP
+.EX
+acl global {
+   allow all from 198.51.100.0/24;
+   deny all;
+}
+.EE
+The closing curly brace may be followed by a semicolon, although
+this is not required.
+.SH SERVER SETTINGS
+.TP
+\fBuser\fR \fINAME\fR
+Run with the privileges of this user.  The argument is either a user name,
+or UID prefixed with a plus sign.
+.TP
+\fBgroup\fR \fILIST\fR
+If the \fBuser\fR statement is present, \fBdicod\fR will drop all
+supplementary groups and switch to the principal group of that user.
+Sometimes, however, it may be necessary to retain one or more supplementary
+groups.  For example, this might be necessary to access dictionary
+databases.  The \fBgroup\fR statement retains the supplementary groups
+listed in \fILIST\fR.  Each group can be specified either
+by its name or by its GID number, prefixed with @samp{+}, e.g.:
+.RS
+.EX
+user nobody;
+group (man, dict +88);
+.EE
+.RE
+This statement is ignored if no \fBuser\fR statement is present or if
+\fBdicod\fR is running in inetd mode.
+.TP
+\fBmode\fR \fBdaemon\fR|\fBinetd\fR
+Sets server operation mode.
+.TP
+\fBlisten\fR \fILIST\fR
+Specify the IP addresses and ports to listen on in daemon mode.
+By default, \fBdicod\fR will listen on port 2628 on all existing
+interfaces.
+
+Elements of \fILIST\fR can have the following forms:
+.RS
+.TP
+\fIHOST\fB:\fIPORT\fR
+Specifies an IP (version 4 or 6) socket to listen on.  The \fIHOST\fR
+part is either an IPv4 in ``dotted-quad'' notation, or an IPv6 address
+in square brackets, or a host name.  In the latter case, \fBdicod\fR
+will listen on all IP addresses corresponding to its
+.B A
+and
+.B AAAA
+DNS records.
+
+The \fIPORT\fR part is either a numeric port number or a symbolic
+service name from the
+.B /etc/services
+file.
+
+Either of the two parts may be omitted.  If \fBHOST\fR is omitted,
+the server will listen on all interfaces.  If \fBPORT\fR is omitted,
+the default port 2628 will be used.
+.TP
+\fBinet://\fIHOST\fB:\fIPORT\fR, \fBinet4://\fIHOST\fB:\fIPORT\fR
+Listen on IPv4 socket.  \fIHOST\fR is either an IP address or a host
+name. In the latter case, \fBdicod\fR will start listening on all IP
+addresses from the \fBA\fR records for this host. 
+
+Either \fIHOST\fR or \fIPORT\fR (but not both) can be omitted.  Missing
+\fIHOST\fR defaults to IPv4 addresses on all available network
+interfaces, and missing \fIPORT\fR defaults to 2628.
+.TP
+\fBinet6://\fIHOST\fB:\fIPORT\fR
+Listen on IPv6 socket.  \fIHOST\fR is either an IPv6 address in
+square brackets, or a host name.  In the latter case, \fBdicod\fR
+will start listening on all IP addresses from the \fBAAAA\fR
+records for this host.
+
+Either \fIHOST\fR or \fIPORT\fR (but not both) can be omitted.  Missing
+\fIHOSTf\R defaults to IPv6 addresses on all available network
+interfaces, and missing \fIPORT\fR defaults to 2628.
+.TP
+\fIFILENAME\fR, \fBunix://\fIFILENAME\fR
+Specifies the name of a UNIX socket to listen on.  \fIFILENAME\fR
+must be an absolute file name of the socket.
+.RE
+.TP
+.BI pidfile " STRING"
+Store PID of the master process in this file.  Default is
+.BR \*(LO/run/dicod.pid .
+.TP
+.BI max\-children " NUMBER"
+Sets maximum number of subprocesses that can run simultaneously.
+This is equivalent to the number of clients that can simultaneously
+use the server.  The default is 64.
+.TP
+.BI inactivity\-timeout " NUMBER"
+Sets inactivity timeout to the \fINUMBER\fR of seconds.  The server
+disconnects automatically if the remote client has not sent any
+command within this number of seconds.  Setting timeout to 0
+disables inactivity timeout (the default).
+
+This statement along with \fBmax\-children\fR allows you to control the
+server load.
+.TP
+.BI shutdown\-timeout " NUMBER"
+When the master server is shutting down, wait this number of
+seconds for all children to terminate.  Default is 5 seconds.
+.TP
+.BI identity\-check " BOOLEAN"
+Enable identification check using AUTH protocol (RFC 1413).  The
+received user name or UID can be shown in access log using the
+.B %l
+conversion (see below).
+.TP
+.BI ident\-keyfile " STRING"
+Use encryption keys from the named file to decrypt AUTH replies
+encrypted using DES.
+.TP
+.BI ident\-timeout " NUMBER"
+Set timeout for AUTH input/output operation to NUMBER of seconds.
+Default timeout is 3 seconds.
+.SH AUTHENTICATION SETTINGS
+The authentication database is defined as:
+.PP
+.EX
+\fBuser\-db\fR \fIURL\fR \fB{\fR
+    # Additional configuration options.
+    \fBoptions\fR \fISTRING\fB;\fR
+    # Name of the password resource.
+    \fBpassword\-resource\fR \fIRESOURCE\fB;\fR
+    # Name of the resource returning user group information.
+    \fBgroup\-resource\fR \fIRESOURCE\fB;\fR
+\fB}\fR
+.EE
+.PP
+The \fIURL\fR consists of the following parts (square brackets
+denoting optional ones):
+
+\fITYPE\fB://\fR[[\fIUSER\fR[:\fIPASSWORD\fR]\fB@\fR]\fIHOST\fR]\fB/\fIPATH\fR[\fIPARAMS\fR]
+
+where:
+.TP
+.I TYPE
+Database type.  Two types are supported:
+.B text
+and
+.BR ldap . 
+.TP
+.I USER
+User name, if necessary to access the database.
+.TP
+.I PASSWORD
+User password, if necessary to access the database.
+.TP
+.I HOST
+Domain name or IP address of a machine running the database.
+.TP
+.I PATH
+A path to the database.  The exact meaning of this element depends on the
+database protocol.  See the texinfo documentation.
+.TP
+.I PARAMS
+A list of protocol-dependent parameters.  Each parameter is of the
+form \fIKEYWORD\fB=\fINAME\fR, multiple parameters are separated with
+semicolons.
+.PP
+The following statements can appear within the \fBuser\-db\fR block:
+.TP
+.BI options " STRING"
+Pass additional options to the underlying mechanism.  The argument is
+treated as an opaque string and passed to the authentication
+\fBopen\fR procedure verbatim.  Its exact meaning depends on the type
+of the database.
+.TP
+.BI password\-resource " ARG"
+A database resource which returns the user's password.
+.TP
+.BI group\-resource " ARG"
+A database resource which returns the list of groups this user is member of.
+.PP
+The exact semantics of the \fIdatabase resource\fR depends on the type
+of database being used.  For flat text databases, it means the name of
+a text file that contains these data, for LDAP databases, the resource
+is the filter string, etc.  Please refer to the \fBGNU Dico Manual\fR,
+subsection \fB4.3.3 Authentication\fR for a detailed discussion.
+.SH SASL AUTHENTICATION
+The SASL authentication is available if the server was compiled with
+GNU SASL.  It is configured using the following statement:
+.PP
+.EX
+\fBsasl {\fR
+    # Disable SASL mechanisms listed in MECH.
+    \fBdisable\-mechanism\fR \fIMECH\fB;\fR
+    # Enable SASL mechanisms listed in MECH.
+    \fBenable\-mechanism\fR \fIMECH\fB;\fR
+    # Set service name for GSSAPI and Kerberos.
+    \fBservice\fR \fINAME\fB;\fR
+    # Set realm name for GSSAPI and Kerberos.
+    \fBrealm\fR \fINAME\fR;
+    # Define groups for anonymous users.
+    \fBanon\-group\fR \fIGROUPS\fR;
+\fB}\fR
+.EE
+.TP
+.BI disable\-mechanism " MECH"
+Disable SASL mechanisms listed in \fIMECH\fR, which is a list of names.
+.TP
+.BI enable\-mechanism " MECH"
+Enable SASL mechanisms listed in \fIMECH\fR, which is a list of names.
+.TP
+.BI service " NAME"
+Sets the service name for GSSAPI and Kerberos mechanisms.
+.TP
+.BI realm " NAME"
+Sets the realm name.
+.TP
+.BI anon\-group " LIST"
+Declares the list of user groups considered anonymous.
+.SH ACCESS CONTROL LISTS
+Define an ACL:
+.PP
+.EX
+\fBacl\fR \fINAME\fR \fB{\fR
+    \fIDEFINITION\fR...
+\fB}\fR
+.EE
+.PP
+The parameter \fINAME\fR assigns a unique name to that ACL.  This name
+will be used by another configuration statements to refer to that ACL
+(see \fBSECURITY SETTINGS\fR, and \fBDatabase Visibility\fR).
+.PP
+Each \fIDEFINITION\fR is:
+.PP
+.EX
+\fBallow\fR|\fBdeny\fR\
+ [\fBall\fR|\fBauthenticated\fR|\fBgroup\fR \fIGROUPLIST\fR]\
+ [\fBacl\fR \fINAME\fR] [\fBfrom\fR \fIADDRLIST\fR]
+.EE
+.PP
+A definition starting with \fBallow\fR allows access to the resource,
+and the one starting with \fBdeny\fR denies it.
+.PP
+The next part controls what users have access to the resource:
+.TP
+.B all
+All users (the default).
+.TP
+.B authenticated
+Only authenticated users.
+.TP
+.BI group " GROUPLIST"
+Authenticated users which are members of at least one of the groups
+listed in \fIGROUPLIST\fR.
+.PP
+The \fBacl\fR part refers to an already defined ACL.
+.PP
+The \fBfrom\fR keyword declares that the client IP must be within 
+the \fIADDRLIST\fR in order for the definition to apply.  Elements
+of \fIADDRLIST\fR are:
+.TP
+.B any
+Matches any client address.
+.TP
+IP address
+Matches if the request comes from the given IP (both IPv4 and IPv6
+are allowed).
+.TP
+\fIADDR\fB/\fINETLEN\fR
+Matches if first \fINETLEN\fR bits from the client IP address equal to
+\fIADDR\fR.  The network mask length, NETLEN must be an integer number
+between 0 and 32 for IPv4, and between 0 and 128 for IPv6.  The
+address part, \fIADDR\fR, is as described above.
+.TP
+\fIADDR\fB/\fINETMASK\fR
+The specifier matches if the result of logical AND between the
+client IP address and \fINETMASK\fR equals to ADDR.  The network mask
+must be specified in a IP address (either IPv4 or IPv6) notation.
+.SH SECURITY SETTINGS
+.TP
+.BI connection\-acl " NAME"
+Use ACL \fINAME\fR to control incoming connections.  The ACL itself
+must be defined before this statement.  Using the \fBgroup\fR clause
+in this ACL makes no sense, because the authentication itself is
+performed only after the connection have been established.
+.TP
+.BI show\-sys\-info " NAME"
+Controls whether to show system information in reply to \fBSHOW
+SERVER\fR command.  The information will be shown only if ACL
+\fINAME\fR allows it.
+.TP
+.BI visibility\-acl " NAME"
+Sets name of the ACL that controls visibility of all databases.
+
+.SH LOGGING AND DEBUGGING
+.TP
+.BI log\-tag " STRING"
+Prefix syslog messages with this string.  By default, the program
+name is used.
+.TP
+.BI log\-facility " STRING"
+Sets the syslog facility to use.  Allowed values are:
+.BR user ,
+.BR daemon ,
+.BR auth ,
+.BR authpriv ,
+.BR mail ,
+.BR cron ,
+.BR local0 " through " local7
+(case-insensitive), or a decimal facility number.
+.TP
+.BI log\-print\-severity " BOOLEAN"
+Prefix diagnostics messages with a string identifying their severity.
+.TP
+.BI transcript " BOOLEAN"
+Controls the transcript of user sessions.
+.SH ACCESS LOG
+GNU Dico provides a feature similar to Apache's \fBCustomLog\fR, which
+keeps a log of \fBMATCH\fR and \fBDEFINE\fR requests.
+.TP
+.BI access\-log\-file " STRING"
+Sets access log file name.
+.TP
+.BI access\-log\-format " STRING"
+Defines the format string.  Its argument can contain literal
+characters, which are copied into the log file verbatim, and \fIformat
+specifiers\fR, i.e. special sequences beginning with \fB%\fR, which
+are replaced in the log file as shown in the table below:
+.RS
+.TP
+.B %%
+The percent sign.
+.TP
+.B %a
+Remote IP address.
+.TP
+.B %A
+Local IP address.
+.TP
+.B %B
+Size of response in bytes.
+.TP
+.B %b
+Size of response in bytes in CLF format, i.e. a dash rather than a
+\fB0\fR when no bytes are sent.
+.TP
+.B %C
+Remote client (from the \fBCLIENT\fR command).
+.TP
+.B %D
+The time taken to serve the request, in microseconds.
+.TP
+.B %d
+Request command verb in abbreviated form, suitable for use in
+URLs, i.e. \fBd\fR for \fBDEFINE\fR, and \fBm\fR for \fBMATCH\fR.
+.TP
+.B %h
+Remote host.
+.TP
+.B %H
+Request command verb (\fBDEFINE\fR or \fBMATCH\fR).
+.TP
+.B %l
+Remote logname (from \fBidentd\fR(1), if supplied).  This will return a
+dash unless \fBidentity\-check\fR statement is set to true.
+.TP
+.B %m
+The search strategy.
+.TP
+.B %p
+The canonical port of the server serving the request.
+.TP
+.B %P
+The PID of the child that served the request.
+.TP
+.B %q
+The database from the request.
+.TP
+.B %r
+Full request.
+.TP
+.BI %{ N }R
+The
+.IR N th
+token from the request (\fIN\fR is 0-based).
+.TP
+.B %s
+Reply status.  For multiple replies, the form \fB%s\fR returns the
+status of the first reply, while \fB%>s\fR returns that of the last
+reply.
+.TP
+.B %t
+Time the request was received in the standard Apache format, e.g.:
+.EX
+  [04/Jun/2008:11:05:22 +0300]
+.EE
+.TP 
+.BI %{ FORMAT }t
+The time, in the form given by \fIFORMAT\fR, which should be a valid
+.BR strftime (3)
+format string.  The standard \fB%t\fR format is equivalent to
+.EX
+  [%d/%b/%Y:%H:%M:%S %z]
+.EE
+.TP
+.B %T
+The time taken to serve the request, in seconds.
+.TP
+.B %u
+Remote user from \fBAUTH\fR command.
+.TP
+.B %v
+The host name of the server serving the request.
+.TP
+.B %V
+Actual host name of the server (in case it was overridden in configuration).
+.TP
+.B %W
+The word from the request.
+.RE
+
+The absence of \fBaccess\-log\-format\fR statement is equivalent to the
+following:
+
+.EX
+  access\-log\-format \(dq%h %l %u %t \\\(dq%r\\\(dq %>s %b\(dq;
+.EE
+.SH GENERAL SETTINGS
+.TP
+.BI initial\-banner\-text " TEXT"
+Display \fITEXT\fR in the textual part of the initial server reply.
+.TP
+.BI hostname " STRING"
+Sets the hostname.  By default it is determined automatically.
+
+The server hostname is used, among others, in the initial reply
+after the \fB220\fR and may also be displayed in the access log file
+using the \fB%v\fR escape (see \fBACCESS LOG\fR).
+.TP
+.BI server\-info " TEXT"
+Sets the server description to be shown in reply to the \fBSHOW
+SERVER\fR command.
+
+It is common for \fITEXT\fR to use the \fIhere-document\fR syntax, e.g.:
+.EX
+  server-info <<EOT
+    Welcome to the FOO dictionary service.
+
+    Contact <dict@foo.example.org> if you have questions or
+    suggestions.
+  EOT;
+.EE
+.TP
+.BI help\-text " TEXT"
+Sets the text to be displayed in reply to the \fBHELP\fR command.
+
+The default reply displays a list of commands understood by the server
+with a short description of each. 
+
+If \fITEXT\fR begins with a plus sign, it will be appended to the
+default reply.
+.TP
+.B default\-strategy " NAME"
+Sets the name of the default matching strategy (*note MATCH::).
+By default, Levenshtein matching is used, which is equivalent to
+\fBdefault\-strategy lev;\fR
+.SH CAPABILITIES
+.TP
+.BI capability " LIST"
+Requests additional capabilities from the \fILIST\fR.
+.PP
+Capabilities are certain server features that can be enabled or
+disabled at the system administrator's will.  The following
+capabilities are defined:
+.TP
+.B auth
+The \fBAUTH\fR command is supported.  See the section
+\fBAUTHENTICATION\fR, for its configuration.
+.TP
+.B mime
+The \fBOPTION MIME\fR command is supported.  Notice that \fBRFC 2229\fR
+requires all servers to support that command, so you should always
+specify this capability.
+.TP
+.B xversion
+The \fBXVERSION\fR command is supported.  It is a GNU extension that
+displays the \fBdicod\fR implementation and version number. 
+.TP
+.B xlev
+The \fBXLEV\fR command is supported.  This command allows the remote
+party to set and query maximal Levenshtein distance for the \fBlev\fR
+matching strategy.  
+.PP
+The capabilities set using this directive are displayed in the
+initial server reply, and their descriptions are added to the \fBHELP\fR
+command output (unless specified otherwise by the \fBhelp\-text\fR statement).
+.SH DATABASE MODULES
+A \fIdatabase module\fR is an external piece of software designed to handle
+a particular format of dictionary databases.  This piece of software is
+built as a shared library that `dicod' loads at run time.
+.PP
+A \fBhandler\fR is an instance of the database module loaded by \fBdicod\fR
+and configured for a specific database or a set of databases.
+.PP
+Database handlers are defined using the following block statement:
+.PP
+.EX
+\fBload\-module \fINAME\fR \fB{\fR
+    \fBcommand\fR \fICMD\fB;\fR
+\fB}\fR
+.EE
+.PP
+The \fBload\-module\fR statement creates an instance of a database module.
+The \fINAME\fR argument specifies a unique name which will be used by
+subsequent parts of the configuration to refer to this handler.  The
+command line for this handler is supplied with the \fBcommand\fR statement.
+It must begin with the name of the module (without the library suffix) and
+can contain any additional arguments.  If the module name is not an absolute
+file name, the module will be searched in the module load path.
+.PP
+For example:
+.PP
+.EX
+load\-module dict {
+   command "dictorg dbdir=/var/dicodb";
+}
+.EE
+.PP
+A simplified form of this statement:
+.PP
+.EX
+    load\-module \fINAME\fR;
+.EE
+.PP
+is equivalent to:
+.PP
+.EX
+    load\-module \fINAME\fR {
+        command \fINAME\fR;
+    }
+.EE
+.PP
+A \fImodule load path\fR is an internal list of directories which
+\fBdicod\fR scans in order to find a loadable file name specified in the
+\fBcommand\fR statement.  By default the search order is as follows:
+.nr step 1 1
+.IP \n[step].
+Optional \fIprefix\fR search directories specified in the
+.B prepend\-load\-path
+statement (see below);
+.IP \n+[step].
+\fBGNU Dico\fR module directory
+.BR \*(MD ;
+.IP \n+[step].
+Additional search directories specified in the
+\fBmodule\-load\-path\fR statement (see below);
+.IP \n+[step].
+The value of the environment variable
+.BR LTDL_LIBRARY_PATH ;
+.IP \n+[step].
+The system dependent library search path (e.g. on GNU/Linux it is
+defined by the file
+.B /etc/ld.so.conf
+and the environment variable
+.BR LD_LIBRARY_PATH ).
+.PP
+The value of
+.B LTDL_LIBRARY_PATH
+and
+.B LD_LIBRARY_PATH
+must be a colon-separated list of absolute directory names.
+.PP
+In each of these directories, \fBdicod\fR first attempts to find and load
+the given filename.  If this fails, it tries to append the following
+suffixes to it:
+.nr step 1 1
+.IP \n[step].
+the libtool archive suffix
+.BR .la ;
+.IP \n+[step].
+the suffix used for native dynamic libraries on the host platform,
+e.g., \fB.so\fR, \fB.sl\fR, etc.
+.TP
+.BI module\-load\-path " LIST"
+Add directories from \fILIST\fR to the end of the module load path.
+.TP
+.BI prepend\-load\-path " LIST"
+Add directories from \fILIST\fR to the beginning of the module load path.
+.SH DATABASES
+.EX
+\fBdatabase {\fR
+    \fBname \fIWORD\fB;\fR
+    \fBdescription\fR \fISTRING\fB;\fR
+    \fBinfo\fR \fITEXT\fB;\fR
+    \fBlanguages\-from\fR \fILANGLIST\fB;\fR
+    \fBlanguages\-to\fR \fILANGLIST\fB;\fR
+    \fBhandler\fR \fINAME\fB;\fR
+    \fBvisibility\-acl\fR \fINAME\fB;\fR
+    \fBmime\-headers\fR \fITEXT\fB;\fR
+\fB}\fR
+.EE
+.TP
+.BI name " STRING"
+Sets the name of this database (a single word).  This name will be
+used to identify this database in \fBDICT\fR commands.
+.TP
+.BI handler " STRING"
+Specifies the handler name for this database and optional arguments for
+it.  This handler must be previously defined using the
+\fBload\-module\fR statement (see above).
+.TP
+.BI description " STRING"
+Supplies a short description, to be shown in reply to the \fBSHOW DB\fR
+command.  The \fISTRING\fR may not contain newlines.
+.TP
+.BI info " STRING"
+Defines a full description of the database.  This description is
+shown in reply to the \fBSHOW INFO\fR command.  It is usually a multi-line
+text, so it is common to use here-document syntax.
+.TP
+.BI content\-type " STRING"
+Sets the content type of the reply (for use in MIME headers).
+.TP
+.BI content\-transfer\-encoding " VALUE" 
+Sets transfer encoding to use when sending MIME replies for this
+database.  \fIVALUE\fR is one of:
+.BR base64 ,
+.BR quoted-printable .
+.TP
+.BI visibility\-acl " NAME"
+Sets name of the ACL that controls that database visibility.
+.SH STRATEGIES AND SEARCHES
+A \fIdefault search\fR is a \fBMATCH\fR request with \fB*\fR or \fB!\fR as
+the database argument.  The former means search in all available
+databases, and the latter means search in all databases until a match is
+found.
+.PP
+Default searches cabd be quite expensive and can cause considerable
+strain on the server.  For example, the command
+.B MATCH * priefix \(dq\(dq
+returns all entries from all available databases, which would consume a
+lot of resources both on the server and on the client side.
+.PP
+To minimize harmful effects from such potentially dangerous
+requests, the following statement makes it possible to limit the
+use of certain strategies in default searches:
+.PP
+.EX
+\fBstrategy\fR \fINAME\fR \fB{\fR
+    \fBdeny\-all\fR \fIBOOL\fB;\fR
+    \fBdeny\-word\fR \fICONDLIST\fB;\fR
+    \fBdeny\-length\-lt\fR \fINUMBER\fB;\fR
+    \fBdeny\-length\-le\fR \fINUMBER\fB;\fR
+    \fBdeny\-length\-gt\fR \fINUMBER\fB;\fR
+    \fBdeny\-length\-ge\fR \fINUMBER\fB;\fR
+    \fBdeny\-length\-eq\fR \fINUMBER\fB;\fR
+    \fBdeny\-length\-ne\fR \fINUMBER\fB;\fR
+\fB}\fR
+.EE
+.TP
+.BI deny\-all " BOOL"
+Unconditionally deny the use of this strategy in default searches.
+.TP
+.BI deny\-word " LIST"
+Deny this strategy if the search word matches one of the words from
+\fILIST\fR.
+.TP
+.BI deny\-length\-lt " NUMBER"
+Deny if length of the search word is less than \fINUMBER\fR.
+.TP
+.BI deny\-length\-le " NUMBER"
+Deny if length of the search word is less than or equal to \fINUMBER\fR.
+.TP
+.BI deny\-length\-gt " NUMBER"
+Deny if length of the search word is greater than \fINUMBER\fR.
+.TP
+.BI deny\-length\-ge " NUMBER"
+Deny if length of the search word is greater than or equal to \fINUMBER\fR.
+.TP
+.BI deny\-length\-eq " NUMBER"
+Deny if length of the search word is equal to \fINUMBER\fR.
+.TP
+.BI deny\-length\-ne " NUMBER"
+Deny if length of the search word is not equal to \fINUMBER\fR.
+.PP
+For example, the following statement denies the use of \fBprefix\fR
+strategy in default searches if its argument is an empty string:
+.PP
+.EX
+strategy prefix {
+    deny-length-eq 0;
+}
+.EE
+.SH TUNING
+While tuning your server, it is often necessary to get timing
+information which shows how much time is spent serving certain
+requests.  This can be achieved using the following configuration
+directive:
+.TP
+.BI timing " BOOLEAN"
+Provide timing information after successful completion of an
+operation.
+.PP
+This information is displayed after replies to the following
+requests:
+.BR MATCH ,
+.BR DEFINE ,
+and
+.BR QUIT .  
+The format is:
+.PP
+.EX
+.BI "[d/m/c = " ND / NM / NC " " RT r " UT" u " ST" s]
+.EE
+.PP
+where:
+.TP
+.I ND
+Number of processed define requests.
+.TP
+.I NM
+Number of processed match requests.
+.TP
+.I NC
+Number of comparisons made.  This value may be inaccurate if
+the underlying database module does not provide such information.
+.TP
+.I RT
+Real time spent serving the request.
+.TP
+.I UT
+Time in user space spent serving the request.
+.TP
+.I ST
+Time in kernel space spent serving the request.
+.PP
+You can also add timing information to your access log files.  See
+the
+.B %T
+conversuion in section
+.BR "ACCESS LOG" .
+.SH COMMAND ALIASES
+Aliases allow a string to be substituted for a word when it is used
+as the first word of a command.  The daemon maintains a list of aliases
+that are created using the \fBalias\fR configuration file statement:
+.TP
+\fBalias\fR \fIWORD\fR \fICOMMAND\fR
+Creates a new alias.
+.PP
+Aliases may be recursive, i.e. the first word of \fICOMMAND\fR may refer
+to another alias.  To prevent endless loops, recursive expansion is
+stopped if the first word of the replacement text is identical to an
+alias expanded earlier.
+.PP
+Aliases are useful to facilitate manual interaction with the server,
+as they allow the administrator to create abbreviations for some
+frequently typed commands.  For example, the following alias creates
+new command \fBd\fR which is equivalent to \fBDEFINE *\fR:
+.PP
+.EX
+alias d DEFINE "*";
+.EE
+.SH "SEE ALSO"
+.BR dicod (1),
+.BR "RFC 2229" .
+.PP
+Complete \fBGNU Dico\fR manual: run
+.B info dico
+or use
+.BR emacs (1)
+info mode to read it.
+.PP
+Online copies of \fBGNU Dico\fR documentation in various formats can be
+found at:
+.PP
+.in +4
+.B http://www.gnu.org.ua/software/dico/manual
+.SH AUTHORS
+Sergey Poznyakoff
+.SH "BUG REPORTS"
+Report bugs to <bug\-dico@gnu.org.ua>.
+.SH COPYRIGHT
+Copyright \(co 2008-2014 Sergey Poznyakoff
+.br
+.na
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+.br
+.ad
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+.\" Local variables:
+.\" eval: (add-hook 'write-file-hooks 'time-stamp)
+.\" time-stamp-start: ".TH [A-Z_][A-Z0-9_.\\-]* [0-9] \""
+.\" time-stamp-format: "%:B %:d, %:y"
+.\" time-stamp-end: "\""
+.\" time-stamp-line-limit: 20
+.\" end:
+
+
+
+
+

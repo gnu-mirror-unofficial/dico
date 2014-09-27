@@ -1,0 +1,455 @@
+.\" This file is part of GNU Dico                                        
+.\" Copyright (C) 2014 Sergey Poznyakoff                     
+.\"                                                                      
+.\" GNU Dico is free software; you can redistribute it and/or modify     
+.\" it under the terms of the GNU General Public License as published by 
+.\" the Free Software Foundation; either version 3, or (at your option)  
+.\" any later version.                                                   
+.\"                                                                      
+.\" GNU Dico is distributed in the hope that it will be useful,          
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of       
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        
+.\" GNU General Public License for more details.                         
+.\"                                                                      
+.\" You should have received a copy of the GNU General Public License    
+.\" along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.    
+.TH DICO 1 "September 26, 2014" "GNU DICO" "GNU Dico Reference"
+.SH NAME
+dico \- GNU dictionary client program
+.SH SYNOPSIS
+.nh
+.na
+\fBdico\fR\
+ [\fB\-DHISamqtv\fR]\
+ [\fB\-c\fR \fISTRING\fR]\
+ [\fB\-d\fR \fINAME\fR]\
+ [\fB\-i\fR \fIDBNAME\fR]\
+ [\fB\-k\fR \fISTRING\fR]\
+ [\fB\-p\fR \fISERVICE\fR]\
+ [\fB\-s\fR \fINAME\fR]\
+ [\fB\-u\fR \fINAME\fR]\
+ [\fB\-\-autologin=\fINAME\fR]\
+ [\fB\-\-client=\fISTRING\fR]\
+ [\fB\-\-database=\fINAME\fR]\
+ [\fB\-\-dbs\fR]\
+ [\fB\-\-help\fR]\
+ [\fB\-\-host=\fISERVER\fR]\
+ [\fB\-\-info=\fIDBNAME\fR]\
+ [\fB\-\-key=\fISTRING\fR]\
+ [\fB\-\-levdist=\fIN\fR]\
+ [\fB\-\-levenshtein\-distance=\fIN\fR]\
+ [\fB\-\-match\fR]\
+ [\fB\-\-noauth\fR]\
+ [\fB\-\-nosasl\fR]\
+ [\fB\-\-password=\fISTRING\fR]\
+ [\fB\-\-port=\fISERVICE\fR]\
+ [\fB\-\-quiet\fR]\
+ [\fB\-\-sasl\fR]\
+ [\fB\-\-serverhelp\fR]\
+ [\fB\-\-serverinfo\fR]\
+ [\fB\-\-source\-info\fR]\
+ [\fB\-\-source=\fIADDR\fR]\
+ [\fB\-\-strategies\fR]\
+ [\fB\-\-strategy=\fINAME\fR]\
+ [\fB\-\-time\-stamp\fR]\
+ [\fB\-\-transcript\fR]\
+ [\fB\-\-user=\fINAME\fR]\
+ [\fB\-\-verbose\fR]\
+ [\fIURL-or-WORD\fR]
+.PP
+.B dico \-h
+.PP
+.B dico \-\-help
+.PP
+.B dico \-\-usage
+.PP
+.B dico \-\-version
+.ad
+.hy
+.SH NOTE
+This manpage is a short description of GNU \fBdico\fR.  For a detailed
+discussion, including examples and usage recommendations, refer to the
+\fBGNU Dico Manual\fR available in texinfo format.  If the \fBinfo\fR
+reader and \fBGNU Dico\fR documentation are properly installed on your
+system, the command
+.PP
+.RS +4
+.B info dico
+.RE
+.PP
+should give you access to the complete manual.
+.PP
+You can also view the manual using the info mode in
+.BR emacs (1),
+or find it in various formats online at
+.PP
+.RS +4
+.B http://www.gnu.org.ua/software/dico/manual
+.RE
+.PP
+If any discrepancies occur between this manpage and the
+\fBGNU Dico Manual\fR, the later shall be considered the authoritative
+source.
+.SH DESCRIPTION
+Console-based utility for querying dictionary servers.  It has two
+operation modes.
+.PP
+In \fIsingle query mode\fR, \fBdico\fR performs a
+query, displays its result and exits immediately.  This mode is
+enabled if a word or a URL was given in the command line.
+.PP
+In \fIinteractive mode\fR, \fBdico\fR enters a read-and-eval loop, in
+which it reads requests from the keyboard, performs the necessary
+searches, and displays obtained results on the screen.
+.PP
+Upon startup, \fBdico\fR looks for initialization files named
+.B .dico
+in the current user's home directory, and the current
+working directory.  If found, these files are read in order, and
+their contents is treated as a sequence of \fIcommands\fR, which
+are executed.  See the section
+.BR COMMANDS ,
+for a discussion of available commands.
+.SH OPTIONS
+.SS Server Selection
+.TP
+\fB\-d\fR, \fB\-\-database=\fINAME]fR
+Select database to search.
+.TP
+.BI \-\-host= SERVER
+Connect to this server.
+.TP
+\fB\-p\fR, \fB\-\-port=\fISERVICE\fR
+Specify port to connect to.
+.TP
+\fB\-\-source=\fIADDR\fR
+Set source address for TCP connections.
+.SS Operation Modes
+.TP
+.BR \-D ", " \-\-dbs
+Show available databases.
+.TP
+.BR \-H ", " \-\-serverhelp
+Show server help.
+.TP
+.BR \-I ", " \-\-serverinfo
+Show information about the server.
+.TP
+.BR \-S ", " \-\-strategies
+Show available search strategies.
+.TP
+\fB\-i\fR, \fB\-\-info=\fIDBNAME\fR
+Show information about database \fIDBNAME\fR.
+.TP
+\fB\-\-levdist\fR, \fB\-\-levenshtein\-distance=\fIN\fR
+Set maximum Levenshtein distance to \fIN\fR.
+.TP
+.BR \-m ", " \-\-match
+Match instead of define.
+.TP
+.BR \-q ", " \-\-quiet
+Do not print the normal \fBdico\fR welcome banner.
+.TP
+\fB\-s\fR, \fB\-\-strategy=\fINAME\fR
+Select a strategy for matching.  Implies
+.BR \-\-match .
+.SS Authentication
+.TP
+.BR \-a ", " \-\-noauth
+Disable authentication.
+.TP
+.BI \-\-autologin= NAME
+Set the name of autologin file to use.
+.TP
+\fB\-c\fR, \fB\-\-client=\fISTRING\fR
+Additional text for client command.
+.TP
+\fB\-k\fR, \fB\-\-key\fR, \fB\-\-password=\fISTRING\fR
+Set shared secret for authentication.
+.TP
+.B \-\-nosasl
+Disable SASL authentication.
+.TP
+.B \-\-sasl
+Enable SASL authentication (default).
+.TP
+\fB\-u\fR, \fB\-\-user=\fINAME\fR
+Set user name for authentication.
+.SS Debugging
+.TP
+.B \-\-source\-info
+Include source line information in the debugging output.
+.TP
+.BR \-t ", " \-\-transcript
+Enable session transcript.
+.TP
+.B \-\-time\-stamp
+Include time stamp in the debugging output.
+.TP
+.BR \-v ", " \-\-verbose
+Increase debugging verbosity level.
+.SS Other Options
+.TP
+.BR \-V ", " \-\-version
+Print program version.
+.TP
+.BR \-h ", " \-\-help
+Print a short summary of command line options.
+.TP
+.B \-\-usage
+Display a short usage message.
+.SH COMMANDS
+In
+.I interactive mode
+.B dico
+reads commands from the standard input, executes them and displays results on
+the standard output.  If the standard input is connected to a terminal,
+the readline and history facilities are enabled.
+.PP
+The input syntax is designed so as to save you the maximum amount of
+typing.
+.PP
+A line beginning with a \fB#\fR sign introduces a comment and is ignored.
+.PP
+Typing quiestion mark alone shows a short usage summary.
+.PP
+All commands begin with a
+.IR "command prefix" ,
+a single punctuation character used to tell a command from a define or
+match request.  The default command prefix is a dot.
+.PP
+Any input starting with a slash is a
+.IR "match request" .
+For example,
+.PP
+.EX
+  /sail
+.EE
+.PP
+will display all headwords matching the word
+.B sail
+in the currently selected database.
+.PP
+Any input not starting with
+.B / 
+or command prefix is a definition request.  It is looked up
+using the defaault server and database settings, and the result is
+displayed on the screen.
+.PP
+\fBDico\fR
+initialization files have the same syntax, excepting that no command
+prefix is used by default.
+.PP
+Available commands (without prefix) are summarized in the table below:
+.TP
+\fBautologin\fR \fIFILE\fR
+Use \fIFILE\fR for authentication.  If \fIFILE\fR begins with
+.BR ~/ ,
+this prefix is replaced with the name of the current user home
+directory, followed by
+.BR /.
+The prefix
+.BI ~ USER /
+is replaced with the home directory of \fIUSER\fR.  This command is
+mostly useful in the initialization file.
+
+See the section \fBAUTOLOGIN FILE\fR, for a discussion of this feature.
+.TP
+.B close
+Close the existing connection.
+.TP
+\fBdatabase\fR [\fINAME\fR]
+Without argument, display the currently selected database.  With
+argument, select the database \fINAME\fR.
+.TP
+\fBdistance\fR [\fIN\fR]
+If the remote server supports \fBxlev\fR experimental capability, this
+command shows the maximum Levenshtein distance.  With argument, it
+sets the distance.
+.TP
+.B help
+Displays short command usage summary.  For
+convenience, a single question mark can be used instead of this command.
+.TP
+.B history
+Show command history.
+.TP
+\fBinfo\fR [\fINAME\fR]
+Display information about the database \fINAME\fR, or the currently
+selected database, if used without arguments.
+.TP
+.B ld
+List databases.
+.TP
+.B ls
+List strategies.
+.TP
+\fBopen\fR \fIHOST\fR [\fIPORT\fR]
+Establish connection with remote server \fIHOST\fR.  If given, use
+\fIPORT\fR instead of the default 2628.
+.TP
+\fBpager\fR [\fICOMMAND\fR]
+Sets or displays external command used for paging output.
+.TP
+\fBprefix\fR [\fICHAR\fR]
+Without argument, shows the currently selected command prefix.  With
+argument, sets command prefix to the given value.
+.TP
+\fBprompt\fR \fISTRING\fR
+Sets \fBdico\fR command line prompt.
+.TP
+\fBquiet\fR \fByes\fR|\fBno\fR
+Toggle the startup banner.  Useful in the initialization file.
+.TP
+.B quit
+Quit the \fBdico\fR shell.
+.TP
+\fBsasl\fR [\fByes\fR|\fBno\fR]
+Without argument, show whether the SASL authentication is enabled.
+With argument, enable or disable it.
+.TP
+\fBstrategy\fR [\fINAME\fR]
+Without argument, display the currently selected matching strateguy.  With
+argument, select the strategy \fINAME\fR.
+.TP
+\fBtranscript\fR [\fByes\fR|\fBno\fR]
+Enable or disable session transcript.  When the transcript is on,
+.B dico
+displays raw DICT commands and answers as they are executed.  It is
+useful for debugging purposes.
+
+Used without arguments, this command shows current state of the
+transcript.
+.TP
+.B version
+Print program version.
+.TP
+.B warranty
+Print the copyright statement.
+.SH AUTOLOGIN FILE
+After connecting to a remote server, \fBdico\fR checks if the server
+supports authentication and attempts to authenticate itself if so.
+The authentication credentials are taken from the following sources:
+.nr step 1 1
+.IP \n[step].
+Command line options
+.B \-\-user
+and
+.BR \-\-password .
+.IP \n+[step].
+URL given as a command line argument.
+.IP \n+[step].
+Autologin files.
+.PP
+These three sources are consulted in that order, i.e., a user name
+supplied with the
+.B \-\-user command line option takes precedence over
+the one found in an URL and over any names supplied by autologin files.
+.PP
+If, after consulting all these sources, the user name is
+established, while the password is not, the resulting action depends on
+whether the standard input is connected to a terminal.  If it is,
+\fBdico\fR will ask the user to supply a password.  If it is not,
+authentication is aborted and connection to the server is closed.
+.PP
+Some authentication mechanisms require additional credentials.  For
+example, GSSAPI authentication requires a \fIservice name\fR.  These
+credentials can be supplied only in autologin file.
+.PP
+.I Autologin file
+is a plaintext file that contains authentication
+information for various DICT servers.  At most two autologin files are
+consulted: first the session-specific file, if it is supplied by
+\fBautologin\fR command or by the \fB\-\-autologin\fR command line
+option, next the default file
+.B .dicologin
+in the user's home directory.  The default autologin file is examined
+only if no matching record was found in the session-specific one.
+.PP
+The file format is similar to that of \fB.netrc\fR.
+.PP
+Empty lines and comments are ignored.  Comments are introduced by a
+pound sign.  Non-empty lines constitute \fIstatements\fR.  Tokens in a
+statement are separated with spaces, tabs, or newlines.  A valid
+statement must begin with one of the following:
+.TP
+\fBmachine\fR \fINAME\fR
+This statement contains parameters for authenticating on server
+\fINAME\fR.
+.TP
+.B default
+This statement contains parameters for authenticating on any
+server, not explicitly listed in one of the \fBmachine\fR statements.
+There can be at most one \fBdefault\fR statement in autologin file.
+Its exact location does not matter, it will always be matched
+after all explicit \fBmachine\fR statements.
+.PP
+The following clauses can follow:
+.TP
+\fBlogin\fR \fINAME\fR
+Supplies the user name for this server.
+.TP
+\fBpassword\fR \fISTRING\fR
+Supplies the password for this server.
+.TP
+.B noauth
+Do not perform authentication on this server.
+.TP
+.B sasl
+Enable SASL authentication.
+.TP
+.B nosasl
+Disable SASL authentication.
+.TP
+\fBmechanisms\fR \fILIST\fR
+Declare acceptable SASL mechanisms.  The \fILIST\fR argument is a
+comma-separated list of mechanism names, without intervening
+whitespace.  Multiple \fBmechanisms\fR clauses may be present, in
+which case the corresponding lists are concatenated.
+.TP
+\fBservice\fR \fINAME\fR
+Declare service name, for authentication methods that need it.  If
+this token is omitted, the default service name \fBdico\fR is used.
+.TP
+\fBrealm\fR \fINAME\fR
+Declare realm for authentication.
+.TP
+\fBhost\fR \fINAME\fR
+Set host name for this server.  By default, it is determined
+automatically.
+.SH "SEE ALSO"
+.BR dicod (8).
+.PP
+Complete \fBGNU Dico\fR manual: run
+.B info dico
+or use
+.BR emacs (1)
+info mode to read it.
+.PP
+Online copies of \fBGNU Dico\fR documentation in various formats can be
+found at:
+.PP
+.in +4
+.B http://www.gnu.org.ua/software/dico/manual
+.SH AUTHORS
+Sergey Poznyakoff
+.SH "BUG REPORTS"
+Report bugs to <bug\-dico@gnu.org.ua>.
+.SH COPYRIGHT
+Copyright \(co 2008-2014 Sergey Poznyakoff
+.br
+.na
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+.br
+.ad
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+.\" Local variables:
+.\" eval: (add-hook 'write-file-hooks 'time-stamp)
+.\" time-stamp-start: ".TH [A-Z_][A-Z0-9_.\\-]* [0-9] \""
+.\" time-stamp-format: "%:B %:d, %:y"
+.\" time-stamp-end: "\""
+.\" time-stamp-line-limit: 20
+.\" end:
+
+

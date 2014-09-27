@@ -352,6 +352,7 @@ set_user(enum grecs_callback_command cmd,
 	 void *cb_data)
 {
     struct passwd *pw;
+    char *s;
     
     if (cmd != grecs_callback_set_value) {
 	grecs_error(locus, 0, _("Unexpected block statement"));
@@ -362,8 +363,17 @@ set_user(enum grecs_callback_command cmd,
 	grecs_error(locus, 0, _("expected scalar value but found list"));
 	return 1;
     }
-    
-    pw = getpwnam(value->v.string);
+    s = value->v.string;
+    if (*s == '+') {
+	char *q;
+	unsigned long n = strtoul(s + 1, &q, 0);
+	if (*q) {
+	    grecs_error(locus, 0, _("not a valid UID number: %s"), s);
+	    return 1;
+	}
+	pw = getpwuid(n);
+    } else
+	pw = getpwnam(s);
     if (!pw) {
 	grecs_error(locus, 0, _("%s: no such user"), value->v.string);
 	return 1;
@@ -404,7 +414,19 @@ set_supp_group(enum grecs_callback_command cmd,
     if (value->type == GRECS_TYPE_LIST)
 	grecs_list_iterate(value->v.list, set_supp_group_iter, NULL);
     else {
-	struct group *group = getgrnam(value->v.string);
+	char *s = value->v.string;
+	struct group *group;
+
+	if (*s == '+') {
+	    char *q;
+	    unsigned long n = strtoul(s + 1, &q, 0);
+	    if (*q) {
+		grecs_error(locus, 0, _("not a valid GID number: %s"), s);
+		return 1;
+	    }
+	    group = getgrgid(n);
+	} else
+	    group = getgrnam(s);
 	if (group)
 	    xdico_list_append(group_list, (void*)group->gr_gid);
 	else {

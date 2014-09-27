@@ -1,0 +1,282 @@
+.\" This file is part of GNU Dico                                        
+.\" Copyright (C) 2014 Sergey Poznyakoff                     
+.\"                                                                      
+.\" GNU Dico is free software; you can redistribute it and/or modify     
+.\" it under the terms of the GNU General Public License as published by 
+.\" the Free Software Foundation; either version 3, or (at your option)  
+.\" any later version.                                                   
+.\"                                                                      
+.\" GNU Dico is distributed in the hope that it will be useful,          
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of       
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        
+.\" GNU General Public License for more details.                         
+.\"                                                                      
+.\" You should have received a copy of the GNU General Public License    
+.\" along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.    
+.so config.man
+.TH DICOD 1 "September 26, 2014" "GNU DICO" "GNU Dico Reference"
+.SH NAME
+dicod \- GNU dictionary server
+.SH SYNOPSIS
+.nh
+.na
+\fBdicod\fR\
+ [\fB\-ETVfist\fR]\
+ [\fB\-D\fR \fISYMBOL\fR[\fB=\fIVALUE\fR]]\
+ [\fB\-I\fR \fIDIR\fR]\
+ [\fB\-x\fR \fILEVEL\-SPEC\fR]\
+ [\fB\-\-config=\fIFILE\fR]\
+ [\fB\-\-config\-help\fR]\
+ [\fB\-\-debug=\fILEVEL\-SPEC\fR]\
+ [\fB\-\-define=\fISYMBOL\fR[\fB=\fIVALUE\fR]]\
+ [\fB\-\-foreground\fR]\
+ [\fB\-\-include\-dir=\fIDIR\fR]\
+ [\fB\-\-inetd\fR]\
+ [\fB\-\-lint\fR]\
+ [\fB\-\-no\-preprocessor\fR]\
+ [\fB\-\-no\-transcript\fR]\
+ [\fB\-\-preprocessor=\fIPROG\fR]\
+ [\fB\-\-single\-process\fR]\
+ [\fB\-\-source\-info\fR]\
+ [\fB\-\-stderr\fR]\
+ [\fB\-\-syslog\fR]\
+ [\fB\-\-trace\-grammar\fR]\
+ [\fB\-\-trace\-lex\fR]\
+ [\fB\-\-transcript\fR]
+.PP
+.B dicod \-h
+.PP
+.B dicod \-\-help
+.PP
+.B dicod \-\-usage
+.PP
+.B dicod \-\-version
+.ad
+.hy
+.SH NOTE
+This manpage is a short description of GNU \fBdicod\fR.  For a detailed
+discussion, including examples and usage recommendations, refer to the
+\fBGNU Dico Manual\fR available in texinfo format.  If the \fBinfo\fR
+reader and \fBGNU Dico\fR documentation are properly installed on your
+system, the command
+.PP
+.RS +4
+.B info dico
+.RE
+.PP
+should give you access to the complete manual.
+.PP
+You can also view the manual using the info mode in
+.BR emacs (1),
+or find it in various formats online at
+.PP
+.RS +4
+.B http://www.gnu.org.ua/software/dico/manual
+.RE
+.PP
+If any discrepancies occur between this manpage and the
+\fBGNU Dico Manual\fR, the later shall be considered the authoritative
+source.
+.SH DESCRIPTION
+.B Dicod
+is a dictionary server daemon.  It implements the
+.B DICT
+protocol defined in
+.BR "RFC 2229" .
+.PP
+.B Dicod
+is a part of
+.BR "GNU Dico",
+a package that provides, apart from the server itself, a set of
+loadable modules and a command line client program
+.BR dico (1).
+.PP
+Upon startup, the server reads its configuration file
+.BR \*(ET/dicod.conf ,
+loads and initializes the dictionary modules defined there and starts
+serving requests.
+.PP
+When started in
+.I daemon mode
+(which is the default),
+.B dicod
+listens for incoming connections on sockets requested in its
+configuration.  When an incoming connection arrives, the server
+spawns a copy of itself dedicated for serving that particular
+connection.  Unless configured otherwise, in this mode \fBdicod\fR
+detaches itself from the controlling terminal and operates in
+background.
+.PP
+In
+.B inetd mode
+the server listens on
+.B DICT
+requests on its standard input stream and sends replies to its
+standard output stream.  As the name indicates, this mode is
+intended for use with
+.BR inetd (8)
+or a similar daemon.
+.PP
+.SH OPTIONS
+.SS Program Mode
+.TP
+.B \-E
+Preprocess configuration file and exit.  See the section
+\fBPREPROCESSOR\fR below.
+.TP
+.BR \-i ", " \-\-inetd
+Run in \fIinetd mode\fR.
+.TP
+.BR \-t ", " \-\-lint
+Check configuration file syntax and exit.
+.SS Modifiers
+.TP
+.BI \-\-config= FILE
+Read configuration from \fIFILE\fR, instead of
+.BR \*(ET/dicod.conf .
+.TP
+.BR \-f ", " \-\-foreground
+Operate in foreground.
+.TP
+.BR \-s ", " \-\-single\-process
+In \fIdaemon mode\fR, process connections in the main process, without
+starting subprocesses for each connection.  This means that the daemon
+is able to serve only one client at a time.  This option is intended
+for debugging purposes only.  Never use it in production environment.
+.TP
+.B \-\-stderr
+Output diagnostic to stderr.  Useful only together with
+.BR \-\-foreground .
+.TP
+.B \-\-syslog
+After successful startup, output any diagnostic to syslog.  This is
+the default.
+.SS Debugging
+.TP
+.BR \-T ", " \-\-transcript
+Enable session transcripts.  This instructs \fBdicod\fR to log all
+commands it receives and all responses it sends during the session.
+Transcript is logged via the default logging channel.  If syslog
+is enabled, the \fBdebug\fR priority is used.
+.TP
+.B \-\-no\-transcript
+Disable session transcript.
+.TP
+.B \-\-source\-info
+Include source line information in the debugging output.
+.TP
+.B \-\-trace\-grammar
+Trace configuration file parser.
+.TP
+.B \-\-trace\-lex
+Trace configuration file lexer.
+.TP
+\fB\-x\fR, \fB\-\-debug=\fINUMBER\fR
+Set debug verbosity level.  The argument is an integer
+ranging from \fB0\fR (no debugging, default) to \fB100\fR
+(maximum debugging information).
+.SS Preprocessor Control
+.TP
+\fB\-D\fR, \fB\-\-define=\fISYMBOL\fR[\fB=\fIVALUE\fR]
+Define preprocessor symbol \fISYMBOL\fR.  Optional \fIVALUE\fR supplies
+the new symbol value.  This option is passed to the preprocessor verbatim.
+.TP
+\fB\-I\fR, \fB\-\-include\-dir=\fIDIR\fR
+Add the directory \fIDIR\fR to the list of directories to be searched for
+preprocessor include files.
+.TP
+.B \-\-no\-preprocessor
+Do not use external preprocessor.
+.TP
+.BI \-\-preprocessor= PROG
+Use \fIPROG\fR as a preprocessor for configuration file.
+.SS Additional information options
+.TP
+.B \-\-config\-help
+Show a summary of configuration file syntax and available statements.
+.TP
+.BR \-V ", " \-\-version
+Print program version.
+.TP
+.BR \-h ", " \-\-help
+Print a short summary of command line options.
+.TP
+.B \-\-usage
+Display a short usage message.
+.SH PREPROCESSOR
+Prior to parsing, \fBdicod\fR configuration file is preprocessed using
+.BR m4 (1).
+It is invoked with `-s' flag, instructing it
+to include line synchronization information in its output.  This
+information is then used by the parser to display meaningful
+diagnostic. 
+.PP
+The include path is set initially to the following two directories:
+.PP
+.B \*(VI
+.br
+.B \*(DI
+.PP
+It can be further modified using the
+\fB\-I\fR (\fB\-\-include\-directory\fR) command line option.
+.PP
+If the file
+.B pp\-setup
+is found in the include path, it is sourced before the configuration
+file.  This can be used to provide macros and constants for the
+configuration.
+.PP
+The default
+.B pp\-setup file renames all
+.B m4
+built-in macros so they start with the prefix
+.BR m4_ .
+This is similar to
+.B GNU m4 \-\-prefix\-builtin
+option, but has an advantage that it works with other
+.B m4 implementations as well.
+.PP
+Additional definitions can also be provided from the command line
+using the \fB\-D\fR (\fB\-\-define\fR) option.
+.PP
+To view preprocessed configuration, use the \fB\-E\fR option.  It
+prints the preprocessed text on the standard output.
+.PP
+To disable preprocessing, use the \fB\-\-no\-preprocessor\fR option.
+.SH "SEE ALSO"
+.BR dicod.conf (5),
+.BR dico (1),
+.BR "RFC 2229" .
+.PP
+Complete \fBGNU Dico\fR manual: run
+.B info dico
+or use
+.BR emacs (1)
+info mode to read it.
+.PP
+Online copies of \fBGNU Dico\fR documentation in various formats can be
+found at:
+.PP
+.in +4
+.B http://www.gnu.org.ua/software/dico/manual
+.SH AUTHORS
+Sergey Poznyakoff
+.SH "BUG REPORTS"
+Report bugs to <bug\-dico@gnu.org.ua>.
+.SH COPYRIGHT
+Copyright \(co 2008-2014 Sergey Poznyakoff
+.br
+.na
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+.br
+.ad
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+.\" Local variables:
+.\" eval: (add-hook 'write-file-hooks 'time-stamp)
+.\" time-stamp-start: ".TH [A-Z_][A-Z0-9_.\\-]* [0-9] \""
+.\" time-stamp-format: "%:B %:d, %:y"
+.\" time-stamp-end: "\""
+.\" time-stamp-line-limit: 20
+.\" end:
+

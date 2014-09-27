@@ -135,6 +135,17 @@ if test -z "$DEFAULT_DICT_SERVER" ; then
    DEFAULT_DICT_SERVER="gnu.org.ua"
 fi
 
+AC_ARG_VAR([DEFAULT_INCLUDE_DIR],
+           [Default preprocessor include directory])
+if test -z "$DEFAULT_INCLUDE_DIR"; then
+   DEFAULT_INCLUDE_DIR='$(pkgdatadir)/include'
+fi   
+AC_ARG_VAR([DEFAULT_VERSION_INCLUDE_DIR],
+           [Default version-specific include directory])
+if test -z "$DEFAULT_VERSION_INCLUDE_DIR"; then
+   DEFAULT_VERSION_INCLUDE_DIR='$(pkgdatadir)/$(VERSION)/include'
+fi   
+
 # Grecs configuration system
 GRECS_SETUP(grecs, [shared tests getopt git2chg std-pp-setup sockaddr-list])
 GRECS_HOST_PROJECT_INCLUDES='-I$(top_srcdir)/gnu -I$(top_builddir)/gnu'

@@ -46,13 +46,12 @@ dicod_SOURCES=\
 
 noinst_HEADERS=dicod.h
 
-incdir=$(pkgdatadir)/$(VERSION)/include
 AM_CPPFLAGS = \
  -DSYSCONFIG=\"$(sysconfdir)\"\
  -DLOCALSTATEDIR=\"$(localstatedir)\"\
  -DDICO_MODDIR=\"$(DICO_MODDIR)\"\
- -DDEFAULT_VERSION_INCLUDE_DIR=\"$(incdir)\"\
- -DDEFAULT_INCLUDE_DIR=\"$(pkgdatadir)/include\"\
+ -DDEFAULT_VERSION_INCLUDE_DIR=\"$(DEFAULT_VERSION_INCLUDE_DIR)\"\
+ -DDEFAULT_INCLUDE_DIR=\"$(DEFAULT_INCLUDE_DIR)\"\
  -DDEFAULT_PREPROCESSOR="$(DEFAULT_PREPROCESSOR)"\
  -I$(top_srcdir)/include\
  -I$(top_srcdir)/gnu\

@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 2008, 2010, 2012 Sergey Poznyakoff
+# Copyright (C) 2008, 2010, 2012, 2014 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,7 +12,29 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
+# along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.    
+
+dist_man_MANS=dicod.8 dicod.conf.5in dico.1
+
+.8in.8:
+	$(AM_V_GEN)soelim -I$(builddir) $< > $@
+.5in.5:
+	$(AM_V_GEN)soelim -I$(builddir) $< > $@
+
+config.man: $(top_srcdir)/configure.ac $(top_srcdir)/doc/Makefile.am
+	$(AM_V_GEN){						\
+		echo ".ds ET $(sysconfdir)";			\
+		echo ".ds MD $(DICO_MODDIR)";			\
+		echo ".ds DI $(DEFAULT_INCLUDE_DIR)";		\
+		echo ".ds VI $(DEFAULT_VERSION_INCLUDE_DIR)";	\
+		echo ".ds LO $(localstatedir)";			\
+	} > config.man
+
+dicod.8 dicod.conf.5: config.man
+
+EXTRA_DIST = dicod.8in dicod.conf.5in
+CLEANFILES=dicod.8 dicod.conf.5
+DISTCLEANFILES=config.man
 
 info_TEXINFOS=dico.texi
 dico_TEXINFOS=\
@@ -23,7 +45,7 @@ dico_TEXINFOS=\
  strat.texi\
  strftime.texi
 
-EXTRA_DIST = \
+EXTRA_DIST += \
  gendocs_template
 
 clean-local:

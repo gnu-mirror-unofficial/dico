@@ -1008,8 +1008,9 @@ server machine.
 @deffn {Configuration} user @var{string}
 Run with the privileges of this user.  @command{Dicod} does not
 require root privileges, so it is recommended to always use this
-statement when running @command{dicod} in daemon mode.
-@xref{Daemon Mode}. 
+statement when running @command{dicod} in daemon mode (@pxref{Daemon
+Mode}).  The argument is either a user name, or UID prefixed with a
+plus sign.
 
 Example:
 @example
@@ -1024,11 +1025,12 @@ groups and switch to the principal group of that user.  Sometimes,
 however, it may be necessary to retain one or more supplementary
 groups.  For example, this might be necessary to access dictionary
 databases.  The @code{group} statement retains the supplementary
-groups listed in @var{list}, e.g.:
+groups listed in @var{list}.  Each group can be specified either
+by its name or by its GID number, prefixed with @samp{+}, e.g.:
 
 @example
 user nobody;
-group (man, dict);
+group (man, dict, +88);
 @end example
 
 This statement is ignored if @code{user} statement is not present or
@@ -1613,14 +1615,15 @@ first of its @acronym{IP} addresses will be used.
 @item @var{addr}/@var{netlen}
 Matches if first @var{netlen} bits from the client @acronym{IP}
 address equal to @var{addr}.  The network mask length, @var{netlen}
-must be an integer number in the range from 0 to 32.  The address part,
+must be an integer number in the range from 0 to 32 for IPv4, and
+in the range 0 -- 128 for IPv6.  The address part,
 @var{addr}, is as described above. 
 
 @item @var{addr}/@var{netmask}
 The specifier matches if the result of logical @acronym{AND} between
 the client @acronym{IP} address and @var{netmask} equals to
-@var{addr}.  The network mask must be specified in ``dotted quad''
-form, e.g.@: @samp{255.255.255.224}.
+@var{addr}.  The network mask must be specified in a IP address
+(either IPv4 or IPv6) notation.
 
 @item @var{filename}
 Matches if connection was received from a @acronym{UNIX} socket
@@ -1812,7 +1815,7 @@ Size of response in bytes in @acronym{CLF} format, i.e. a @samp{-} rather
 than a @samp{0} when no bytes are sent.
 
 @item %C
-Remote client (from @code{CLIENT} command (@pxref{CLIENT}).
+Remote client (from the @code{CLIENT} command, @pxref{CLIENT}).
 
 @item %D
 The time taken to serve the request, in microseconds.
@@ -1840,7 +1843,7 @@ The search strategy.
 The canonical port of the server serving the request.
 
 @item %P
-The @acronym{PID} of the child that serviced the request.
+The @acronym{PID} of the child that served the request.
 
 @item %q
 The database from the request.
@@ -1981,7 +1984,7 @@ directive.  It is common to specify @var{string} using
 server-info <<EOT
 Welcome to the FOO dictionary service.
 
-Contact <dict@@foo.org> if you have questions or
+Contact <dict@@foo.example.org> if you have questions or
 suggestions.
 EOT;
 @end example
@@ -2061,7 +2064,7 @@ matching strategy.  @xref{MATCH, strategy}.  @xref{Extended Commands, XLEV}.
   The capabilities set using this directive are
 displayed in the initial server reply (@pxref{initial reply}), and
 their descriptions are added to the @code{HELP} command output (unless
-specified otherwise by the @code{help} statement).
+specified otherwise by the @code{help-text} statement).
 
 @node Handlers
 @subsection Database Modules and Handlers
@@ -2388,7 +2391,7 @@ The @var{statements} define conditions the 4th argument of a
 following statements are defined:
 
 @deffn {Configuration} deny-all @var{bool}
-Unconditionally deny this strategy in default searches.
+Unconditionally deny the use of this strategy in default searches.
 @end deffn
 
 @deffn {Configuration} deny-word @var{list}
@@ -5342,7 +5345,8 @@ If @var{user} is given, but @var{pass} is not, @command{dico} will ask
 you to supply a password interactively (@pxref{Autologin}).
 
 @item host
-Host name or @acronym{IP} address of the server to query.  Same as the
+Host name, @acronym{IPv4} address, or @acronym{IPv6} address (in
+square brackets) of the server to query.  Same as the
 @option{--host} command line option.
 
 @item port

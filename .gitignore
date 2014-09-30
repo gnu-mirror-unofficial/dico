@@ -34,6 +34,7 @@ dicoweb/bin
 dicoweb/include
 dicoweb/lib
 dicoweb/lib64
+dicoweb/settings.py
 gmon.out
 gnu
 gnulib

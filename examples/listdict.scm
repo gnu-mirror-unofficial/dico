@@ -16,9 +16,11 @@
 
 (define-module (listdict)
   #:use-module (guile-user)
-;;  #:use-module (ice-9 syncase)
   #:use-module (ice-9 format)
   #:use-module (srfi srfi-1))
+
+(if (= (string->number (major-version)) 1)
+    (use-modules (ice-9 syncase)))
 
 (define-syntax db:get
   (syntax-rules (info descr name lang corpus)

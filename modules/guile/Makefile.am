@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 1998-2000, 2008, 2010, 2012 Sergey Poznyakoff
+# Copyright (C) 1998-2000, 2008, 2010, 2012, 2014 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,9 +27,9 @@ AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include @GRECS_INCLUDES@
 
 SUFFIXES =
 BUILT_SOURCES =
-EXTRA_DIST = guile.x
+EXTRA_DIST = 
 DOT_X_FILES = guile.x
-CLEANFILES=
+CLEANFILES= guile.x
 DISTCLEANFILES=
 sitedir = @GUILE_SITE@/$(PACKAGE)
 site_DATA=

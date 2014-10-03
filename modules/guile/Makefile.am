@@ -27,7 +27,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include @GRECS_INCLUDES@
 
 SUFFIXES =
 BUILT_SOURCES =
-EXTRA_DIST = 
+EXTRA_DIST = module.ac
 DOT_X_FILES = guile.x
 CLEANFILES= guile.x
 DISTCLEANFILES=

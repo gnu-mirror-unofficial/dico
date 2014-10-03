@@ -34,7 +34,7 @@ SUBDIRS=\
  po
 #FIXME: add these when ready: makedict client fonts
 
-EXTRA_DIST = ChangeLog.2008
+EXTRA_DIST = ChangeLog.2008 stub.ac modinc
 
 dist-hook:
 	tar -C $(srcdir) -c -f - --exclude-vcs app dicoweb | \

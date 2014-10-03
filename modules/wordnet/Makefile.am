@@ -26,3 +26,4 @@ AM_CPPFLAGS = \
  -I$(top_builddir)/include\
  @WORDNET_IOPT@\
  @GRECS_INCLUDES@
+EXTRA_DIST=module.ac

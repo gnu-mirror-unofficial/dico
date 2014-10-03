@@ -1,0 +1,47 @@
+## This file is part of GNU Dico
+## Copyright (C) 2014 Sergey Poznyakoff
+##
+## GNU Dico is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 3, or (at your option)
+## any later version.
+##
+## GNU Dico is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
+
+## module description: PAM
+
+status_pam=maybe
+AC_ARG_ENABLE([pam],
+              AC_HELP_STRING([--enable-pam],
+                             [enable PAM]),
+              [
+case "${enableval}" in
+  yes) status_pam=yes ;;
+  no)  status_pam=no ;;
+  *)   AC_MSG_ERROR([bad value ${enableval} for --enable-pam]) ;;
+esac],[status_pam=maybe])
+
+AC_SUBST(PAM_LIBS)
+if test "$status_pam" != "no"; then
+  pam=$status_pam
+  AC_CHECK_HEADERS(security/pam_appl.h)
+  if test "$ac_cv_header_security_pam_appl_h" = "yes"; then
+    AC_CHECK_LIB(dl, dlopen, [PAM_LIBS=-ldl])
+    AC_CHECK_LIB(pam, pam_start,
+	         [status_pam=yes],
+	         [status_pam=no], $PAM_LIBS)
+  else
+    status_pam=no
+  fi
+  if test $pam = yes && test $pam != $status_pam; then
+      AC_MSG_ERROR([required module PAM cannot be built because of missing prerequisites])
+  fi
+fi
+
+AM_CONDITIONAL([PAM_COND], [test $status_pam = yes])

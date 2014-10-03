@@ -22,3 +22,4 @@ pcre_la_SOURCES = pcre.c
 pcre_la_LIBADD = ../../lib/libdico.la -lpcre
 AM_LDFLAGS = -module -avoid-version -no-undefined
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include
+EXTRA_DIST=module.ac

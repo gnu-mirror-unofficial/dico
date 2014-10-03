@@ -30,3 +30,4 @@ noinst_HEADERS = \
 dictorg_la_LIBADD = ../../lib/libdico.la @LIBZ@
 AM_LDFLAGS = -module -avoid-version -no-undefined
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include
+EXTRA_DIST=module.ac

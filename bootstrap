@@ -92,7 +92,7 @@ extract_package_name='
      p
   }
 '
-package=`sed -n "$extract_package_name" configure.ac` || exit
+package=`sed -n "$extract_package_name" stub.ac` || exit
 gnulib_name=lib$package
 
 build_aux=build-aux

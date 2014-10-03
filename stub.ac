@@ -1,3 +1,11 @@
+## This file is a source for configure.ac.
+## Run ./modinc to create it.
+## Run ./modinc --help for a detailed description.
+## A short reminder:
+##   1. Comments starting with ## are removed from the output.
+##   2. A construct <NAME> is replaced with the value of the variable NAME.
+##   3. Everything else is reproduced verbatim.
+dnl<HEADING>
 dnl Process this file with -*- autoconf -*- to produce a configure script. 
 # This file is part of GNU Dico
 # Copyright (C) 1998-2000, 2008-2010, 2012-2016 Sergey Poznyakoff
@@ -150,35 +158,6 @@ fi
 GRECS_SETUP(grecs, [shared tests getopt git2chg std-pp-setup sockaddr-list])
 GRECS_HOST_PROJECT_INCLUDES='-I$(top_srcdir)/gnu -I$(top_builddir)/gnu'
 
-# Check for Guile
-GINT_INIT([gint],[1.8 with-guile nodoc],
-	  [status_guile=yes],
-	  [status_guile=no])
-AM_CONDITIONAL([GUILE_COND],[test $status_guile = yes])
-
-# Check for Python
-AC_ARG_WITH([python],
-            AC_HELP_STRING([--without-python],
-                           [do not build Python interface]),
-            [
-case "${withval}" in
-  yes) status_python=yes ;;
-  no)  status_python=no ;;
-  *)   AC_MSG_ERROR(bad value ${withval} for --without-python) ;;
-esac],[status_python=yes])
-
-if test "$status_python" = yes; then
-  AC_ARG_VAR([PYTHON_CONFIG], [The name of python-config binary])
-  AC_PATH_PROG([PYTHON_CONFIG], python-config)
-  if test -n "$PYTHON_CONFIG"; then
-    AC_SUBST(PYTHON_LIBS,`python-config --libs`)
-    AC_SUBST(PYTHON_INCLUDES,`python-config --includes`)
-  else
-    status_python=no     
-  fi	
-fi
-AM_CONDITIONAL([PYTHON_COND],[test $status_python = yes])
-
 # Tcl/tk
 AC_ARG_WITH([tk],
             AC_HELP_STRING([--with-tk],
@@ -197,28 +176,6 @@ if test $status_tk=yes; then
   fi
   AM_CONDITIONAL([TK_WISH_COND],[test $status_tk = yes])
 fi
-
-# Check for libpcre
-AC_ARG_WITH([pcre],
-            AC_HELP_STRING([--with-pcre],
-                           [compile Perl-compatible regular expressions support]),
-            [
-case "${withval}" in
-  yes) status_pcre=yes ;;
-  no)  status_pcre=no ;;
-  *)   AC_MSG_ERROR(bad value ${withval} for --with-pcre) ;;
-esac],[status_pcre=yes])
-
-if test $status_pcre = yes; then
-  AC_CHECK_HEADER([pcre.h], [], [status_pcre=no])
-  if test $status_pcre = yes; then
-    DICO_CHECK_LIB(pcre, main, [:],
-                   [],
-		   [status_pcre=no])
-  fi
-fi
-AM_CONDITIONAL([PCRE_COND],[test $status_pcre = yes])
-
 #
 AC_ARG_WITH(autologin-file,
             AC_HELP_STRING([--with-autologin-file@<:@=NAME@:>@],
@@ -298,90 +255,14 @@ MU_CHECK_GSASL(0.2.5, [
     AC_SUBST(BUILD_LIBDICOSASL,'libdicosasl.a')
     AC_SUBST(LIBDICOSASL,'$(top_builddir)/lib/libdicosasl.a')])
 
-# SASL
-
-AC_ARG_WITH(ldap,
-            [AC_HELP_STRING([--with-ldap],
-		            [Configure to work with OpenLDAP])],
-	    [status_ldap=$withval],
-            [status_ldap=maybe])
-
-if test $status_ldap != no; then
-  AC_CHECK_LIB(ldap, ldap_bind,
-               [status_ldap=yes],
-               [if test $status_ldap = yes; then
-	          AC_MSG_ERROR([required library ldap is not found])
-		fi
- 	        status_ldap=no])
-fi
-AM_CONDITIONAL([LDAP_COND], [test $status_ldap = yes])
-
-# PAM
-status_pam=maybe
-AC_ARG_ENABLE([pam],
-              AC_HELP_STRING([--enable-pam],
-                             [enable PAM]),
-              [
-case "${enableval}" in
-  yes) status_pam=yes ;;
-  no)  status_pam=no ;;
-  *)   AC_MSG_ERROR([bad value ${enableval} for --enable-pam]) ;;
-esac],[status_pam=maybe])
-
-AC_SUBST(PAM_LIBS)
-if test "$status_pam" != "no"; then
-  pam=$status_pam
-  AC_CHECK_HEADERS(security/pam_appl.h)
-  if test "$ac_cv_header_security_pam_appl_h" = "yes"; then
-    AC_CHECK_LIB(dl, dlopen, [PAM_LIBS=-ldl])
-    AC_CHECK_LIB(pam, pam_start,
-	         [status_pam=yes],
-	         [status_pam=no], $PAM_LIBS)
-  else
-    status_pam=no
-  fi
-  if test $pam = yes && test $pam != $status_pam; then
-      AC_MSG_ERROR([required module PAM cannot be built because of missing prerequisites])
-  fi
-fi
-
-AM_CONDITIONAL([PAM_COND], [test $status_pam = yes])
-
-# WordNet
-AC_SUBST(WORDNET_LOPT)
-AC_SUBST(WORDNET_IOPT)
-AC_ARG_WITH([wordnet],
-            AC_HELP_STRING([--with-wordnet@<:@=DIR@:>@],
-                           [use wordnet]),
-            [
-case "${withval}" in
-  yes) status_wordnet=req ;;
-  no)  status_wordnet=no ;;
-  /*)  status_wordnet=req
-       WORDNET_LOPT=-L${withval}/lib
-       WORDNET_IOPT=-I${withval}/include;;
-  *)   AC_MSG_ERROR([argument for --with-wordnet must be an absoulute directory name]) ;;
-esac],[status_wordnet=maybe])
-
-if test $status_wordnet != no; then
-  save_LIBS=$LIBS
-  save_CPPFLAGS=$CPPFLAGS
-  LIBS="$LIBS $WORDNET_LOPT"
-  CPPFLAGS="$CPPFLAGS $WORDNET_IOPT"
-  AC_CHECK_HEADER([wn.h],
-      [AC_CHECK_LIB(WN, findtheinfo, status_wordnet=yes)])
-  case $status_wordnet in
-  req) AC_MSG_ERROR([required module wordnet cannot be built because of missing prerequisites]);;
-  maybe) status_wordnet=no;;
-  esac
-  AM_CONDITIONAL([WORDNET_COND],[test $status_wordnet = yes])
-  LIBS=$save_LIBS
-  CPPFLAGS=$save_CPPFLAGS
-fi
-
-
+<MODULES>
+    
 # Imprimatur
 IMPRIMATUR_INIT
+
+# Tests
+DICO_TESTS(lib)
+DICO_TESTS(dicod)
 
 AC_CONFIG_COMMANDS([status],[
 cat <<EOT
@@ -389,50 +270,28 @@ cat <<EOT
 *******************************************************************
 Dico configured with the following settings:
 
-Guile ........................... $status_guile
-Python .......................... $status_python
 GSASL ........................... $status_gsasl
-LDAP ............................ $status_ldap
-PAM ............................. $status_pam
 Readline ........................ $status_readline
 Preprocessor .................... $dicopp
 
-Perl-compatible regexs .......... $status_pcre
-WordNet ......................... $status_wordnet
+<STATUS_OUTPUT>
 
 Default server .................. $defserver
 Autologin file .................. $autologin_file
 *******************************************************************
 EOT
 ],
-[status_guile=$status_guile
-status_python=$status_python
-status_gsasl=$status_gsasl
-status_ldap=$status_ldap
-status_pam=$status_pam
+[status_gsasl=$status_gsasl
 status_readline=$status_readline
 if test $use_ext_pp = no; then
   dicopp=no
 else
   dicopp="$DEFAULT_PREPROCESSOR"
 fi
-status_pcre=$status_pcre
-status_wordnet=$status_wordnet
 defserver="$DEFAULT_DICT_SERVER"
 autologin_file="$DEFAULT_AUTOLOGIN_FILE"
+<STATUS_DEFN>
 ])
-
-# Tests
-DICO_TESTS(lib)
-DICO_TESTS(dicod)
-DICO_TESTS(modules/outline)
-DICO_TESTS(modules/gcide)
-DICO_TESTS(modules/guile)
-DICO_TESTS(modules/python)
-DICO_TESTS(modules/stratall)
-DICO_TESTS(modules/word)
-DICO_TESTS(modules/substr)
-DICO_TESTS(modules/nprefix)
 
 AC_CONFIG_FILES([Makefile
                  include/Makefile
@@ -444,19 +303,6 @@ AC_CONFIG_FILES([Makefile
                  lib/Makefile
                  dicod/Makefile
 		 modules/Makefile
-		 modules/outline/Makefile
-		 modules/dict.org/Makefile
-		 modules/guile/Makefile
-		 modules/python/Makefile
-		 modules/stratall/Makefile
-		 modules/substr/Makefile
-		 modules/pcre/Makefile
-		 modules/ldap/Makefile
-		 modules/pam/Makefile
-		 modules/word/Makefile
-		 modules/gcide/Makefile
-		 modules/wordnet/Makefile
-		 modules/nprefix/Makefile
 		 dico/Makefile
 		 scripts/Makefile
 		 doc/Makefile

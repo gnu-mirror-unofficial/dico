@@ -29,6 +29,7 @@ config.h.in
 config.log
 config.status
 configure
+configure.ac
 core
 dicoweb/bin
 dicoweb/include

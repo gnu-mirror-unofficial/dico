@@ -124,7 +124,7 @@ mod_result_headers(dico_result_t rp, dico_assoc_list_t hdr)
     return 0;
 }
 
-struct dico_database_module DICO_EXPORT(sample, module) = {
+struct dico_database_module DICO_EXPORT(<MODNAME>, module) = {
     DICO_MODULE_VERSION,
     DICO_CAPA_NONE,
     mod_init,

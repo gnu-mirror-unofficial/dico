@@ -1,0 +1,625 @@
+#! /usr/bin/perl
+# This file is part of GNU Dico
+# Copyright (C) 2014 Sergey Poznyakoff
+#
+# GNU Dico is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3, or (at your option)
+# any later version.
+#
+# GNU Dico is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
+
+=head1 NAME
+
+modinc - Recreate Dico module autoconf structure
+    
+=head1 SYNOPSIS
+
+B<modinc>
+[B<-ahnv>]    
+[B<--add>]
+[B<--help>]    
+[B<--new>]    
+[B<--dry-run>]
+[B<--verbose>]
+[I<NAME>...]
+
+=head1 DESCRIPTION
+
+Recreates F<configure.ac> and F<modules/Makefile.am> from stub files
+F<stub.ac> and F<modules/stub.am>.  The list of modules is obtained
+from the contents of the F<modules> directory -- each subdirectory
+is supposed to contain one module.
+
+Additional F<configure.ac> code for each module is obtained from
+file F<module.ac> in each module directory.  See the description of
+this file in section B<FILES>.
+
+When run with B<-a> (B<--add>, B<--new>) option, the program creates
+basic infrastructure for modules named in the command line.  For each
+I<NAME> it creates directory F<modules/I<NAME>>.  Withih that directory,
+it creates two files: F<Makefile.am> from F<modules/template.am>, and
+F<I<NAME>.c>, which contains a stub code for the module.    
+
+The program must be run from the Dico source tree topmost directory.
+    
+=head1 OPTIONS
+
+=over 4
+
+=item B<-a>, B<--add>, B<--new>
+
+Create basic infrastructure for modules named in the command line and
+add them to F<configure.ac> and F<modules/Makefile.am>
+    
+=item B<-n>, B<--dry-run>
+
+Don't do anything, just print what would have been done.    
+
+=item B<-v>, B<--verbose>
+
+Increase output verbosity.  Multiple options accumulate.    
+
+=back
+
+The following options cause the program to display informative text and
+exit:    
+    
+=over 4    
+    
+=item B<-h>
+
+Show a short usage summary.
+
+=item B<--help>
+
+Show man page.    
+
+=item B<--usage>
+
+Show a concise command line syntax reminder.     
+    
+=back
+    
+=head1 FILES    
+
+The following files are used as templates to create output files.  When
+creating output file, each line from the corresponding template is read,
+I<macro expansion> is performed, and the resulting string is written to the
+output file.
+
+During macro expansion, each occurrence of B<< <I<NAME>> >> is replaced with
+the contents of the macro variable I<NAME>, if it is defined.  Expansion
+of undefined variables lefts the text as is.
+
+A B<< <I<NAME>> >> appearing alone after a sequence of non-whitespace
+characters (a I<prefix>) at the beginning of the line is treated specially:
+if I<NAME> expands to multiple lines, I<prefix> is prepended to each line
+on output.
+
+The macro variables are specific for each file, and are described below.
+
+For each file, a special comment sequence is defined.  Lines beginning
+with that sequence are omitted from the output.    
+    
+=over 4
+
+=item F<stub.ac>
+
+Produces the F<configure.ac> file.  Comment marker is B<##>.
+The following variables are defined:
+
+=over 8
+
+=item B<MODULES>
+
+B<Autoconf> code for each module, obtained from the F<module.ac>
+files.
+
+=item B<HEADING>
+
+Generates an initial header text, warning the reader that the file is
+generated automatically and informing him about the ways to recreate
+that file.
+
+=item B<STATUS_OUTPUT>
+
+A list of printable description for modules that can be disabled.  Each
+module is represented with a line
+
+    MODNAME ................ STATUS
+
+where MODNAME is the module name and STATUS is the module status variable
+(which produces B<yes> or B<no> at configure time, depending on whether
+the module is enabled or not).
+
+This is intended for use in B<AC_CONFIG_COMMANDS>.    
+
+=item B<STATUS_DEFN>    
+
+A list of assignments for module status variables, intended
+for use in B<AC_CONFIG_COMMANDS>.
+
+=back
+
+The following code illustrates the use of the latter two variables:
+
+  AC_CONFIG_COMMANDS([status],[
+echo<STATUS_OUTPUT>                    
+],
+                     [<STATUS_DEFN>])
+    
+=item F<modules/*/module.ac>
+
+This file is optional.  If present, it contains the B<autoconf> code for
+that module, which is appended to the contents of the B<MODULES> variable
+used for creating F<configure.ac>.
+
+No macro substitutions are performed for that file.
+
+Comment marker is B<##>.
+
+The following comments starting with B<## module> are I<pragmatic> ones,
+and are treated specially:
+
+=over 8
+
+=item B<## module name: I<NAME>>
+
+Use I<NAME> as module name when creating variable names for that module.  This
+is useful when the module name contains symbols that cannot be used in variable
+names (as in, e.g. B<dict.org>).
+
+=item B<## module description: I<TEXT>>    
+
+Use I<TEXT> as module description in B<STATUS_OUTPUT> (see F<stub.ac>).
+
+=item B<## module category:>
+
+Reserved for future use.
+
+=back
+
+As well as other B<##> comments, these comments do not appear in the output.
+    
+=item F<modules/stub.am>
+
+Produces the file F<modules/Makefile.am>.  Comment marker is B<##>.
+
+Macro variables:
+
+=over 8
+    
+=item B<HEADING>
+
+Same as in F<stub.ac>.
+
+=item B<MODULES>
+
+Produces B<Makefille.am> code for the B<SUBDIRS> variable.    
+
+=back
+    
+=item F<modules/template.c>
+
+This template is used when B<-a> (B<--add>, B<--new>) option is given.
+It produces the file F<modules/I<NAME>/I<NAME>.c>.  Comment marker is B<//>.
+
+Macro variables:
+
+=over 8
+
+=item B<MODNAME>
+
+Expands to the name of the module.
+
+=back    
+    
+=item F<modules/template.am>
+    
+This template is used when B<-a> (B<--add>, B<--new>) option is given.
+It produces the file F<modules/I<NAME>/Makefile.am>.
+
+Macro variables:
+
+=over 8
+
+=item B<MODNAME>
+
+Expands to the name of the module.
+
+=back
+    
+=back    
+
+=head1 EXIT CODES
+
+=over 4
+
+=item 0
+
+Successful termination.
+
+=item 64
+
+Command line usage error.
+
+=item 66
+
+Can't open input file.    
+    
+=item 73
+
+Can't create output file.    
+
+=back
+
+=head1 BUGS
+
+Error handling can be made better.
+    
+=cut    
+
+use strict;
+use Getopt::Long qw(:config gnu_getopt no_ignore_case);
+use Pod::Usage;
+use Pod::Man;
+use File::Temp qw(tempfile);
+use File::Basename;
+use Data::Dumper;
+
+use constant EX_OK           => 0;
+use constant EX_USAGE        => 64;    # command line usage error
+use constant EX_DATAERR      => 65;    # data format error
+use constant EX_NOINPUT      => 66;    # cannot open input file
+use constant EX_SOFTWARE     => 70;    # internal software error (not used yet)
+use constant EX_CANTCREAT    => 73;    # can't create (user) output file
+
+my $progname;
+($progname = $0) =~ s/.*\///;
+my $progdescr = "Recreate Dico module autoconf structure";
+my $addmod;
+my $dry_run;
+my $verbose;
+my $autoconf = "module.ac";
+my $config_stub = "stub.ac";
+my $makefile_stub = "modules/stub.am";
+my $makefile = "modules/Makefile.am";
+my %outfile;
+
+my %categories; # not used now
+
+sub error {
+    my $msg = shift;
+    local %_ = @_;
+    print STDERR "$progname: " if defined($progname);
+    print STDERR "$_{prefix}: " if defined($_{prefix});
+    print STDERR "$msg\n"
+}
+
+sub abend {
+    my $code = shift;
+    print STDERR "$progname: " if defined($progname);
+    print STDERR "@_\n";
+    exit $code;
+}
+
+my $status = 0;
+
+sub rewrite_configure_ac {
+    my $ref = shift;
+    
+    my %vartab = (
+	'overwrite' => 1,
+	'tempfile' => 1,
+	'ignorecomm' => '##',
+	'HEADING' => "Do not edit. -*- mode: autoconf; buffer-read-only: t; -*- vi: set ro:\
+This file is created automatically from $config_stub.\
+To recreate, run $progname from the top of Dico source tree.
+",
+	'MODULES' => sub {
+	    my $s;
+	    
+	    foreach my $name (sort keys %{$ref}) {
+		my $h = $ref->{$name};
+		$s .= "# Module $name\n";
+		if (defined($h->{autoconf})) {
+		    open(my $afd, "<", $h->{autoconf})
+			or abend(EX_NOINPUT,
+				 "can't open $h->{autoconf} for reading: $!");
+		    while (<$afd>) {
+			next if /^##/;
+			$s .= $_;
+		    }
+		    close $afd;
+		}
+		$s .= "\n";
+		$s .= "DICO_TESTS($h->{dir})\n" if ($h->{tests});
+		$s .= "AC_CONFIG_FILES([$h->{dir}/Makefile])\n";
+		$s .= "\n# End of module $name\n\n";
+	    }
+	    return $s;
+	},
+	'STATUS_OUTPUT' => sub {
+	    return join "\n",
+	     map {
+		 my $n;
+		 if (defined($ref->{$_}{descr})) {
+		     $n = $ref->{$_}{descr};
+		 } else {
+		     $n = $_;
+		     $n =~ s/\b(\w)/\U$1/g;
+		 }
+
+		 my $l = 34 - length($n) - 2;
+
+		 "$n " .
+		 (($l > 0) ? '.' x $l : '') .
+		 " \$status_$ref->{$_}{modname}";
+	     }
+	    grep { $ref->{$_}{status} }
+	    sort keys %{$ref};
+	},
+	'STATUS_DEFN' => sub {
+	    return join "\n",
+	      map { "status_$ref->{$_}{modname}=\$status_$ref->{$_}{modname}" }
+	      grep { defined($ref->{$_}{status}) }
+	      sort keys %{$ref};
+	}
+    );
+    make_file($config_stub, "configure.ac", \%vartab);
+}
+
+sub rewrite_makefile {
+    my $ref = shift;
+
+    my %vartab = (
+	'overwrite' => 1,
+	'tempfile' => 1,
+	'ignorecomm' => '##',
+	'HEADING' => "Do not edit. -*- buffer-read-only: t; -*- vi: set ro:\
+This file is created automatically from $makefile_stub.\
+To recreate, run $progname from the top of Dico source tree.
+",
+	'MODULES' => sub {
+	    my $s;
+	    foreach my $am (map { $ref->{$_}{am} }
+			    grep { defined($ref->{$_}{am}) }
+			    sort keys %{$ref}) {
+		$s .= "$am\n";
+	    }
+	    $s .= "SUBDIRS=";
+	    foreach my $dir (map { $ref->{$_}{SUBDIRS} } sort keys %{$ref}) {
+		$s .= "\\\n $dir";
+	    }
+	    $s .= "\n";
+	    return $s;
+	}
+    );
+    make_file($makefile_stub, $makefile, \%vartab);
+}
+
+sub add_module {
+    my ($name,$ref) = @_;
+    my $dir = "modules/$name";
+
+    error("adding module $name", prefix=>'DEBUG') if ($verbose);
+    my $acname = uc($name);
+    $ref->{$name}{dir} = $dir;
+    $ref->{$name}{SUBDIRS} = $name;
+    $ref->{$name}{modname} = $name;
+    if (-r "$dir/$autoconf") {
+	$ref->{$name}{autoconf} = "$dir/$autoconf";
+	open(my $fd, "<", "$dir/$autoconf")
+	    or abend(EX_NOINPUT,
+		     "can't open $dir/$autoconf for reading: $!");
+	while (<$fd>) {
+	    chomp;
+	    s/\s+$//;
+	    if (/^##\s*module\s+name\s*:\s*([^\s]+).*$/) {
+		$ref->{$name}{modname} = $1;
+	    } elsif (/^##\s*module\s+description\s*:\s*(.+).*$/) {
+		$ref->{$name}{descr} = $1;
+	    } elsif (/^##\s*module\s+category\s*:\s*(.+).*$/) {
+		$ref->{$name}{category} = $1;
+		$categories{$1}++;
+	    }
+	    s/#.*//;
+	    next if ($_ eq "");
+	    if (/AM_CONDITIONAL\s*\(\s*\[${acname}_COND\]/) {
+		$ref->{$name}{am} = <<EOT;
+if ${acname}_COND
+  ${acname}_DIR=$name
+endif
+EOT
+;		
+		$ref->{$name}{SUBDIRS} = "\$(${acname}_DIR)";
+	    }
+	    $ref->{$name}{status} = 1
+		if (!$ref->{$name}{status} and /status_$ref->{$name}{modname}=/);
+	}
+	close $fd;
+    }
+    $ref->{$name}{tests} = (-d "$dir/tests"
+			    and -f "$dir/tests/Makefile.am"
+			    and -f "$dir/tests/testsuite.at");
+
+    if (-f "$dir/Makefile.am") {
+	open(my $fd, "<", "$dir/Makefile.am")
+	    or abend(EX_NOINPUT,
+		     "can't open $dir/$autoconf for reading: $!");
+	my %checks = ('mod' => "mod_LTLIBRARIES does not contain $ref->{$name}{modname}.la",
+		      'SOURCES' => "$ref->{$name}{modname}_la_SOURCES not defined");
+	while (<$fd>) {
+	    chomp;
+	    s/\s+$//;
+	    s/#.*//;
+	    next if ($_ eq "");
+	    if (/mod_LTLIBRARIES\s*=\s*$ref->{$name}{modname}.la/) {
+		delete $checks{mod};
+	    } elsif (/$ref->{$name}{modname}_la_SOURCES\s*=/) {
+		delete $checks{SOURCES};
+	    }
+	}
+	close $fd;
+	if (keys(%checks)) {
+	    while (my ($k,$v) = each %checks) {
+		error("$dir/Makefile.am: $v");
+	    }
+	    $status = EX_DATAERR;
+	    return;
+	}
+    } 
+    
+    if ($verbose>1) {
+	print STDERR "module $name:\n";
+	print STDERR Dumper($ref->{$name});
+    }
+}
+
+sub replace_macro {
+    my $name = shift;
+    my $ref = shift;
+
+    my $s;
+
+    if (defined($ref->{$name})) {
+	if (ref($ref->{$name}) eq 'CODE') {
+	    $s = &{$ref->{$name}};
+	} else {
+	    $s = $ref->{$name};     
+	}
+    } else {
+	$s = "<$name>";
+    }
+
+    return $s;
+}
+
+sub make_file {
+    my $infile = shift;
+    my $ofile = shift;
+    my $ref = shift;
+    
+    error("creating $ofile from $infile", prefix => 'DEBUG') if ($verbose);
+    return if $dry_run;
+    if (!$ref->{overwrite} and -e $ofile) {
+	error("$ofile already exists", prefix => 'warning');
+    } else {
+	open(my $ifd, "<", $infile)
+	    or abend(EX_DATAERR, "can't open $infile for reading: $!");
+
+	my $ofd;
+	if (defined($ref->{tempfile})) {
+	    my $tempname;
+	    ($ofd, $tempname) = tempfile(DIR => dirname($infile))
+		or abend(EX_CANTCREAT,
+			 "can't open temporary file for creating $ofile: $!");
+	    $outfile{$tempname} = $ofile;
+	} else {
+	    open($ofd, ">", $ofile)
+		or abend(EX_CANTCREAT, "can't open $ofile for writing: $!");
+	}
+	while (<$ifd>) {
+	    next if (defined($ref->{ignorecomm}) and /^$ref->{ignorecomm}/);
+	    if (/^(\S+)<([A-Z][A-Z0-9_]+)>\s*$/) {
+		my $pfx = "$1 ";
+		$_ = $pfx . replace_macro($2, $ref, @_);
+		chomp;
+		s/\n/\n$pfx/g;
+		$_ .= "\n";
+	    } else {
+		s/<([A-Z][A-Z0-9_]+)>/replace_macro($1, $ref, @_)/gex;
+	    }
+	    print $ofd $_;
+	}
+	close($ifd);
+	close($ofd);
+    }
+}    
+
+sub create_module {
+    my $name = shift;
+    my $dir = "modules/$name";
+
+    if (-d $dir) {
+	error("$dir already exists", prefix => 'warning');
+    } else {
+	error("creating $dir", prefix => 'DEBUG') if ($verbose);
+	mkdir($dir) unless $dry_run;
+    }
+    make_file("modules/template.am", "$dir/Makefile.am",
+	      { ignorecomm => '##',
+		MODNAME => $name });
+    make_file("modules/template.c", "$dir/${name}.c",
+	      { ignorecomm => '//',
+		MODNAME => $name });
+}
+
+sub cleanup {
+    foreach my $f (keys %outfile) {
+	unlink $f if (-e $f);
+    }
+}
+
+END {
+    cleanup;
+}
+
+$SIG{HUP} = $SIG{INT} = $SIG{QUIT} = $SIG{TERM} = \&cleanup;
+
+#
+GetOptions("h" => sub {
+                    pod2usage(-message => "$progname: $progdescr",
+                              -exitstatus => 0);
+           },
+           "help" => sub {
+                    pod2usage(-exitstatus => EX_OK, -verbose => 2);
+           },
+	   "usage" => sub {
+                    pod2usage(-exitstatus => EX_OK, -verbose => 0);
+           },
+	   "add|new|a" => \$addmod,
+           "dry-run|n" => \$dry_run,
+           "verbose|v+" => \$verbose,
+) or exit(1);
+
+abend(EX_USAGE, "must run from the Dico source tree topmost directory")
+    unless (-d "modules");
+
+++$verbose if $dry_run;
+
+if ($addmod) {
+    abend(EX_USAGE, "not enough arguments") unless ($#ARGV >= 0);
+    foreach my $mod (@ARGV) {
+	create_module($mod);
+    }
+} elsif ($#ARGV >= 0) {
+    abend(EX_USAGE, "too many arguments; did you mean --new?");
+}
+
+my %modtab;
+my @modnames = map { s#modules/##; $_; } grep { -d $_; } glob "modules/*";
+
+foreach my $m (@modnames) {
+    add_module($m, \%modtab);
+}
+
+rewrite_configure_ac(\%modtab);
+rewrite_makefile(\%modtab);
+
+if ($status == 0 and !$dry_run) {
+    while (my ($from, $to) = each %outfile) {
+	rename $from, $to
+	    or abend(EX_CANTCREAT, "can't rename $from to $to: $!");
+    }
+}
+
+exit($status);
+

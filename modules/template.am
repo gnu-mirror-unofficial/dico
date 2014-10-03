@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 1998-2000, 2008, 2010, 2012 Sergey Poznyakoff
+# Copyright (C) 2014 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,12 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
+SUBDIRS = . tests
+
 moddir=@DICO_MODDIR@
 
-mod_LTLIBRARIES=pam.la
+mod_LTLIBRARIES=<MODNAME>.la
 
-pam_la_SOURCES = pam.c
-pam_la_LIBADD = ../../lib/libdico.la -lpam @PAM_LIBS@
+<MODNAME>_la_SOURCES = <MODNAME>.c
+<MODNAME>_la_LIBADD = ../../lib/libdico.la
 AM_LDFLAGS = -module -avoid-version -no-undefined
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include @GRECS_INCLUDES@
-EXTRA_DIST=module.ac
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include

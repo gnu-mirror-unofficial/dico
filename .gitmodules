@@ -10,3 +10,6 @@
 [submodule "grecs"]
 	path = grecs
 	url = git://git.gnu.org.ua/grecs.git
+[submodule "gnulib"]
+	path = gnulib
+	url = git://git.savannah.gnu.org/gnulib.git

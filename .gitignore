@@ -38,7 +38,7 @@ dicoweb/lib64
 dicoweb/settings.py
 gmon.out
 gnu
-gnulib
+gnulibinit
 libltdl
 libtool
 local-tests

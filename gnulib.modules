@@ -9,16 +9,14 @@ fprintftime
 inttostr
 inttypes
 getline
-getopt
+getopt-gnu
 getpass-gnu
 gettext-h
 gettimeofday
 hash
-malloc
 obstack
 quote
 quotearg
-realloc
 regex
 size_max
 snprintf

@@ -1,4 +1,4 @@
-## This file is a source for configure.ac.
+## This file is a source for configure.ac. -*- autoconf -*-
 ## Run ./modinc to create it.
 ## Run ./modinc --help for a detailed description.
 ## A short reminder:

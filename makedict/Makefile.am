@@ -1,5 +1,5 @@
 # This file is part of GNU Dico.
-# Copyright (C) 1998-2000, 2008, 2010, 2012 Sergey Poznyakoff
+# Copyright (C) 1998-2000, 2008, 2010, 2012, 2014 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ makedict_SOURCES=\
 
 LDADD=\
  ../lib/libxdico.a\
- ../gnu/libgnu.a\
+ ../gnu/libgnu.la\
  ../lib/libextra.a\
  ../lib/libdico.la\
  @DB_LIBS@

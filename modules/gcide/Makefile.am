@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 2012 Sergey Poznyakoff
+# Copyright (C) 2012, 2014 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ gcide_la_LDFLAGS = -module -avoid-version -no-undefined
 libexec_PROGRAMS=idxgcide 
 idxgcide_SOURCES=idxgcide.l idxgcide-cli.h
 idxgcide_LDADD = \
- ../../gnu/libgnu.a\
+ ../../gnu/libgnu.la\
  libgcide.la\
  ../../lib/libxdico.a\
  ../../lib/libdico.la\

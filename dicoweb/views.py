@@ -1,5 +1,5 @@
 #  This file is part of GNU Dico.
-#  Copyright (C) 2008-2010, 2012, 2013 Wojciech Polak
+#  Copyright (C) 2008-2010, 2012-2014 Wojciech Polak
 #
 #  GNU Dico is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -196,7 +196,7 @@ def opensearch(request):
     url_media = request.build_absolute_uri(settings.MEDIA_URL)
     return render_to_response('opensearch.xml', {'url_query': url_query,
                                                  'url_media': url_media},
-                              mimetype='application/xml')
+                              content_type='application/xml')
 
 
 def __subs1(match):

@@ -2062,7 +2062,7 @@ utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char **sptr)
 
     wbc = 0;
     for (i = 0; i < wordlen; i++) {
-	char r[4];
+	char r[6];
 	int rc = utf8_wctomb(r, wordbuf[i]);
 	if (rc <= 0)
 	    return rc;
@@ -2077,7 +2077,7 @@ utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char **sptr)
 
     wbc = 0;
     for (i = 0; i < wordlen; i++) {
-	char r[4];
+	char r[6];
 	int rc = utf8_wctomb(r, wordbuf[i]);
 	if (rc <= 0)
 	    return rc;

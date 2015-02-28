@@ -3316,7 +3316,7 @@ variable.
 @c conditional overrides this bug.
 @ifnothtml
 @xref{Build Config, %load-path,
-{Configuration\, Build and Installation}, guile, The Guile Reference Manual}.
+Configuration Build and Installation, guile, The Guile Reference Manual}.
 @end ifnothtml
 @ifhtml
 See the section @uref{http://www.gnu.org/software/guile/manual/html_node/Build-Config.html, Configuration and Installation} in the Guile Reference Manual.
@@ -6295,7 +6295,7 @@ Show available databases.
 
 @xref{dico options, --dbs}.
 
-@itemx --strategies
+@item --strategies
 @itemx -S
 Show available search strategies.
 

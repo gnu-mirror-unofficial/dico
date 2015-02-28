@@ -588,7 +588,7 @@ GetOptions("h" => sub {
 	   "add|new|a" => \$addmod,
            "dry-run|n" => \$dry_run,
            "verbose|v+" => \$verbose,
-) or exit(1);
+) or exit(EX_USAGE);
 
 abend(EX_USAGE, "must run from the Dico source tree topmost directory")
     unless (-d "modules");

@@ -32,7 +32,7 @@ config.man: $(top_srcdir)/configure.ac $(top_srcdir)/doc/Makefile.am
 
 dicod.8 dicod.conf.5: config.man
 
-EXTRA_DIST = dicod.8in dicod.conf.5in
+EXTRA_DIST = dicod.8in dicod.conf.5in gendocs.sh
 CLEANFILES=dicod.8 dicod.conf.5
 DISTCLEANFILES=config.man
 
@@ -78,7 +78,8 @@ final: imprimatur-final
 
 GENDOCS=gendocs.sh 
 
-TEXI2DVI=texi2dvi -t '@set $(RENDITION)' -E
+#FIXME: -E
+TEXI2DVI=texi2dvi -t '@set $(RENDITION)' -I $(top_srcdir)/imprimatur
 
 .PHONY: manual man-tar
 # Make sure you set TEXINPUTS.
@@ -87,8 +88,7 @@ manual:
 	TEXINPUTS=$(srcdir):$(top_srcdir)/build-aux:$(TEXINPUTS) \
 	 MAKEINFO="$(MAKEINFO) $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS)" \
 	 TEXI2DVI="$(TEXI2DVI)" \
-         TEXI2HTML="texi2html $(AM_MAKEINFOFLAGS) $(MAKEINFOFLAGS)" \
-	$(GENDOCS) --texi2html $(PACKAGE) '$(PACKAGE_NAME) manual'
+	$(GENDOCS) $(PACKAGE) '$(PACKAGE_NAME) manual'
 
 manual.tar.bz2: manual
 	tar cfj manual.tar.bz2 manual

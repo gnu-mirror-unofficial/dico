@@ -161,6 +161,7 @@ my @gray_buttons = (\&gray_document_title, ' ',
 
 set_from_init_file('SECTION_BUTTONS', \@gray_buttons);
 set_from_init_file('CHAPTER_BUTTONS', \@gray_buttons);
+set_from_init_file('NODE_FOOTER_BUTTONS', \@gray_buttons);
 set_from_init_file('MISC_BUTTONS',
 		   [\&gray_document_title,
 		    'Contents',

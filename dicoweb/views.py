@@ -1,5 +1,5 @@
 #  This file is part of GNU Dico.
-#  Copyright (C) 2008-2010, 2012-2014 Wojciech Polak
+#  Copyright (C) 2008-2010, 2012-2015 Wojciech Polak
 #
 #  GNU Dico is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -21,10 +21,15 @@ from django.conf import settings
 from django.core import urlresolvers
 from django.core.cache import cache
 from django.shortcuts import render_to_response
+from django.utils.encoding import force_bytes
 from django.utils.translation import ugettext as _
 
-import dicoclient
-from wit import wiki2html
+from dicoclient import dicoclient
+try:
+    from wit import wiki2html
+except ImportError:
+    wiki2html = None
+    print('WARNING: The wit module is not installed.')
 
 
 def index(request):
@@ -56,8 +61,8 @@ def index(request):
     if len(settings.DICT_SERVERS) > 1:
         selects['sv'] = HtmlOptions(settings.DICT_SERVERS, server)
 
-    key = hashlib.md5('%s/%s' % (sid, server.encode('ascii',
-                                                    'backslashreplace')))
+    key = hashlib.md5(force_bytes(
+        '%s/%s' % (sid, server.encode('ascii', 'backslashreplace'))))
     sid = key.hexdigest()
 
     type = 'search'
@@ -110,9 +115,10 @@ def index(request):
         if database == '*':
             langkey = ','.join(accept_lang)
 
-        key = hashlib.md5('%s:%d/%s/%s/%s/%s/%s' %
-                         (server, port, langkey, type, database, strategy,
-                          q.encode('ascii', 'backslashreplace')))
+        key = hashlib.md5(force_bytes(
+            '%s:%d/%s/%s/%s/%s/%s' % (server, port, langkey, type,
+                                      database, strategy,
+                                      q.encode('ascii', 'backslashreplace'))))
         key = key.hexdigest()
         result = cache.get('dicoweb/' + key)
 
@@ -171,7 +177,8 @@ def index(request):
         rx1 = re.compile('{+(.*?)}+', re.DOTALL)
         for df in result['definitions']:
             if 'content-type' in df \
-                    and df['content-type'].startswith('text/x-wiki'):
+                    and df['content-type'].startswith('text/x-wiki') \
+                    and wiki2html:
                 lang = df['x-wiki-language'] \
                     if 'x-wiki-language' in df else 'en'
                 wikiparser = wiki2html.HtmlWiktionaryMarkup(text=df['desc'],
@@ -216,6 +223,10 @@ class HtmlOptions:
             if len(opt) == 2:
                 if not opt[1]:
                     opt[1] = opt[0]
+                try:
+                    opt[1] = opt[1].decode('utf-8')
+                except:
+                    pass
                 if opt[0] == self.value:
                     buf.append('<option value="%s" selected="selected">%s</option>' % (
                         opt[0], opt[1]))

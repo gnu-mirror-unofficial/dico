@@ -1,5 +1,5 @@
 #  This file is part of GNU Dico.
-#  Copyright (C) 2008-2010, 2012, 2013 Wojciech Polak
+#  Copyright (C) 2008-2010, 2012, 2013, 2015 Wojciech Polak
 #
 #  GNU Dico is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -19,10 +19,16 @@ import socket
 import base64
 import quopri
 
-__version__ = '1.0'
+try:
+    from django.utils.six.moves import range, reduce
+except ImportError:
+    from six.moves import range, reduce
+
+__version__ = '1.1'
 
 
 class DicoClient:
+
     """GNU Dico client module written in Python
        (a part of GNU Dico software)"""
 
@@ -77,8 +83,8 @@ class DicoClient:
         """Send the OPTION command."""
         if self.__connected:
             self.__send('OPTION %s%s' %
-                       (name, reduce(lambda x, y: str(x) + ' ' + str(y),
-                                     args, '')))
+                        (name, reduce(lambda x, y: str(x) + ' ' + str(y),
+                                      args, '')))
             res = self.__read()
             code, msg = res[0].split(' ', 1)
             if int(code) == 250:
@@ -113,7 +119,10 @@ class DicoClient:
                 del mimeinfo['content-transfer-encoding']
             elif mimeinfo['content-transfer-encoding'].lower() == 'quoted-printable':
                 buf = quopri.decodestring('\n'.join(lines))
-                lines[:] = buf.split('\r\n')
+                try:
+                    lines[:] = buf.split('\r\n')
+                except TypeError:
+                    lines[:] = buf.decode('utf-8').split('\r\n')
                 if lines[-1] == '':
                     del lines[-1]
                 del mimeinfo['content-transfer-encoding']
@@ -166,7 +175,11 @@ class DicoClient:
     def __send(self, command):
         if not self.__connected:
             raise DicoNotConnectedError('Not connected')
-        self.socket.send(command.encode('utf_8') + "\r\n")
+        cmd = command + "\r\n"
+        try:
+            self.socket.send(cmd)
+        except (UnicodeEncodeError, TypeError):
+            self.socket.send(cmd.encode('utf-8'))
         if self.transcript:
             self.__debug('C:%s' % command)
 
@@ -191,7 +204,7 @@ class DicoClient:
     def __send_define(self, database, word):
         if self.verbose:
             self.__debug('Sending query for word "%s" in database "%s"' %
-                        (word, database))
+                         (word, database))
         self.__send('DEFINE "%s" "%s"' % (database, word))
         return self.__read()
 
@@ -273,8 +286,8 @@ class DicoClient:
                     lang_dst[dst.strip()] = True
             return {
                 'desc': '\n'.join(dsc),
-                'lang_src': lang_src.keys(),
-                'lang_dst': lang_dst.keys(),
+                'lang_src': list(lang_src.keys()),
+                'lang_dst': list(lang_dst.keys()),
             }
         else:
             return {'error': code, 'msg': msg}
@@ -387,13 +400,14 @@ class DicoClient:
     def __decode(self, encoded):
         for octc in (c for c in re.findall(r'\\(\d{3})', encoded)):
             encoded = encoded.replace(r'\%s' % octc, chr(int(octc, 8)))
-        return unicode(encoded, 'utf_8')
+        return encoded
 
     def __debug(self, msg):
-        print 'dico: Debug: %s' % msg
+        print('dico: Debug: %s' % msg)
 
 
 class DicoNotConnectedError (Exception):
+
     def __init__(self, value):
         self.parameter = value
 

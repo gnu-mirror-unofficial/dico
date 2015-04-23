@@ -78,6 +78,8 @@ Options:
   --html ARG   pass ARG to makeinfo or texi2html for HTML targets.
   --info ARG   pass ARG to makeinfo for Info, instead of --no-split.
   --no-ascii   skip generating the plain text output.
+  --no-copy-images
+               don't try to copy images referenced by img HTML tags,
   --source ARG include ARG in tar archive of sources.
   --split HOW  make split HTML by node, section, chapter; default node.
 
@@ -147,6 +149,7 @@ outdir=manual
 source_extra=
 split=default
 srcfile=
+no_copy_images=
 
 while test $# -gt 0; do
   case $1 in
@@ -162,7 +165,7 @@ while test $# -gt 0; do
     --source)    shift; source_extra=$1;;
     --split)     shift; split=$1;;
     --texi2html) use_texi2html=1;;
-
+    --no-copy-images) no_copy_images=1;;
     --help)      echo "$usage"; exit 0;;
     --version)   echo "$version"; exit 0;;
     -*)
@@ -225,6 +228,7 @@ calcsize()
 # for them in the -I directories.
 copy_images()
 {
+  test -n "$no_copy_images" && return
   local odir
   odir=$1
   shift
@@ -343,19 +347,18 @@ if test -z "$use_texi2html"; then
   html_mono_size=`calcsize $PACKAGE.html`
   gzip -f -9 -c $PACKAGE.html >"$outdir/$PACKAGE.html.gz"
   html_mono_gz_size=`calcsize "$outdir/$PACKAGE.html.gz"`
-## FIXME  
-#  copy_images "$outdir/" $PACKAGE.html
+  copy_images "$outdir/" $PACKAGE.html
   mv $PACKAGE.html "$outdir/"
   ls -l "$outdir/$PACKAGE.html" "$outdir/$PACKAGE.html.gz"
 
-  # Before Texinfo 5.0, makeinfo did not accept a --split=HOW option,
-  # it just always split by node.  So if we're splitting by node anyway,
-  # leave it out.
   version=`makeinfo --version|sed -n '1s/.* \([0-9][0-9]*\)\.[0-9.]*/\1/p'`
   case $version in
     [0-9]*) ;;
     *) version=4;;
   esac
+  # Before Texinfo 5.0, makeinfo did not accept a --split=HOW option,
+  # it just always split by node.  So if we're splitting by node anyway,
+  # leave it out.
   if test $version -lt 5 -o "x$split" != xdefault; then
     split_arg=--split=$split
     opt="--html -o $PACKAGE.html $split_arg $commonarg $htmlarg"

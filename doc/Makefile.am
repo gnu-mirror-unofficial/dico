@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 2008, 2010, 2012, 2014 Sergey Poznyakoff
+# Copyright (C) 2008-2015 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -76,10 +76,9 @@ master-menu: imprimatur-master-menu
 untabify: imprimatur-untabify
 final: imprimatur-final
 
-GENDOCS=gendocs.sh 
+GENDOCS=$(srcdir)/gendocs.sh --no-copy-images --html '--init-file=$(abs_srcdir)/html.init'
 
-#FIXME: -E
-TEXI2DVI=texi2dvi -t '@set $(RENDITION)' -I $(top_srcdir)/imprimatur
+TEXI2DVI=texi2dvi -t '@set $(RENDITION)' -E
 
 .PHONY: manual man-tar
 # Make sure you set TEXINPUTS.

@@ -276,9 +276,9 @@ dict_connect(struct dict_connection **pconn, dico_url_t url)
     struct addrinfo hints, *res, *rp;
     dico_stream_t str;
     struct dict_connection *conn;
+    char const *port = url->port ? url->port : DICO_DICT_PORT_STR;
     
-    XDICO_DEBUG_F2(1, _("Connecting to %s:%s\n"), url->host,
-		   url->port ? url->port : DICO_DICT_PORT_STR);
+    XDICO_DEBUG_F2(1, _("Connecting to %s:%s\n"), url->host, port);
 
     if (source_addr) {
 	memset(&hints, 0, sizeof(hints));
@@ -310,7 +310,7 @@ dict_connect(struct dict_connection **pconn, dico_url_t url)
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
-    rc = getaddrinfo(url->host, url->port, &hints, &res);
+    rc = getaddrinfo(url->host, port, &hints, &res);
     for (rp = res; rp; rp = rp->ai_next) {
 	if (fd != -1 && family != rp->ai_family) {
 	    close(fd);

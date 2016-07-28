@@ -1,6 +1,6 @@
 %top {
 /* This file is part of GNU Dico.
-   Copyright (C) 2012 Sergey Poznyakoff
+   Copyright (C) 2012, 2016 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -294,6 +294,7 @@ main(int argc, char **argv)
 	dico_log(L_ERR, 0, _("not enough memory"));
 	exit(EX_UNAVAILABLE);
     }
+    idx_page->ipg_header.hdr.phdr_numentries = 0;
     idx_page->ipg_header.hdr.phdr_text_offset = idx_header.ihdr_pagesize / 2;
 
     idx_header.ihdr_maxpageref = idx_header.ihdr_pagesize / 2 /

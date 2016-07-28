@@ -96,12 +96,29 @@ output file.
 
 During macro expansion, each occurrence of B<< <I<NAME>> >> is replaced with
 the contents of the macro variable I<NAME>, if it is defined.  Expansion
-of undefined variables lefts the text as is.
+of undefined variables leaves the text as is.
 
-A B<< <I<NAME>> >> appearing alone after a sequence of non-whitespace
-characters (a I<prefix>) at the beginning of the line is treated specially:
-if I<NAME> expands to multiple lines, I<prefix> is prepended to each line
-on output.
+The construct B<< <I<NAME>#I<TEXT>> >> is expanded if it appears on a line
+alone, possibly preceded by any string of characters.  It works similarly
+to B<< <I<NAME>> >>, except that if I<NAME> expands to multiple lines, the
+second and subsequent lines of expansion are prefixed with I<TEXT> on output.
+If I<TEXT> is empty, the content of the source line immediately preceding the
+construct is used instead.  This makes it possible to use expansions after a
+comment character.  E.g. if the variable B<HEADING> contains:
+
+    This file is generated automatically.
+    Please, do not edit.
+    See the docs for more info.
+
+and the input file contains:
+
+    dnl <HEADING#>
+
+Then, the resulting expansion will be:    
+
+    dnl This file is generated automatically.
+    dnl Please, do not edit.
+    dnl See the docs for more info.
 
 The macro variables are specific for each file, and are described below.
 
@@ -281,8 +298,7 @@ use constant EX_NOINPUT      => 66;    # cannot open input file
 use constant EX_SOFTWARE     => 70;    # internal software error (not used yet)
 use constant EX_CANTCREAT    => 73;    # can't create (user) output file
 
-my $progname;
-($progname = $0) =~ s/.*\///;
+my $progname = basename($0);
 my $progdescr = "Recreate Dico module autoconf structure";
 my $addmod;
 my $dry_run;
@@ -528,14 +544,14 @@ sub make_file {
 	}
 	while (<$ifd>) {
 	    next if (defined($ref->{ignorecomm}) and /^$ref->{ignorecomm}/);
-	    if (/^(\S+)<([A-Z][A-Z0-9_]+)>\s*$/) {
-		my $pfx = "$1 ";
-		$_ = $pfx . replace_macro($2, $ref, @_);
+	    if (/^(.*)<([A-Z][A-Z0-9_]+)#([^>]*)>\s*$/) {
+		my $pfx = $3 || $1;
+		$_ = $1 . replace_macro($2, $ref);
 		chomp;
 		s/\n/\n$pfx/g;
 		$_ .= "\n";
 	    } else {
-		s/<([A-Z][A-Z0-9_]+)>/replace_macro($1, $ref, @_)/gex;
+		s/<([A-Z][A-Z0-9_]+)>/replace_macro($1, $ref)/gex;
 	    }
 	    print $ofd $_;
 	}

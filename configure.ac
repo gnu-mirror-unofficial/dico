@@ -1,6 +1,6 @@
 dnl Process this file with -*- autoconf -*- to produce a configure script. 
 # This file is part of GNU Dico
-# Copyright (C) 1998-2000, 2008-2010, 2012, 2013, 2014 Sergey Poznyakoff
+# Copyright (C) 1998-2000, 2008-2010, 2012-2016 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -212,7 +212,7 @@ esac],[status_pcre=yes])
 if test $status_pcre = yes; then
   AC_CHECK_HEADER([pcre.h], [], [status_pcre=no])
   if test $status_pcre = yes; then
-    DICO_CHECK_LIB(pcre, main, [],
+    DICO_CHECK_LIB(pcre, main, [:],
                    [],
 		   [status_pcre=no])
   fi

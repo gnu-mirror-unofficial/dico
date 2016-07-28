@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # This file is part of GNU Dico
-# Copyright (C) 2014 Sergey Poznyakoff
+# Copyright (C) 2014, 2016 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -242,19 +242,19 @@ Expands to the name of the module.
 
 =over 4
 
-=item 0
+=item B<0>
 
 Successful termination.
 
-=item 64
+=item B<64>
 
 Command line usage error.
 
-=item 66
+=item B<66>
 
 Can't open input file.    
     
-=item 73
+=item B<73>
 
 Can't create output file.    
 

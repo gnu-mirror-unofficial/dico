@@ -1,5 +1,5 @@
 /* This file is part of GNU Dico.
-   Copyright (C) 1998-2000, 2008, 2010, 2012 Sergey Poznyakoff
+   Copyright (C) 1998-2000, 2008, 2010, 2012, 2016 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -743,7 +743,7 @@ mime_headers_cb (enum grecs_callback_command cmd,
 	grecs_error(locus, 0, _("cannot parse headers: %s"),
 		     strerror(errno));
 
-    if (enc = dico_assoc_find(*pasc, CONTENT_TRANSFER_ENCODING_HEADER)) {
+    if ((enc = dico_assoc_find(*pasc, CONTENT_TRANSFER_ENCODING_HEADER))) {
         if (!(strcmp(enc, "quoted-printable") == 0
 	      || strcmp(enc, "base64") == 0
 	      || strcmp(enc, "8bit") == 0))
@@ -1345,6 +1345,7 @@ config_init()
     grecs_preprocessor = DEFAULT_PREPROCESSOR;
     grecs_log_to_stderr = 1;
     grecs_default_port = htons(DICO_DICT_PORT);
+    grecs_parser_options = GRECS_OPTION_QUOTED_STRING_CONCAT;
 }
 
 void

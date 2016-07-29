@@ -1,6 +1,6 @@
 %top {
 /* This file is part of GNU Dico.
-   Copyright (C) 2012 Sergey Poznyakoff
+   Copyright (C) 2012, 2016 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -259,6 +259,7 @@ pop_tag(const char *tagstr, size_t taglen)
 
 %option 8bit
 %option nounput
+%option noinput
 
 %x COMMENT
 
@@ -470,7 +471,7 @@ gcide_markup_parse(char const *text, size_t len, int dbg)
 	append_tag(tag);
     }
     
-    while (p = dico_list_pop(tagstk))
+    while ((p = dico_list_pop(tagstk)))
 	/* FIXME: Report unclosed tag */
 	current_tag = p;
 

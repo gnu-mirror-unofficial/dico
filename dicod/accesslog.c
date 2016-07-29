@@ -1,5 +1,5 @@
 /* This file is part of GNU Dico.
-   Copyright (C) 2008, 2010, 2012 Sergey Poznyakoff
+   Copyright (C) 2008, 2010, 2012, 2016 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -484,7 +484,7 @@ compile_access_log()
 	    
 	    if (!q) {
 		dico_log(L_ERR, 0,
-			 _("log format error (near char %ld): "
+			 _("log format error (near char %td): "
                            "missing terminating `}'"),
 			 p - access_log_format);
 		add_instr(alog_print, p - 1, 2);
@@ -499,7 +499,7 @@ compile_access_log()
 	tptr = find_alog_entry(*p);
 	if (!tptr) {
 	    dico_log(L_ERR, 0,
-		     _("log format error (near char %ld): "
+		     _("log format error (near char %td): "
 		       "unknown format char `%c'"),
 		     p - access_log_format,
 		     *p);
@@ -507,7 +507,7 @@ compile_access_log()
 	} else {
 	    if (arg && !tptr->allow_fmt) {
 		dico_log(L_ERR, 0,
-			 _("log format warning (near char %ld): "
+			 _("log format warning (near char %td): "
 			   "format char `%c' does not "
 			   "take arguments"),
 			 p - access_log_format,

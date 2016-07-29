@@ -1,5 +1,5 @@
 /* This file is part of GNU Dico.
-   Copyright (C) 2008, 2010, 2012 Sergey Poznyakoff
+   Copyright (C) 2008, 2010, 2012, 2016 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -406,13 +406,13 @@ handle_connection(int n)
     }
 
     if (single_process) {
-	int status;
 	dico_stream_t str = dicod_iostream(connfd, connfd);
 	if (str) {
 	    status = dicod_loop(str);
 	    dico_stream_close(str);
 	    dico_stream_destroy(&str);
-	}
+	} else
+	    status = -1;
     } else {
 	pid_t pid = fork();
 	if (pid == -1) {

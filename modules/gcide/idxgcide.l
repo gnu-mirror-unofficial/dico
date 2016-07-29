@@ -171,6 +171,7 @@ flush_headwords()
 %}
 %option 8bit
 %option nounput
+%option noinput
 
 %x HEADWORD MHW COMMENT HTMLCOM
 

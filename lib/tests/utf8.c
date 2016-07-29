@@ -1,5 +1,5 @@
 /* This file is part of GNU Dico
-   Copyright (C) 2012 Sergey Poznyakoff
+   Copyright (C) 2012, 2016 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -206,7 +206,7 @@ op_wc_strchr(int argc, char **argv)
     p = utf8_wc_strchr(wa, wb[0]);
     if (!p)
 	return 2;
-    printf("%ld\n", p - wa);
+    printf("%td\n", p - wa);
     return 0;
 }
 
@@ -227,7 +227,7 @@ op_wc_strchr_ci(int argc, char **argv)
     p = utf8_wc_strchr_ci(wa, wb[0]);
     if (!p)
 	return 2;
-    printf("%ld\n", p - wa);
+    printf("%td\n", p - wa);
     return 0;
 }
 
@@ -246,9 +246,14 @@ op_wc_strstr(int argc, char **argv)
     wa = strtowc(argv[0]);
     wb = strtowc(argv[1]);
     p = utf8_wc_strstr(wa, wb);
-    if (!p)
+    if (!p) {
+	if (errno) {
+	    dico_log(L_ERR, errno, "can't match");
+	    return 3;
+	}
 	return 2;
-    printf("%ld\n", p - wa);
+    }
+    printf("%td\n", p - wa);
     return 0;
 }
 

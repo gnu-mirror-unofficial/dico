@@ -1,5 +1,5 @@
 /* This file is part of GNU Dico.
-   Copyright (C) 2008, 2010, 2012 Sergey Poznyakoff
+   Copyright (C) 2008, 2010, 2012, 2016 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -66,6 +66,18 @@ unsigned *utf8_wc_quote (const unsigned *s);
 
 const unsigned *utf8_wc_strchr(const unsigned *str, unsigned chr);
 const unsigned *utf8_wc_strchr_ci(const unsigned *str, unsigned chr);
+
+enum utf8_strpat_result {
+    strpat_found,
+    strpat_not_found,
+    strpat_error
+};
+
+enum utf8_strpat_result utf8_wc_strpat(const unsigned *text,
+				       const unsigned *pattern,
+				       size_t *return_offset);
+
+
 const unsigned *utf8_wc_strstr(const unsigned *haystack,
 			       const unsigned *needle);
 

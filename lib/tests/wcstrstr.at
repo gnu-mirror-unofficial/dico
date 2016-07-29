@@ -1,5 +1,5 @@
 # This file is part of GNU Dico. -*- Autotest -*-
-# Copyright (C) 2012 Sergey Poznyakoff
+# Copyright (C) 2012, 2016 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,13 @@
 
 AT_SETUP(wc_strstr)
 AT_KEYWORDS(utf8 wc_strstr)
+
+AT_CHECK([utf8 wc_strstr gcatcgcagagagtatacagtacg gcagagag],
+0,
+[5
+])
+
+AT_CHECK([utf8 wc_strstr gcatcgcagagagtatacagtacg gcagagat], 2)
 
 AT_CHECK([utf8 wc_strstr εκδρομή δρομ],
 0,

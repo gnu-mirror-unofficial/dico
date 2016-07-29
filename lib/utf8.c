@@ -1,5 +1,5 @@
 /* This file is part of GNU Dico
-   Copyright (C) 2007-2008, 2010, 2012 Sergey Poznyakoff
+   Copyright (C) 2007-2008, 2010, 2012, 2016 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -2000,33 +2000,111 @@ utf8_wc_strchr_ci(const unsigned *str, unsigned chr)
 	    return str;
     return NULL;
 }
+
+#define INIT ((size_t) -1)
+
+/* Compute the table of tagged border lengths for use in the
+   Knuth-Morris-Pratt algorithm.
+*/
+static size_t *
+kmp_next(const unsigned *text, size_t text_len,
+	 const unsigned *pattern, size_t pattern_len)
+{
+    size_t *nextab;
+    size_t i, j;
+
+    if (pattern_len + 1 == 0) {
+	errno = ERANGE;
+	return NULL;
+    }
     
-const unsigned *
+    nextab = calloc(pattern_len + 1, sizeof nextab[0]);
+    if (!nextab)
+	return NULL;
+    
+    i = 0;
+    j = INIT;
+    nextab[0] = j;
+    while (i < pattern_len) {
+	while (j != INIT && pattern[i] != text[j])
+	    j = nextab[j];
+	i++;
+	j++;
+	if (pattern[i] == pattern[j])
+	    nextab[i] = nextab[j];
+	else
+	    nextab[i] = j;
+    }
+
+    return nextab;
+}
+
+/* Find the first occurrence of PATTERN in TEXT.
+   Return value:
+     strpat_found     - Pattern was found.  Unless RETURN_OFFSET is NULL, the
+                        offset of the pattern is stored in the memory location
+		        it points to.
+     strpat_not_found - Pattern was not found.
+     strpat_error     - An error occurred.  The errno variable is set to
+                        ERANGE if pattern is too long, or to ENOMEM if unable
+			to allocate memory.
+
+   This implementation uses Knuth-Morris-Pratt algorithm.
+*/
+enum utf8_strpat_result
+utf8_wc_strpat(const unsigned *text, const unsigned *pattern,
+	       size_t *return_offset)
+{
+    size_t i, j;
+    enum utf8_strpat_result result;
+    size_t text_len = utf8_wc_strlen(text);
+    size_t pattern_len = utf8_wc_strlen(pattern);
+    size_t *nextab;
+
+    /* Handle corner cases */
+    if (pattern_len > text_len)
+	return strpat_not_found;
+    else if (pattern_len == text_len) {
+	if (utf8_wc_strcmp(text, pattern) == 0) {
+	    if (return_offset) 
+		*return_offset = 0;
+	    return strpat_found;
+	} else
+	    return strpat_not_found;
+    }
+
+    /* Uses Knuth-Morris-Pratt algorithm for the general case */
+    nextab = kmp_next(text, text_len, pattern, pattern_len);
+    if (!nextab)
+	return strpat_error;
+
+    i = j = 0;
+    result = strpat_not_found;
+    while (j < text_len) {
+	while (i != INIT && pattern[i] != text[j])
+	    i = nextab[i];
+	i++;
+	j++;
+	if (i >= pattern_len) {
+	    if (return_offset) 
+		*return_offset = j - i;
+	    result = strpat_found;
+	    break;
+	}
+    }
+
+    free(nextab);
+
+    return result;
+}
+    
+unsigned const *
 utf8_wc_strstr(const unsigned *haystack, const unsigned *needle)
 {
-    unsigned first = needle[0];
-
-    /* Is needle empty?  */
-    if (first == 0)
-	return haystack;
-
-    /* Is needle nearly empty?  */
-    if (needle[1] == 0)
-	return utf8_wc_strchr(haystack, first);
-    for (; *haystack; haystack++)
-	if (*haystack == first) {
-	    /* Compare with needle's remaining units.  */
-	    const unsigned *hptr = haystack + 1;
-	    const unsigned *nptr = needle + 1;
-	    for (;;) {
-		if (*hptr != *nptr)
-		    break;
-		hptr++;
-		nptr++;
-		if (*nptr == 0)
-		    return haystack;
-	    }
-	}
+    size_t n;
+    errno = 0;
+    if (utf8_wc_strpat(haystack, needle, &n) == strpat_found)
+	return haystack + n;
     return NULL;
 }
     

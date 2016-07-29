@@ -29,8 +29,8 @@ esac],[status_pcre=yes])
 if test $status_pcre = yes; then
   AC_CHECK_HEADER([pcre.h], [], [status_pcre=no])
   if test $status_pcre = yes; then
-    DICO_CHECK_LIB(pcre, main, [:],
-                   [],
+    DICO_CHECK_LIB(pcre, main, [],
+                   [:],
 		   [status_pcre=no])
   fi
 fi

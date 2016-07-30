@@ -1,10 +1,14 @@
 ## This file is a source for configure.ac. -*- autoconf -*-
-## Run ./modinc to create it.
-## Run ./modinc --help for a detailed description.
+## Run ./bootstrap to create it.
+## Run ./bootstrap --help for a detailed description.
 ## A short reminder:
 ##   1. Comments starting with ## are removed from the output.
 ##   2. A construct <NAME> is replaced with the value of the variable NAME.
-##   3. Everything else is reproduced verbatim.
+##   3. <NAME#TEXT> on a line alone (arbitrary leading characters allowed)
+##      is replaced with (multiline) expansion of NAME.  The second and
+##      subsequent lines are prefixed with TEXT (or leading characters, if
+##      TEXT is empty).
+##   4. Everything else is reproduced verbatim.
 dnl <HEADING#>
 dnl Process this file with -*- autoconf -*- to produce a configure script. 
 # This file is part of GNU Dico

@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 1998-2000, 2008-2010, 2012 Sergey Poznyakoff
+# Copyright (C) 1998-2000, 2008-2010, 2012, 2016 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ SUBDIRS=\
  po
 #FIXME: add these when ready: makedict client fonts
 
-EXTRA_DIST = ChangeLog.2008 stub.ac modinc
+EXTRA_DIST = ChangeLog.2008 configure.boot bootstrap
 
 dist-hook:
 	tar -C $(srcdir) -c -f - --exclude-vcs app dicoweb | \

@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 1998-2000, 2008, 2010, 2012 Sergey Poznyakoff
+# Copyright (C) 1998-2000, 2008, 2010, 2012, 2016 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,6 +44,7 @@ noinst_PROGRAMS = \
  linetrim\
  listop\
  crlftool\
+ soundex\
  utf8
 
 listop_SOURCES=listop.c itrsh.c itrsh.h
@@ -70,6 +71,7 @@ TESTSUITE_AT = \
  lntrim01.at\
  lntrim02.at\
  lntrim03.at\
+ soundex.at\
  strcasecmp.at\
  strlen.at\
  strncasecmp.at\

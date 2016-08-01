@@ -1,5 +1,5 @@
 # This file is part of GNU Dico. -*- Autotest -*-
-# Copyright (C) 2012 Sergey Poznyakoff
+# Copyright (C) 2012, 2016 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,6 +28,9 @@ m4_include(toupper.at)
 m4_include(tolower.at)
 m4_include(wcstrchr.at)
 m4_include(wcstrstr.at)
+
+AT_BANNER(SOUNDEX)
+m4_include([soundex.at])
 
 AT_BANNER([Levenshtein distances])
 m4_include([lev00.at])

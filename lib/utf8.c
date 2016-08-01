@@ -1590,9 +1590,11 @@ utf8_wctomb(char *r, unsigned int wc)
 	count = 5;
     else if (wc <= 0x7fffffff)
 	count = 6;
-    else
+    else {
+	errno = EILSEQ;
 	return -1;
-
+    }
+    
     switch (count) {
 	/* Note: code falls through cases! */
     case 6:
@@ -2148,7 +2150,7 @@ utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char **sptr)
 	char r[6];
 	int rc = utf8_wctomb(r, wordbuf[i]);
 	if (rc <= 0)
-	    return rc;
+	    return -1;
 	wbc += rc;
     }
 
@@ -2162,8 +2164,12 @@ utf8_wc_to_mbstr(const unsigned *wordbuf, size_t wordlen, char **sptr)
     for (i = 0; i < wordlen; i++) {
 	char r[6];
 	int rc = utf8_wctomb(r, wordbuf[i]);
-	if (rc <= 0)
-	    return rc;
+	if (rc <= 0) {
+	    int ec = errno;
+	    free(s);
+	    errno = ec;
+	    return -1;
+	}
 	memcpy(s + wbc, r, rc);
 	wbc += rc;
     }
@@ -2198,7 +2204,9 @@ utf8_mbstr_to_wc(const char *str, unsigned **wptr, size_t *plen)
     for (i = 0, len = strlen(str); len; i++) {
 	int rc = utf8_mbtowc(w + i, str, len);
 	if (rc <= 0) {
+	    int ec = errno;
 	    free(w);
+	    errno = ec;
 	    return -1;
 	}
 	str += rc;

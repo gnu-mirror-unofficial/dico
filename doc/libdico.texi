@@ -623,15 +623,57 @@ struct dico_url @{
 
 @node utf8
 @section UTF-8
-@UNREVISED
+
+This section describes functions for handling UTF-8 strings.  A UTF-8
+character can be represented either as a multi-byte character or a
+wide character.
+
+@dfn{Multibyte} character is a @code{char *} pointing to one or more
+bytes representing the UTF-8 character.
+
+@dfn{Wide character} is an @code{unsigned} value identifying the
+character.
+
+In the discussion below, a sequence of one or more multi-byte
+characters is called a @dfn{multi-byte string}.  Multibyte strings
+terminate with a single @samp{nul} (0) character.
+
+A sequence of one or more wide characters is called a @dfn{wide
+character string}.  Such strings terminate with a single 0 value.
+
+@menu
+* Character sizes::
+* Iterating over UTF-8 strings::
+* Conversions::
+* Comparing UTF-8 strings::
+* Character lookups::
+* Functions for converting UTF-8 characters::
+* Additional functions::
+@end menu
+
+@node Character sizes
+@subsection Character sizes
 
 @deftypefn Function size_t utf8_char_width (const unsigned char *@var{cp})
+Returns length in bytes of the UTF-8 character representation pointed
+to by @var{cp}.
 @end deftypefn
 
 @deftypefn Function size_t utf8_strlen (const char *@var{str})
+Returns number of UTF-8 characters (not bytes) in @var{str}.
 @end deftypefn
 
+@deftypefn Function size_t utf8_wc_strlen (const unsigned *@var{s})
+Returns number of wide characters in the wide character string @var{s}.
+@end deftypefn
+
+@node Iterating over UTF-8 strings
+@subsection Iterating over UTF-8 strings
+
 @deftp struct utf8_iterator
+A data type for iterating over a string of UTF-8 characters.  Defined
+as:
+
 @smallexample
 struct utf8_iterator @{
     char *string;
@@ -639,104 +681,294 @@ struct utf8_iterator @{
     unsigned curwidth;
 @};
 @end smallexample
+
+When iterating over characters in string, @code{curptr} points to the
+current character, and @code{curwidth} holds its length in bytes.
 @end deftp
 
-@deftypefn Function int utf8_iter_isascii (struct utf8_iterator @var{itr}) 
+@deftypefn Function int utf8_iter_isascii (struct utf8_iterator @var{itr})
+Returns @samp{true} if @var{itr} points to a ASCII character.
 @end deftypefn
 
 @deftypefn Function int utf8_iter_end_p (struct utf8_iterator *@var{itr})
+Returns @samp{true} if @var{itr} reached end of the input string.
 @end deftypefn
 
 @deftypefn Function int utf8_iter_first (struct utf8_iterator *@var{itr}, @
-  unsigned char *@var{ptr})
+  unsigned char *@var{str})
+Initializes @var{itr} for iterating over the string @var{str}.
+On success, positions @code{@var{itr}.curptr} to the next character
+from the input string, sets @code{@var{itr}.curwidth} to the length of
+that character in bytes, and returns @samp{0}.  If @var{str} is an
+empty string, returns @samp{1}.
 @end deftypefn
 
 @deftypefn Function int utf8_iter_next (struct utf8_iterator *@var{itr})
+Positions @code{@var{itr}.curptr} to the next character from the input
+string.  Sets @code{@var{itr}.curwidth} to the length of that
+character in bytes.
 @end deftypefn
+
+@node Conversions
+@subsection Conversions
+
+The following functions convert between the two string representations.
 
 @deftypefn Function int utf8_mbtowc_internal (void *@var{data}, @
   int (*@var{read}) (void*), unsigned int *@var{pwc})
+Internal function for converting a single UTF-8 character to a corresponding
+wide character representation.  The character to convert is obtained
+by calling the function pointed to by @var{read} with @var{data} as
+its only argument.  If that call returns a non-positive value, the
+function sets @code{errno} to @samp{ENODATA} and returns -1.
 @end deftypefn
-  
+
+@deftypefn Function int utf8_mbtowc (unsigned int *@var{pwc},@
+ const char *@var{r}, size_t @var{len})
+Converts first @var{len} characters from the multi-byte string @var{r}
+to wide character representation.  On success, returns 0 and stores
+the result in @var{pwc}.  The result pointer is allocated using
+@code{malloc}(3).
+
+On error (invalid multi-byte sequence encountered), returns -1 and sets
+@code{errno} to @samp{EILSEQ}. 
+@end deftypefn
+
 @deftypefn Function int utf8_wctomb (unsigned char *@var{r}, @
   unsigned int @var{wc})
+Stores the UTF-8 representation of the Unicode character wc in @code{r[0..5]}.
+Returns the number of bytes stored.  If @var{wc} is out of range,
+return -1 and sets @code{errno} to @samp{EILSEQ}.
 @end deftypefn
+
+@deftypefn Function int utf8_wc_to_mbstr (const unsigned *@var{word}, @
+  size_t @var{wordlen}, char **@var{retptr})
+Converts first @var{wordlen} characters of the wide character string
+@var{word} to multi-byte representation.  The result is returned in
+@var{retptr}.  It is allocated using @code{malloc}(3).
+
+Returns 0 on success.  On error, returns -1 and sets @code{errno} to
+one of the following values:
+
+@table @asis
+@item ENOMEM
+Not enough memory to allocate the return buffer.
+
+@item EILSEQ
+An invalid wide character is encountered.
+@end table
+@end deftypefn
+
+@deftypefn Function int utf8_mbstr_to_wc (const char *@var{str},@
+ unsigned **@var{wptr}, size_t *@var{plen})
+Converts a multi-byte string from @var{str} to its wide character
+representation.
+
+The result is returned in @var{retptr}.  It is allocated using @code{malloc}(3).
+
+Returns 0 on success.  On error, returns -1 and sets @code{errno} to
+one of the following values:
+
+@table @asis
+@item ENOMEM
+Not enough memory to allocate the return buffer.
+
+@item EILSEQ
+An invalid wide character is encountered.
+@end table 
+@end deftypefn
+ 
+@deftypefn Function int utf8_mbstr_to_norm_wc (const char *@var{str}, @
+  unsigned **@var{wptr}, size_t *@var{plen})
+Converts a multi-byte string from @var{str} to its wide character
+representation, replacing each run of one or more whitespace characters
+with a single space character (ASCII 32).
+
+The result is returned in @var{retptr}.  It is allocated using @code{malloc}(3).
+
+Returns 0 on success.  On error, returns -1 and sets @code{errno} to
+one of the following values:
+
+@table @asis
+@item ENOMEM
+Not enough memory to allocate the return buffer.
+
+@item EILSEQ
+An invalid wide character is encountered.
+@end table
+@end deftypefn
+
+@node Comparing UTF-8 strings
+@subsection Comparing UTF-8 strings
 
 @deftypefn Function int utf8_symcmp (unsigned char *@var{a}, @
   unsigned char *@var{b})
+Compares first UTF-8 characters from @var{a} and @var{b}.
 @end deftypefn
 
 @deftypefn Function int utf8_symcasecmp (unsigned char *@var{a}, @
   unsigned char *@var{b})
+Compares first UTF-8 characters from @var{a} and @var{b}, ignoring the
+case.
 @end deftypefn
   
 @deftypefn Function int utf8_strcasecmp (unsigned char *@var{a}, @
   unsigned char *@var{b})
+Compares the two UTF-8 strings @var{a} and @var{b}, ignoring the case
+of the characters.  
 @end deftypefn
   
 @deftypefn Function int utf8_strncasecmp (unsigned char *@var{a}, @
   unsigned char *@var{b}, size_t @var{maxlen})
-@end deftypefn
-  
-
-@deftypefn Function unsigned utf8_wc_toupper (unsigned @var{wc})
+Compares at most @var{maxlen} first characters from the two UTF-8
+strings @var{a} and @var{b}, ignoring the case of the characters.   
 @end deftypefn
 
-@deftypefn Function int utf8_toupper (char *@var{s}, size_t @var{len})
-@end deftypefn
-
-@deftypefn Function unsigned utf8_wc_tolower (unsigned @var{wc})
-@end deftypefn
-
-@deftypefn Function int utf8_tolower (char *@var{s}, size_t @var{len})
-@end deftypefn
-
-@deftypefn Function size_t utf8_wc_strlen (const unsigned *@var{s})
-@end deftypefn
-
-@deftypefn Function {unsigned *} utf8_wc_strdup (const unsigned *@var{s})
-@end deftypefn
-
-@deftypefn Function size_t utf8_wc_hash_string (const unsigned *@var{ws}, @
-  size_t @var{n_buckets})
-@end deftypefn
-  
 @deftypefn Function int utf8_wc_strcmp (const unsigned *@var{a}, @
   const unsigned *@var{b})
+Compare the two wide character strings @var{a} and @var{b}.
 @end deftypefn
 
-@deftypefn Function {const unsigned *} utf8_wc_strstr( const unsigned *var{text},@
+@deftypefn Function int utf8_wc_strncmp (const unsigned *@var{a}, @
+ const unsigned *@var{b}, size_t @var{n})
+Compares at most @var{n} first characters from the wide character
+strings @var{a} and @var{b}.
+@end deftypefn
+
+@deftypefn Function int utf8_wc_strcasecmp (const unsigned *@var{a}, const unsigned *@var{b})
+Compares the two wide character strings @var{a} and @var{b}, ignoring the case
+of the characters.
+@end deftypefn
+
+@deftypefn Function int utf8_wc_strncasecmp (const unsigned *@var{a},@
+  const unsigned *@var{b}, size_t @var{n})
+Compares at most first @var{n} characters of the two wide character
+strings @var{a} and @var{b}, ignoring the case.
+@end deftypefn
+
+@node Character lookups
+@subsection Character lookups
+
+@deftypefn Function {unsigned *} utf8_wc_strchr (const unsigned *@var{str},@
+  unsigned @var{chr})
+Returns a pointer to the first occurrence of wide character @var{chr} in
+string @var{str}, or @samp{NULL}, if no such character is encountered.
+@end deftypefn
+
+@deftypefn Function {unsigned *} utf8_wc_strchr_ci (const unsigned *@var{str},@
+  unsigned @var{chr})
+Returns a pointer to the first occurrence of wide character @var{chr}
+(case-insensitive) in string @var{str}, or @samp{NULL}, if no such
+character is encountered.
+@end deftypefn
+
+@deftypefn Function {const unsigned *} utf8_wc_strstr (const unsigned *var{text},@
   const unsigned *@var{pattern})
 Finds the first occurrence of @var{pattern} in @var{text}.  Returns a
 pointer to the beginning of pattern in @var{text}.  Returns
 @code{NULL} if no occurrence was found.
 @end deftypefn
 
-@deftypefn Function int utf8_wc_to_mbstr (const unsigned *@var{wordbuf}, @
-  size_t @var{wordlen}, char *@var{s}, size_t @var{size})
+@node Functions for converting UTF-8 characters
+@subsection Functions for converting UTF-8 characters
+
+@deftypefn Function unsigned utf8_wc_toupper (unsigned @var{wc})
+Converts wide character @var{wc} to upper case, if possible.  Returns
+@var{wc}, if it cannot be converted.
 @end deftypefn
-  
-@deftypefn Function int utf8_mbstr_to_wc (const char *@var{str}, @
-  unsigned **@var{wptr})
+
+@deftypefn Function int utf8_toupper (char *@var{s}, size_t @var{len})
+Converts first @var{len} bytes of the UTF-8 string @var{s} to upper
+case, if possible.
 @end deftypefn
-  
-@deftypefn Function int utf8_mbstr_to_norm_wc (const char *@var{str}, @
-  unsigned **@var{wptr})
+
+@deftypefn Function unsigned utf8_wc_tolower (unsigned @var{wc})
+Converts wide character @var{wc} to lower case, if possible.  Returns
+@var{wc}, if it cannot be converted.
+@end deftypefn
+
+@deftypefn Function int utf8_tolower (char *@var{s}, size_t @var{len})
+Converts first @var{len} bytes of the UTF-8 string @var{s} to lower
+case, if possible.
+@end deftypefn
+
+@deftypefn Function void utf8_wc_strupper (unsigned *@var{str})
+Converts each character from the wide character string @var{str} to
+uppercase, if applicable.
+@end deftypefn
+
+@deftypefn Function void utf8_wc_strlower (unsigned *@var{str})
+Converts each character from the wide character string @var{str} to
+lowercase, if applicable.
+@end deftypefn
+
+@node Additional functions
+@subsection Additional functions
+
+@deftypefn Function {unsigned *} utf8_wc_strdup (const unsigned *@var{s})
+Returns a pointer to a new wide character string which is a duplicate
+of the string @var{s}.  Memory for the new string is obtained with 
+@code{malloc}(3), and can be freed with @code{free}(3).
+@end deftypefn
+
+@deftypefn Function {unsigned *} utf8_wc_quote (const unsigned *@var{s})
+Quotes occurrences of backslash and double-quote in @var{s} by
+prefixing each of them with a backslash.  The return value is
+allocated using @code{malloc}(3).
+@end deftypefn
+
+@deftypefn Function int utf8_quote (const char *@var{str}, char **@var{sptr})
+Quotes occurrences of backslash and double-quote in @var{s} by
+prefixing each of them with a backslash.  On success stores the result
+(allocated with @code{malloc}(3)) in @var{sptr}, and returns 0.  On
+error, returns -1 and sets @code{errno} to the one of the following:
+
+@table @asis
+@item ENOMEM
+Not enough memory to allocate the return buffer.
+
+@item EILSEQ
+An invalid wide character is encountered.
+@end table
+@end deftypefn
+
+@deftypefn Function size_t utf8_wc_hash_string (const unsigned *@var{ws}, @
+  size_t @var{n})
+Compute a hash code of @var{ws} for a symbol table of @var{n} buckets.
 @end deftypefn
   
 @deftypefn Function int dico_levenshtein_distance (const char *@var{a}, @
   const char *@var{b}, int @var{flags})
+Computes Levenshtein distance between UTF-8 strings @var{a} and
+@var{b}.  The @var{flags} argument is a bitwise or of one or more
+flags:
+
 @table @code
+@item 0
+Default - compute Levenstein distance, treating both arguments
+literally.
 @item DICO_LEV_NORM
+Treat runs of one or more whitespace characters as a single 
+space character (ASCII 32).
 @item DICO_LEV_DAMERAU
+Compute Damerau-Levenshtein distance.  This distance takes into
+account transpositions.
 @end table
 @end deftypefn
   
-@deftypefn Function int dico_soundex (const char *@var{s}, @
-  char @var{codestr}[DICO_SOUNDEX_SIZE])
+@deftypefn Function int dico_soundex (const char *@var{word}, @
+  char @var{code}[DICO_SOUNDEX_SIZE])
+Computes the @acronym{Soundex} code for the given @var{word}.  The
+code is stored in @var{code}.  Returns 0 on success, -1 if @var{word}
+is not a valid UTF-8 string.
+
 @defvr Define DICO_SOUNDEX_SIZE
-5
+This macro definition expands to the size of @acronym{Soundex} code
+buffer, including the terminal zero.
 @end defvr
+
+Note that this function silently ignores all characters, except Latin
+letters.
 @end deftypefn
   
 @node util

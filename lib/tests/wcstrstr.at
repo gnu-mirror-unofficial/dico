@@ -32,4 +32,18 @@ AT_CHECK([utf8 wc_strstr εκδρομή δρομ],
 AT_CHECK([utf8 wc_strstr εκδρομή δρομο],
 2)
 
+# corner cases 
+AT_CHECK([utf8 wc_strstr δρομο δρομο],
+0,
+[0
+])
+
+AT_CHECK([utf8 wc_strstr δρομο εκδρομή],
+2)
+
+AT_CHECK([utf8 wc_strstr δρομο μ],
+0,
+[3
+])
+
 AT_CLEANUP

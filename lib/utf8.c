@@ -2049,46 +2049,61 @@ kmp_next(const unsigned *text, size_t text_len,
                         ERANGE if pattern is too long, or to ENOMEM if unable
 			to allocate memory.
 
-   This implementation uses Knuth-Morris-Pratt algorithm.
+   This implementation uses Knuth-Morris-Pratt algorithm.  If low on memory,
+   it falls back to brute force algorithm.
 */
-enum utf8_strpat_result
-utf8_wc_strpat(const unsigned *text, const unsigned *pattern,
-	       size_t *return_offset)
+unsigned const *
+utf8_wc_strstr(const unsigned *text, const unsigned *pattern)
 {
     size_t i, j;
-    enum utf8_strpat_result result;
+    unsigned const *result;
     size_t text_len = utf8_wc_strlen(text);
     size_t pattern_len = utf8_wc_strlen(pattern);
     size_t *nextab;
 
     /* Handle corner cases */
     if (pattern_len > text_len)
-	return strpat_not_found;
+	return NULL;
+    else if (pattern_len == 1)
+	return utf8_wc_strchr(text, pattern[0]);
     else if (pattern_len == text_len) {
-	if (utf8_wc_strcmp(text, pattern) == 0) {
-	    if (return_offset) 
-		*return_offset = 0;
-	    return strpat_found;
-	} else
-	    return strpat_not_found;
+	if (utf8_wc_strcmp(text, pattern) == 0)
+	    return text;
+	else
+	    return NULL;
     }
 
     /* Uses Knuth-Morris-Pratt algorithm for the general case */
     nextab = kmp_next(text, text_len, pattern, pattern_len);
-    if (!nextab)
-	return strpat_error;
+    if (!nextab) {
+	/* Fall back to brute force approach */
+	unsigned first = pattern[0];
+	for (; *text; text++)
+	    if (*text == first) {
+		/* Compare with pattern's remaining units.  */
+		const unsigned *text_ptr = text + 1;
+		const unsigned *pat_ptr = pattern + 1;
+		for (;;) {
+		    if (*text_ptr != *pat_ptr)
+			break;
+		    text_ptr++;
+		    pat_ptr++;
+		    if (*pat_ptr == 0)
+			return text;
+		}
+	    }
+	return NULL;
+    }
 
     i = j = 0;
-    result = strpat_not_found;
+    result = NULL;
     while (j < text_len) {
 	while (i != INIT && pattern[i] != text[j])
 	    i = nextab[i];
 	i++;
 	j++;
 	if (i >= pattern_len) {
-	    if (return_offset) 
-		*return_offset = j - i;
-	    result = strpat_found;
+	    result = text + j - i;
 	    break;
 	}
     }
@@ -2096,16 +2111,6 @@ utf8_wc_strpat(const unsigned *text, const unsigned *pattern,
     free(nextab);
 
     return result;
-}
-    
-unsigned const *
-utf8_wc_strstr(const unsigned *haystack, const unsigned *needle)
-{
-    size_t n;
-    errno = 0;
-    if (utf8_wc_strpat(haystack, needle, &n) == strpat_found)
-	return haystack + n;
-    return NULL;
 }
     
 unsigned *

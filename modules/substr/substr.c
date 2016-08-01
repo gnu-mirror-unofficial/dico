@@ -30,8 +30,7 @@ substr_sel(int cmd, struct dico_key *key, const char *dict_word)
 {
     unsigned *sample;
     unsigned *tmp;
-    enum utf8_strpat_result res;
-    int ec;
+    int res;
     
     switch (cmd) {
     case DICO_SELECT_BEGIN:
@@ -46,19 +45,9 @@ substr_sel(int cmd, struct dico_key *key, const char *dict_word)
 	if (utf8_mbstr_to_wc(dict_word, &tmp, NULL))
 	    return 0;
 	utf8_wc_strupper(tmp);
-	res = utf8_wc_strpat(tmp, sample, NULL);
-	ec = errno;
+	res = !!utf8_wc_strstr(tmp, sample);
 	free(tmp);
-	switch (res) {
-	case strpat_found:
-	    return 1;
-
-	case strpat_error:
-	    dico_log(L_ERR, ec, "can't match");
-	    /* fall throuog */
-	case strpat_not_found:
-	    return 0;
-	}
+	return res;
 
     case DICO_SELECT_END:
 	free(key->call_data);

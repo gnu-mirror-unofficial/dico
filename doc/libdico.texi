@@ -705,58 +705,11 @@ struct utf8_iterator @{
   const unsigned *@var{b})
 @end deftypefn
 
-@deftp enum utf8_strpat_result
-Integer return type for string matching functions.  Defined as:
-
-@smallexample
-enum utf8_strpat_result @{
-    strpat_found,
-    strpat_not_found,
-    strpat_error
-@};
-@end smallexample
-
-Its values:
-
-@table @code
-@item strpat_found:
-Pattern was found in text.
-
-@item strpat_not_found
-Pattern was not found in text.
-
-@item strpat_error
-An error occurred.  The @code{errno} variable should be examined to
-obtain more information about the error.
-@end table
-@end deftp
-
-@deftypefn Function {enum utf8_strpat_result} utf8_wc_strpat (const unsigned *@var{text},@
-  const unsigned *@var{pattern}, size_t *@var{return_offset})
-Finds the first occurrence of @var{pattern} in @var{text}.  Return value:
-
-@table @code
-@item strpat_found
-Pattern was found.  Unless @var{return_offset} is @code{NULL}, the
-offset of the pattern occurrence in @var{text} is stored in the memory
-location pointed to by @var{return_offset}.
-
-@item strpat_not_found
-Pattern was not found.
-
-@item strpat_error
-An error occurred.  The @code{errno }variable is set to @samp{ERANGE},
-if pattern is too long, or to @samp{ENOMEM} if unable to allocate memory.
-@end table
-@end deftypefn
-
 @deftypefn Function {const unsigned *} utf8_wc_strstr( const unsigned *var{text},@
   const unsigned *@var{pattern})
-Alternative interface to @code{utf8_wc_strpat}.  Finds the first
-occurrence of @var{pattern} in @var{text}.  Returns a pointer to the
-beginning of pattern in @var{text}.  Returns @code{NULL} if no occurrence
-was found or if an error occurred.  In the latter case, the global
-variable @code{errno} is set appropriately.
+Finds the first occurrence of @var{pattern} in @var{text}.  Returns a
+pointer to the beginning of pattern in @var{text}.  Returns
+@code{NULL} if no occurrence was found.
 @end deftypefn
 
 @deftypefn Function int utf8_wc_to_mbstr (const unsigned *@var{wordbuf}, @

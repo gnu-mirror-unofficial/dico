@@ -1,5 +1,5 @@
 /* This file is part of GNU Dico.
-   Copyright (C) 1998-2000, 2008, 2010, 2012 Sergey Poznyakoff
+   Copyright (C) 1998-2000, 2008, 2010, 2012, 2016 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -51,14 +51,6 @@
 
 #define EXIT_TIMEOUT 2
 #define UINTMAX_STRSIZE_BOUND INT_BUFSIZE_BOUND(uintmax_t)
-
-#if defined HAVE_SYSCONF && defined _SC_OPEN_MAX
-# define getmaxfd() sysconf(_SC_OPEN_MAX)
-#elif defined (HAVE_GETDTABLESIZE)
-# define getmaxfd() getdtablesize()
-#else
-# define getmaxfd() 256
-#endif
 
 extern int mode;
 extern int foreground;     /* Run in foreground mode */

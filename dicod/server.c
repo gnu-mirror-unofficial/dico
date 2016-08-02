@@ -15,6 +15,8 @@
    along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <dicod.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -561,6 +563,17 @@ server_loop()
 		handle_connection(i);
     }
     return 0;
+}
+
+static int
+getmaxfd(void)
+{
+    int i = open("/dev/null", O_RDONLY);
+    if (i >= 0) {
+	close(i);
+	i--;
+    }
+    return i;
 }
 
 void

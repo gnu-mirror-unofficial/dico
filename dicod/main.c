@@ -1353,6 +1353,8 @@ config_parse()
 {
     struct grecs_node *tree;
 
+    if (mode == MODE_TEST && access (config_file, F_OK) && errno == ENOENT)
+	return;
     tree = grecs_parse (config_file);
     if (!tree)
 	exit (EX_CONFIG);
@@ -1649,7 +1651,7 @@ main(int argc, char **argv)
     config_init();
     init_conf_override(&ovr);
 
-    get_options(argc, argv, &ovr);
+    get_options(&argc, &argv, &ovr);
     if (!config_lint_option)
 	dicod_log_setup();
     
@@ -1667,6 +1669,9 @@ main(int argc, char **argv)
     compile_access_log();
 
     dicod_loader_init();
+
+    if (mode == MODE_TEST)
+	exit(dicod_module_test(argc, argv));
     
     begin_timing("server");
     dicod_server_init();

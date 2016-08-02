@@ -597,4 +597,35 @@ dicod_define_word_all(dico_stream_t stream, const char *word)
 		   "250 Command complete",
 		   print_definitions, NULL, "define");
 }
-	    
+
+int
+dicod_module_test(int argc, char **argv)
+{
+    int targc = 0;
+    char **targv = { NULL };
+    int i;
+    dicod_module_instance_t inst;
+    struct dico_database_module *pmod;    
+    
+    /* Split arguments in two parts: module initialization and
+       unit test arguments */
+    for (i = 0; i < argc; i++)
+	if (strcmp(argv[i], ":") == 0) {
+	    argv[i] = NULL;
+	    break;
+	}
+
+    if (i == 0)
+	dico_die(EX_UNAVAILABLE, L_ERR, 0, _("no module name"));
+    
+    memset(&inst, 0, sizeof(inst));
+    if (dicod_load_module0(&inst, i, argv))
+	return 1;
+
+    pmod = inst.module;
+    if (pmod->dico_version <= 1 || !pmod->dico_run_test)
+	dico_die(EX_UNAVAILABLE, L_ERR, 0,
+		 _("module does not define dico_run_test function"));
+    argv[i] = argv[0];
+    return pmod->dico_run_test(argc - i, argv + i);
+}

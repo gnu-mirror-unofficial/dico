@@ -52,6 +52,13 @@ BEGIN
    mode = MODE_INETD;
 END
 
+OPTION(test, X,,
+       [<Run tests for MODULE>])
+BEGIN
+   mode = MODE_TEST;
+   log_to_stderr = 1;
+END
+
 GROUP(Modifiers)
     
 OPTION(config,,FILE,
@@ -82,6 +89,14 @@ OPTION(single-process, s,,
        [<Single-process mode.>])
 BEGIN
    single_process = 1;
+END
+
+OPTION(load-dir, L, DIR,
+       [<Prepend DIR to the load path>])
+BEGIN
+   prepend_load_path = xdico_list_create();
+   dico_list_set_free_item(prepend_load_path, dicod_free_item, NULL);
+   xdico_list_append(prepend_load_path, xstrdup(optarg));
 END
 
 GROUP(Debugging)
@@ -172,9 +187,13 @@ END
 OPTIONS_END
 
 void
-get_options(int argc, char *argv[], struct dicod_conf_override *conf)
+get_options(int *pargc, char **pargv[], struct dicod_conf_override *conf)
 {
-    GETOPT(argc, argv,, exit(EX_USAGE))
+    int i;
+    int argc = *pargc;
+    char **argv = *pargv;
+    
+    GETOPT(argc, argv, i, exit(EX_USAGE))
     if (pp_cmd_acc && grecs_preprocessor) {
 	char *args, *cmd;
 
@@ -187,4 +206,12 @@ get_options(int argc, char *argv[], struct dicod_conf_override *conf)
 	grecs_preprocessor = cmd;
     }
     grecs_txtacc_free(pp_cmd_acc);
+
+    if (mode == MODE_TEST) {
+	*pargc = argc - i;
+	*pargv = argv + i;
+    } else if (i < argc) {
+	fprintf(stderr, "%s: unexpected arguments\n", argv[0]);
+	exit(EX_USAGE);
+    }
 }

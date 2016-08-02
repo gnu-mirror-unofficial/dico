@@ -565,6 +565,7 @@ server_loop()
     return 0;
 }
 
+/* Return the highest-numbered open file descriptor. */
 static int
 getmaxfd(void)
 {

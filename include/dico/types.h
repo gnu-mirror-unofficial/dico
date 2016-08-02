@@ -58,7 +58,7 @@ typedef struct dico_key *dico_key_t;
 #define DICO_SELECT_END   2
 typedef int (*dico_select_t) (int, dico_key_t, const char *);
 
-#define DICO_MODULE_VERSION 1
+#define DICO_MODULE_VERSION 2
 
 #define DICO_CAPA_NONE 0
 #define DICO_CAPA_NODB 0x0001
@@ -85,6 +85,7 @@ struct dico_database_module {
     size_t (*dico_compare_count) (dico_result_t rp);
     void (*dico_free_result) (dico_result_t rp);
     int (*dico_result_headers) (dico_result_t rp, dico_assoc_list_t hdr);
+    int (*dico_run_test) (int argc, char **argv);
 };
 
 #endif

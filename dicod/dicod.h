@@ -118,12 +118,13 @@ extern struct dico_stat current_stat, total_stat;
 #define MODE_DAEMON  0 
 #define MODE_INETD   1
 #define MODE_PREPROC 2
+#define MODE_TEST    3
 
 struct dicod_conf_override {
     int transcript;
 };
 
-void get_options(int argc, char *argv[], struct dicod_conf_override *conf);
+void get_options(int *argc, char **argv[], struct dicod_conf_override *conf);
 
 
 /* acl.c */
@@ -288,6 +289,8 @@ void dicod_define_word_db(dicod_database_t *db, dico_stream_t stream,
 			  const char *word);
 void dicod_define_word_first(dico_stream_t stream, const char *word);
 void dicod_define_word_all(dico_stream_t stream, const char *word);
+
+int dicod_module_test(int argc, char **argv);
 
 /* ostream.c */
 extern off_t total_bytes_out;

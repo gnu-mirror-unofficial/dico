@@ -69,8 +69,48 @@ substr_init(int argc, char **argv)
     return 0;
 }
 
+static unsigned *
+strtowc(const char *str)
+{
+    unsigned *buf;
+    if (utf8_mbstr_to_wc(str, &buf, NULL)) {
+	dico_log(L_ERR, errno, "cannot convert \"%s\"", str);
+	abort();
+    }
+    return buf;
+}
+
+static int
+substr_run_test(int argc, char **argv)
+{
+    unsigned *wa, *wb;
+    unsigned const *p;
+    int ret;
+
+    argc--;
+    argv++;
+    
+    if (argc != 2) {
+	dico_log(L_ERR, 0, "bad argument list for substr test");
+	return 1;
+    }
+
+    wa = strtowc(argv[0]);
+    wb = strtowc(argv[1]);
+    p = utf8_wc_strstr(wa, wb);
+    if (p) {
+	ret = 0;
+	printf("%td\n", p - wa);
+    } else
+	ret = 1;
+    free(wa);
+    free(wb);
+    return ret;
+}
+
 struct dico_database_module DICO_EXPORT(substr, module) = {
-    DICO_MODULE_VERSION,
-    DICO_CAPA_NODB,
-    substr_init,
+    .dico_version = DICO_MODULE_VERSION,
+    .dico_capabilities = DICO_CAPA_NODB,
+    .dico_init = substr_init,
+    .dico_run_test = substr_run_test
 };

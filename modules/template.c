@@ -1,5 +1,5 @@
 /* This file is part of GNU Dico.
-   Copyright (C) 2008, 2010, 2012 Sergey Poznyakoff
+   Copyright (C) 2008, 2010, 2012, 2016 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,127 +19,134 @@
 #endif
 #include <dico.h>
 
-
 static int
-mod_init(int argc, char **argv)
+<MODNAME>_init(int argc, char **argv)
 {
     /* FIXME */
     return 1;
 }
     
 static dico_handle_t
-mod_init_db(const char *dbname, int argc, char **argv)
+<MODNAME>_init_db(const char *dbname, int argc, char **argv)
 {
     /* FIXME */
     return NULL;
 }
 
 static int
-mod_free_db(dico_handle_t hp)
+<MODNAME>_free_db(dico_handle_t hp)
 {
     /* FIXME */
     return 1;
 }
 
 static int
-mod_open(dico_handle_t dp)
+<MODNAME>_open(dico_handle_t dp)
 {
     /* FIXME */
     return 1;
 }
 
 static int
-mod_close(dico_handle_t hp)
+<MODNAME>_close(dico_handle_t hp)
 {
     /* FIXME */
     return 1;
 }
 
 static char *
-mod_info(dico_handle_t hp)
+<MODNAME>_info(dico_handle_t hp)
 {
     /* FIXME */
     return NULL;
 }
 
 static char *
-mod_descr(dico_handle_t hp)
+<MODNAME>_descr(dico_handle_t hp)
 {
     /* FIXME */
     return NULL;
 }
 
 int
-mod_lang(dico_handle_t hp, dico_list_t list[2])
+<MODNAME>_lang(dico_handle_t hp, dico_list_t list[2])
 {
     /* FIXME */
     return 1;
 }
 
 static dico_result_t
-mod_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
+<MODNAME>_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 {
     /* FIXME */
     return NULL;
 }
 
 static dico_result_t
-mod_define(dico_handle_t hp, const char *word)
+<MODNAME>_define(dico_handle_t hp, const char *word)
 {
     /* FIXME */
     return NULL;
 }
 
 static int
-mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
+<MODNAME>_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 {
     /* FIXME */
     return 1;
 }
 
 static size_t
-mod_result_count (dico_result_t rp)
+<MODNAME>_result_count (dico_result_t rp)
 {
     /* FIXME */
     return 0;
 }
 
 static size_t
-mod_compare_count (dico_result_t rp)
+<MODNAME>_compare_count (dico_result_t rp)
 {
     /* FIXME */
     return 0;
 }
 
 static void
-mod_free_result(dico_result_t rp)
+<MODNAME>_free_result(dico_result_t rp)
 {
     /* FIXME */
 }
 
 static int
-mod_result_headers(dico_result_t rp, dico_assoc_list_t hdr)
+<MODNAME>_result_headers(dico_result_t rp, dico_assoc_list_t hdr)
 {  
     /* FIXME */
     return 0;
 }
 
+static int
+<MODNAME>_run_test(int argc, char **argv)
+{
+    /* FIXME */
+    return 1;
+}
+
 struct dico_database_module DICO_EXPORT(<MODNAME>, module) = {
-    DICO_MODULE_VERSION,
-    DICO_CAPA_NONE,
-    mod_init,
-    mod_init_db,
-    mod_free_db,
-    mod_open,
-    mod_close,
-    mod_info,
-    mod_descr,
-    mod_lang,
-    mod_match,
-    mod_define,
-    mod_output_result,
-    mod_result_count,
-    mod_compare_count,
-    mod_free_result,
-    mod_result_headers
+    .dico_version        =  DICO_MODULE_VERSION,
+    .dico_capabilities   =  DICO_CAPA_NONE,
+    .dico_init           =  <MODNAME>_init,
+    .dico_init_db        =  <MODNAME>_init_db,
+    .dico_free_db        =  <MODNAME>_free_db,
+    .dico_open           =  <MODNAME>_open,
+    .dico_close          =  <MODNAME>_close,
+    .dico_db_info        =  <MODNAME>_info,
+    .dico_db_descr       =  <MODNAME>_descr,
+    .dico_db_lang        =  <MODNAME>_lang,
+    .dico_match          =  <MODNAME>_match,
+    .dico_define         =  <MODNAME>_define,
+    .dico_output_result  =  <MODNAME>_output_result,
+    .dico_result_count   =  <MODNAME>_result_count,
+    .dico_compare_count  =  <MODNAME>_compare_count,
+    .dico_free_result    =  <MODNAME>_free_result,
+    .dico_result_headers =  <MODNAME>_result_headers,
+    .dico_run_test       =  <MODNAME>_run_test
 };

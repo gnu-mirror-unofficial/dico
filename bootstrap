@@ -24,10 +24,11 @@ bootstrap - Bootstrap the Dico project
 B<bootstrap>
 [B<-ahmnv>]    
 [B<--add>]
+[B<--dry-run>]
 [B<--help>]    
 [B<--new>]
-[B<--modules>]    
-[B<--dry-run>]
+[B<--modules>]
+[B<--skip-reconfig>]    
 [B<--verbose>]
 [I<NAME>...]
 
@@ -60,16 +61,31 @@ this file in section B<FILES>.
 
 The program must be run from the Dico source tree topmost directory.
     
-When given the B<-m> (B<--modules>) option, only the second step is
+When given the B<-m> (B<--modules>) option, the only the second step is
 performed.
 
-When run with B<-a> (B<--add>, B<--new>) option, the program creates
+When the B<-a> (B<--add>, B<--new>) option is given, the program creates
 basic infrastructure for modules named in the command line.  For each
-I<NAME> it creates directory F<modules/I<NAME>>.  Withih that directory,
-it creates two files: F<Makefile.am> from F<modules/template.am>, and
-F<I<NAME>.c>, which contains a stub code for the module.  The new module
-is then integrated into F<configure.ac> and F<modules/Makefile.am> files.    
+I<NAME> from the command line it creates directory F<modules/I<NAME>>
+and populates it with files from the directory F<modules/template>.  To    
+this effect, it reads the list of file names from the section I<FILE LIST>
+of the file modules/README.  This file is in Emacs outline format.  The   
+section in question lists file names relative to the F<modules/template>
+directory, one file per line.  File names must start at coluimn.  A
+whitespace character (space or tab) starts a comment that spans to the
+physical end of line.  Empty lines are ignored.
 
+Each file name from that list is copied to the newly created F<modules/I<NAME>>
+directory, creating eventual intermediate directories on the fly.  E.g. the
+file F<modules/template/test/Makefile.am> is copied to
+F<modules/I<NAME>/test/Makefile.am>.  During the copy, some files undergo
+I<macro expansion>, in which macro variables appearing in the source file
+are replaced with their actual values in the destination file.  This process
+is discussed in detail in section B<FILES>, below.
+
+Finally, the files F<configure.ac> and F<modules/Makefile.am> are recreated
+to take into account the newly created modules.    
+    
 By default, the program prints only error diagnostics.  That means that
 upon success, it will terminate quietly, without producing a single line
 on output.  This can be changed using the B<-v> (or B<--verbose>) option.
@@ -98,6 +114,11 @@ Don't do anything, just print what would have been done.
 
 Run only the second step: creation of autoconf/automake sources for
 Dico modules.     
+
+=item B<-s>, B<--skip-reconfigure>
+
+Don't run B<autoreconf>.  Takes effect only with B<--add> (B<--new>) or
+B<--modules>.    
     
 =item B<-v>, B<--verbose>
 
@@ -280,12 +301,22 @@ Same as in F<configure.boot>.
 
 Produces B<Makefille.am> code for the B<SUBDIRS> variable.    
 
-=back
-    
-=item F<modules/template.c>
+=item B<TEMPLATE>
 
-This template is used when B<-a> (B<--add>, B<--new>) option is given.
-It produces the file F<modules/I<NAME>/I<NAME>.c>.  Comment marker is B<//>.
+A whitespace-separated list of template files obtained from file
+F<modules/README>.
+
+=back
+
+=back    
+    
+The following template files are processed when creating new modules:
+
+=over 4    
+    
+=item F<modules/template/module.c>
+
+produces the file F<modules/I<NAME>/I<NAME>.c>.  Comment marker is B<//>.
 
 Macro variables:
 
@@ -297,11 +328,10 @@ Expands to the name of the module.
 
 =back    
     
-=item F<modules/template.am>
-    
-This template is used when B<-a> (B<--add>, B<--new>) option is given.
-It produces the file F<modules/I<NAME>/Makefile.am>.
+=item Any F<Makefile.am> files in the F<modules/template> directory
 
+Comment marker is B<##>.
+    
 Macro variables:
 
 =over 8
@@ -311,9 +341,13 @@ Macro variables:
 Expands to the name of the module.
 
 =back
-    
+
 =back    
 
+The files F<modules/template/tests/atlocal.in> and 
+F<modules/template/tests/testsuite.at> follow the same rules as
+F<Makefile.am>.
+    
 =head1 EXIT CODES
 
 =over 4
@@ -348,6 +382,7 @@ use Pod::Usage;
 use Pod::Man;
 use File::Temp qw(tempfile);
 use File::Basename;
+use File::Path qw(make_path);
 use Data::Dumper;
 use IPC::Open3;
 use Symbol 'gensym';
@@ -365,6 +400,7 @@ my $addmod;
 my $dry_run;
 my $verbose;
 my $modules;
+my $skip_reconf;
 my @gnulib_options;
 my $autoconf = "module.ac";
 my $config_stub = "configure.boot";
@@ -480,6 +516,9 @@ To recreate, run $progname from the top of Dico source tree.
 	    }
 	    $s .= "\n";
 	    return $s;
+	},
+	'TEMPLATE' => sub {
+	    return join(' ', map { "template/$_" } read_file_list())
 	}
     );
     make_file($makefile_stub, $makefile, \%vartab);
@@ -586,7 +625,22 @@ sub make_file {
     my $infile = shift;
     my $ofile = shift;
     my $ref = shift;
-    
+    my $dir = dirname($ofile);
+
+    unless (-d $dir) {
+	error("creating directory $dir", prefix => 'DEBUG') if ($verbose>1);
+	unless ($dry_run) {
+	    make_path($dir, {error=>\my $err});
+	    if (@$err) {
+		for my $diag (@$err) {
+                    my ($file, $message) = %$diag;
+                    $file = $dir if ($file eq '');
+                    error("error creating $file: $message");
+                }
+	        exit(EX_CANTCREAT);
+	    }
+	}
+    }
     error("creating $ofile from $infile", prefix => 'DEBUG') if ($verbose>1);
     return if $dry_run;
     if (!$ref->{overwrite} and -e $ofile) {
@@ -624,9 +678,47 @@ sub make_file {
     }
 }    
 
+sub read_file_list {
+    open(my $fd, '<', 'modules/template/README') or die;
+    my $found;
+    while (<$fd>) {
+	chomp;
+	if (/^\*\s+FILE\s+LIST/) {
+	    $found = 1;
+	    last;
+	}
+    }
+
+    my @ret;
+    if ($found) {
+	while (<$fd>) {
+	    chomp;
+	    last if /^\*/ or /Local Variables:/;
+	    next if /^\s/;
+	    s/[[:space:]].*$//;
+	    next if /^$/;
+	    push @ret, $_;
+	}
+    }
+    close($fd);
+    return @ret;
+}
+
 sub create_module {
-    my $name = shift;
-    my $dir = "modules/$name";
+    my $modname = shift;
+
+    error("Creating framework for module $modname", fd => \*STDOUT) if $verbose;
+    my %variables = (
+	'./module.c' => { rename => sub { s/module/${modname}/; },
+			  ignorecomm => '//',
+			  MODNAME => $modname },
+	'Makefile.am' => { ignorecomm => '##',
+			   MODNAME => $modname },
+	'./tests/atlocal.in' => { ref => 'Makefile.am' },
+	'./tests/testsuite.at' => { ref => 'Makefile.am' },
+    );
+
+    my $dir = "modules/$modname";
 
     if (-d $dir) {
 	error("$dir already exists", prefix => 'warning');
@@ -634,12 +726,40 @@ sub create_module {
 	error("creating $dir", prefix => 'DEBUG') if ($verbose>1);
 	mkdir($dir) unless $dry_run;
     }
-    make_file("modules/template.am", "$dir/Makefile.am",
-	      { ignorecomm => '##',
-		MODNAME => $name });
-    make_file("modules/template.c", "$dir/${name}.c",
-	      { ignorecomm => '//',
-		MODNAME => $name });
+
+    my $template_dir = 'modules/template';
+    
+    foreach my $file (read_file_list) {
+	# my $subdir = $dir . '/' . dirname($file);
+	# unless (-d $subdir) {
+	#     error("creating $subdir", prefix => 'DEBUG')
+	#          if ($verbose>1);
+	#     mkdir($subdir) unless $dry_run;
+	# }
+
+	my $vartab;
+	my $key = './' . $file;
+
+      VARTAB:
+	do {
+	    if (exists($variables{$key})
+		|| exists($variables{$key = basename($file)})) {
+	        $vartab = $variables{$key};
+	    }
+	    if ($vartab && exists($vartab->{ref})) {
+	        $key = $vartab->{ref};
+	        goto VARTAB;
+	    }
+	};
+
+        my $outfile = $file;
+        if ($vartab && exists($vartab->{rename})) {
+	    local $_ = $outfile;
+  	    &{$vartab->{rename}};
+	    $outfile = $_;
+	}
+	make_file("$template_dir/$file", "$dir/$outfile", $vartab);
+    }
 }
 
 sub cleanup {
@@ -669,7 +789,7 @@ sub checksrc {
 
 sub modproc {
     my %modtab;
-    my @modnames = map { s#modules/##; $_; } grep { -d $_; } glob "modules/*";
+    my @modnames = map { s#modules/##; $_; } grep { $_ ne 'modules/template' && -d $_; } glob "modules/*";
 
     error("Bootstrapping dico modules", fd => \*STDOUT) if $verbose;
     
@@ -728,6 +848,12 @@ sub gnulib_init {
     run('sh', $gnulib, @gnulib_options);
 }
 
+sub reconf {
+    return if $status || $skip_reconf;
+    error("Reconfiguring", fd => \*STDOUT) if $verbose;
+    run("autoreconf -i -s");
+}    
+
 END {
     cleanup;
 }
@@ -749,6 +875,7 @@ GetOptions("h" => sub {
            "dry-run|n" => \$dry_run,
            "verbose|v+" => \$verbose,
 	   "modules|m" => \$modules,
+	   "skip-reconfigure|s" => \$skip_reconf,
 	   "gnulib-srcdir=s" => sub { push @gnulib_options, "--$_[0]=$_[1]" },
 	   "skip-po|no-git" => sub { push @gnulib_options, "--$_[0]" }
 ) or exit(EX_USAGE);
@@ -764,9 +891,11 @@ if ($addmod) {
 	create_module($mod);
     }
     modproc();
+    reconf();
 } elsif ($modules) {
     abend(EX_USAGE, "too many arguments") if @ARGV;
     modproc();
+    reconf();
 } elsif ($#ARGV >= 0) {
     abend(EX_USAGE, "too many arguments; did you mean --new?");
 } else {

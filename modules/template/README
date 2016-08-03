@@ -1,0 +1,37 @@
+
+* Overview
+
+The module/template directory contains template files for creating new
+Dicod modules.  It is used by the bootstrap tool in the Dico topmost
+source directory.
+
+See "bootstrap --help", for a detailed information about the tool and
+its operation modes.
+
+* FILE LIST
+
+  This section lists the files that are to be copied from the
+  module/template directory to the newly created module
+  directory.  They also form the expansion of the <TEMPLATE>
+  variable in modules/stub.am.
+
+  On each line, a whitespace character (space or tab) starts a
+  comment that spans to the physical end of line.  Empty lines
+  are ignored.  Any continuous sequence of one or more
+  non-whitespace characters starting in column 1 forms a file
+  name.
+
+Makefile.am	     Process this file with automake to create Makefile.
+module.c             A template for module source file.   
+tests/testsuite.at   Testsuite for the module (main source)
+tests/atlocal.in     Local variables for the testsuite (processed by autoconf)
+tests/Makefile.am    Makefile for the testsute
+
+
+Local Variables:
+mode: outline
+paragraph-separate: "[ 	]*$"
+version-control: never
+End:
+
+

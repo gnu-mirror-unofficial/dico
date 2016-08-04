@@ -1,0 +1,28 @@
+# This file is part of GNU Dico. -*- Autotest -*-
+# Copyright (C) 2016 Sergey Poznyakoff
+#
+# GNU Dico is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3, or (at your option)
+# any later version.
+#
+# GNU Dico is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
+
+AT_SETUP([Build code])
+AT_KEYWORDS([build])
+
+AT_CHECK([dicod -L $abs_builddir/.. --test metaphone2 build 0 1 23 4 5 6 7 8 9 ABCD EFDEA DBE EF],
+[0],
+[length = 24
+nsegm = 2
+'0123456789ABCDEF'
+'DEADBEEF'
+])
+
+AT_CLEANUP

@@ -2811,6 +2811,7 @@ distribution of GNU Dico version @value{VERSION}.
 * substr::
 * word::
 * nprefix::
+* metaphone2::
 * pcre::
 * ldap::
 * pam::
@@ -4556,6 +4557,34 @@ The module is loaded using this simple statement:
 @example
 load-module nprefix;
 @end example
+
+@node metaphone2
+@section @command{metaphone2}
+@cindex metaphone2
+@cindex Double Metaphone
+@cindex Lawrence Philips
+The @command{metaphone2} module provides a strategy based on
+@dfn{Double Metaphone} phonetic encoding algorithm, published by
+Lawrence Philips.
+
+The module is normally loaded as follows:
+
+@example
+load-module metaphone2;
+@end example
+
+The only available initialization parameter is
+
+@deffn {metaphone2 parameter} size @var{number}
+Defines the size of computed Double Metaphone codes, in characters.
+The default is 4.
+
+@example
+load-module metaphone2 @{
+   command "metaphone2 size=16";
+@}
+@end example
+@end deffn
 
 @node pcre
 @section @command{Pcre}

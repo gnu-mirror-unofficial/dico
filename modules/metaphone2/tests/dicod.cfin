@@ -1,0 +1,9 @@
+timing no;
+prepend-load-path ("~moddir~/outline","~moddir~/metaphone2");
+load-module outline;
+load-module metaphone2;
+
+database {
+        name "dev";
+        handler "outline ~dictdir~/devdict.out";
+}

@@ -1,4 +1,4 @@
-GNU Dico NEWS -- history of user-visible changes. 2014-09-28
+GNU Dico NEWS -- history of user-visible changes. 2016-08-04
 Copyright (C) 2008-2010, 2012-2014 Sergey Poznyakoff
 See the end of file for copying conditions.
 
@@ -10,6 +10,11 @@ Version 2.2.90 (Git)
 * IPv6 support
 
 * Guile 2.x support
+
+* New matching strategy: metaphone2
+
+The metaphone2 strategy implements the Double Metaphone phonetic
+encoding algorithm.
 
 * Implement info and description for gcide dictionary.
 

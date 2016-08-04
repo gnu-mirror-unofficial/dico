@@ -1,0 +1,55 @@
+# This file is part of GNU Dico. -*- Autotest -*-
+# Copyright (C) 2016 Sergey Poznyakoff
+#
+# GNU Dico is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3, or (at your option)
+# any later version.
+#
+# GNU Dico is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
+
+AT_SETUP([Encode])
+AT_KEYWORDS([encode])
+
+AT_CHECK([dicod -L $abs_builddir/.. --test -- metaphone2 encode -length=4 dnl
+ Kuczewski dnl
+ dumb dnl
+ thumb dnl
+ Campbell dnl
+ island dnl
+ Carlysle dnl
+ sugar dnl
+ Snider dnl
+ Schneider dnl
+ Wasserman dnl
+ Vasserman dnl
+ tagliaro dnl
+ Jose dnl
+ orchestra dnl
+ archive
+],
+0,
+[Kuczewski: 'KSSK' -- 'KXFS'
+dumb: 'TM' -- NULL
+thumb: '0M' -- 'TM'
+Campbell: 'KMPL' -- NULL
+island: 'ALNT' -- NULL
+Carlysle: 'KRLL' -- NULL
+sugar: 'XKR' -- 'SKR'
+Snider: 'SNTR' -- 'XNTR'
+Schneider: 'XNTR' -- 'SNTR'
+Wasserman: 'ASRM' -- 'FSRM'
+Vasserman: 'FSRM' -- NULL
+tagliaro: 'TKLR' -- 'TLR'
+Jose: 'JS' -- 'HS'
+orchestra: 'ARKS' -- NULL
+archive: 'ARXF' -- 'ARKF'
+])
+
+AT_CLEANUP

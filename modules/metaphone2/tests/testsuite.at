@@ -19,10 +19,11 @@ m4_include(testsuite.inc)
 AT_INIT
 
 # -----------------------------------------------------------------------
-
+m4_pushdef([DICOD_TEST],[dicod --config=/dev/null -L $abs_builddir/.. --test])
 m4_include([build.at])
 m4_include([comp00.at])
 m4_include([comp01.at])
 m4_include([comp02.at])
 m4_include([encode.at])
 m4_include([match00.at])
+m4_popdef([DICOD_TEST])

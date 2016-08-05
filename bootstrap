@@ -809,9 +809,10 @@ sub modproc {
 }
 
 sub run {
-    error("running @_", prefix=>'DEBUG') if ($verbose>2);
+    error("running @_", prefix=>'DEBUG') if $verbose>2; 
     return if $dry_run;
     my $out = gensym;
+    my $err = gensym;
     open(my $err, ">&", \*STDERR) or die "can't dup STDERR: $!";
     open(my $in, "<&", \*STDIN) or die "can't dup STDIN: $!";
     my $pid = open3($in, $out, $err, @_);
@@ -821,19 +822,25 @@ sub run {
 	if ($logpid == 0) {
 	    while (<$out>) {
 		chomp;
-		error($_, fd => \*STDOUT, prefix => "[$_[0]]");
+		error($_, fd => \*STDOUT, prefix => "[@_]");
 	    }
 	    exit;
-	}
+	} 
+    }
+    
+    while (<$err>) {
+	chomp;
+	next if /^(libtoolize|autoreconf):/ && !$verbose;
+	error($_, prefix => "[@_]");
     }
     waitpid($pid, 0);
-    my $ret = 0;
+    my $ret = $?;
     if ($? == -1) {
 	abend(EX_CANTCREAT, "failed to run @_");
     } elsif ($? & 127) {
-	abend(EX_CANTCREAT, "$@ exited on signal " . ($? & 127));
+	abend(EX_CANTCREAT, "@_ exited on signal " . ($? & 127));
     } elsif (my $e = ($? >> 8)) {
-	abend(EX_CANTCREAT, "$@ exited with status $e");
+	abend(EX_CANTCREAT, "@_ exited with status $e");
     }
     waitpid($logpid, 0) if defined $logpid;
 }    

@@ -1242,7 +1242,7 @@ struct grecs_keyword keywords[] = {
       N_("Maximum number of children running simultaneously."),
       grecs_type_uint, GRECS_DFLT, &max_children, 0 },
     { "log-tag", N_("arg"),  N_("Tag syslog diagnostics with this tag."),
-      grecs_type_string, GRECS_DFLT, &log_tag, 0 },
+      grecs_type_string, GRECS_DFLT|GRECS_CONST, &log_tag, 0 },
     { "log-facility", N_("arg"),
       N_("Set syslog facility. Arg is one of the following: user, daemon, "
 	 "auth, authpriv, mail, cron, local0 through local7 "
@@ -1253,15 +1253,15 @@ struct grecs_keyword keywords[] = {
       grecs_type_bool, GRECS_DFLT, &log_print_severity, 0 },
     { "access-log-format", N_("fmt"),
       N_("Set format string for access log file."),
-      grecs_type_string, GRECS_DFLT, &access_log_format, },
+      grecs_type_string, GRECS_DFLT|GRECS_CONST, &access_log_format, },
     { "access-log-file", N_("name"),
       N_("Set access log file name."),
-      grecs_type_string, GRECS_DFLT, &access_log_file },
+      grecs_type_string, GRECS_DFLT|GRECS_CONST, &access_log_file },
     { "transcript", N_("arg"), N_("Log session transcript."),
       grecs_type_bool, GRECS_DFLT, &transcript },
     { "pidfile", N_("name"),
       N_("Store PID of the master process in this file."),
-      grecs_type_string, GRECS_DFLT, &pidfile_name, },
+      grecs_type_string, GRECS_DFLT|GRECS_CONST, &pidfile_name, },
     { "shutdown-timeout", N_("seconds"),
       N_("Wait this number of seconds for all children to terminate."),
       grecs_type_uint, GRECS_DFLT, &shutdown_timeout },
@@ -1272,11 +1272,11 @@ struct grecs_keyword keywords[] = {
       grecs_type_sockaddr, GRECS_LIST, &listen_addr, 0, cb_dico_sockaddr_list },
     { "initial-banner-text", N_("text"),
       N_("Display this text in the initial 220 banner"),
-      grecs_type_string, GRECS_DFLT, &initial_banner_text },
+      grecs_type_string, GRECS_DFLT|GRECS_CONST, &initial_banner_text },
     { "help-text", N_("text"),
       N_("Display this text in reply to the HELP command. If text "
 	 "begins with a +, usual command summary is displayed before it."),
-      grecs_type_string, GRECS_DFLT, &help_text },
+      grecs_type_string, GRECS_DFLT|GRECS_CONST, &help_text },
     { "hostname", N_("name"), N_("Override the host name."),
       grecs_type_string, GRECS_DFLT, &hostname },
     { "capability", N_("arg"), N_("Request additional capabilities."),
@@ -1353,14 +1353,14 @@ config_parse()
 {
     struct grecs_node *tree;
 
-    if (mode == MODE_TEST && access (config_file, F_OK) && errno == ENOENT)
+    if (mode == MODE_TEST && access(config_file, F_OK) && errno == ENOENT)
 	return;
-    tree = grecs_parse (config_file);
+    tree = grecs_parse(config_file);
     if (!tree)
-	exit (EX_CONFIG);
-    if (grecs_tree_process (tree, keywords) || grecs_error_count)
-	exit (EX_CONFIG);
-    grecs_tree_free (tree);
+	exit(EX_CONFIG);
+    if (grecs_tree_process(tree, keywords) || grecs_error_count)
+	exit(EX_CONFIG);
+    grecs_tree_free(tree);
 }
 
 void

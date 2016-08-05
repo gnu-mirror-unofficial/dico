@@ -17,7 +17,7 @@
 AT_SETUP([Compare equal])
 AT_KEYWORDS([compare equal])
 
-AT_CHECK([dicod -L $abs_builddir/.. --test metaphone2 compare 0 1 23 4 5 6 7 8 9 ABCD EFDEA DBE EF : 0123456789ABCDEFDEADBEEF],
+AT_CHECK([DICOD_TEST metaphone2 compare 0 1 23 4 5 6 7 8 9 ABCD EFDEA DBE EF : 0123456789ABCDEFDEADBEEF],
 [0],
 [1
 ])

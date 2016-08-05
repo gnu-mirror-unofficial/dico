@@ -605,8 +605,8 @@ dicod_module_test(int argc, char **argv)
     dicod_module_instance_t inst;
     struct dico_database_module *pmod;    
     
-    /* Split arguments in two parts: module initialization and
-       unit test arguments */
+    /* Split arguments in two parts: unit test arguments and
+       optional module initialization arguments */
     for (i = 0; i < argc; i++)
 	if (strcmp(argv[i], "--") == 0) {
 	    break;

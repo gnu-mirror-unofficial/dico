@@ -21,9 +21,10 @@ dicod \- GNU dictionary server
 .nh
 .na
 \fBdicod\fR\
- [\fB\-ETVXfist\fR]\
+ [\fB\-ETVfist\fR]\
  [\fB\-D\fR \fISYMBOL\fR[\fB=\fIVALUE\fR]]\
  [\fB\-I\fR \fIDIR\fR]\
+ [\fB\-L\fR \fIDIR\fR]\
  [\fB\-x\fR \fILEVEL\-SPEC\fR]\
  [\fB\-\-config=\fIFILE\fR]\
  [\fB\-\-config\-help\fR]\
@@ -32,6 +33,7 @@ dicod \- GNU dictionary server
  [\fB\-\-foreground\fR]\
  [\fB\-\-include\-dir=\fIDIR\fR]\
  [\fB\-\-inetd\fR]\
+ [\fB\-\-lib-dir=\fIDIR\fR]\
  [\fB\-\-lint\fR]\
  [\fB\-\-no\-preprocessor\fR]\
  [\fB\-\-no\-transcript\fR]\
@@ -40,10 +42,16 @@ dicod \- GNU dictionary server
  [\fB\-\-source\-info\fR]\
  [\fB\-\-stderr\fR]\
  [\fB\-\-syslog\fR]\
- [\fB\-\-test\fR]\
  [\fB\-\-trace\-grammar\fR]\
  [\fB\-\-trace\-lex\fR]\
  [\fB\-\-transcript\fR]
+.PP
+\fBdicod\
+ [\fIOPTIONS\fR]\
+ \fB-r\fR|\fB\-\-runtest\
+ \fIMODULE\fR\
+ [\fIARG\fR...]\
+ [\fB\-\-\fR \fIARG\fR...]
 .PP
 .B dicod \-h
 .PP
@@ -131,8 +139,18 @@ Run in \fIinetd mode\fR.
 .BR \-t ", " \-\-lint
 Check configuration file syntax and exit.
 .TP
-.BR \-X ", " \-\-test
-Run unit tests for module.
+.BR \-r ", " \-\-runtest
+Run unit tests for module.  The arguments that follow this option
+are collected into two arrays: arguments up to the \fB\-\-\fR marker
+(or end of line, if it is not present) form the vector that is passed
+to the module's \fBdico_run_test\fR function.  If the \fB\-\-\fR
+marker is present, arguments that follow it are collected into a
+separate argument vector starting from slot 1, its 0th element is set
+to point to the module name and the resulting vector is passed to the
+\fBdico_init\fR function of the module. 
+
+When running unit tests, configuration file is ignored.  The diagnostic
+messages are printed to the standard error output.
 .SS Modifiers
 .TP
 .BI \-\-config= FILE

@@ -2142,7 +2142,7 @@ modules listed in the argument.  For example:
 load-module (stratall,substr,word);
 @end example
 
-
+@anchor{load path}
 @cindex module load path
 @cindex load path
   A @dfn{module load path} is an internal list of directories which
@@ -2152,8 +2152,12 @@ follows:
 
 @enumerate 1
 @item
+@kwindex prepend-load-path
+@kwindex --load-dir
+@kwindex -L
 Optional @dfn{prefix} search directories specified by the
-@code{prepend-load-path} directive (see below).
+@code{prepend-load-path} directive (see below) and the
+@option{--load-dir} (@option{-L}) command line option.
 
 @item
 GNU Dico module directory: @file{$prefix/lib/dico}.
@@ -2660,118 +2664,79 @@ An error in the configuration file was detected.
 @cindex command line options
 @cindex options, @command{dicod}.
    This section summarizes @command{dicod} command line options.
-   
+Options are subdivided in five categories.
+
+@menu
+* Operation Mode::
+* Help Options::
+* Modifier Options::
+* Preprocessor Control::
+* Debugging Options::
+@end menu
+
+@node Operation Mode
+@subsection Dicod Operation Mode   
+The following options select the operation mode.  Only one of them can
+be present in the command line:
+
 @table @option
-@opsummary{define}
-@item --define=@var{symbol}[=@var{value}]
-@itemx -D @var{symbol}[=@var{value}]
-Define the preprocessor symbol @var{symbol}.  Optional @var{value}
-supplies the new symbol value.  This option is passed to the
-preprocessor verbatim.
-
-@opsummary{config}
-@item --config=@var{file}
-Read this configuration file instead of the default
-@file{@var{$sysconfdir}/dicod.conf}.  @xref{Configuration}.
-
-@opsummary{foreground}
-@item -f
-@itemx --foreground
-Operate in foreground.  @xref{Daemon Mode}.
-
-@opsummary{stderr}
-@item --stderr
-Output the diagnostics to stderr.  @xref{Daemon Mode, --stderr}.
-
-@opsummary{syslog}
-@item --syslog
-After successful startup, output any diagnostic to syslog.  This is
-the default.
-
 @item -E
 Preprocess configuration file and exit.  @xref{Preprocessor}.
-
-@opsummary{preprocessor}
-@item --preprocessor=@var{prog}
-Use @var{prog} as a preprocessor for configuration file.  The default
-preprocessor command line is @command{m4 -s}, unless overridden while
-configuring the package (@pxref{Default Preprocessor}).
-
-@xref{Preprocessor}.
-
-@opsummary{no-preprocessor}
-@item --no-preprocessor
-Do not use external preprocessor.  @xref{Preprocessor}.
-
-@opsummary{include-dir}
-@item -I @var{dir}
-@itemx --include-dir=@var{dir}
-Add the directory @var{dir} to the list of directories to be searched for
-preprocessor include files.  @xref{Preprocessor}.
-
-@opsummary{single-process}
-@item -s
-@itemx --single-process
-In daemon mode, process connections in the main process, without
-starting subprocesses for each connection (@pxref{Daemon Mode}).  This
-means that the daemon is able to serve only one client at a time.  The
-@option{--single-process} option is provided for debugging purposes
-only.  Never use it in production environment.
-
-@opsummary{transcript}
-@item -T
-@itemx --transcript
-Enable session transcript.  This instructs @command{dicod} to log
-all commands it receives and all responses it sends during the
-session.  Transcript is logged via the default logging channel
-(@pxref{Logging and Debugging}).  If logging via syslog, the
-@samp{debug} priority is used.
-
-See also @ref{Session Transcript}, for a description of the similar
-mode in @command{dico}, the client program.
-
-@opsummary{no-transcript}
-@item --no-transcript
-Disable transcript mode.  This is the default.  Use this option if you
-wish to temporarily disable transcript mode, enabled in the
-configuration file (@pxref{Logging and Debugging, transcript}).
 
 @opsummary{inetd}
 @item -i
 @itemx --inetd
 Run in inetd mode.  @xref{Inetd Mode}.
 
-@opsummary{debug}
-@item -x
-@itemx --debug=@var{level}
-Set debug verbosity level.  The @var{level} argument is an integer 
-ranging from @samp{0} (no debugging) to @samp{100} (maximum debugging
-information).
+@opsummary{runtest}
+@item -r
+@itemx --runtest
+@itemx --test
+Run unit tests for the module.  Arguments following that option are
+parsed as follows:
 
-@opsummary{source-info}
-@item --source-info
-Include source line information in the debugging output.
+@example
+@var{modname} [@var{testargs}] [-- @var{initargs}]
+@end example
 
-@opsummary{trace-grammar}
-@item --trace-grammar
-Trace parsing of the config file.  The option is provided for debugging
-purposes. 
+@noindent
+where @var{modname} stands for the name of the module to test,
+@var{testargs} are arguments to the @code{dico_run_test} function of
+the module, and @var{initargs} are module initialization arguments
+(passed to the @code{dico_init} method).  Square brackets denote
+optional parts.  Before passing to the corresponding method, both
+argument lists are augmented by prepending module name as the first
+element (with index 0).
 
-@opsummary{trace-lex}
-@item --trace-lex
-Trace the configuration file lexer.  The option is provided for debugging
-purposes. 
+This option implies @option{--stderr}.
 
-@opsummary{config-help}
-@item --config-help
-Show a summary of the configuration file syntax and allowed
-statements.  @xref{Configuration}.
+@kwindex --load-dir
+@kwindex -L
+Use the @option{--load-dir} (@option{-L}) option (@pxref{--load-dir}),
+if the module is not located in one of the default load directories
+(@pxref{load path}).
+
+@xref{Unit Testing}, for a detailed discussion of module unit testing.
 
 @opsummary{lint}
 @item -t
 @itemx --lint
 Check configuration file syntax and exit with code @samp{0} if it is
 OK, or with @samp{78} if there are errors.  @xref{Configuration}.
+@end table
+
+@node Help Options
+@subsection Informational Options
+
+The informational options cause the program to print a selected piece
+of information and exit.  Only one informational option can be used at
+a time.
+
+@table @option
+@opsummary{config-help}
+@item --config-help
+Show a summary of the configuration file syntax and allowed
+statements.  @xref{Configuration}.
 
 @opsummary{help}
 @item -h
@@ -2785,6 +2750,118 @@ List all available command line options and exit.
 @opsummary{version}
 @item --version
 Print program version and exit.
+@end table
+
+@node Modifier Options
+@subsection Modifier Options
+These options modify the program behavior:
+
+@table @option
+@opsummary{config}
+@item --config=@var{file}
+Read this configuration file instead of the default
+@file{@var{$sysconfdir}/dicod.conf}.  @xref{Configuration}.
+
+@opsummary{foreground}
+@item -f
+@itemx --foreground
+Operate in foreground.  @xref{Daemon Mode}.
+
+@opsummary{load-dir}
+@item -L @var{dir}
+@itemx --load-dir=@var{dir}
+Adds @var{dir} to the beginning of module load path.  @xref{load
+path}, for  detailed discussion.
+
+@opsummary{single-process}
+@item -s
+@itemx --single-process
+In daemon mode, process connections in the main process, without
+starting subprocesses for each connection (@pxref{Daemon Mode}).  This
+means that the daemon is able to serve only one client at a time.  The
+@option{--single-process} option is provided for debugging purposes
+only.  Never use it in production environment.
+
+@opsummary{stderr}
+@item --stderr
+Output the diagnostics to stderr.  @xref{Daemon Mode, --stderr}.
+
+@opsummary{syslog}
+@item --syslog
+After successful startup, output any diagnostic to syslog.  This is
+the default.
+@end table
+
+@node Preprocessor Control
+@subsection Preprocessor Control
+
+The following options control the use of preprocessor.
+@xref{Preprocessor}, for a detailed discussion.
+
+@table @option
+@opsummary{define}
+@item --define=@var{symbol}[=@var{value}]
+@itemx -D @var{symbol}[=@var{value}]
+Define the preprocessor symbol @var{symbol}.  Optional @var{value}
+supplies the new symbol value.  This option is passed to the
+preprocessor verbatim.
+
+@opsummary{include-dir}
+@item -I @var{dir}
+@itemx --include-dir=@var{dir}
+Add the directory @var{dir} to the list of directories to be searched for
+preprocessor include files.  @xref{Preprocessor}.
+
+@opsummary{no-preprocessor}
+@item --no-preprocessor
+Do not use external preprocessor.  @xref{Preprocessor}.
+
+@opsummary{preprocessor}
+@item --preprocessor=@var{prog}
+Use @var{prog} as a preprocessor for configuration file.  The default
+preprocessor command line is @command{m4 -s}, unless overridden while
+configuring the package (@pxref{Default Preprocessor}).
+@end table
+
+@node Debugging Options
+@subsection Debugging Options
+@table @option
+@opsummary{debug}
+@item -x
+@itemx --debug=@var{level}
+Set debug verbosity level.  The @var{level} argument is an integer 
+ranging from @samp{0} (no debugging) to @samp{100} (maximum debugging
+information).
+
+@opsummary{no-transcript}
+@item --no-transcript
+Disable transcript mode.  This is the default.  Use this option if you
+wish to temporarily disable transcript mode, enabled in the
+configuration file (@pxref{Logging and Debugging, transcript}).
+
+@opsummary{transcript}
+@item -T
+@itemx --transcript
+Enable session transcript.  This instructs @command{dicod} to log
+all commands it receives and all responses it sends during the
+session.  Transcript is logged via the default logging channel
+(@pxref{Logging and Debugging}).  If logging via syslog, the
+@samp{debug} priority is used.
+
+See also @ref{Session Transcript}, for a description of the similar
+mode in @command{dico}, the client program.
+
+@opsummary{source-info}
+@item --source-info
+Include source line information in the debugging output.
+
+@opsummary{trace-grammar}
+@item --trace-grammar
+Trace parsing of the config file.
+
+@opsummary{trace-lex}
+@item --trace-lex
+Trace the configuration file lexer.
 @end table
 
 @node Modules
@@ -4704,6 +4781,7 @@ This chapter describes the API for Dico loadable modules.
 * dico_database_module::
 * Strategies::
 * Output::
+* Unit Testing::
 @end menu
 
 @node dico_database_module
@@ -4924,6 +5002,12 @@ Populate associative list @var{hdr} with the headers describing result
 set @var{rp}.  This callback is optional.  If defined, it will be
 called before outputting the result set @var{rp} if @code{OPTION MIME}
 is in effect (@pxref{OPTION, OPTION MIME}).
+@end deftypefn
+
+@deftypefn {Dico Callback} int dico_run_test (int @var{argc}, char **@var{argv})
+Runs unit tests for the module.  Argument vector contains all command
+line arguments that follow the @option{--runtest} option, up to the
+@samp{--} marker or end of line, whichever is encountered first.
 @end deftypefn
 
 @node Strategies
@@ -5219,6 +5303,42 @@ output stream @var{str}.  Returns 0 on success, and non-zero on error.
 Same as @code{dico_stream_write}, but ends the output with a
 @kbd{newline} character (ASCII 10).              
 @end deftypefn
+
+@node Unit Testing
+@section Module Unit Testing
+@cindex testing, modules
+@cindex unit testing
+The @code{dico_run_test} member of @code{struct dico_database_module}
+(@pxref{dico_database_module, dico_run_test}) points to the function
+that serves as entry point for unit tests of that module.  If it is
+NULL, the module does not support unit testing.  Otherwise, unit tests
+can be run using the following command line syntax:
+
+@example
+$ dicod --runtest @var{module} [@var{test_args}] [-- @var{init_args}]
+@end example
+
+As usual, square brackets denote optional parts.  The arguments that
+follow the @option{--runtest} (@option{-r}) option are collected into
+two arrays: arguments up to the @samp{--} marker form the vector that
+is passed to the module's @code{dico_run_test} function.  The 
+@samp{--} marker is optional.  If present, arguments that follow it
+are collected into a separate argument vector starting from slot 1,
+the slot 0 is set to point to the module name and the resulting vector
+is passed to the @code{dico_init} method of the module.
+
+When running unit tests, @command{dicod} prints its diagnostic
+messages to the standard error output.
+
+@kwindex --load-dir
+@kwindex -L
+Use the @option{--load-dir} (@option{-L}) command line option, if the
+module being tested cannot be found in the default load path
+(@pxref{load path}), e.g.:
+
+@example
+$ dicod -L ../lib --runtest metaphone2 build A B C
+@end example
 
 @node dico client
 @chapter Dico --- a client program.

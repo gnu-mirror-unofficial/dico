@@ -17,7 +17,7 @@
 AT_SETUP([Encode])
 AT_KEYWORDS([encode])
 
-AT_CHECK([DICOD_TEST --test -- metaphone2 encode -length=4 dnl
+AT_CHECK([DICOD_TEST metaphone2 encode -length=4 dnl
  Kuczewski dnl
  dumb dnl
  thumb dnl

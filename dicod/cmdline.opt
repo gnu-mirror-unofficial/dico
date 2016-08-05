@@ -35,64 +35,65 @@ OPTIONS_BEGIN("dicod",
 
 GROUP(Select program mode)
 OPTION(,E,,
-       [<Preprocess configuration file and exit>])
+       [<preprocess configuration file and exit>])
 BEGIN
    mode = MODE_PREPROC;
 END
 
 OPTION(lint,t,,
-       [<Check configuration file syntax and exit.>])
+       [<check configuration file syntax and exit>])
 BEGIN
    config_lint_option = 1;
 END
 
 OPTION(inetd, i,,
-       [<Inetd mode.>])
+       [<inetd mode>])
 BEGIN
    mode = MODE_INETD;
 END
 
-OPTION(test, X,,
-       [<Run tests for MODULE>])
+OPTION(runtest, r,,
+       [<run unit tests for module; subsequent arguments are treated as module name and unit test arguments; the -- marker introduces module initialization arguments>])
 BEGIN
    mode = MODE_TEST;
    log_to_stderr = 1;
+   LASTOPT;
 END
 
 GROUP(Modifiers)
     
 OPTION(config,,FILE,
-       [<Read this configuration file.>])
+       [<read this configuration file.>])
 BEGIN
    config_file = optarg;
 END
 
 OPTION(foreground, f,,
-       [<Operate in foreground.>])
+       [<operate in foreground>])
 BEGIN
    foreground = 1;
 END
 
 OPTION(stderr,,,
-       [<Output diagnostic to stderr.>])
+       [<output diagnostic to stderr>])
 BEGIN
    log_to_stderr = 1;
 END
 
 OPTION(syslog,,,
-       [<Output diagnostic to syslog (default).>])
+       [<output diagnostic to syslog (default)>])
 BEGIN
    log_to_stderr = 0;
 END
 
 OPTION(single-process, s,,
-       [<Single-process mode.>])
+       [<single-process mode>])
 BEGIN
    single_process = 1;
 END
 
 OPTION(load-dir, L, DIR,
-       [<Prepend DIR to the load path>])
+       [<prepend DIR to the module load path>])
 BEGIN
    prepend_load_path = xdico_list_create();
    dico_list_set_free_item(prepend_load_path, dicod_free_item, NULL);
@@ -102,38 +103,38 @@ END
 GROUP(Debugging)
     
 OPTION(transcript, T,,
-       [<Enable session transcript.>])
+       [<enable session transcript>])
 BEGIN
    conf->transcript = 1;
 END
 
 OPTION(no-transcript,,,
-       [<Disable session transcript.>])
+       [<disable session transcript>])
 BEGIN
    conf->transcript = 0;
 END
 
 OPTION(debug, x, NUMBER,
-       [<Set debug verbosity level.>])
+       [<set debug verbosity level>])
 BEGIN
    debug_level_str = optarg;
    debug_level = atoi(optarg);
 END
 
 OPTION(source-info,,,
-       [<Include source line information in the debugging output.>])
+       [<include source line information in the debugging output>])
 BEGIN
-  debug_source_info = 1;
+   debug_source_info = 1;
 END  
 
 OPTION(trace-grammar,,,
-       [<Trace parsing of configuration file.>])
+       [<trace parsing of configuration file>])
 BEGIN
    grecs_gram_trace(1);
 END
 
 OPTION(trace-lex,,,
-       [<Trace config file lexer.>])
+       [<trace config file lexer>])
 BEGIN
    grecs_lex_trace(1);
 END
@@ -141,7 +142,7 @@ END
 GROUP([<Additional help>])
 
 OPTION(config-help,,,
-       [<Show configuration file summary.>])
+       [<show configuration file summary>])
 BEGIN
    config_help();
    exit(0);
@@ -150,19 +151,19 @@ END
 GROUP(Preprocessor control)
     
 OPTION(preprocessor,,PROG,
-       [<Use PROG as a preprocessor for config file.>])
+       [<use PROG as a preprocessor for config file>])
 BEGIN
    grecs_preprocessor = optarg;
 END
 
 OPTION(no-preprocessor,,,
-       [<Do not use external preprocessor.>])
+       [<do not use external preprocessor>])
 BEGIN
    grecs_preprocessor = NULL;
 END
 
 OPTION(include-dir,I,DIR,
-       [<Add the directory DIR to the list of directories to be searched for preprocessor include files>])
+       [<add the directory DIR to the list of directories to be searched for preprocessor include files>])
 BEGIN
    grecs_preproc_add_include_dir(optarg); 
 END

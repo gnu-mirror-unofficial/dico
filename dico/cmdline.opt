@@ -29,25 +29,25 @@ OPTIONS_BEGIN("dico",
 GROUP([<Server selection>])
 	      
 OPTION(host,,SERVER,
-       [<Connect to this server.>])
+       [<connect to this server>])
 BEGIN
   xdico_assign_string(&dico_url.host, optarg);
 END
 
 OPTION(port,p,SERVICE,
-       [<Specify port to connect to.>])
+       [<specify port to connect to>])
 BEGIN
   xdico_assign_string(&dico_url.port, optarg);
 END
 
 OPTION(database,d,NAME,
-       [<Select a database to search.>])
+       [<select a database to search>])
 BEGIN
   xdico_assign_string(&dico_url.req.database, optarg);  
 END
 
 OPTION(source,,ADDR,
-       [<Set a source address for TCP connections.>])
+       [<set a source address for TCP connections>])
 BEGIN
   source_addr = optarg;
 END
@@ -55,20 +55,20 @@ END
 GROUP([<Operation modes>])
 
 OPTION(match,m,,
-       [<Match instead of define.>])
+       [<match instead of define>])
 BEGIN
   mode = mode_match;   
 END
 
 OPTION(strategy,s,NAME,
-       [<Select a strategy for matching.  Implies --match.>])
+       [<select a strategy for matching; implies --match>])
 BEGIN
   xdico_assign_string(&dico_url.req.strategy, optarg);
   mode = mode_match;
 END
 
 OPTION(levdist,,N,
-       [<Set maximum Levenshtein distance to N.>])
+       [<set maximum Levenshtein distance>])
 ALIAS(levenshtein-distance)
 BEGIN
   char *p;
@@ -78,38 +78,38 @@ BEGIN
 END
 
 OPTION(dbs,D,,
-       [<Show available databases.>])
+       [<show available databases>])
 BEGIN
   mode = mode_dbs;  
 END
 
 OPTION(strategies,S,,
-       [<Show available search strategies.>])
+       [<show available search strategies>])
 BEGIN
   mode = mode_strats;
 END
 
 OPTION(serverhelp,H,,
-       [<show server help.>])
+       [<show server help>])
 BEGIN
   mode = mode_help;
 END
 
 OPTION(info,i,DBNAME,
-       [<Show information about database DBNAME.>])
+       [<show information about database DBNAME>])
 BEGIN
   mode = mode_info;
   dico_url.req.database = optarg;
 END
 
 OPTION(serverinfo,I,,
-       [<Show information about the server.>])
+       [<show information about the server>])
 BEGIN
   mode = mode_server;
 END
 
 OPTION(quiet, q,,
-       [<Do not print the normal dico welcome.>])
+       [<do not print the normal dico welcome>])
 BEGIN
   quiet_option = 1;
 END
@@ -117,70 +117,70 @@ END
 GROUP([<Authentication>])
 
 OPTION(noauth,a,,
-       [<Disable authentication.>])
+       [<disable authentication>])
 BEGIN
   noauth_option = 1;
 END
 
 OPTION(sasl,,,
-       [<Enable SASL authentication (default).>])
+       [<enable SASL authentication (default)>])
 BEGIN
   sasl_enable(1);
 END
 
 OPTION(nosasl,,,
-       [<Disable SASL authentication.>])
+       [<disable SASL authentication>])
 BEGIN
   sasl_enable(0);
 END
 
 OPTION(user,u,NAME,
-       [<Set user name for authentication.>])
+       [<set user name for authentication>])
 BEGIN
   default_cred.user = optarg;
 END
 
 OPTION(key, k, STRING,
-       [<Set shared secret for authentication.>])
+       [<set shared secret for authentication>])
 ALIAS(password)       
 BEGIN
   default_cred.pass = optarg;
 END
 
 OPTION(autologin,, NAME,
-       [<Set the name of autologin file to use.>])
+       [<set the name of autologin file to use>])
 BEGIN
   autologin_file = optarg;
 END  
 
 OPTION(client,c, STRING,
-       [<Additional text for client command.>])
+       [<additional text for client command>])
 BEGIN
   client = optarg;
 END
 
 GROUP([<Debugging>])
 OPTION(transcript,t,,
-       [<Enable session transcript.>])
+       [<enable session transcript>])
 BEGIN
   transcript = 1;
 END
 
 OPTION(verbose,v,,
-       [<Increase debugging verbosity level.>])
+       [<increase debugging verbosity level>])
 BEGIN
   debug_level++;
 END
 
 OPTION(time-stamp,,,
-       [<Include time stamp in the debugging output.>])
+       [<include time stamp in the debugging output>])
 BEGIN
   int n = 1;
   dico_stream_ioctl(debug_stream, DICO_DBG_CTL_SET_TS, &n);
 END  
 
 OPTION(source-info,,,
-       [<Include source line information in the debugging output.>])
+       [<include source line information in the debugging output>])
 BEGIN
   debug_source_info = 1;
 END  

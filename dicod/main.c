@@ -1658,6 +1658,10 @@ main(int argc, char **argv)
     if (mode == MODE_PREPROC)
 	exit(grecs_preproc_run(config_file, grecs_preprocessor) ?
 	      EX_CONFIG : 0);
+    else if (mode == MODE_TEST) {
+	dicod_loader_init();
+	exit(dicod_module_test(argc, argv));
+    }
 
     config_parse();
     /* Logging settings may have been changed by the config, so setup
@@ -1670,9 +1674,6 @@ main(int argc, char **argv)
 
     dicod_loader_init();
 
-    if (mode == MODE_TEST)
-	exit(dicod_module_test(argc, argv));
-    
     begin_timing("server");
     dicod_server_init();
     init_user_db();

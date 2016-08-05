@@ -17,7 +17,7 @@
 AT_SETUP([Build code])
 AT_KEYWORDS([build])
 
-AT_CHECK([dicod -L $abs_builddir/.. --test metaphone2 build 0 1 23 4 5 6 7 8 9 ABCD EFDEA DBE EF],
+AT_CHECK([DICOD_TEST --test metaphone2 build 0 1 23 4 5 6 7 8 9 ABCD EFDEA DBE EF],
 [0],
 [length = 24
 nsegm = 2

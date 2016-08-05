@@ -5318,7 +5318,8 @@ can be run using the following command line syntax:
 $ dicod --runtest @var{module} [@var{test_args}] [-- @var{init_args}]
 @end example
 
-As usual, square brackets denote optional parts.  The arguments that
+As usual, square brackets denote optional parts.  The @var{module}
+argument specifies the name of the module to test.  The arguments that
 follow the @option{--runtest} (@option{-r}) option are collected into
 two arrays: arguments up to the @samp{--} marker form the vector that
 is passed to the module's @code{dico_run_test} function.  The 
@@ -5327,8 +5328,8 @@ are collected into a separate argument vector starting from slot 1,
 the slot 0 is set to point to the module name and the resulting vector
 is passed to the @code{dico_init} method of the module.
 
-When running unit tests, @command{dicod} prints its diagnostic
-messages to the standard error output.
+When running unit tests, configuration file is ignored.  The diagnostic
+messages are printed to the standard error output.
 
 @kwindex --load-dir
 @kwindex -L

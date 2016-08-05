@@ -1353,8 +1353,6 @@ config_parse()
 {
     struct grecs_node *tree;
 
-    if (mode == MODE_TEST && access(config_file, F_OK) && errno == ENOENT)
-	return;
     tree = grecs_parse(config_file);
     if (!tree)
 	exit(EX_CONFIG);

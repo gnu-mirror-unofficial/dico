@@ -1,5 +1,5 @@
-.\" This file is part of GNU Dico                                        
-.\" Copyright (C) 2014 Sergey Poznyakoff                     
+.\" This file is part of GNU Dico                                -*- nroff -*-
+.\" Copyright (C) 2014-2016 Sergey Poznyakoff                     
 .\"                                                                      
 .\" GNU Dico is free software; you can redistribute it and/or modify     
 .\" it under the terms of the GNU General Public License as published by 
@@ -14,14 +14,14 @@
 .\" You should have received a copy of the GNU General Public License    
 .\" along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.    
 .so config.man
-.TH DICOD 1 "September 26, 2014" "GNU DICO" "GNU Dico Reference"
+.TH DICOD 1 "August 5, 2016" "GNU DICO" "GNU Dico Reference"
 .SH NAME
 dicod \- GNU dictionary server
 .SH SYNOPSIS
 .nh
 .na
 \fBdicod\fR\
- [\fB\-ETVfist\fR]\
+ [\fB\-ETVXfist\fR]\
  [\fB\-D\fR \fISYMBOL\fR[\fB=\fIVALUE\fR]]\
  [\fB\-I\fR \fIDIR\fR]\
  [\fB\-x\fR \fILEVEL\-SPEC\fR]\
@@ -40,6 +40,7 @@ dicod \- GNU dictionary server
  [\fB\-\-source\-info\fR]\
  [\fB\-\-stderr\fR]\
  [\fB\-\-syslog\fR]\
+ [\fB\-\-test\fR]\
  [\fB\-\-trace\-grammar\fR]\
  [\fB\-\-trace\-lex\fR]\
  [\fB\-\-transcript\fR]
@@ -129,6 +130,9 @@ Run in \fIinetd mode\fR.
 .TP
 .BR \-t ", " \-\-lint
 Check configuration file syntax and exit.
+.TP
+.BR \-X ", " \-\-test
+Run unit tests for module.
 .SS Modifiers
 .TP
 .BI \-\-config= FILE

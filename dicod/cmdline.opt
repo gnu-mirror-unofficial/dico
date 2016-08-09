@@ -63,7 +63,7 @@ END
 GROUP(Modifiers)
     
 OPTION(config,,FILE,
-       [<read this configuration file.>])
+       [<read this configuration file>])
 BEGIN
    config_file = optarg;
 END

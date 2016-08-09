@@ -358,30 +358,30 @@ SCM_DEFINE_PUBLIC(scm_dico_strat_select_p, "dico-strat-select?", 3, 0, 0,
     sp = (struct _guile_strategy *) SCM_CDR(strat);
     stratp = sp->strat;
     
+    wordstr = scm_to_locale_string(word);
     if (scm_is_string(key)) {
 	char *keystr = scm_to_locale_string(key);
 	struct dico_key skey;
 
-	if (dico_key_init(&skey, stratp, wordstr)) {
-	    free(keystr);
+	rc = dico_key_init(&skey, stratp, keystr);
+	free(keystr);
+	if (rc) {
+	    free(wordstr);
 	    scm_misc_error(FUNC_NAME,
 			   "key initialization failed: ~S",
 			   scm_list_1(key));
 	}
 	rc = dico_key_match(&skey, wordstr);
 	dico_key_deinit(&skey);
-	free(wordstr);
-	free(keystr);
     } else {
 	struct dico_key *kptr;
 
 	SCM_ASSERT(CELL_IS_KEY(key), key, SCM_ARG3, FUNC_NAME);
     
 	kptr = (struct dico_key *) SCM_CDR(key);
-	wordstr = scm_to_locale_string(word);
 	rc = dico_key_match(kptr, wordstr);
-	free(wordstr);
     }
+    free(wordstr);
     return rc ? SCM_BOOL_T : SCM_BOOL_F;
 }
 #undef FUNC_NAME

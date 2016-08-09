@@ -214,7 +214,7 @@ convert(uchar *text, int len, struct cvt_tab *tab)
 int
 shift_to_shin(char *text, int len)
 {
-    return convert(text, len, shift_to_shin_tab);
+    return convert((uchar*) text, len, shift_to_shin_tab);
 }
 
 int

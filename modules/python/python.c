@@ -620,7 +620,7 @@ _tuple_to_langlist (PyObject *py_obj)
 	list = dico_list_create ();
 
 	if (py_iterator) {
-	    while (py_item = PyIter_Next (py_iterator)) {
+	    while ((py_item = PyIter_Next (py_iterator))) {
 		if (PyString_Check (py_item)) {
 		    char *text = strdup (PyString_AsString (py_item));
 		    dico_list_append (list, text);
@@ -808,7 +808,7 @@ mod_define (dico_handle_t hp, const char *word)
 static int
 mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 {
-    PyObject *py_args, *py_fnc, *py_res, *py_out;
+    PyObject *py_args, *py_fnc, *py_out;
     struct python_result *gres = (struct python_result *)rp;
     struct _python_database *db = (struct _python_database *)gres->db;
 
@@ -831,7 +831,8 @@ mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 
     py_fnc = PyObject_GetAttrString (db->py_instance, "output");
     if (py_fnc && PyCallable_Check (py_fnc)) {
-	py_res = PyObject_CallObject (py_fnc, py_args);
+	/* FIXME: should we checj/propagate the retval? */
+	PyObject_CallObject (py_fnc, py_args);
 	Py_DECREF (py_args);
 	Py_DECREF (py_fnc);
 	if (PyErr_Occurred ())

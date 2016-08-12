@@ -395,7 +395,7 @@ _acl_check_cb(void *item, void *data)
 	dico_log(L_DEBUG, 0, "%s:%d: %s",
 		 /* FIXME: beg:end */
 		 ent->locus.beg.file, ent->locus.beg.line,
-		 /* TRANSLATIONS: `MATCHES' is the verb `match' in 2nd person.
+		 /* TRANSLATORS: `MATCHES' is the verb `match' in 2nd person.
 		    E.g., in French: CONCORD AVEC */
 		 result ? _("MATCHES") : _("does not match"));
     }

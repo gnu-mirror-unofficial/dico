@@ -49,5 +49,6 @@ m4_include(def01.at)
 m4_include(def02.at)
 m4_include(def04.at)
 m4_include(def05.at)
+m4_include(def06.at)
 
 m4_popdef([AT_DICOD])

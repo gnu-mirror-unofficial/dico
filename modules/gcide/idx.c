@@ -392,9 +392,12 @@ gcide_idx_locate(struct gcide_idx_file *file, char *headword, size_t hwlen)
 	return NULL;
 
     for (;;) {
-	if (_compare(file, headword, &page->ipg_ref[refno-1], hwlen) > 0)
-	    break;
-	if (--refno==0) {
+	if (refno > 0) {
+	    if (_compare(file, headword, &page->ipg_ref[refno-1], hwlen) > 0)
+		break;
+	    --refno;
+	}
+	if (refno == 0) {
 	    if (pageno == 0)
 		break;
 	    page = _idx_get_page(file, --pageno);

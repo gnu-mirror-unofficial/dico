@@ -71,6 +71,7 @@ TESTSUITE_AT = \
  def03.at\
  def04.at\
  def05.at\
+ def06.at\
  descr.at\
  exact.at\
  greek.at\

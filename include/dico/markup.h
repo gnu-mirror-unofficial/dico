@@ -19,7 +19,7 @@
 
 #include <dico/types.h>
 
-const char *dico_markup_type;
+extern const char *dico_markup_type;
 dico_list_t dico_markup_list;
 const char *dico_markup_lookup(const char *name);
 int dico_markup_register(const char *name);

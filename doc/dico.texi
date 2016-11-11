@@ -5650,6 +5650,10 @@ name is @samp{gnu.org.ua} and the default port number is 2628.  Both
 values can be changed at configuration time, see @ref{Default Server}
 for a detailed instruction.
 
+  When given one argument, @code{open} checks if it begins with a
+directory separator (@samp{/}).  If so, the argument is handled as the
+full file name of a UNIX socket.
+
   Note that you are not required to issue this command.  If it is not
 given, @command{dico} will attempt to establish a connection using its
 default settings before executing any command that requires a

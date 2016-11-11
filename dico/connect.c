@@ -269,6 +269,28 @@ dict_transcript(struct dict_connection *conn, int state)
     }
 }
 
+static char const *
+urlstr(dico_url_t url)
+{
+    if (!url->string) {
+	if (!url->proto)
+	    xdico_assign_string(&url->proto, "dict");
+	if (!url->port)
+	    xdico_assign_string(&url->port, DICO_DICT_PORT_STR);
+
+	if (url->host) {
+	    asprintf(&url->string, "%s://%s:%s",
+		     url->proto,
+		     url->host,
+		     url->port);
+	} else {
+	    asprintf(&url->string, "%s:///%s", url->proto, url->path);
+	}
+    }   
+    
+    return url->string;
+}
+
 int
 dict_connect(struct dict_connection **pconn, dico_url_t url)
 {
@@ -278,7 +300,7 @@ dict_connect(struct dict_connection **pconn, dico_url_t url)
     struct dict_connection *conn;
     char const *port = url->port ? url->port : DICO_DICT_PORT_STR;
     
-    XDICO_DEBUG_F2(1, _("Connecting to %s:%s\n"), url->host, port);
+    XDICO_DEBUG_F1(1, _("Connecting to %s\n"), urlstr (url));
 
     if (source_addr) {
 	memset(&hints, 0, sizeof(hints));
@@ -310,7 +332,34 @@ dict_connect(struct dict_connection **pconn, dico_url_t url)
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
-    rc = getaddrinfo(url->host, port, &hints, &res);
+    if (url->host) {
+	rc = getaddrinfo(url->host, port, &hints, &res);
+	if (rc) {
+	    dico_log(L_ERR, 0,
+		     _("%s: can't get address: %s"),
+		     url->host, gai_strerror(rc));
+	    return -1;
+	}
+    } else {
+	struct sockaddr_un *s;
+
+	if (strlen(url->path) >= sizeof s->sun_path) {
+	    dico_log(L_ERR, 0, _("%s: UNIX socket name too long"), url->path);
+	    return -1;
+	}
+	
+	hints.ai_family = AF_UNIX;
+	hints.ai_addrlen = sizeof(struct sockaddr_un);
+	
+	s = xcalloc(1, hints.ai_addrlen);
+	s->sun_family = AF_UNIX;
+	strcpy(s->sun_path, url->path);
+
+	hints.ai_addr = (struct sockaddr *)s;
+
+	res = &hints;
+    }
+    
     for (rp = res; rp; rp = rp->ai_next) {
 	if (fd != -1 && family != rp->ai_family) {
 	    close(fd);
@@ -329,11 +378,16 @@ dict_connect(struct dict_connection **pconn, dico_url_t url)
 	if (connect(fd, rp->ai_addr, rp->ai_addrlen) != -1)
 	    break;
     }
-
+    
     if (!rp) {
-	dico_log(L_ERR, 0, _("%s: cannot connect"), url->host);
+	dico_log(L_ERR, 0, _("%s: cannot connect"), urlstr(url));
 	return 1;
     }
+
+    if (res == &hints)
+	free(res->ai_addr);
+    else
+	freeaddrinfo(res);
     
     if ((str = dico_fd_io_stream_create(fd, fd)) == NULL) {
 	dico_log(L_ERR, errno,

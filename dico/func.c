@@ -100,7 +100,7 @@ ensure_connection()
 {
     check_disconnect();
     if (!conn) {
-	if (!dico_url.host) {
+	if (!dico_url.host && !dico_url.path) {
 	    script_error(_("Please specify server name or IP address"));
 	    return 1;
 	}
@@ -122,12 +122,19 @@ void
 ds_open(int argc, char **argv)
 {
     if (argc > 1) {
-	xdico_assign_string(&dico_url.host, argv[1]);
-	xdico_assign_string(&dico_url.port,
-			    argc == 3 ? argv[2] : DICO_DICT_PORT_STR);
+	xdico_assign_string(&dico_url.string, NULL);
+	if (argv[1][0] == '/') {
+	    xdico_assign_string(&dico_url.host, NULL);
+	    xdico_assign_string(&dico_url.port, NULL);
+	    xdico_assign_string(&dico_url.path, argv[1]);
+	} else {
+	    xdico_assign_string(&dico_url.host, argv[1]);
+	    xdico_assign_string(&dico_url.port,
+				argc == 3 ? argv[2] : DICO_DICT_PORT_STR);
+	}
     }
 
-    if (!dico_url.host) {
+    if (!dico_url.host && !dico_url.path) {
 	script_error(_("Please specify server name or IP address"));
 	return;
     }

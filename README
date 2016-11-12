@@ -157,13 +157,31 @@ If you do not wish to use Guile, use `--without-guile' to disable it.
 ** WordNet database
 -------------------
 
-If you plan to use WordNet database, you will most probably need the
-`--with-wordnet' option to inform the script about the location where
-WordNet libraries and headers can be found.  For example, the command
+If you plan to use WordNet database, there are several points to be
+observed.  First of all, WordNet provides static libraries, usually
+with position-dependent code, which makes it difficult (or impossible,
+on 64-bit architectures) to use from the shared dico modules.  So,
+first of all you will need to rebuild WordNet so that it contains
+position-independent code.  To do so, reconfigure it as follows:
+
+  ./configure CFLAGS=-fPIC [other_options]
+
+where [other_options] stands for any other options you might wish to
+pass to configure.
+
+If you are going to run this command in a source directory that has
+been previously configured, it is advised to run "make distclean"
+beforehand.
+
+After configuring, run make and make install, as usual.
+
+Once this step done, configure dico with the `--with-wordnet' option,
+to inform the it about the location where WordNet libraries and
+headers can be found.  For example, the command 
 
   ./configure --with-wordnet=/usr/local/WordNet-3.0
 
-instructs the script to look for WordNet library files in
+will instruct the configure script to look for WordNet library files in
 /usr/local/WordNet-3.0/lib and for include files in
 /usr/local/WordNet-3.0/include.
 
@@ -184,7 +202,7 @@ Send bug reports to <bug-dico@gnu.org>.
 
 * Copyright information:
 
-Copyright (C) 2008-2010, 2012 Sergey Poznyakoff
+Copyright (C) 2008-2016 Sergey Poznyakoff
 
    Permission is granted to anyone to make or distribute verbatim copies
    of this document as received, in any medium, provided that the

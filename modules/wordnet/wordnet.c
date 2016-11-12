@@ -684,7 +684,7 @@ wn_exact_match(struct wndb *db, const char *hw)
 {
     struct result *res;
 
-    if (!wn_is_defined(db, hw))
+    if (!wn_is_defined(db, (char*)hw))
 	return NULL;
     res = wn_create_match_result(db);
     dico_list_append(res->list, strdup(hw));

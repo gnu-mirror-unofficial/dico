@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.    
 
-dist_man_MANS=dicod.8 dicod.conf.5in dico.1
+dist_man_MANS=dicod.8 dicod.conf.5 dico.1
 
 .8in.8:
 	$(AM_V_GEN)soelim -I$(builddir) $< > $@

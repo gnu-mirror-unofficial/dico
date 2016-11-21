@@ -3216,16 +3216,37 @@ between these synonym sets.
 @cindex libWN
 Dico provides a @command{wordnet} module for reading WordNet lexical
 database files.  The module relies on @file{libWN}, the support
-library distributed with the WordNet database.
+library distributed with the WordNet database. 
+
+@cindex WordNet, configuring
+There is a point worth noticing if you plan to use the WordNet
+library.  Normally, the @file{libWN} is compiled as a static library
+with position-dependent code, which makes it difficult (or impossible,
+on 64-bit architectures) to use from the dynamically-loaded libraries,
+such as @command{dicod} modules.  So, first of all you will need to
+rebuild WordNet so that it contains position-independent code.  To do
+so, change to the WordNet source directory and reconfigure it as
+follows: 
+
+@example
+  ./configure CFLAGS=-fPIC [@var{other_options}]
+@end example
+
+where @var{other_options} stands for any other options you might wish to
+pass to configure.
+
+If you are going to run this command in a source directory that has
+been previously configured, it is advisable to run @samp{make distclean}
+beforehand.
 
 @findex wn.h
 @opindex --with-wordnet, @command{configure} option.
-The module is compiled automatically if the configure script was able
-to find the library and its header file @file{wn.h}.  If it was not,
-use the @option{--with-wordnet} configure option to specify the
-location where these files can be found.  For example, if WordNet was
-installed using the default procedure, then the following option will
-do the job:
+The @command{wordnet} module is compiled automatically if the
+configure script was able to find the library and its header file
+@file{wn.h}.  If it was not, use the @option{--with-wordnet} configure
+option to specify the location where these files can be found.  For
+example, if WordNet was installed using the default procedure, then
+the following option will do the job:
 
 @example
   ./configure --with-wordnet=/usr/local/WordNet-3.0
@@ -3235,7 +3256,7 @@ This command tells Dico to look for WordNet library files in
 @file{/usr/@/local/@/WordNet-3.0/@/lib} and for include files in
 @file{/usr/@/local/@/WordNet-3.0/@/include}.
 
-A compiled module is installed using the following statement:
+A compiled module is loaded using the following statement:
 
 @example
 load-module wordnet @{
@@ -3246,7 +3267,26 @@ load-module wordnet @{
 Optional parameters are:
 
 @deffn {wordnet module parameter} wnhome dir
-Base directory for WordNet files.
+Base directory for WordNet files.  This is the directory where WordNet
+was installed.  For the @command{wordnet} module to work, it must
+contain the @file{dict} subdirectory with WordNet dictionary files.
+
+If you installed WordNet to @file{/usr/local/WordNet-3.0}, so that
+running @command{ls} on that directory shows you:
+
+@example
+$ ls /usr/local/WordNet-3.0/
+bin/  dict/  doc/  include/  lib/  man/
+@end example
+
+@noindent
+then you would use
+
+@example
+load-module wordnet @{
+    command "wordnet wnhome=/usr/local/WordNet-3.0";
+@}
+@end example
 @end deffn
 
 @deffn {wordnet module parameter} wnsearchdir dir
@@ -3255,7 +3295,7 @@ Directory in which the WordNet database has been installed.
 
 Normally, these values are set at compile time and you won't need to
 override them.  The use of these parameters may, however, be necessary
-if the database is moved or installed in a non-standard location.
+if the database was moved or installed in a non-standard location.
 
 One or more WordNet database instances can be defined.  They all will
 be sharing the same database.  The reason for having several database

@@ -1,8 +1,16 @@
-GNU Dico NEWS -- history of user-visible changes. 2016-08-09
+GNU Dico NEWS -- history of user-visible changes. 2016-11-21
 Copyright (C) 2008-2010, 2012-2016 Sergey Poznyakoff
 See the end of file for copying conditions.
 
 Please send Dico bug reports to <bug-dico@gnu.org.ua>
+
+Version 2.4, 2016-11-21
+
+* dico accepts UNIX socket name as argument to the open command
+
+* Fix coredump in gcide module
+
+* Update translations
 
 
 Version 2.3, 2016-08-09

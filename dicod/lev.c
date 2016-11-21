@@ -23,7 +23,7 @@ lev_sel(int cmd, dico_key_t key, const char *dict_word)
 {
     if (cmd == DICO_SELECT_RUN) {
 	int dist = dico_levenshtein_distance(key->word, dict_word,
-					     (int)key->strat->closure);
+					     *(int*)key->strat->closure);
 	if (dist < 0)
 	    return 0;
 	return dist <= levenshtein_distance;
@@ -31,23 +31,28 @@ lev_sel(int cmd, dico_key_t key, const char *dict_word)
     return 0;
 }
 
+static int lev_flags = 0;
+static int nlev_flags = DICO_LEV_NORM;
+static int dlev_flags = DICO_LEV_DAMERAU;
+static int ndlev_flags = DICO_LEV_NORM | DICO_LEV_DAMERAU;
+
 static struct dico_strategy levstrat[] = {
     { "lev",
       "Match headwords within given Levenshtein distance",
       lev_sel,
-      NULL },
+      &lev_flags },
     { "nlev",
       "Match headwords within given Levenshtein distance (normalized)",
       lev_sel,
-      (void*)DICO_LEV_NORM },
+      &nlev_flags },
     { "dlev",
       "Match headwords within given Damerau-Levenshtein distance",
       lev_sel,
-      (void*)DICO_LEV_DAMERAU },
+      &dlev_flags },
     { "ndlev",
       "Match headwords within given Damerau-Levenshtein distance (normalized)",
       lev_sel,
-      (void*)(DICO_LEV_NORM|DICO_LEV_DAMERAU) }
+      &ndlev_flags }
 };
 
 static void

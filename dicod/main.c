@@ -408,15 +408,17 @@ set_supp_group(enum grecs_callback_command cmd,
 	return 1;
     }
 
-    if (!group_list)
+    if (!group_list) {
 	group_list = xdico_list_create();
+	dico_list_set_free_item(group_list, dicod_free_item, NULL);
+    }
     
     if (value->type == GRECS_TYPE_LIST)
 	grecs_list_iterate(value->v.list, set_supp_group_iter, NULL);
     else {
 	char *s = value->v.string;
-	struct group *group;
-
+	gid_t gid, *gp;
+    
 	if (*s == '+') {
 	    char *q;
 	    unsigned long n = strtoul(s + 1, &q, 0);
@@ -424,15 +426,19 @@ set_supp_group(enum grecs_callback_command cmd,
 		grecs_error(locus, 0, _("not a valid GID number: %s"), s);
 		return 1;
 	    }
-	    group = getgrgid(n);
-	} else
-	    group = getgrnam(s);
-	if (group)
-	    xdico_list_append(group_list, (void*)group->gr_gid);
-	else {
-	    grecs_error(locus, 0, _("%s: unknown group"), value->v.string);
-	    return 1;
+	    gid = n;
+	} else {
+	    struct group *group = getgrnam(s);
+	    if (!group) {
+		grecs_error(locus, 0, _("%s: unknown group"), value->v.string);
+		return 1;
+	    }
+	    gid = group->gr_gid;
 	}
+	
+	gp = xmalloc(sizeof(*gp));
+	*gp = gid;
+	xdico_list_append(group_list, gp);
     }
     return 0;
 }

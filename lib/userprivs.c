@@ -52,7 +52,7 @@ switch_to_privs (uid_t uid, gid_t gid, dico_list_t retain_groups)
     itr = dico_list_iterator(retain_groups);
     for (gp = dico_iterator_first(itr); gp;
 	 gp = dico_iterator_next(itr)) 
-	emptygidset[j++] = (gid_t) gp;
+	emptygidset[j++] = *(gid_t*) gp;
     dico_iterator_destroy(&itr);
     
     /* Reset group permissions */

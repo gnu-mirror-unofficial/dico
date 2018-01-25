@@ -139,11 +139,22 @@ parse_index_entry(const char *filename, size_t line,
     int rc;
     
     memset(&itr, 0, sizeof(itr));
+    memset(&idx, 0, sizeof(idx));
     
     utf8_iter_first(&itr, buf);
 
     rc = 0;
-    for (nfield = 0; nfield < 3; nfield++) {
+    /* A valid index file contains three to four columns per line:
+         0 - Headword.
+	 1 - Offset of the article in the dictionary file.
+	 2 - Size of the article in bytes
+	 3 - Optional original headword.
+
+      Column 0 is used for searches. Column 3, if present, is used when
+      returning the results of the search. If it is not supplied, column 0
+      is used.
+    */
+    for (nfield = 0; nfield < 4; nfield++) {
 	char *start, *end;
 	size_t len;
 	
@@ -179,6 +190,14 @@ parse_index_entry(const char *filename, size_t line,
 	    idx.word[len] = 0;
 	    idx.length = len;
 	    idx.wordlen = utf8_strlen(idx.word);
+	} else if (nfield == 3) {
+	    idx.orig = malloc(len + 1);
+	    if (!idx.orig) {
+		memerr("parse_index_entry");
+		return 1;
+	    }
+	    memcpy(idx.orig, start, len);
+	    idx.orig[len] = 0;	    
 	} else {
 	    size_t n;
 	    
@@ -224,6 +243,7 @@ free_index_entry(void *item, void *data)
 {
     struct index_entry *ep = item;
     free(ep->word);
+    free(ep->orig);
     free(ep);
     return 0;
 }
@@ -928,9 +948,11 @@ mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
     
     
     switch (res->type) {
-    case result_match:
-	dico_stream_write(str, ep->word, strlen(ep->word));
+    case result_match: {
+	char *headword = ep->orig ? ep->orig : ep->word;
+	dico_stream_write(str, headword, strlen(headword));
 	break;
+    }
 	
     case result_define:
 	printdef(str, res->db, ep);

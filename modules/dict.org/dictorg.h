@@ -109,6 +109,7 @@
 
 struct index_entry {
     char *word;             /* Word */
+    char *orig;             /* Original headword (for four-column indices) */
     size_t length;          /* Its length in bytes */
     size_t wordlen;         /* Its length in characters */
     off_t offset;           /* Offset of the corresponding article in file */

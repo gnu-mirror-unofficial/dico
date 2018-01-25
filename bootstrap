@@ -61,24 +61,24 @@ this file in section B<FILES>.
 
 The program must be run from the Dico source tree topmost directory.
     
-When given the B<-m> (B<--modules>) option, the only the second step is
+When given the B<-m> (B<--modules>) option, only the second step is
 performed.
 
 When the B<-a> (B<--add>, B<--new>) option is given, the program creates
 basic infrastructure for modules named in the command line.  For each
 I<NAME> from the command line it creates directory F<modules/I<NAME>>
 and populates it with files from the directory F<modules/template>.  To    
-this effect, it reads the list of file names from the section I<FILE LIST>
-of the file modules/README.  This file is in Emacs outline format.  The   
-section in question lists file names relative to the F<modules/template>
-directory, one file per line.  File names must start at coluimn.  A
+this effect, it reads the list of file names from the section B<FILE LIST>
+of the file F<modules/template/README>.  This file is in Emacs outline format.
+The B<FILE LIST> section lists file names relative to the F<modules/template>
+directory, one file per line.  File names must start at column 1.  A
 whitespace character (space or tab) starts a comment that spans to the
 physical end of line.  Empty lines are ignored.
 
 Each file name from that list is copied to the newly created F<modules/I<NAME>>
 directory, creating eventual intermediate directories on the fly.  E.g. the
 file F<modules/template/test/Makefile.am> is copied to
-F<modules/I<NAME>/test/Makefile.am>.  During the copy, some files undergo
+F<modules/I<NAME>/test/Makefile.am>.  In the process some files undergo
 I<macro expansion>, in which macro variables appearing in the source file
 are replaced with their actual values in the destination file.  This process
 is discussed in detail in section B<FILES>, below.
@@ -304,7 +304,7 @@ Produces B<Makefille.am> code for the B<SUBDIRS> variable.
 =item B<TEMPLATE>
 
 A whitespace-separated list of template files obtained from file
-F<modules/README>.
+F<modules/template/README>.
 
 =back
 

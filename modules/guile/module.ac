@@ -15,7 +15,7 @@
 ## along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
 # Check for Guile
-GINT_INIT([gint],[1.8 with-guile nodoc],
+GINT_INIT([gint],[2.2.0 with-guile nodoc],
 	  [status_guile=yes],
 	  [status_guile=no])
 AM_CONDITIONAL([GUILE_COND],[test $status_guile = yes])

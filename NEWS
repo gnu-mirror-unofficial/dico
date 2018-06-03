@@ -1,8 +1,12 @@
-GNU Dico NEWS -- history of user-visible changes. 2018-01-28
+GNU Dico NEWS -- history of user-visible changes. 2018-06-03
 Copyright (C) 2008-2010, 2012-2018 Sergey Poznyakoff
 See the end of file for copying conditions.
 
 Please send Dico bug reports to <bug-dico@gnu.org.ua>
+
+
+* Support for Guile 2.2.0
+
 
 Version 2.5, 2018-01-28
 

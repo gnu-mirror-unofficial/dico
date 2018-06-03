@@ -551,7 +551,7 @@ a service name from @file{/etc/services}.
   The @dfn{GNU's Ubiquitous Intelligent Language for Extensions}, or
 @dfn{Guile}@footnote{@uref{http://www.gnu.org/software/guile}.}  can
 be used to write database modules for GNU Dico.  This requires
-Guile version 1.8.4 or newer.  The @command{configure} script will
+Guile version 2.2.0 or newer.  The @command{configure} script will
 probe for the presence of Guile on your system and automatically
 enable its use if its version number is high enough.
 

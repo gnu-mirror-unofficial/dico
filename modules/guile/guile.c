@@ -47,28 +47,28 @@ apply_catch_body(void *data)
 }
 
 static SCM
-eval_catch_handler (void *data, SCM tag, SCM throw_args)
+eval_catch_handler(void *data, SCM tag, SCM throw_args)
 {
     scm_handle_by_message_noexit("dico", tag, throw_args);
     longjmp(*(jmp_buf*)data, 1);
 }
 
 struct scheme_exec_data {
-    SCM (*handler) (void *data);
+    SCM (*handler)(void *data);
     void *data;
     SCM result;
 };
 
 static SCM
-scheme_safe_exec_body (void *data)
+scheme_safe_exec_body(void *data)
 {
     struct scheme_exec_data *ed = data;
-    ed->result = ed->handler (ed->data);
+    ed->result = ed->handler(ed->data);
     return SCM_BOOL_F;
 }
 
 static int
-guile_safe_exec(SCM (*handler) (void *data), void *data, SCM *result)
+guile_safe_exec(SCM (*handler)(void *data), void *data, SCM *result)
 {
     jmp_buf jmp_env;
     struct scheme_exec_data ed;
@@ -77,15 +77,9 @@ guile_safe_exec(SCM (*handler) (void *data), void *data, SCM *result)
 	return 1;
     ed.handler = handler;
     ed.data = data;
-#if GUILE_VERSION_NUMBER < 2000
-    scm_internal_lazy_catch(SCM_BOOL_T,
-			    scheme_safe_exec_body, (void*)&ed,
-			    eval_catch_handler, &jmp_env);
-#else
     scm_c_with_throw_handler(SCM_BOOL_T,
 			     scheme_safe_exec_body, (void*)&ed,
 			     eval_catch_handler, &jmp_env, 0);
-#endif
     if (result)
 	*result = ed.result;
     return 0;
@@ -196,15 +190,9 @@ guile_call_proc(SCM *result, SCM proc, SCM arglist)
     }
     adata.proc = proc;
     adata.arg = arglist;
-#if GUILE_VERSION_NUMBER < 2000
-    *result = scm_internal_lazy_catch(SCM_BOOL_T,
-				      apply_catch_body, &adata,
-				      eval_catch_handler, &jmp_env);
-#else
     *result = scm_c_with_throw_handler(SCM_BOOL_T,
 				      apply_catch_body, &adata,
 				       eval_catch_handler, &jmp_env, 0);
-#endif
     return 0;
 }
 
@@ -221,7 +209,7 @@ dico_new_scm_key(struct dico_key **pkey)
     SCM_RETURN_NEWSMOB(_guile_dico_key_tag, kptr);
 }
 
-static scm_sizet
+static size_t
 _guile_dico_key_free(SCM message_smob)
 {
     struct dico_key *kp = (struct dico_key *) SCM_CDR (message_smob);
@@ -295,7 +283,7 @@ _make_strategy(const dico_strategy_t strat)
     SCM_RETURN_NEWSMOB(_guile_strategy_tag, sp);
 }
 
-static scm_sizet
+static size_t
 _guile_strategy_free(SCM message_smob)
 {
     struct _guile_strategy *sp =
@@ -308,7 +296,7 @@ static int
 _guile_strategy_print(SCM message_smob, SCM port, scm_print_state * pstate)
 {
     struct _guile_strategy *sp =
-	(struct _guile_strategy *) SCM_CDR (message_smob);
+	(struct _guile_strategy *) SCM_CDR(message_smob);
     scm_puts("#<strategy ", port);
     scm_puts(sp->strat->name, port);
     scm_puts(" [", port);
@@ -514,7 +502,8 @@ SCM_DEFINE_PUBLIC(scm_dico_register_markup, "dico-register-markup", 1, 0, 0,
 	break;
 
     case ENOMEM:
-	scm_memory_error(FUNC_NAME);
+	scm_report_out_of_memory ();
+	break;
 
     case EINVAL:
 	scm_misc_error(FUNC_NAME,
@@ -540,7 +529,7 @@ SCM_DEFINE_PUBLIC(scm_dico_current_markup, "dico-current-markup", 0, 0, 0,
 #undef FUNC_NAME
 
 
-static scm_t_bits scm_tc16_dico_port;
+static scm_t_port_type *scm_dico_port_type;
 struct _guile_dico_port {
     dico_stream_t str;
 };
@@ -549,68 +538,31 @@ static SCM
 _make_dico_port(dico_stream_t str)
 {
     struct _guile_dico_port *dp;
-    SCM port;
-    scm_port *pt;
 
-    dp = scm_gc_malloc (sizeof (struct _guile_dico_port), "dico-port");
+    dp = scm_gc_typed_calloc (struct _guile_dico_port);
     dp->str = str;
-
-    port = scm_new_port_table_entry(scm_tc16_dico_port);
-    pt = SCM_PTAB_ENTRY(port);
-    pt->rw_random = 0;
-    SCM_SET_CELL_TYPE(port,
-		      (scm_tc16_dico_port | SCM_OPN | SCM_WRTNG | SCM_BUF0));
-    SCM_SETSTREAM(port, dp);
-    return port;
+    return scm_c_make_port (scm_dico_port_type,
+			    SCM_BUF0 | SCM_WRTNG, (scm_t_bits) dp);
 }
 
 #define DICO_PORT(x) ((struct _guile_dico_port *) SCM_STREAM (x))
 
-static SCM
-_dico_port_mark(SCM port)
-{
-    return SCM_BOOL_F;
-}
-
 static void
-_dico_port_flush(SCM port)
-{
-    struct _guile_dico_port *dp = DICO_PORT(port);
-    if (dp && dp->str)
-	dico_stream_flush(dp->str);
-}
-
-static int
 _dico_port_close(SCM port)
 {
     struct _guile_dico_port *dp = DICO_PORT(port);
 
-    if (dp) {
-	_dico_port_flush(port);
-	SCM_SETSTREAM(port, NULL);
-	scm_gc_free(dp, sizeof(struct _guile_dico_port), "dico-port");
-    }
-    return 0;
+    if (dp && dp->str)
+	dico_stream_flush(dp->str);
 }
 
-static scm_sizet
-_dico_port_free(SCM port)
-{
-    _dico_port_close(port);
-    return 0;
-}
-
-static int
-_dico_port_fill_input(SCM port)
-{
-    return EOF;
-}
-
-static void
-_dico_port_write(SCM port, const void *data, size_t size)
+static size_t
+_dico_port_write(SCM port, SCM src, size_t start, size_t count)
 {
     struct _guile_dico_port *dp = DICO_PORT(port);
-    dico_stream_write(dp->str, data, size);
+    dico_stream_write(dp->str, SCM_BYTEVECTOR_CONTENTS (src) + start,
+		      count);
+    return count;
 }
 
 static scm_t_off
@@ -628,22 +580,18 @@ _dico_port_print(SCM exp, SCM port, scm_print_state *pstate)
 }
 
 static void
-_guile_init_dico_port()
+_guile_init_dico_port(void)
 {
-    scm_tc16_dico_port = scm_make_port_type("dico-port",
-					    _dico_port_fill_input,
+    scm_dico_port_type = scm_make_port_type("dico-port",
+					    NULL,
 					    _dico_port_write);
-    scm_set_port_mark (scm_tc16_dico_port, _dico_port_mark);
-    scm_set_port_free (scm_tc16_dico_port, _dico_port_free);
-    scm_set_port_print (scm_tc16_dico_port, _dico_port_print);
-    scm_set_port_flush (scm_tc16_dico_port, _dico_port_flush);
-    scm_set_port_close (scm_tc16_dico_port, _dico_port_close);
-    scm_set_port_seek (scm_tc16_dico_port, _dico_port_seek);
+    scm_set_port_print (scm_dico_port_type, _dico_port_print);
+    scm_set_port_needs_close_on_gc (scm_dico_port_type, 1);
+    scm_set_port_close (scm_dico_port_type, _dico_port_close);
+    scm_set_port_seek (scm_dico_port_type, _dico_port_seek);
 }
-
-
 
-static scm_t_bits scm_tc16_dico_log_port;
+static scm_t_port_type *scm_dico_log_port_type;
 
 static SCM
 _make_dico_log_port(int level)
@@ -660,17 +608,15 @@ _dico_log_port_print(SCM exp, SCM port, scm_print_state *pstate)
 }
 
 static void
-_guile_init_dico_log_port()
+_guile_init_dico_log_port(void)
 {
-    scm_tc16_dico_log_port = scm_make_port_type("dico-log-port",
-						_dico_port_fill_input,
+    scm_dico_log_port_type = scm_make_port_type("dico-log-port",
+						NULL,
 						_dico_port_write);
-    scm_set_port_mark (scm_tc16_dico_log_port, _dico_port_mark);
-    scm_set_port_free (scm_tc16_dico_log_port, _dico_port_free);
-    scm_set_port_print (scm_tc16_dico_log_port, _dico_log_port_print);
-    scm_set_port_flush (scm_tc16_dico_log_port, _dico_port_flush);
-    scm_set_port_close (scm_tc16_dico_log_port, _dico_port_close);
-    scm_set_port_seek (scm_tc16_dico_log_port, _dico_port_seek);
+    scm_set_port_print (scm_dico_log_port_type, _dico_log_port_print);
+    scm_set_port_close (scm_dico_log_port_type, _dico_port_close);
+    scm_set_port_needs_close_on_gc (scm_dico_log_port_type, 1);
+    scm_set_port_seek (scm_dico_log_port_type, _dico_port_seek);
 }
 
 

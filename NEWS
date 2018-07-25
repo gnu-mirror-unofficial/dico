@@ -7,6 +7,8 @@ Please send Dico bug reports to <bug-dico@gnu.org.ua>
 
 * Support for Guile 2.2.0
 
+* Support for Python 3
+
 
 Version 2.5, 2018-01-28
 

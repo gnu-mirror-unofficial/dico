@@ -6,7 +6,7 @@ database {
         name "cznum";
         handler "python "
                 "load-path=~dictdir~ "
-                "init-script=textdict "
+                "init-script=textdict~py2~ "
                 "~dictdir~/numerals-cz.txt";
 }
 

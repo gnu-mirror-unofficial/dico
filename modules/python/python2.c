@@ -41,17 +41,7 @@ struct _python_database {
     PyThreadState *py_ths;
     PyObject *py_instance;
 };
-
-static PyObject *
-find_method (PyMethodDef *methods, PyObject *self, const char *name)
-{
-    for (; methods->ml_name; methods++) {
-	 if (strcmp(name, methods->ml_name) == 0)
-	      return PyCFunction_New(methods, self);
-    }
-    PyErr_SetString(PyExc_AttributeError, name);
-    return NULL;
-}
+
 
 typedef struct {
     PyObject_HEAD;
@@ -72,10 +62,10 @@ static PyObject *
 _PySelectionKey_getattr (PyObject *self, char *name)
 {
     PySelectionKey *py_key = (PySelectionKey *)self;
-    
+
     if (strcmp (name, "word") == 0)
-	return PyUnicode_FromString (py_key->key->word);
-    return find_method (selection_key_methods, self, name);
+	return PyString_FromString (py_key->key->word);
+    return Py_FindMethod (selection_key_methods, self, name);
 }
 
 static PyObject *
@@ -84,24 +74,34 @@ _PySelectionKey_repr (PyObject *self)
     PySelectionKey *py_key = (PySelectionKey *)self;
     char buf[80];
     snprintf (buf, sizeof buf, "<DicoSelectionKey %s>", py_key->key->word);
-    return PyUnicode_FromString (buf);
+    return PyString_FromString (buf);
 }
 
 static PyObject *
 _PySelectionKey_str (PyObject *self)
 {
     PySelectionKey *py_key = (PySelectionKey *)self;
-    return PyUnicode_FromString (py_key->key->word);
+    return PyString_FromString (py_key->key->word);
 }
 
 static PyTypeObject PySelectionKeyType = {
     PyObject_HEAD_INIT(&PyType_Type)
-    .tp_name = "DicoSelectionKey",
-    .tp_basicsize = sizeof (PySelectionKey),
-    .tp_dealloc = _PySelectionKey_dealloc,
-    .tp_getattr = _PySelectionKey_getattr,
-    .tp_repr = _PySelectionKey_repr,
-    .tp_str = _PySelectionKey_str
+    0,
+    "DicoSelectionKey",      /* tp_name */
+    sizeof (PySelectionKey), /* tp_basicsize */
+    0,                   /* tp_itemsize; */
+    _PySelectionKey_dealloc, /* tp_dealloc; */
+    NULL,                /* tp_print; */
+    _PySelectionKey_getattr, /* tp_getattr; __getattr__ */
+    NULL,                /* tp_setattr; __setattr__ */
+    NULL,                /* tp_compare; __cmp__ */
+    _PySelectionKey_repr,    /* tp_repr; __repr__ */
+    NULL,                /* tp_as_number */
+    NULL,                /* tp_as_sequence */
+    NULL,                /* tp_as_mapping */
+    NULL,                /* tp_hash; __hash__ */
+    NULL,                /* tp_call; __call__ */
+    _PySelectionKey_str,     /* tp_str; __str__ */
 };
 
 typedef struct {
@@ -149,10 +149,10 @@ _PyStrategy_getattr (PyObject *self, char *name)
 
     if (strcmp (name, "name") == 0) {
 	/* Return the name of the strategy STRAT. */
-	return PyUnicode_FromString (strat->name);
+	return PyString_FromString (strat->name);
     } else if (strcmp (name, "descr") == 0) {
 	/* Return a textual description of the strategy STRAT. */
-	return PyUnicode_FromString (strat->descr);
+	return PyString_FromString (strat->descr);
     } else if (strcmp (name, "has_selector") == 0) {
 	/* Return True if STRAT has a selector. */
 	return _ro (strat->sel ? Py_True : Py_False);
@@ -160,7 +160,7 @@ _PyStrategy_getattr (PyObject *self, char *name)
 	/* Return True if STRAT is a default strategy. */
 	return _ro (dico_strategy_is_default_p (strat) ? Py_True : Py_False);
     }
-    return find_method (strategy_methods, self, name);
+    return Py_FindMethod (strategy_methods, self, name);
 }
 
 static PyObject *
@@ -169,24 +169,34 @@ _PyStrategy_repr (PyObject *self)
     PyStrategy *py_strat = (PyStrategy *)self;
     char buf[80];
     snprintf (buf, sizeof buf, "<DicoStrategy %s>", py_strat->strat->name);
-    return PyUnicode_FromString (buf);
+    return PyString_FromString (buf);
 }
 
 static PyObject *
 _PyStrategy_str (PyObject *self)
 {
     PyStrategy *py_strat = (PyStrategy *)self;
-    return PyUnicode_FromString (py_strat->strat->name);
+    return PyString_FromString (py_strat->strat->name);
 }
 
 static PyTypeObject PyStrategyType = {
     PyObject_HEAD_INIT(&PyType_Type)
-    .tp_name = "DicoStrategy",
-    .tp_basicsize = sizeof (PyStrategy),
-    .tp_dealloc = _PyStrategy_dealloc,
-    .tp_getattr = _PyStrategy_getattr, 
-    .tp_repr = _PyStrategy_repr,
-    .tp_str = _PyStrategy_str,
+    0,
+    "DicoStrategy",      /* tp_name */
+    sizeof (PyStrategy), /* tp_basicsize */
+    0,                   /* tp_itemsize; */
+    _PyStrategy_dealloc, /* tp_dealloc; */
+    NULL,                /* tp_print; */
+    _PyStrategy_getattr, /* tp_getattr; __getattr__ */
+    NULL,                /* tp_setattr; __setattr__ */
+    NULL,                /* tp_compare; __cmp__ */
+    _PyStrategy_repr,    /* tp_repr; __repr__ */
+    NULL,                /* tp_as_number */
+    NULL,                /* tp_as_sequence */
+    NULL,                /* tp_as_mapping */
+    NULL,                /* tp_hash; __hash__ */
+    NULL,                /* tp_call; __call__ */
+    _PyStrategy_str,     /* tp_str; __str__ */
 };
 
 
@@ -237,75 +247,11 @@ static PyMethodDef capture_stdout_info_method[] =
     { "write", _capture_stdout_info, 1 },
     { NULL, NULL, 0, NULL }
 };
-
 static PyMethodDef capture_stderr_method[] =
 {
     { "write", _capture_stderr, 1 },
     { NULL, NULL, 0, NULL }
 };
-
-static int
-stderr_init (void)
-{
-    static struct PyModuleDef stderr_ModuleDef = {
-	 PyModuleDef_HEAD_INIT,
-	 "DicoStderr",        /* module name */
-	 NULL,                /* module documentation; FIXME */
-	 -1,                  /* size of per-interpreter state of the module */
-	 capture_stderr_method
-    };
-    static PyObject *module;
-
-    if (!module) {
-	 module = PyModule_Create (&stderr_ModuleDef);
-	 if (!module)
-	      return -1;
-    }
-    PySys_SetObject ("stderr", module);
-    return 0;
-}
-
-static int
-stdout_info_init (void)
-{
-    static struct PyModuleDef moddef = {
-	 PyModuleDef_HEAD_INIT,
-	 "DicoStdoutInfo",    /* module name */
-	 NULL,                /* module documentation; FIXME */
-	 -1,                  /* size of per-interpreter state of the module */
-	 capture_stdout_info_method
-    };
-    static PyObject *module;
-
-    if (!module) {
-	 module = PyModule_Create (&moddef);
-	 if (!module)
-	      return -1;
-    }
-    PySys_SetObject ("stdout", module);
-    return 0;
-}
-
-static int
-stdout_result_init (void)
-{
-    static struct PyModuleDef moddef = {
-	 PyModuleDef_HEAD_INIT,
-	 "DicoStdoutResult",  /* module name */
-	 NULL,                /* module documentation; FIXME */
-	 -1,                  /* size of per-interpreter state of the module */
-	 capture_stdout_result_method
-    };
-    static PyObject *module;
-
-    if (!module) {
-	 module = PyModule_Create (&moddef);
-	 if (!module)
-	      return -1;
-    }
-    PySys_SetObject ("stdout", module);
-    return 0;
-}
 
 static int
 _python_selector (int cmd, struct dico_key *key, const char *dict_word)
@@ -315,11 +261,11 @@ _python_selector (int cmd, struct dico_key *key, const char *dict_word)
     void *closure = key->strat->closure;
     
     py_args = PyTuple_New (3);
-    PyTuple_SetItem (py_args, 0, PyLong_FromLong (cmd));
+    PyTuple_SetItem (py_args, 0, PyInt_FromLong (cmd));
     py_key = PyObject_NEW (PySelectionKey, &PySelectionKeyType);
     py_key->key = key;
     PyTuple_SetItem (py_args, 1, (PyObject*)py_key);
-    PyTuple_SetItem (py_args, 2, PyUnicode_FromString (dict_word));
+    PyTuple_SetItem (py_args, 2, PyString_FromString (dict_word));
 
     if (closure && PyCallable_Check (closure)) {
 	py_res = PyObject_CallObject (closure, py_args);
@@ -363,12 +309,12 @@ dico_register_markup (PyObject *self, PyObject *py_obj)
     int rc;
     char *type;
 
-    if (!PyUnicode_Check (py_obj)) {
+    if (!PyString_Check (py_obj)) {
 	PyErr_SetString (PyExc_TypeError, _("This parameter must be a string"));
         return NULL;
     }
 
-    type = strdup (PyUnicode_AsUTF8 (py_obj));
+    type = strdup (PyString_AsString (py_obj));
     rc = dico_markup_register (type);
     free (type);
     if (rc)
@@ -380,7 +326,7 @@ dico_register_markup (PyObject *self, PyObject *py_obj)
 static PyObject *
 dico_current_markup (PyObject *self)
 {
-    return _ro (PyUnicode_FromString (dico_markup_type));
+    return _ro (PyString_FromString (dico_markup_type));
 }
 
 static PyMethodDef dico_methods[] = {
@@ -400,7 +346,7 @@ _argv_to_tuple (int argc, char **argv)
     int i;
     PyObject *py_args = PyTuple_New (argc);
     for (i = 0; argc; argc--, argv++, i++) {
-	PyTuple_SetItem (py_args, i, PyUnicode_FromString (*argv));
+	PyTuple_SetItem (py_args, i, PyString_FromString (*argv));
     }
     return py_args;
 }
@@ -432,7 +378,7 @@ insert_load_path (const char *dir)
 	size_t len;
 	for (len = 0; p > dir && p[-1] != ':'; p--, len++)
 	    ;
-	py_dirstr = PyUnicode_FromStringAndSize (p, len);
+	py_dirstr = PyString_FromStringAndSize (p, len);
 	if (PySequence_Index (py_path, py_dirstr) == -1) {
 	    PyObject *py_list;
 	    PyErr_Clear ();
@@ -456,27 +402,13 @@ static struct {
     { NULL }
 };
 
-static struct PyModuleDef dico_ModuleDef = {
-  PyModuleDef_HEAD_INIT,
-  "dico",                 /* module name */
-  NULL,                   /* module documentation; FIXME */
-  -1,                     /* size of per-interpreter state of the module */
-  dico_methods
-};
-
 static void
-dico_module_init (void)
+declare_constants(PyObject *module)
 {
     int i;
-    PyObject *module, *sysmodules;
-
-    module = PyModule_Create (&dico_ModuleDef);
-    if (!module)
-	 abort ();
+    
     for (i = 0; constab[i].name; i++)
 	PyModule_AddIntConstant (module, constab[i].name, constab[i].value);
-    sysmodules = PyImport_GetModuleDict();
-    PyMapping_SetItemString(sysmodules, dico_ModuleDef.m_name, module);
 }
 
 static dico_handle_t
@@ -517,17 +449,21 @@ mod_init_db (const char *dbname, int argc, char **argv)
     PyThreadState_Swap (py_ths);
     db->py_ths = py_ths;
 
-    dico_module_init ();
+    declare_constants (Py_InitModule ("dico", dico_methods));
     
     PyRun_SimpleString ("import sys");
     if (load_path)
 	insert_load_path (load_path);
     insert_load_path ("");
 
-    stderr_init ();
-    stdout_info_init ();
+    py_err = Py_InitModule ("stderr", capture_stderr_method);
+    if (py_err)
+	PySys_SetObject ("stderr", py_err);
+    py_out = Py_InitModule ("stdout", capture_stdout_info_method);
+    if (py_out)
+	PySys_SetObject ("stdout", py_out);
 
-    py_name = PyUnicode_FromString (init_script);
+    py_name = PyString_FromString (init_script);
     py_module = PyImport_Import (py_name);
     Py_DECREF (py_name);
 
@@ -540,10 +476,11 @@ mod_init_db (const char *dbname, int argc, char **argv)
     }
 
     py_class = PyObject_GetAttrString (py_module, root_class);
-    if (py_class) {
-	PyObject *py_instance =
-	  PyObject_CallObject (py_class, _argv_to_tuple (argc, argv));
-	if (py_instance)
+    if (py_class && PyClass_Check (py_class)) {
+	PyObject *py_instance = PyInstance_New (py_class,
+						_argv_to_tuple (argc, argv),
+						NULL);
+	if (py_instance && PyInstance_Check (py_instance))
 	    db->py_instance = py_instance;
 	else if (PyErr_Occurred ()) {
 	    PyErr_Print ();
@@ -579,7 +516,7 @@ mod_open (dico_handle_t hp)
 
     PyThreadState_Swap (db->py_ths);
 
-    py_value = PyUnicode_FromString (db->dbname);
+    py_value = PyString_FromString (db->dbname);
     py_args = PyTuple_New (1);
     PyTuple_SetItem (py_args, 0, py_value);
 
@@ -635,8 +572,8 @@ _mod_get_text (PyObject *py_instance, const char *method)
     if (py_fnc && PyCallable_Check (py_fnc)) {
 	py_res = PyObject_CallObject (py_fnc, NULL);
 	Py_DECREF (py_fnc);
-	if (py_res && PyUnicode_Check (py_res)) {
-	    char *text = strdup (PyUnicode_AsUTF8 (py_res));
+	if (py_res && PyString_Check (py_res)) {
+	    char *text = strdup (PyString_AsString (py_res));
 	    Py_DECREF (py_res);
 	    return text;
 	} else if (PyErr_Occurred ())
@@ -671,8 +608,8 @@ _tuple_to_langlist (PyObject *py_obj)
     if (!py_obj)
 	return NULL;
     
-    if (PyUnicode_Check (py_obj)) {
-	char *text = strdup (PyUnicode_AsUTF8 (py_obj));
+    if (PyString_Check (py_obj)) {
+	char *text = strdup (PyString_AsString (py_obj));
 	list = dico_list_create ();
 	dico_list_append (list, text);
     } else if (PyTuple_Check (py_obj) || PyList_Check (py_obj)) {
@@ -683,8 +620,8 @@ _tuple_to_langlist (PyObject *py_obj)
 
 	if (py_iterator) {
 	    while ((py_item = PyIter_Next (py_iterator))) {
-		if (PyUnicode_Check (py_item)) {
-		    char *text = strdup (PyUnicode_AsUTF8 (py_item));
+		if (PyString_Check (py_item)) {
+		    char *text = strdup (PyString_AsString (py_item));
 		    dico_list_append (list, text);
 		}
 		Py_DECREF (py_item);
@@ -715,8 +652,8 @@ mod_lang (dico_handle_t hp, dico_list_t list[2])
 	py_res = PyObject_CallObject (py_fnc, NULL);
 	Py_DECREF (py_fnc);
 	if (py_res) {
-	    if (PyUnicode_Check (py_res)) {
-		char *text = strdup (PyUnicode_AsUTF8 (py_res));
+	    if (PyString_Check (py_res)) {
+		char *text = strdup (PyString_AsString (py_res));
 		Py_DECREF (py_res);
 		list[0] = dico_list_create ();
 		dico_list_append (list[0], text);
@@ -849,7 +786,7 @@ mod_define (dico_handle_t hp, const char *word)
     PyThreadState_Swap (db->py_ths);
 
     py_args = PyTuple_New (1);
-    PyTuple_SetItem (py_args, 0, PyUnicode_FromString (word));
+    PyTuple_SetItem (py_args, 0, PyString_FromString (word));
 
     py_fnc = PyObject_GetAttrString (db->py_instance, "define_word");
     if (py_fnc && PyCallable_Check (py_fnc)) {
@@ -878,7 +815,10 @@ mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 
     dico_stream_output = str;
 
-    if (stdout_result_init ()) {
+    py_out = Py_InitModule ("stdout", capture_stdout_result_method);
+    if (py_out)
+	PySys_SetObject ("stdout", py_out);
+    else {
 	dico_log (L_ERR, 0, _("mod_output_result: cannot capture stdout"));
 	return 1;
     }
@@ -898,7 +838,9 @@ mod_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 	    PyErr_Print ();
     }
 
-    stdout_info_init ();
+    py_out = Py_InitModule ("stdout", capture_stdout_info_method);
+    if (py_out)
+	PySys_SetObject ("stdout", py_out);
 
     dico_stream_output = NULL;
     return 0;
@@ -916,8 +858,8 @@ _mod_get_size_t (PyObject *py_instance, PyObject *py_args, const char *method)
     if (py_fnc && PyCallable_Check (py_fnc)) {
 	py_res = PyObject_CallObject (py_fnc, py_args);
 	Py_DECREF (py_fnc);
-	if (py_res && PyLong_Check (py_res)) {
-	    size_t s = (size_t)PyLong_AsSsize_t (py_res);
+	if (py_res && PyInt_Check (py_res)) {
+	    size_t s = (size_t)PyInt_AsSsize_t (py_res);
 	    Py_DECREF (py_res);
 	    return s;
 	} else if (PyErr_Occurred ())
@@ -1002,7 +944,7 @@ _assoc_to_dict (dico_assoc_list_t assoc)
 	itr = dico_assoc_iterator (assoc);
 	for (p = dico_iterator_first (itr); p; p = dico_iterator_next (itr)) {
 	    PyDict_SetItemString (py_dict, p->key,
-				  PyUnicode_FromString (p->value));
+				  PyString_FromString (p->value));
 	}
 	dico_iterator_destroy (&itr);
 	return _ro (py_dict);
@@ -1020,8 +962,8 @@ _dict_to_assoc (dico_assoc_list_t assoc, PyObject *py_dict)
 
     while (PyDict_Next (py_dict, &py_pos, &py_key, &py_value)) {
 	char *key, *val;
-	key = strdup (PyUnicode_AsUTF8 (py_key));
-	val = strdup (PyUnicode_AsUTF8 (py_value));
+	key = strdup (PyString_AsString (py_key));
+	val = strdup (PyString_AsString (py_value));
 	dico_assoc_append (assoc, key, val);
     }
 }

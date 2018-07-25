@@ -20,5 +20,6 @@ EXTRA_DIST = \
  listdict.scm\
  numerals-pl.ldb\
  textdict.py\
+ textdict2.py\
  numerals-cz.txt
 

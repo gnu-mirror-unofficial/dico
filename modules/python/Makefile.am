@@ -20,7 +20,12 @@ moddir=@DICO_MODDIR@
 
 mod_LTLIBRARIES=python.la
 
-python_la_SOURCES = python.c
+if PYTHON3_COND
+  python_la_SOURCES = python.c
+else
+  python_la_SOURCES = python2.c
+endif
+
 python_la_LIBADD = ../../lib/libdico.la @PYTHON_LIBS@
 AM_LDFLAGS = -module -avoid-version -no-undefined -rpath $(moddir)
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include @PYTHON_INCLUDES@

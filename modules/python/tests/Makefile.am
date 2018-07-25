@@ -20,8 +20,16 @@ MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
 
 SUFFIXES = .cfin .conf
 
+if PYTHON3_COND
+  PY2_SUF=
+else
+  PY2_SUF=2
+endif
+
 .cfin.conf:
-	$(AM_V_GEN)sed 's|~moddir~|$(abs_top_builddir)/modules|g;s|~dictdir~|$(abs_top_srcdir)/examples|g' $< > $@
+	$(AM_V_GEN)sed -e 's|~moddir~|$(abs_top_builddir)/modules|g'\
+                       -e 's|~dictdir~|$(abs_top_srcdir)/examples|g'\
+                       -e 's|~py2~|$(PY2_SUF)|g' $< > $@
 
 noinst_DATA = dicod.conf
 CLEANFILES = dicod.conf

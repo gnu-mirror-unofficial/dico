@@ -41,13 +41,13 @@ class DicoResult:
         
 class DicoDefineResult (DicoResult):
     def output (self, n):
-        print("%d. %s" % (n + 1, self.result[n]))
-        print("---------", end="")
+        print "%d. %s" % (n + 1, self.result[n])
+        print "---------",
 
 class DicoMatchResult (DicoResult):
     def output (self, n):
         sys.stdout.softspace = 0
-        print(self.result[n], end="")
+        print self.result[n],
 
 class DicoModule:
     adict =  {}
@@ -63,7 +63,7 @@ class DicoModule:
     
     def open (self, dbname):
         self.dbname = dbname
-        file = open (self.filename, "r", encoding="utf8")
+        file = open (self.filename, "r")
         for line in file:
             if line.startswith ('--'):
                 continue
@@ -99,13 +99,13 @@ class DicoModule:
         return '\n'.join (self.mod_info)
     
     def define_word (self, word):
-        if word in self.adict:
+        if self.adict.has_key (word):
             return DicoDefineResult ([self.adict[word]])
         return False
     
     def match_word (self, strat, key):
         if strat.name == "exact":
-            if key.word.lower () in self.adict:
+            if self.adict.has_key (key.word.lower ()):
                 return DicoMatchResult ([self.adict[key.word.lower()]])
         elif strat.name == "prefix":
             res = []
@@ -119,7 +119,7 @@ class DicoModule:
             for k in self.adict:
                 if strat.select (k, key):
                     res.append (k)
-            if res.count() > 0:
+            if res.count > 0:
                 return res
         return False
 

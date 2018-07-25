@@ -905,15 +905,16 @@ if ($addmod) {
     reconf();
 } elsif ($#ARGV >= 0) {
     abend(EX_USAGE, "too many arguments; did you mean --new?");
-} else {
-    abend(EX_USAGE, "this does not look like a clone of the Dico repository; try $progname --help for more info")
-	unless -d '.git';
-
+} elsif (-d '.git') {
     error("Initializing submodules", fd => \*STDOUT) if $verbose;
     run('git submodule init');
     run('git submodule update');
     modproc();
     gnulib_init();
+} else {
+    error("this does not look like a clone of the Dico repository");
+    error("did you mean --modules?");
+    abend(EX_USAGE, "If not, try $progname --help for detailed info");
 }
 
 exit($status);

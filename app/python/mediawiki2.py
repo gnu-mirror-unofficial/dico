@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-# Mediawiki module for Python 3
+# Mediawiki module for Python 2
 # This file is part of GNU Dico.
 # Copyright (C) 2008-2010, 2012 Wojciech Polak
-#               2018 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,11 +19,21 @@
 import sys
 import re
 import socket
-import urllib.request, urllib.error, urllib.parse
-from html.entities import name2codepoint
+import urllib2
+from htmlentitydefs import name2codepoint
 from xml.dom import minidom
 from wit import wiki2text
-import imp
+
+# Set utf-8 as the default encoding. 
+# Trying to do so using encode('utf_8')/unicode, which is 
+# supposed to be the right way, does not work.
+# Simply calling sys.setdefaultencoding is not possible,
+# because, for some obscure reason, Python chooses to delete 
+# this symbol from the namespace after setting its default 
+# encoding in site.py. That's why reload is needed. 
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 try:
     import json
@@ -60,12 +69,12 @@ class DicoModule:
 
     def define_word (self, word):
         url = 'http://%s%s%s' % (self.wikihost, self.endpoint_define,
-                                 urllib.parse.quote (word))
-        req = urllib.request.Request (url)
+                                 urllib2.quote (word))
+        req = urllib2.Request (url)
         req.add_header ('User-Agent', self.user_agent)
         try:
-            xml = urllib.request.urlopen (req).read ()
-        except urllib.error.URLError:
+            xml = urllib2.urlopen (req).read ()
+        except urllib2.URLError:
             return False
         dom = minidom.parseString (xml)
         el = dom.getElementsByTagName ('text')
@@ -82,33 +91,39 @@ class DicoModule:
 
     def match_word (self, strat, key):
         url = 'http://%s%s%s' % (self.wikihost, self.endpoint_match,
-                                 urllib.parse.quote (key.word))
-        req = urllib.request.Request (url)
+                                 urllib2.quote (key.word))
+        req = urllib2.Request (url)
         req.add_header ('User-Agent', self.user_agent)
         try:
-            result = json.load (urllib.request.urlopen (req))
+            result = json.load (urllib2.urlopen (req))
             if result:
                 if strat.has_selector:
                     fltres = []
                     for k in result[1]:
                         if strat.select (k, key):
                             fltres.append (k)
-                    if len(fltres) > 0:
-                        return ['match', sorted(fltres, key=str.lower)]
+                    if fltres.count > 0:
+                        return ['match', sorted(fltres, key=unicode.lower)]
                 else:
                     result[1].sort ()
-                    return ['match', sorted(result[1], key=str.lower)]
+                    return ['match', sorted(result[1], key=unicode.lower)]
             return False
-        except urllib.error.URLError:
+        except urllib2.URLError:
             return False
 
     def output (self, rh, n):
         if rh[0] == 'define':
-            print(rh[1], end='')
+            try:
+                print rh[1].encode ('utf_8'),
+            except UnicodeDecodeError:
+                print rh[1],
         else:
             list = rh[1]
             sys.stdout.softspace = 0
-            print(list[n], end='')
+            try:
+                print list[n].encode ('utf_8'),
+            except UnicodeDecodeError:
+                print list[n],
         return True
 
     def result_count (self, rh):
@@ -136,4 +151,4 @@ class DicoModule:
 
     def __htmlentitydecode (self, s):
         return re.sub ('&(%s);' % '|'.join (name2codepoint),
-                       lambda m: chr (name2codepoint[m.group (1)]), s)
+                       lambda m: unichr (name2codepoint[m.group (1)]), s)

@@ -31,8 +31,8 @@ if test "$status_python" = yes; then
   AC_ARG_VAR([PYTHON_CONFIG], [The name of python-config binary])
   AC_PATH_PROG([PYTHON_CONFIG], python-config)
   if test -n "$PYTHON_CONFIG"; then
-    AC_SUBST(PYTHON_LIBS,`python-config --libs`)
-    AC_SUBST(PYTHON_INCLUDES,`python-config --includes`)
+    AC_SUBST(PYTHON_LIBS,`$PYTHON_CONFIG --libs`)
+    AC_SUBST(PYTHON_INCLUDES,`$PYTHON_CONFIG --includes`)
     $PYTHON <<EOT
 import sys
 exit(1 if sys.version_info[[0]] == 3 else 0)

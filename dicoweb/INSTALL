@@ -1,53 +1,117 @@
 GNU Dico - Dicoweb INSTALL
-Copyright (C) 2008-2010, 2012, 2013 Wojciech Polak
+See end of file for copying conditions.
 
 * Dicoweb requirements
 ======================
 
-- Django 1.4+ -- a Python Web framework (http://www.djangoproject.com/)
-- Wit -- a wiki translator distributed within GNU Dico.
-  (http://puszcza.gnu.org.ua/projects/wit/)
+- Django    -- a Python Web framework (http://www.djangoproject.com/)
+- wikitrans -- a wiki translator (https://pypi.org/project/wikitrans/)
+- python-memcached -- Pure python memcached client
+                      (https://pypi.org/project/python-memcached)
 
 * Installation instructions
 ===========================
 
-Rename 'settings-sample.py' to 'settings.py' and edit your
+The instructions below assume dicoweb sources are located in
+/var/www/dicoweb.
+
+1. Create the virtual environment directory in /var/www/dicoweb.
+Assuming the directory will be named 'venv':
+
+   $ cd /var/www/dicoweb
+   $ virtualenv venv
+
+2. Activate the environment:
+
+   $ . venv/bin/activate
+
+3. Install the prerequisites
+
+   $ pip install -r requirements.txt
+
+4. Deactivate the environment
+
+   $ deactivate
+
+5. Rename 'settings-sample.py' to 'settings.py' and edit your
 local Dicoweb site configuration.
 
-See https://docs.djangoproject.com/en/dev/howto/deployment/
-for usual Django applications deployment.
+6. Enable the following Apache modules: mod_alias, mod_env, mod_wsgi.
 
+The exact instructions depend on your Apache configuration layout. In
+general, they boil down to adding the following three statements to
+the Apache configuration:
+
+  LoadModule alias_module modules/mod_alias.so
+  LoadModule env_module modules/mod_env.so
+  LoadModule wsgi_module modules/mod_wsgi.so
+
+7. Configure Apache virtual host. The minimal configuration is as
+follows:
+
+  <VirtualHost *:80>
+     ServerName dict.example.org
+     DocumentRoot /var/www/dicoweb
+
+     # Ensure proper encoding (for Python 3)
+     SetEnv LC_ALL en_US.utf8
+
+     # Configure virtual environment.
+     # (If not using virtual environment, omit the WSGIDaemonProcess and
+     # WSGIProcessGroup statements).
+    
+     # Make sure to edit the statement below to match to the actual
+     # path to the site-packages directory.
+     WSGIDaemonProcess dicoweb python-path=/var/www/dicoweb/venv/lib/python3.5/site-packages
+     WSGIProcessGroup dicoweb
+
+     # Start up the module.
+     WSGIScriptAlias / /var/www/dicoweb/wsgi.py
+     # Provide access to the static files.
+     Alias /static /var/www/dicoweb/static
+     <Directory "/var/www/dicoweb/">
+        AllowOverride All
+	Options None
+	Require all granted
+     </Directory>
+  </VirtualHost>
+
+For a general discussion of deployment of the Django applications,
+please see https://docs.djangoproject.com/en/dev/howto/deployment.
 
 ** The development/test server
 ------------------------------
 
-Change the current working directory into the `dicoweb' directory
+To start the stand-alone development server, change to /var/www/dicoweb
 and run the command `python manage.py runserver'. You will see
 the following output:
 
  Validating models...
  0 errors found.
 
- Django version 1.4.5, using settings 'dicoweb.settings'
+ Django version 1.11.5, using settings 'dicoweb.settings'
  Development server is running at http://127.0.0.1:8000/
  Quit the server with CONTROL-C.
 
-** Production server with mod_wsgi
-----------------------------------
+Use your web browser to query the displayed URL. 
 
-Apache configuration:
+* Copyright information:
 
-  LoadModule wsgi_module modules/mod_wsgi.so
-  WSGIScriptAlias / /usr/local/django/dicoweb/wsgi.py
-  Alias /static "/usr/local/django/dicoweb/static"
+Copyright (C) 2008-2018 Wojciech Polak
 
-More detailed information is available at:
-http://code.google.com/p/modwsgi/wiki/IntegrationWithDjango
+   Permission is granted to anyone to make or distribute verbatim copies
+   of this document as received, in any medium, provided that the
+   copyright notice and this permission notice are preserved,
+   thus giving the recipient permission to redistribute in turn.
 
+   Permission is granted to distribute modified versions
+   of this document, or of portions of it,
+   under the above conditions, provided also that they
+   carry prominent notices stating who last changed them.
 
 
 Local Variables:
 mode: outline
-paragraph-separate: "[ 	]*$"
+paragraph-separate: "[	]*$"
 version-control: never
 End:

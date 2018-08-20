@@ -21,7 +21,6 @@ SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
 BASE_DIR = SITE_ROOT
 
 DEBUG = True
-TEMPLATE_DEBUG = True
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -29,7 +28,7 @@ ALLOWED_HOSTS = [
 ]
 
 ADMINS = (
-    ('Your Name', 'Your e-mail address'),
+    ('gray', 'gray@gnu.org'),
 )
 MANAGERS = ADMINS
 
@@ -67,28 +66,28 @@ MEDIA_URL = '/static/'
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'SET THIS TO A RANDOM STRING'
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
-    'django.template.loaders.app_directories.load_template_source',
-)
-
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = [
     'django.middleware.cache.UpdateCacheMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.gzip.GZipMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
-)
+]
 
 ROOT_URLCONF = 'dicoweb.urls'
 
 WSGI_APPLICATION = 'dicoweb.wsgi.application'
 
-TEMPLATE_DIRS = (
-    os.path.join(SITE_ROOT, 'templates'),
-)
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+#    os.path.join(SITE_ROOT, 'templates'),
+            os.path.dirname(__file__).replace('\\', '/') + '/templates',
+        ]
+    }
+]
 
 INSTALLED_APPS = (
     'django.contrib.contenttypes',

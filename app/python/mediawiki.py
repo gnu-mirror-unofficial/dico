@@ -23,7 +23,7 @@ import socket
 import urllib.request, urllib.error, urllib.parse
 from html.entities import name2codepoint
 from xml.dom import minidom
-from wit import wiki2text
+from WikiTrans.wiki2text import TextWiktionaryMarkup
 import imp
 
 try:
@@ -72,8 +72,8 @@ class DicoModule:
         if len (el):
             data = el[0].firstChild.data
             if dico.current_markup () != 'wiki':
-                data = self.__htmlentitydecode (data).encode ('utf_8')
-                wikiparser = wiki2text.TextWiktionaryMarkup (text=data)
+                data = self.__htmlentitydecode (data)
+                wikiparser = TextWiktionaryMarkup (text=data)
                 wikiparser.parse ()
                 data = str (wikiparser)
             return ['define', data]

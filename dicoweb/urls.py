@@ -15,17 +15,12 @@
 #  along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf import settings
-from django.conf.urls import patterns
-import views
+from django.conf.urls import url, include
+#from django.conf.urls.static import static
+from . import views as app_views
 
-urlpatterns = patterns(
-    '',
-    (r'^/?$', views.index, {}, 'index'),
-    (r'^opensearch\.xml$', views.opensearch, {}, 'opensearch'),
-)
+urlpatterns = [
+    url(r'^$', app_views.index, name='index'),
+    url(r'^opensearch\.xml$', app_views.opensearch, name='opensearch'),
+]# + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-urlpatterns += patterns(
-    '',
-    (r'^static/(?P<path>.*)$', 'django.views.static.serve',
-     {'document_root': settings.MEDIA_ROOT}),
-)

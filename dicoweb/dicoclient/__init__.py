@@ -16,4 +16,4 @@
 
 __all__ = ["dicoclient"]
 
-from dicoclient import *
+from .dicoclient import *

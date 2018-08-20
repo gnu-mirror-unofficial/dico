@@ -18,18 +18,21 @@ import re
 import hashlib
 import socket
 from django.conf import settings
-from django.core import urlresolvers
+try:
+    from django.core.urlresolvers import reverse
+except ImportError:
+    from django.urls import reverse
 from django.core.cache import cache
 from django.shortcuts import render_to_response
 from django.utils.encoding import force_bytes
 from django.utils.translation import ugettext as _
 
-from dicoclient import dicoclient
+from .dicoclient import dicoclient
 try:
-    from wit import wiki2html
+    from wikitrans import wiki2html
 except ImportError:
     wiki2html = None
-    print('WARNING: The wit module is not installed.')
+    print('WARNING: wikitrans is not installed.')
 
 
 def index(request):
@@ -199,7 +202,7 @@ def index(request):
 
 
 def opensearch(request):
-    url_query = request.build_absolute_uri(urlresolvers.reverse('index'))
+    url_query = request.build_absolute_uri(reverse('index'))
     url_media = request.build_absolute_uri(settings.MEDIA_URL)
     return render_to_response('opensearch.xml', {'url_query': url_query,
                                                  'url_media': url_media},

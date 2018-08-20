@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #  This file is part of GNU Dico.
 #  Copyright (C) 2008-2010, 2012, 2013, 2015 Wojciech Polak
 #

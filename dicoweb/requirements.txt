@@ -1,2 +1,4 @@
-Django >=1.7
-git+git://git.gnu.org.ua/wit.git#egg=wit
+Django>=2.0;python_version>="3.0"
+Django==1.11.5;python_version<="2.7"
+wikitrans==1.0
+python-memcached>=1.59

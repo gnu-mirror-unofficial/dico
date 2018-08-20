@@ -14,7 +14,7 @@
 .\" You should have received a copy of the GNU General Public License    
 .\" along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.    
 .so config.man
-.TH DICOD 1 "August 5, 2016" "GNU DICO" "GNU Dico Reference"
+.TH DICOD 8 "August 20, 2018" "GNU DICO" "GNU Dico Reference"
 .SH NAME
 dicod \- GNU dictionary server
 .SH SYNOPSIS
@@ -286,7 +286,7 @@ Sergey Poznyakoff
 .SH "BUG REPORTS"
 Report bugs to <bug\-dico@gnu.org.ua>.
 .SH COPYRIGHT
-Copyright \(co 2008-2014 Sergey Poznyakoff
+Copyright \(co 2008-2018 Sergey Poznyakoff
 .br
 .na
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>

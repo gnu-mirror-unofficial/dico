@@ -14,13 +14,18 @@
 .\" You should have received a copy of the GNU General Public License    
 .\" along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.    
 .so config.man
-.TH DICOD.CONF 5 "August 5, 2016" "GNU DICO" "GNU Dico Reference"
-dicod.conf \- configuration file for
-.BR dicod (8).
+.TH DICOD.CONF 5 "August 20, 2018" "GNU DICO" "GNU Dico Reference"
+.SH NAME
+dicod.conf \- GNU dictionary server configuration file.
 .SH DESCRIPTION
-.B dicod.conf
-is the configuration file for
+The file 
+.B /etc/dicod.conf
+contains configuration settings and database definitions for the GNU
+dictionary server
 .BR dicod (8).
+The server reads this file once, upon startup, and uses the
+settings until it is shut down or the HUP signal is delivered, in which case
+previous configuration settings are discarded and the file is re-read.
 .SH NOTE
 This manpage is a short description of the
 .B dicod.conf
@@ -1023,7 +1028,7 @@ Sergey Poznyakoff
 .SH "BUG REPORTS"
 Report bugs to <bug\-dico@gnu.org.ua>.
 .SH COPYRIGHT
-Copyright \(co 2008-2014 Sergey Poznyakoff
+Copyright \(co 2008-2018 Sergey Poznyakoff
 .br
 .na
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>

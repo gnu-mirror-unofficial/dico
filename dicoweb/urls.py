@@ -16,11 +16,14 @@
 
 from django.conf import settings
 from django.conf.urls import url, include
+# Uncomment this when running via runserver
 #from django.conf.urls.static import static
 from . import views as app_views
 
 urlpatterns = [
     url(r'^$', app_views.index, name='index'),
     url(r'^opensearch\.xml$', app_views.opensearch, name='opensearch'),
-]# + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+# Add the following when running via runserver:
+#  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

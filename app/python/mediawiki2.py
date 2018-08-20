@@ -22,7 +22,7 @@ import socket
 import urllib2
 from htmlentitydefs import name2codepoint
 from xml.dom import minidom
-from WikiTrans.wiki2text import TextWiktionaryMarkup
+from wikitrans.wiki2text import TextWiktionaryMarkup
 
 # Set utf-8 as the default encoding. 
 # Trying to do so using encode('utf_8')/unicode, which is 

@@ -23,7 +23,7 @@ import socket
 import urllib.request, urllib.error, urllib.parse
 from html.entities import name2codepoint
 from xml.dom import minidom
-from WikiTrans.wiki2text import TextWiktionaryMarkup
+from wikitrans.wiki2text import TextWiktionaryMarkup
 import imp
 
 try:

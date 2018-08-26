@@ -325,7 +325,7 @@ will start listening on all IP addresses from the \fBAAAA\fR
 records for this host.
 
 Either \fIHOST\fR or \fIPORT\fR (but not both) can be omitted.  Missing
-\fIHOSTf\R defaults to IPv6 addresses on all available network
+\fIHOST\fR defaults to IPv6 addresses on all available network
 interfaces, and missing \fIPORT\fR defaults to 2628.
 .TP
 \fIFILENAME\fR, \fBunix://\fIFILENAME\fR

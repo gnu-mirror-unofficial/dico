@@ -17,14 +17,30 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
 import sys
 import re
 import socket
-import urllib.request, urllib.error, urllib.parse
-from html.entities import name2codepoint
 from xml.dom import minidom
 from wikitrans.wiki2text import TextWiktionaryMarkup
-import imp
+
+if sys.version_info[0] > 2:
+    from urllib.request import urlopen, Request
+    from urllib.error import URLError
+    from urllib.parse import quote as url_quote
+    from html.entities import name2codepoint
+else:
+    from urllib2 import urlopen, Request, quote as url_quote, URLError
+    from htmlentitydefs import name2codepoint
+    # Set utf-8 as the default encoding. 
+    # Trying to do so using encode('utf_8')/unicode, which is 
+    # supposed to be the right way, does not work.
+    # Simply calling sys.setdefaultencoding is not possible,
+    # because, for some obscure reason, Python chooses to delete 
+    # this symbol from the namespace after setting its default 
+    # encoding in site.py. That's why reload is needed. 
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
 
 try:
     import json
@@ -60,12 +76,12 @@ class DicoModule:
 
     def define_word (self, word):
         url = 'http://%s%s%s' % (self.wikihost, self.endpoint_define,
-                                 urllib.parse.quote (word))
-        req = urllib.request.Request (url)
+                                 url_quote (word))
+        req = Request (url)
         req.add_header ('User-Agent', self.user_agent)
         try:
-            xml = urllib.request.urlopen (req).read ()
-        except urllib.error.URLError:
+            xml = urlopen (req).read ()
+        except URLError:
             return False
         dom = minidom.parseString (xml)
         el = dom.getElementsByTagName ('text')
@@ -73,6 +89,8 @@ class DicoModule:
             data = el[0].firstChild.data
             if dico.current_markup () != 'wiki':
                 data = self.__htmlentitydecode (data)
+                if sys.version_info[0] == 2:
+                    data = data.encode ('utf-8')
                 wikiparser = TextWiktionaryMarkup (text=data)
                 wikiparser.parse ()
                 data = str (wikiparser)
@@ -82,11 +100,11 @@ class DicoModule:
 
     def match_word (self, strat, key):
         url = 'http://%s%s%s' % (self.wikihost, self.endpoint_match,
-                                 urllib.parse.quote (key.word))
-        req = urllib.request.Request (url)
+                                 url_quote (key.word))
+        req = Request (url)
         req.add_header ('User-Agent', self.user_agent)
         try:
-            result = json.load (urllib.request.urlopen (req))
+            result = json.load (urlopen (req))
             if result:
                 if strat.has_selector:
                     fltres = []
@@ -94,12 +112,12 @@ class DicoModule:
                         if strat.select (k, key):
                             fltres.append (k)
                     if len(fltres) > 0:
-                        return ['match', sorted(fltres, key=str.lower)]
+                        return ['match', sorted(fltres, key=unicode.lower)]
                 else:
                     result[1].sort ()
-                    return ['match', sorted(result[1], key=str.lower)]
+                    return ['match', sorted(result[1], key=unicode.lower)]
             return False
-        except urllib.error.URLError:
+        except URLError:
             return False
 
     def output (self, rh, n):
@@ -136,4 +154,4 @@ class DicoModule:
 
     def __htmlentitydecode (self, s):
         return re.sub ('&(%s);' % '|'.join (name2codepoint),
-                       lambda m: chr (name2codepoint[m.group (1)]), s)
+                       lambda m: unichr (name2codepoint[m.group (1)]), s)

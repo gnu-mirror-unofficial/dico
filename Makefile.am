@@ -34,10 +34,11 @@ SUBDIRS=\
  po
 #FIXME: add these when ready: makedict client fonts
 
-EXTRA_DIST = ChangeLog.2008 configure.boot bootstrap
+EXTRA_DIST = ChangeLog.2008 configure.boot bootstrap DISTFILES
 
 dist-hook:
-	tar -C $(srcdir) -c -f - --exclude-vcs app dicoweb | \
+	tar -C $(srcdir) -c -f - --no-recursion --exclude-vcs \
+           -T $(abs_top_srcdir)/DISTFILES | \
 	      tar -C $(distdir) -x -f -
 
 #  Start Git ChangeLog from this date.

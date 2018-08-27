@@ -28,7 +28,7 @@ dnl Process this file with -*- autoconf -*- to produce a configure script.
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
 AC_PREREQ(2.63)
-AC_INIT([GNU dico], 2.5.90, [bug-dico@gnu.org])
+AC_INIT([GNU dico], 2.6, [bug-dico@gnu.org])
 AC_CONFIG_SRCDIR([dicod/main.c])
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR([build-aux])
@@ -310,6 +310,7 @@ AC_CONFIG_FILES([Makefile
 		 dico/Makefile
 		 scripts/Makefile
 		 doc/Makefile
-		 po/Makefile.in])
+		 po/Makefile.in
+		 app/python/dicod.conf])
 
 AC_OUTPUT

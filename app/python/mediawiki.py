@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Mediawiki module for Python 3
+# Mediawiki module for Python 
 # This file is part of GNU Dico.
 # Copyright (C) 2008-2010, 2012 Wojciech Polak
 #               2018 Sergey Poznyakoff

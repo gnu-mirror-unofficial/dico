@@ -1,0 +1,29 @@
+This is mediawiki.py - a Python module which enables dicod to use Wiktionary
+as a database. To use the module, you will first need to install its
+prerequisites. To do so, run
+
+  pip install -r requirements.txt
+
+If the package has been built properly, the file dicod.conf will be created
+in this dicrectory. This file configures a single "en-wiktionary" dictionary,
+which will be using http://en.wiktionary.org as a database.
+You can use this file to test the module without installing the package,
+E.g., to list dictionary entries matching "word":
+
+  ../../dicod/dicod --config ./dicod.conf --stderr --inetd <<<"match ! . word"
+
+This will display something like that:
+
+220 harp dicod (GNU dico) 2.6 <mime.lang.markup.xversion.xlev.markup-none.markup-wiki> <3865.1535358562@harp>
+152 4 matches found: list follows
+en-wiktionary "word"
+en-wiktionary "Word"
+en-wiktionary "words"
+en-wiktionary "wordy"
+.
+250 Command complete
+
+To show the Wiktionary article for "word":
+
+  ../../dicod/dicod --config ./dicod.conf --stderr --inetd <<<"define ! word"
+

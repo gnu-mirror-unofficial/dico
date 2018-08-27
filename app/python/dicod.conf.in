@@ -1,0 +1,13 @@
+capability (mime,markup,lang,xversion,xlev);
+prepend-load-path ("@abs_top_srcdir@/modules/python");
+load-module python {
+    	command "python load-path=@abs_top_srcdir@/app/python";
+}
+database {
+	name "en-wiktionary";
+        handler "python init-script=mediawiki en.wiktionary.org";
+	description "en.wiktionary.org";
+}
+
+                 	 
+	    

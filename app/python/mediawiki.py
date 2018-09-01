@@ -29,6 +29,10 @@ if sys.version_info[0] > 2:
     from urllib.error import URLError
     from urllib.parse import quote as url_quote
     from html.entities import name2codepoint
+    class unicode(str):
+        pass
+    def unichr(c):
+        return chr(c)
 else:
     from urllib2 import urlopen, Request, quote as url_quote, URLError
     from htmlentitydefs import name2codepoint

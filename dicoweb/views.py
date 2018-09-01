@@ -179,17 +179,20 @@ def index(request):
     if 'definitions' in result:
         rx1 = re.compile('{+(.*?)}+', re.DOTALL)
         for df in result['definitions']:
-            if 'content-type' in df \
-                    and df['content-type'].startswith('text/x-wiki') \
-                    and wiki2html:
-                lang = df['x-wiki-language'] \
-                    if 'x-wiki-language' in df else 'en'
-                wikiparser = wiki2html.HtmlWiktionaryMarkup(text=df['desc'],
-                                                            html_base='?q=',
-                                                            lang=lang)
-                wikiparser.parse()
-                df['desc'] = str(wikiparser)
-                df['format_html'] = True
+            if 'content-type' in df:
+                if (df['content-type'].startswith('text/x-wiki') 
+                    and wiki2html):
+                    lang = df['x-wiki-language'] \
+                          if 'x-wiki-language' in df else 'en'
+                    wikiparser = wiki2html.HtmlWiktionaryMarkup(
+                                          text=df['desc'],
+                                          html_base='?q=',
+                                          lang=lang)
+                    wikiparser.parse()
+                    df['desc'] = str(wikiparser)
+                    df['format_html'] = True
+                elif df['content-type'].startswith('text/html'):
+                    df['format_html'] = True
             else:
                 df['desc'] = re.sub('_(.*?)_', '<b>\\1</b>', df['desc'])
                 df['desc'] = re.sub(rx1, __subs1, df['desc'])

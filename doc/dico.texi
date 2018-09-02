@@ -2286,29 +2286,39 @@ The following two directives control the content type and transfer
 encoding used when formatting replies from this database if
 @code{OPTION MIME} (@pxref{OPTION, OPTION MIME}) is in effect:
 
-@deffn {Database} content-type @var{string}
-Sets the content type of the reply.  E.g.:
+@deffn {Database} mime-headers @var{multiline-string}
+Defines the headers to be sent with the replies from this
+database.  Argument is a here-document (@pxref{here-document}),
+containing the headers to be sent with each dictionary entry, if the
+client sent the @samp{OPTION MIME} command.  Normally, you would want
+to include at least the @samp{Content-Type} and
+@samp{Content-Transfer-Encoding} headers, as shown in the example below:
 
 @example
 directory @{
    name "foo";
    handler "dictorg";
-   content-type "text/html";
+   mime-headers <<- EOT
+     Content-Type: text/html; charset=utf-8
+     Content-Transfer-Encoding: 8bit
+   EOT;     
    ...
 @}   
 @end example
-@end deffn
 
-@deffn {Database} content-transfer-encoding @var{enum}
-Sets transfer encoding to use when sending @acronym{MIME} replies for
-this database.  Allowed values for @var{enum} are:
+Valid values for the @samp{Content-Transfer-Encoding} header are:
 
 @table @asis
-@item base64
-Use @acronym{BASE64} encoding.
+@item 8bit
+The content will be transferred as is.
 
 @item quoted-printable
-Use quoted-printable encoding.
+Non-printable characters will be encoded using the
+@samp{quoted-printable} encoding.
+
+@item base64
+Non-printable characters will be encoded using the
+@samp{base64} encoding.
 @end table
 @end deffn
 

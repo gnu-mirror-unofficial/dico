@@ -50,6 +50,8 @@ TESTSUITE_AT = \
  define.at\
  exact.at\
  lev.at\
+ mime.at\
+ mime2.at\
  prefix.at\
  showdb.at\
  showinfo.at\

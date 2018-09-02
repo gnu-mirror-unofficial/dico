@@ -1,4 +1,5 @@
 ;; -*- scheme -*-
+;; coding: utf-8 
 ;; To handle this file use the listdict.scm module.
 (; Short info (for show db):
  "Short English-Polish numerals dictionary"
@@ -7,9 +8,12 @@
 Hardly worth copyrighting, but just in case:\n\
 \n\
 This dictionary is public domain. You can do with it whatever you\n\
-info: like to do, except changing the meaning of the words, of course.\n"
+like to do, except changing the meaning of the words, of course.\n"
  ; Supported languages (source . dest):
  ("en" . "pl")
+ ; MIME headers
+ "Content-Type: text/plain; charset=UTF-8\n\
+Content-Transfer-Encoding: quoted-printable\n"
  ; Dictionary corpus
  ("one" . "jeden")
  ("two" . "dwa")

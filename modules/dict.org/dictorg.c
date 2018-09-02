@@ -797,6 +797,13 @@ mod_descr(dico_handle_t hp)
     return ptr;
 }
 
+static char *
+mod_mime_header(dico_handle_t hp)
+{
+    struct dictdb *db = (struct dictdb *) hp;
+    return find_db_entry(db, DICTORG_ENTRY_MIME_HEADER);
+}
+
 
 static dico_result_t
 _match_simple(struct dictdb *db, entry_match_t match, const char *word)
@@ -984,20 +991,18 @@ mod_free_result(dico_result_t rp)
 }
 
 struct dico_database_module DICO_EXPORT(dictorg, module) = {
-    DICO_MODULE_VERSION,
-    DICO_CAPA_NONE,
-    mod_init,
-    mod_init_db,
-    mod_free_db,
-    NULL,
-    NULL,
-    mod_info,
-    mod_descr,
-    NULL, /* FIXME: dico_db_lang */
-    mod_match,
-    mod_define,
-    mod_output_result,
-    mod_result_count,
-    mod_compare_count,
-    mod_free_result
+    .dico_version = DICO_MODULE_VERSION,
+    .dico_capabilities = DICO_CAPA_NONE,
+    .dico_init = mod_init,
+    .dico_init_db = mod_init_db,
+    .dico_free_db = mod_free_db,
+    .dico_db_info = mod_info,
+    .dico_db_descr = mod_descr,
+    .dico_match = mod_match,
+    .dico_define = mod_define,
+    .dico_output_result = mod_output_result,
+    .dico_result_count = mod_result_count,
+    .dico_compare_count = mod_compare_count,
+    .dico_free_result = mod_free_result,
+    .dico_db_mime_header = mod_mime_header
 };

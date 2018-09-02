@@ -1,5 +1,5 @@
 # This file is part of GNU Dico. -*- Autotest -*-
-# Copyright (C) 2012-2018 Sergey Poznyakoff
+# Copyright (C) 2018 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,29 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-m4_include(testsuite.inc)
+AT_SETUP(result-headers)
+AT_KEYWORDS(option mime result-headers)
+AT_DICOD([option mime
+define plnum six
+quit
+],
+[220
+250
+150 1 definitions found: list follows
+151 "six" plnum "Short English-Polish numerals dictionary"
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-AT_INIT
+six
+sze=C5=9B=C4=87
 
-# -----------------------------------------------------------------------
+.
+250
+221
+],
+[],
+[sed  's/^dicod: Error: //;/^;;;/d'])
+AT_CLEANUP
 
-AT_BANNER(Match)
-m4_include(exact.at)
-m4_include(prefix.at)
-m4_include(suffix.at)
-m4_include(lev.at)
-m4_include(nlev.at)
-m4_include(dlev.at)
-m4_include(dnlev.at)
-m4_include(soundex.at)
-m4_include(regexp.at)
-m4_include(re.at)
 
-AT_BANNER(Define)
-m4_include(define.at)
-m4_include(mime.at)
-
-AT_BANNER(Show)
-m4_include(showdb.at)
-m4_include(showinfo.at)
-m4_include(showlang.at)

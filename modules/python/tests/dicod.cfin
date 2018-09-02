@@ -1,4 +1,4 @@
-capability lang;
+capability (mime,lang);
 timing no;
 prepend-load-path ("~moddir~/python");
 load-module python;
@@ -6,7 +6,7 @@ database {
         name "cznum";
         handler "python "
                 "load-path=~dictdir~ "
-                "init-script=textdict~py2~ "
+                "init-script=textdict "
                 "~dictdir~/numerals-cz.txt";
 }
 

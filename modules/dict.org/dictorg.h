@@ -48,6 +48,8 @@
 #define DICTORG_ENTRY_PLUGIN        DICTORG_ENTRY_PREFIX"-plugin"
 #define DICTORG_ENTRY_PLUGIN_DATA   DICTORG_ENTRY_PREFIX"-plugin-data"
 
+#define DICTORG_ENTRY_MIME_HEADER   DICTORG_ENTRY_PREFIX"-mime-header"
+
 #define DICTORG_UNKNOWN    0
 #define DICTORG_TEXT       1
 #define DICTORG_GZIP       2

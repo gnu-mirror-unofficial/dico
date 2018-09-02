@@ -191,7 +191,7 @@ guile_call_proc(SCM *result, SCM proc, SCM arglist)
     adata.proc = proc;
     adata.arg = arglist;
     *result = scm_c_with_throw_handler(SCM_BOOL_T,
-				      apply_catch_body, &adata,
+				       apply_catch_body, &adata,
 				       eval_catch_handler, &jmp_env, 0);
     return 0;
 }
@@ -646,9 +646,10 @@ enum guile_proc_ind {
     compare_count_proc,
     free_result_proc,
     result_headers_proc,
-};
+    db_mime_header_proc,
 
-#define MAX_PROC (result_headers_proc+1)
+    MAX_PROC
+};
 
 static char *guile_proc_name[] = {
     "open",
@@ -662,7 +663,8 @@ static char *guile_proc_name[] = {
     "result-count",
     "compare-count",
     "free-result",
-    "result-headers"
+    "result-headers",
+    "db-mime-header"
 };
 
 typedef SCM guile_vtab[MAX_PROC];
@@ -716,7 +718,7 @@ init_vtab(const char *init_fun, const char *dbname, guile_vtab vtab)
     if (guile_safe_exec(call_init_handler, &istr, &res))
 	return 1;
 
-    if (!scm_is_pair(res) && res != SCM_EOL) {
+    if (!scm_list_p(res) && res != SCM_EOL) {
 	str_rettype_error(init_fun);
 	return 1;
     }
@@ -725,7 +727,7 @@ init_vtab(const char *init_fun, const char *dbname, guile_vtab vtab)
 	char *ident;
 	SCM name, proc;
 	SCM car = SCM_CAR(res);
-	if (!scm_is_pair(res)
+	if (!scm_list_p(res)
 	    || !scm_is_string(name = SCM_CAR(car))
 	    || !scm_procedure_p(proc = SCM_CDR(car)))  {
 	    str_rettype_error(init_fun);
@@ -948,7 +950,7 @@ scm_to_assoc(dico_assoc_list_t assoc, SCM scm)
 {
     dico_assoc_clear(assoc);
 
-    for (; scm != SCM_EOL && scm_is_pair(scm); scm = SCM_CDR(scm)) {
+    for (; scm != SCM_EOL && scm_list_p(scm); scm = SCM_CDR(scm)) {
 	SCM elt = SCM_CAR(scm);
 
 	if (!scm_is_pair(elt)) {
@@ -1016,9 +1018,9 @@ scm_to_langlist(SCM scm, SCM procsym)
     else if (scm_is_string(scm)) {
 	list = dico_list_create();
 	dico_list_append(list, scm_to_locale_string(scm));
-    } else if (scm_is_pair(scm)) {
+    } else if (scm_list_p(scm)) {
 	list = dico_list_create();
-	for (; scm != SCM_EOL && scm_is_pair(scm); scm = SCM_CDR(scm))
+	for (; scm != SCM_EOL && scm_list_p(scm); scm = SCM_CDR(scm))
 	    dico_list_append(list, scm_to_locale_string(SCM_CAR(scm)));
     } else
 	rettype_error(procsym);
@@ -1198,7 +1200,7 @@ mod_result_headers (dico_result_t rp, dico_assoc_list_t hdr)
 	if (guile_call_proc(&res, proc,
 			    scm_list_2(gres->result, assoc_to_scm(hdr))))
 	    return 1;
-	if (!scm_is_pair(res)) {
+	if (!scm_list_p(res)) {
 	    rettype_error(proc);
 	    return 1;
 	}
@@ -1207,22 +1209,30 @@ mod_result_headers (dico_result_t rp, dico_assoc_list_t hdr)
     return 0;
 }
 
+static char *
+mod_db_mime_header(dico_handle_t hp)
+{
+    struct _guile_database *db = (struct _guile_database *)hp;
+    return mod_get_text(db, db_mime_header_proc);
+}
+
 struct dico_database_module DICO_EXPORT(guile, module) = {
-    DICO_MODULE_VERSION,
-    DICO_CAPA_NONE,
-    mod_init,
-    mod_init_db,
-    mod_free_db,
-    mod_open,
-    mod_close,
-    mod_info,
-    mod_descr,
-    mod_lang,
-    mod_match,
-    mod_define,
-    mod_output_result,
-    mod_result_count,
-    mod_compare_count,
-    mod_free_result,
-    mod_result_headers
+    .dico_version = DICO_MODULE_VERSION,
+    .dico_capabilities = DICO_CAPA_NONE,
+    .dico_init = mod_init,
+    .dico_init_db = mod_init_db,
+    .dico_free_db = mod_free_db,
+    .dico_open = mod_open,
+    .dico_close = mod_close,
+    .dico_db_info = mod_info,
+    .dico_db_descr = mod_descr,
+    .dico_db_lang = mod_lang,
+    .dico_match = mod_match,
+    .dico_define = mod_define,
+    .dico_output_result = mod_output_result,
+    .dico_result_count = mod_result_count,
+    .dico_compare_count = mod_compare_count,
+    .dico_free_result = mod_free_result,
+    .dico_result_headers = mod_result_headers,
+    .dico_db_mime_header = mod_db_mime_header
 };

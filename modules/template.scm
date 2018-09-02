@@ -47,6 +47,9 @@
 (define (result-headers rh hdr)
   (list))
 
+(define (db-mime-header dbh)
+  #f)
+
 (define-public (dico-init arg)
   (list (cons "open" open-module)
         (cons "close" close-module)
@@ -57,4 +60,5 @@
         (cons "match" match-word)
         (cons "output" output)
         (cons "result-count" result-count)
-	(cons "result-headers" result-headers)))
+	(cons "result-headers" result-headers)
+	(cons "db-mime-header" db-mime-header)))

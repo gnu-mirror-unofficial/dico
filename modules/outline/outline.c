@@ -28,6 +28,10 @@
 
    * Languages
    <lang> [<lang>...] [: <lang> [<lang>...]] 
+
+   * MIME
+   <Header>: <value>
+   [<Header>: <value>...]
    
    * Dictionary
    ** <entry>
@@ -79,7 +83,7 @@ struct outline_file {
     struct entry *index;
     struct entry *suf_index;
     
-    struct entry *info_entry, *descr_entry, *lang_entry;
+    struct entry *info_entry, *descr_entry, *lang_entry, *mime_entry;
 };
 
 #define STATE_INITIAL 0
@@ -103,7 +107,7 @@ trimws(char *buf)
     return len;
 }
     
-int
+static int
 find_header(struct outline_file *file, char *buf, size_t size, size_t *pread)
 {
     while (fgets(buf, size, file->fp)) {
@@ -124,7 +128,7 @@ find_header(struct outline_file *file, char *buf, size_t size, size_t *pread)
     return 0;
 }
 
-off_t
+static off_t
 skipws(struct outline_file *file, char *buf, size_t size)
 {
     while (fgets(buf, size, file->fp)) {
@@ -137,7 +141,7 @@ skipws(struct outline_file *file, char *buf, size_t size)
     return ftell(file->fp);
 }
 
-struct entry *
+static struct entry *
 alloc_entry(const char *text, size_t len)
 {
     struct entry *ep = malloc(sizeof(*ep));
@@ -236,7 +240,7 @@ find_matcher(const char *strat)
     return NULL;
 }
 
-int
+static int
 outline_init(int argc, char **argv)
 {
     int i;
@@ -435,7 +439,7 @@ suffix_match(struct outline_file *file, const char *word, struct result *res)
 }
 
 
-int
+static int
 outline_free_db (dico_handle_t hp)
 {
     size_t i;
@@ -446,6 +450,7 @@ outline_free_db (dico_handle_t hp)
     free(file->info_entry);
     free(file->descr_entry);
     free(file->lang_entry);
+    free(file->mime_entry);
     for (i = 0; i < file->count; i++) {
 	free(file->index[i].word);
 	if (file->suf_index)
@@ -457,7 +462,7 @@ outline_free_db (dico_handle_t hp)
     return 0;
 }
 
-dico_handle_t
+static dico_handle_t
 outline_init_db(const char *dbname, int argc, char **argv)
 {
     FILE *fp;
@@ -524,6 +529,9 @@ outline_init_db(const char *dbname, int argc, char **argv)
 		} else if (strcasecmp(ep->word, "languages") == 0) {
 		    file->lang_entry = ep;
 		    break;
+		} else if (strcasecmp(ep->word, "mime") == 0) {
+		    file->mime_entry = ep;
+		    break;
 		} else if (strcasecmp(ep->word, "dictionary") == 0)
 		    state = STATE_DICT;
 	    }
@@ -554,8 +562,14 @@ outline_init_db(const char *dbname, int argc, char **argv)
 }
 
 
-char *
-read_buf(struct outline_file *file, struct entry *ep)
+static inline int
+isws(int c)
+{
+    return c == ' ' || c == '\t' || c == '\r' || c == '\f';
+}
+
+static char *
+read_buf(struct outline_file *file, struct entry *ep, int trim)
 {
     size_t size;
     char *buf = malloc(ep->size + 1);
@@ -563,25 +577,33 @@ read_buf(struct outline_file *file, struct entry *ep)
 	return NULL;
     fseek(file->fp, ep->offset, SEEK_SET);
     size = fread(buf, 1, ep->size, file->fp);
+    if (trim && size > 0 && buf[size-1] == '\n') {
+	while (size > 0 && buf[size-1] == '\n') {
+	    --size;
+	    while (size > 0 && isws(buf[size-1]))
+		--size;
+	}
+	buf[size++] = '\n';
+    }
     buf[size] = 0;
     return buf;
 }
 
-char *
+static char *
 outline_info(dico_handle_t hp)
 {
     struct outline_file *file = (struct outline_file *) hp;
     if (file->info_entry) 
-	return read_buf(file, file->info_entry);
+	return read_buf(file, file->info_entry, 0);
     return NULL;
 }
 
-char *
+static char *
 outline_descr(dico_handle_t hp)
 {
     struct outline_file *file = (struct outline_file *) hp;
     if (file->descr_entry) { 
-	char *buf = read_buf(file, file->descr_entry);
+	char *buf = read_buf(file, file->descr_entry, 0);
 	char *p = strchr(buf, '\n');
 	if (p)
 	    *p = 0;
@@ -590,7 +612,7 @@ outline_descr(dico_handle_t hp)
     return NULL;
 }
 
-int
+static int
 outline_lang(dico_handle_t hp, dico_list_t list[2])
 {
     struct outline_file *file = (struct outline_file *) hp;
@@ -599,7 +621,7 @@ outline_lang(dico_handle_t hp, dico_list_t list[2])
     if (file->lang_entry) {
 	int n = 0;
 	struct wordsplit ws;
-	char *buf = read_buf(file, file->lang_entry);
+	char *buf = read_buf(file, file->lang_entry, 0);
 
 	ws.ws_delim = "\n";
 	if (wordsplit(buf, &ws, WRDSF_DEFFLAGS|WRDSF_DELIM) == 0) {
@@ -627,8 +649,7 @@ outline_lang(dico_handle_t hp, dico_list_t list[2])
 }
 
 
-
-dico_result_t
+static dico_result_t
 outline_match0(dico_handle_t hp, entry_match_t match, const char *word)
 {
     struct outline_file *file = (struct outline_file *) hp;
@@ -647,7 +668,7 @@ outline_match0(dico_handle_t hp, entry_match_t match, const char *word)
     return (dico_result_t) res;
 }
 
-dico_result_t
+static dico_result_t
 outline_match_all(dico_handle_t hp, dico_strategy_t strat, const char *word)
 {
     struct outline_file *file = (struct outline_file *) hp;
@@ -694,7 +715,7 @@ outline_match_all(dico_handle_t hp, dico_strategy_t strat, const char *word)
     return (dico_result_t) res;
 }
 
-dico_result_t
+static dico_result_t
 outline_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 {
     entry_match_t match = find_matcher(strat->name);
@@ -705,7 +726,7 @@ outline_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
     return NULL;
 }
 
-dico_result_t
+static dico_result_t
 outline_define(dico_handle_t hp, const char *word)
 {
     struct outline_file *file = (struct outline_file *) hp;
@@ -746,7 +767,7 @@ printdef(dico_stream_t str, struct outline_file *file, const struct entry *ep)
     }
 }
 
-int
+static int
 outline_output_result (dico_result_t rp, size_t n, dico_stream_t str)
 {
     struct result *res = (struct result *) rp;
@@ -770,21 +791,21 @@ outline_output_result (dico_result_t rp, size_t n, dico_stream_t str)
     return 0;
 }
 
-size_t
+static size_t
 outline_result_count (dico_result_t rp)
 {
     struct result *res = (struct result *) rp;
     return res->count;
 }
 
-size_t
+static size_t
 outline_compare_count (dico_result_t rp)
 {
     struct result *res = (struct result *) rp;
     return res->compare_count;
 }
 
-void
+static void
 outline_free_result(dico_result_t rp)
 {
     struct result *res = (struct result *) rp;
@@ -793,22 +814,30 @@ outline_free_result(dico_result_t rp)
     free(rp);
 }
 
+static char *
+outline_db_mime_header(dico_handle_t hp)
+{
+    struct outline_file *file = (struct outline_file *) hp;
+    if (file->mime_entry) 
+	return read_buf(file, file->mime_entry, 1);
+    return NULL;
+}
+
 struct dico_database_module DICO_EXPORT(outline, module) = {
-    DICO_MODULE_VERSION,
-    DICO_CAPA_NONE,
-    outline_init,
-    outline_init_db,
-    outline_free_db,
-    NULL,
-    NULL,
-    outline_info,
-    outline_descr,
-    outline_lang,
-    outline_match,
-    outline_define,
-    outline_output_result,
-    outline_result_count,
-    outline_compare_count,
-    outline_free_result
+    .dico_version = DICO_MODULE_VERSION,
+    .dico_capabilities = DICO_CAPA_NONE,
+    .dico_init = outline_init,
+    .dico_init_db = outline_init_db,
+    .dico_free_db = outline_free_db,
+    .dico_db_info = outline_info,
+    .dico_db_descr = outline_descr,
+    .dico_db_lang = outline_lang,
+    .dico_match = outline_match,
+    .dico_define = outline_define,
+    .dico_output_result = outline_output_result,
+    .dico_result_count = outline_result_count,
+    .dico_compare_count = outline_compare_count,
+    .dico_free_result = outline_free_result,
+    .dico_db_mime_header = outline_db_mime_header
 };
     

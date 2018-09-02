@@ -820,29 +820,18 @@ gcide_free_result(dico_result_t rp)
     dico_list_destroy(&res->list);
 }
 
-static int
-gcide_result_headers(dico_result_t rp, dico_assoc_list_t hdr)
-{  
-    /* FIXME */
-    return 0;
-}
-
 struct dico_database_module DICO_EXPORT(gcide, module) = {
-    DICO_MODULE_VERSION,
-    DICO_CAPA_NONE,
-    gcide_init,
-    gcide_init_db,
-    gcide_free_db,
-    NULL,
-    NULL,
-    gcide_info,
-    gcide_descr,
-    NULL,
-    gcide_match,
-    gcide_define,
-    gcide_output_result,
-    gcide_result_count,
-    gcide_compare_count,
-    gcide_free_result,
-    gcide_result_headers
+    .dico_version = DICO_MODULE_VERSION,
+    .dico_capabilities = DICO_CAPA_NONE,
+    .dico_init = gcide_init,
+    .dico_init_db = gcide_init_db,
+    .dico_free_db = gcide_free_db,
+    .dico_db_info = gcide_info,
+    .dico_db_descr = gcide_descr,
+    .dico_match = gcide_match,
+    .dico_define = gcide_define,
+    .dico_output_result = gcide_output_result,
+    .dico_result_count = gcide_result_count,
+    .dico_compare_count = gcide_compare_count,
+    .dico_free_result = gcide_free_result
 };

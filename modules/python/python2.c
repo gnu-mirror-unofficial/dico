@@ -1003,22 +1003,32 @@ mod_result_headers (dico_result_t rp, dico_assoc_list_t hdr)
     return 0;
 }
 
+static char *
+mod_db_mime_header (dico_handle_t hp)
+{
+    struct _python_database *db = (struct _python_database *)hp;
+
+    PyThreadState_Swap (db->py_ths);
+    return _mod_get_text (db->py_instance, "db_mime_header");
+}
+
 struct dico_database_module DICO_EXPORT(python, module) = {
-    DICO_MODULE_VERSION,
-    DICO_CAPA_NONE,
-    mod_init,
-    mod_init_db,
-    mod_free_db,
-    mod_open,
-    mod_close,
-    mod_info,
-    mod_descr,
-    mod_lang,
-    mod_match,
-    mod_define,
-    mod_output_result,
-    mod_result_count,
-    mod_compare_count,
-    mod_free_result,
-    mod_result_headers
+    .dico_version = DICO_MODULE_VERSION,
+    .dico_capabilities = DICO_CAPA_NONE,
+    .dico_init = mod_init,
+    .dico_init_db = mod_init_db,
+    .dico_free_db = mod_free_db,
+    .dico_open = mod_open,
+    .dico_close = mod_close,
+    .dico_db_info = mod_info,
+    .dico_db_descr = mod_descr,
+    .dico_db_lang = mod_lang,
+    .dico_match = mod_match,
+    .dico_define = mod_define,
+    .dico_output_result = mod_output_result,
+    .dico_result_count = mod_result_count,
+    .dico_compare_count = mod_compare_count,
+    .dico_free_result = mod_free_result,
+    .dico_result_headers = mod_result_headers,
+    .dico_db_mime_header = mod_db_mime_header
 };

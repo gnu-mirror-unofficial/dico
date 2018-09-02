@@ -15,7 +15,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
-
+from __future__ import print_function
 import dico
 import sys
 
@@ -55,6 +55,7 @@ class DicoModule:
     filename = ''
     mod_descr = ''
     mod_info = []
+    mime_headers = []
     langlist = ()
 
     def __init__ (self, *argv):
@@ -63,7 +64,10 @@ class DicoModule:
     
     def open (self, dbname):
         self.dbname = dbname
-        file = open (self.filename, "r", encoding="utf8")
+        if sys.version_info[0] <= 2:
+            file = open (self.filename, "r")
+        else:
+            file = open (self.filename, "r", encoding="utf8")
         for line in file:
             if line.startswith ('--'):
                 continue
@@ -79,6 +83,9 @@ class DicoModule:
                     self.langlist = (s[0].split (), s[0].split ())
                 else:
                     self.langlist = (s[0].split (), s[1].split ())
+                continue
+            if line.startswith ('mime: '):
+                self.mime_headers.append(line[6:].strip (' \n'))
                 continue
             f = line.strip (' \n').split (' ', 1)
             if len (f) == 2:
@@ -132,4 +139,6 @@ class DicoModule:
 
     def compare_count (self, rh):
         return rh.compcount
-    
+
+    def db_mime_header (self):
+        return '\n'.join(self.mime_headers)

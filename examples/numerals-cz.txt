@@ -18,6 +18,9 @@ info: like to do, except changing the meaning of the words, of course.
 -- and the list on the right gives `destination' languages, i.e. the ones to
 -- which the headwords are translated.
 lang: en : cz
+-- Optional mime: statements supply MIME headers
+mime: Content-Type: text/plain; charset=UTF-8
+mime: Content-Transfer-Encoding: quoted-printable
 
 -- Anything having two fields is taken to be a word definition:
 

@@ -134,6 +134,7 @@ dicod_init_database(dicod_database_t *dp)
 	    return 1;
 	}
     }
+
     return 0;
 }
 
@@ -148,7 +149,24 @@ dicod_open_database(dicod_database_t *dp)
 		     dp->command);
 	    return 1;
 	}
+	
     }
+
+    if (!dp->mime_headers
+	&& inst->module->dico_version > 2
+	&& inst->module->dico_db_mime_header) {
+	char *str = inst->module->dico_db_mime_header(dp->mod_handle);
+	if (str) {
+	    if (dico_header_parse(&dp->mime_headers, str)) {
+		dico_log(L_WARN, errno,
+			 "database %s: can't parse mime headers \"%s\"",
+			 dp->name,
+			 str);
+	    }
+	    free(str);
+	}
+    }
+
     return 0;
 }
 
@@ -524,6 +542,22 @@ print_definitions(dicod_database_t *db, dico_result_t res,
 	
 	stream_printf(stream, "151 \"%s\" %s \"%s\"\n",
 		      word, db->name, descr ? descr : "");
+
+	if (!db->mime_headers
+	    && mp->dico_version > 2
+	    && mp->dico_db_mime_header) {
+	    char *str = mp->dico_db_mime_header(db->mod_handle);
+	    if (str) {
+		if (dico_header_parse(&db->mime_headers, str)) {
+		    dico_log(L_WARN, errno,
+			     "database %s: can't parse mime headers \"%s\"",
+			     db->name,
+			     str);
+		}
+		free(str);
+	    }
+	}
+
 	if (mp->dico_result_headers) {
 	    if (db->mime_headers)
 		hdr = dico_assoc_dup(db->mime_headers);

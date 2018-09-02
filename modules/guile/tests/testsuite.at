@@ -28,6 +28,8 @@ m4_include(lev.at)
 
 AT_BANNER(Define)
 m4_include(define.at)
+m4_include(mime.at)
+m4_include(mime2.at)
 
 AT_BANNER(Show)
 m4_include(showdb.at)

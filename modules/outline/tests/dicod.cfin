@@ -1,4 +1,4 @@
-capability lang;
+capability (mime,lang);
 timing no;
 prepend-load-path ("~moddir~/outline");
 load-module outline;

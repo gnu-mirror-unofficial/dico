@@ -53,6 +53,7 @@ TESTSUITE_AT = \
  exact.at\
  lev.at\
  nlev.at\
+ mime.at\
  prefix.at\
  re.at\
  regexp.at\

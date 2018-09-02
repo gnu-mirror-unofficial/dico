@@ -37,7 +37,7 @@ class DicoModule:
         return False
 
     def info (self):
-        """Return a full information about the database."""
+        """Return full information about the database."""
         return False
 
     def lang (self):
@@ -69,6 +69,18 @@ class DicoModule:
         """Optional. Return a dictionary of MIME headers."""
         return hdr
 
+    def db_mime_header (self):
+        """Alternative interface to result_headers.
+        Return MIME headers as a (multi-line) string. The major difference
+        between this method and result_headers is that result_headers is
+        called for each result individually, whereas db_mime_header is called
+        exactly once, when initializing the database.
+
+        Unless your database implementation supports per-result MIME headers,
+        define only db_mime_header.
+        """
+        return False
+    
     def free_result (self, rh):
         """Free any resources used by the result set."""
         pass

@@ -31,7 +31,7 @@ add_i_option(int flag, const char *dir, void *data)
 }
 
 void
-run_lint()
+run_lint(void)
 {
     size_t n;
     struct cmdopt cmdopt;

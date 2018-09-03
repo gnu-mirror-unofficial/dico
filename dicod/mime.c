@@ -26,7 +26,7 @@ dicod_mime(dico_stream_t str, int argc, char **argv)
 }
 
 void
-register_mime()
+register_mime(void)
 {
     static struct dicod_command cmd[] = {
 	{ "OPTION MIME", 2, 2, NULL, "use MIME headers",

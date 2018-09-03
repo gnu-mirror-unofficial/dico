@@ -37,7 +37,7 @@ set_bool(int *pval, char *str)
 }
 
 void
-ds_silent_close()
+ds_silent_close(void)
 {
     if (conn) {
 	stream_printf(conn->str, "QUIT\r\n");
@@ -72,7 +72,7 @@ get_list(struct dict_result **pres, char *cmd, char *code)
 }
 
 void
-check_disconnect()
+check_disconnect(void)
 {
     if (conn) {
 	int rc;
@@ -96,7 +96,7 @@ check_disconnect()
 }
 
 int
-ensure_connection()
+ensure_connection(void)
 {
     check_disconnect();
     if (!conn) {

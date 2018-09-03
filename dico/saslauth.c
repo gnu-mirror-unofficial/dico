@@ -356,7 +356,7 @@ sasl_enable(int val)
 }
 
 int
-sasl_enabled_p()
+sasl_enabled_p(void)
 {
     return sasl_enable_state;
 }
@@ -375,7 +375,7 @@ sasl_enable(int val)
 }
 
 int
-sasl_enabled_p()
+sasl_enabled_p(void)
 {
     return 0;
 }

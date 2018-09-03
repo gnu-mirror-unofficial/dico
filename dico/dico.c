@@ -33,7 +33,7 @@ dico_stream_t debug_stream;
 
 
 void
-fixup_url()
+fixup_url(void)
 {
     xdico_assign_string(&dico_url.proto, "dict");
     if (!dico_url.host)

@@ -326,7 +326,7 @@ callback(Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop)
 }
 
 static int
-init_sasl_0()
+init_sasl_0(void)
 {
     int rc = gsasl_init(&ctx);
     if (rc != GSASL_OK) {
@@ -339,7 +339,7 @@ init_sasl_0()
 }
 
 static int
-init_sasl_1()
+init_sasl_1(void)
 {
     static struct dicod_command cmd =
 	{ "SASLAUTH", 2, 3, "mechanism [initial-response]",
@@ -357,7 +357,7 @@ init_sasl_1()
 }
 
 void
-register_sasl()
+register_sasl(void)
 {
   int rc;
   char *listmech;
@@ -390,7 +390,7 @@ register_sasl()
 
 #else
 void
-register_sasl()
+register_sasl(void)
 {
     /* nothing */
 }

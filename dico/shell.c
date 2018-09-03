@@ -406,7 +406,7 @@ parse_init_script(const char *name)
 }
 
 void
-parse_init_scripts()
+parse_init_scripts(void)
 {
     char *name = dico_full_file_name(get_homedir(), ".dico");
     parse_init_script(name);
@@ -493,7 +493,7 @@ _command_completion(const char *cmd, int start, int end)
 #define HISTFILE_SUFFIX "_history"
 
 static char *
-get_history_file_name()
+get_history_file_name(void)
 {
   static char *filename = NULL;
 
@@ -638,7 +638,7 @@ shell_getline(void *data, char **buf)
 }
 
 void
-dico_shell()
+dico_shell(void)
 {
     struct init_script dat;
     shell_init(&dat);

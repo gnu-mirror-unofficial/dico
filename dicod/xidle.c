@@ -23,7 +23,7 @@ dicod_xidle(dico_stream_t str, int argc, char **argv)
 }
     
 void
-register_xidle()
+register_xidle(void)
 {
     static struct dicod_command cmd[] = {
 	{ "XIDLE", 1, 1, NULL, "report inactivity timeout, reset idle timer",

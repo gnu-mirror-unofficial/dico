@@ -42,7 +42,7 @@ mkfullname(char *dir, char *name)
 }
 
 void
-make_names()
+make_names(void)
 {
     int i;
     kanjidict = mkfullname(dictdir, kanjidict);

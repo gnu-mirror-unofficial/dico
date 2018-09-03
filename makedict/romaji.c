@@ -270,7 +270,7 @@ kana_to_romaji_str(const XChar2b *input, size_t size, char **sptr)
 
 #if 0
 int
-main()
+main(void)
 {
     char *text[] = {
 	"...$8$c$/$7$s...",

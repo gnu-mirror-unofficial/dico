@@ -26,7 +26,7 @@
 #include <xgetdomainname.h>
 
 char *
-xdico_local_hostname()
+xdico_local_hostname(void)
 {
     struct hostent *hp;
     char *hostpart = xgethostname();

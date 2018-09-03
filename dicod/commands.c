@@ -355,7 +355,7 @@ dicod_remove_command(const char *name)
 }
 
 void
-dicod_init_command_tab()
+dicod_init_command_tab(void)
 {
     struct dicod_command *p;
     

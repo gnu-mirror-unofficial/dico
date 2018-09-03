@@ -42,7 +42,7 @@ static int line_num;
 static struct dict_token token;
 
 void
-skip_to_eol()
+skip_to_eol(void)
 {
     int c;
     
@@ -135,7 +135,7 @@ copy_kana(int firstc)
 }
 
 int
-nextkn()
+nextkn(void)
 {
     int c;
     
@@ -168,7 +168,7 @@ nextkn()
 }
 
 int
-edict_nextkn()
+edict_nextkn(void)
 {
     int c;
     
@@ -614,7 +614,7 @@ compile_edict(DB *dbp)
 }
 
 int
-compile()
+compile(void)
 {
     DB *dbp;
 

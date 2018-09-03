@@ -25,7 +25,7 @@ _add_load_dir (void *item, void *unused)
 }
 
 void
-dicod_loader_init()
+dicod_loader_init(void)
 {
     lt_dlinit();
     dico_list_iterate(prepend_load_path, _add_load_dir, NULL);

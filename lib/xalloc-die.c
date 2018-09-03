@@ -21,7 +21,7 @@
 #include <sysexits.h>
 
 void
-xalloc_die()
+xalloc_die(void)
 {
     dico_die(EX_OSERR, L_CRIT, 0, "Not enough memory");
 }

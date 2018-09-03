@@ -62,7 +62,7 @@ dicod_capa_add(const char *name)
 }
 
 int
-dicod_capa_flush()
+dicod_capa_flush(void)
 {
     dico_iterator_t itr;
     struct dicod_capa *cp;

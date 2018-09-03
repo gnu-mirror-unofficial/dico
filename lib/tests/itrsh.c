@@ -134,7 +134,7 @@ current(struct itr_shell *shp)
 
 
 dico_iterator_t
-shell_iterator()
+shell_iterator(void)
 {
     return itr[num];
 }

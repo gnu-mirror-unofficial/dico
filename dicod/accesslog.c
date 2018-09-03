@@ -458,7 +458,7 @@ find_alog_entry(int c)
 }
 
 void
-compile_access_log()
+compile_access_log(void)
 {
     char *p;
     const char *fmt = access_log_format;
@@ -570,7 +570,7 @@ free_cache(void *item, void *data)
 }
 
 void
-access_log_free_cache()
+access_log_free_cache(void)
 {
     dico_list_iterate(access_log_prog, free_cache, NULL);
 }

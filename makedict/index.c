@@ -613,7 +613,7 @@ open_secondary(DB *master, struct dbidx *idx)
 }
 
 DB *
-open_db()
+open_db(void)
 {
     DB *dbp;
     int ret;

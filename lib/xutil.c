@@ -46,7 +46,7 @@ make_full_file_name(const char *dir, const char *file)
 }
 
 dico_list_t
-xdico_list_create()
+xdico_list_create(void)
 {
     dico_list_t p = dico_list_create();
     if (!p)

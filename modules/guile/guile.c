@@ -231,7 +231,7 @@ _guile_dico_key_print(SCM message_smob, SCM port, scm_print_state *pstate)
 }
 
 static void
-_guile_init_dico_key()
+_guile_init_dico_key(void)
 {
     _guile_dico_key_tag =
 	scm_make_smob_type("Dico key", sizeof (struct dico_key));
@@ -306,7 +306,7 @@ _guile_strategy_print(SCM message_smob, SCM port, scm_print_state * pstate)
 }
 
 static void
-_guile_init_strategy()
+_guile_init_strategy(void)
 {
     _guile_strategy_tag = scm_make_smob_type("strategy",
 					     sizeof (struct _guile_strategy));

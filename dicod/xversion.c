@@ -25,7 +25,7 @@ dicod_xversion(dico_stream_t str, int argc, char **argv)
 }
     
 void
-register_xversion()
+register_xversion(void)
 {
     static struct dicod_command cmd[] = {
 	{ "XVERSION", 1, 1, NULL, "show implementation and version info",

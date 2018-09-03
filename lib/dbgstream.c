@@ -117,7 +117,7 @@ dbg_ioctl(void *data, int code, void *call_data)
 }
 	
 dico_stream_t
-dico_dbg_stream_create()
+dico_dbg_stream_create(void)
 {
     struct dbg_stream *p = malloc(sizeof(*p));
     dico_stream_t stream;

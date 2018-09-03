@@ -69,7 +69,7 @@ dicod_xlevdist(dico_stream_t str, int argc, char **argv)
 }
 	
 void
-register_lev()
+register_lev(void)
 {
     int i;
     static struct dicod_command cmd[] = {

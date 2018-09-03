@@ -93,7 +93,7 @@ sig_alarm(int sig)
 }
 
 static void
-load_modules()
+load_modules(void)
 {
     dico_iterator_t itr = xdico_list_iterator(modinst_list);
     dicod_module_instance_t *inst;
@@ -109,7 +109,7 @@ load_modules()
 }
 
 static void
-init_databases()
+init_databases(void)
 {
     dico_iterator_t itr = xdico_list_iterator(database_list);
     dicod_database_t *dp;
@@ -125,7 +125,7 @@ init_databases()
 }
 
 static void
-open_databases()
+open_databases(void)
 {
     dico_iterator_t itr = xdico_list_iterator(database_list);
     dicod_database_t *dp;
@@ -141,7 +141,7 @@ open_databases()
 }
 
 static void
-close_databases()
+close_databases(void)
 {
     dico_iterator_t itr = xdico_list_iterator(database_list);
     dicod_database_t *dp;
@@ -256,7 +256,7 @@ soundex_sel(int cmd, dico_key_t key, const char *dict_word)
 }
 	    
 void
-dicod_init_strategies()
+dicod_init_strategies(void)
 {
     static struct dico_strategy defstrat[] = {
 	{ "exact", "Match words exactly", exact_sel },
@@ -270,7 +270,7 @@ dicod_init_strategies()
 }
 
 void
-dicod_server_init()
+dicod_server_init(void)
 {
     load_modules();
     init_databases();
@@ -279,7 +279,7 @@ dicod_server_init()
 }
 
 void
-dicod_server_cleanup()
+dicod_server_cleanup(void)
 {
     dico_iterator_t itr = xdico_list_iterator(database_list);
     dicod_database_t *dp;
@@ -364,7 +364,7 @@ dicod_loop(dico_stream_t str)
 }
 
 int
-dicod_inetd()
+dicod_inetd(void)
 {
     dico_stream_t str = dicod_iostream(0, 1);
     if (!str)

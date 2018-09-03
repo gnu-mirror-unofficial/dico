@@ -19,7 +19,7 @@
 struct dico_stat current_stat, total_stat;
 
 void
-clear_stats()
+clear_stats(void)
 {
     total_stat.defines += current_stat.defines;
     total_stat.matches += current_stat.matches;

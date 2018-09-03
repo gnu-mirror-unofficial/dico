@@ -870,7 +870,7 @@ user_db_config(enum grecs_callback_command cmd,
 }
 
 static void
-init_user_db()
+init_user_db(void)
 {
     if (!user_db_cfg.url)
 	sasl_enable = 0;
@@ -970,7 +970,7 @@ flush_strat_forward_fn(void *item, void *data)
 }
 
 void
-flush_strat_forward()
+flush_strat_forward(void)
 {
     dico_strategy_iterate(flush_strat_forward_fn, NULL);
     dico_list_destroy(&strat_forward);
@@ -1345,7 +1345,7 @@ struct grecs_keyword keywords[] = {
 };
 
 void
-config_init()
+config_init(void)
 {
     grecs_include_path_setup (DEFAULT_VERSION_INCLUDE_DIR,
 			      DEFAULT_INCLUDE_DIR, NULL);
@@ -1356,7 +1356,7 @@ config_init()
 }
 
 void
-config_parse()
+config_parse(void)
 {
     struct grecs_node *tree;
 
@@ -1369,7 +1369,7 @@ config_parse()
 }
 
 void
-config_help()
+config_help(void)
 {
     static char docstring[] =
 	N_("Configuration file structure for dicod.\n"
@@ -1380,7 +1380,7 @@ config_help()
 
 
 int
-show_sys_info_p()
+show_sys_info_p(void)
 {
     if (!show_sys_info)
 	return 1;
@@ -1388,7 +1388,7 @@ show_sys_info_p()
 }
 
 void
-reset_db_visibility()
+reset_db_visibility(void)
 {
     dicod_database_t *db;
     dico_iterator_t itr;
@@ -1400,7 +1400,7 @@ reset_db_visibility()
 }
 
 void
-check_db_visibility()
+check_db_visibility(void)
 {
     dicod_database_t *db;
     dico_iterator_t itr;
@@ -1437,7 +1437,7 @@ _count_databases(void *item, void *data)
 }
 
 size_t
-database_count()
+database_count(void)
 {
     size_t count = 0;
     dico_list_iterate(database_list, _count_databases, &count);
@@ -1562,7 +1562,7 @@ _print_diag(grecs_locus_t const *locus, int err, int errcode, const char *msg)
 }
 
 void
-dicod_log_setup()
+dicod_log_setup(void)
 {
     if (!log_to_stderr) {
 	openlog(log_tag, LOG_PID, log_facility);
@@ -1579,7 +1579,7 @@ dicod_log_setup()
    __DICTD_LOGGING__ environment variable. */
 
 void
-dicod_log_encode_envar()
+dicod_log_encode_envar(void)
 {
     char *p;
     asprintf(&p, "%d:%d:%s", log_facility, log_print_severity, log_tag);
@@ -1587,7 +1587,7 @@ dicod_log_encode_envar()
 }
 
 void
-dicod_log_pre_setup()
+dicod_log_pre_setup(void)
 {
     char *str = getenv(DICTD_LOGGING_ENVAR);
     if (str) {
@@ -1619,7 +1619,7 @@ apply_conf_override(struct dicod_conf_override *ovr)
 
 
 static void
-udb_init()
+udb_init(void)
 {
     dico_udb_define(&text_udb_def);
 }

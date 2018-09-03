@@ -53,7 +53,7 @@ assert_status(const char *status)
 }
 
 static void
-dict_read_reply()
+dict_read_reply(void)
 {
     int rc;
     if (in_buffer)
@@ -72,7 +72,7 @@ dict_read_reply()
 }
 
 static void
-get_msgid()
+get_msgid(void)
 {
     if (in_buffer[in_level-1] == '>') {
 	char *p = strrchr(in_buffer, '<');
@@ -140,7 +140,7 @@ run_command(int argc, char **argv, pid_t *ppid)
 }
 
 void
-printer()
+printer(void)
 {
     for (;;) {
 	dict_read_reply();

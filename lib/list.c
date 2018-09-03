@@ -52,7 +52,7 @@ cmp_ptr(const void *a, void *b)
 }
 
 struct dico_list *
-dico_list_create()
+dico_list_create(void)
 {
     struct dico_list *p = malloc(sizeof(*p));
     if (p) {

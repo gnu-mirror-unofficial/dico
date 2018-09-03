@@ -22,7 +22,7 @@
 #include <locale.h>
 
 void
-appi18n_init()
+appi18n_init(void)
 {
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE, LOCALEDIR);

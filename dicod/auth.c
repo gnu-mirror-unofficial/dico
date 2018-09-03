@@ -95,7 +95,7 @@ auth_init(void *ptr)
 }
 
 void
-register_auth()
+register_auth(void)
 {
     static struct dicod_command cmd[] = {
 	{ "AUTH", 3, 3, "user string", "provide authentication information",
@@ -107,7 +107,7 @@ register_auth()
 
 
 void
-init_auth_data()
+init_auth_data(void)
 {
     free(user_name);
     user_name = NULL;

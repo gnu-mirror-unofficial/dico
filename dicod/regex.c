@@ -83,7 +83,7 @@ static struct dico_strategy regex_strat = {
 };
 
 void
-register_regex()
+register_regex(void)
 {
     dico_strategy_add(&re_strat);
     dico_strategy_add(&regex_strat);

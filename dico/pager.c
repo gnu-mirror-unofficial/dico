@@ -20,7 +20,7 @@
 static char *pager;
 
 static char *
-get_pager_name()
+get_pager_name(void)
 {
     if (pager) {
 	if (strcmp(pager, "-") == 0)
@@ -46,7 +46,7 @@ ds_pager(int argc, char **argv)
 
 
 dico_stream_t
-create_output_stream()
+create_output_stream(void)
 {
     return dico_fd_stream_create(fileno(stdout), DICO_STREAM_WRITE, 1);
 }

@@ -56,7 +56,7 @@ address_family_to_domain (int family)
 }
 
 void
-open_sockets()
+open_sockets(void)
 {
     size_t i;
     dico_iterator_t itr;
@@ -164,7 +164,7 @@ open_sockets()
 }
 
 void
-close_sockets()
+close_sockets(void)
 {
     size_t i;
 
@@ -273,7 +273,7 @@ stop_all(int sig)
 }
 
 void
-stop_children()
+stop_children(void)
 {
     int i;
     if (!childtab)
@@ -448,7 +448,7 @@ handle_connection(int n)
 }
 
 static int
-pre_restart_lint_internal()
+pre_restart_lint_internal(void)
 {
     pid_t pid;
     time_t ts;
@@ -505,7 +505,7 @@ pre_restart_lint_internal()
 }
 
 static int
-pre_restart_lint()
+pre_restart_lint(void)
 {
     int rc;
     RETSIGTYPE (*sf)(int);
@@ -517,7 +517,7 @@ pre_restart_lint()
 }
 
 int
-server_loop()
+server_loop(void)
 {
     size_t i;
     fd_set fdset;

@@ -24,7 +24,7 @@
 static int libdico_initialized;
 
 void
-_dico_libi18n_init()
+_dico_libi18n_init(void)
 {
     if (!libdico_initialized) {
 	bindtextdomain(PACKAGE, LOCALEDIR);

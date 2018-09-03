@@ -131,7 +131,7 @@ dict_auth(struct dict_connection *conn, dico_url_t url)
 }
 
 char *
-get_homedir()
+get_homedir(void)
 {
     char *homedir = getenv("HOME");
     if (!homedir) {

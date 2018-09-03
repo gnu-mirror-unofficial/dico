@@ -32,7 +32,7 @@ dicod_markup(dico_stream_t str, int argc, char **argv)
 }
 
 void
-register_markup()
+register_markup(void)
 {
     static struct dicod_command cmd[] = {
 	{ "OPTION MARKUP", 2, 3, "type", "Set output markup type",
@@ -47,7 +47,7 @@ register_markup()
 #define MARKUP_CAPA_PREFIX "markup-"
 
 void
-markup_flush_capa()
+markup_flush_capa(void)
 {
     dico_iterator_t itr;
     const char *p;

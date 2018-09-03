@@ -100,13 +100,13 @@ dico_strategy_add(const dico_strategy_t strat)
 }
 
 dico_iterator_t 
-dico_strategy_iterator()
+dico_strategy_iterator(void)
 {
     return dico_list_iterator(strategy_list);
 }
 
 size_t
-dico_strategy_count()
+dico_strategy_count(void)
 {
     return dico_list_count(strategy_list);
 }
@@ -134,7 +134,7 @@ dico_set_default_strategy(const char *name)
 }
 
 dico_strategy_t
-dico_get_default_strategy()
+dico_get_default_strategy(void)
 {
     return default_strategy;
 }

@@ -159,7 +159,7 @@ dicod_show_lang_db(dico_stream_t str, int argc, char **argv)
 }
 
 void
-register_lang()
+register_lang(void)
 {
     static struct dicod_command cmd[] = {
 	{ "OPTION LANG", 2, DICOD_MAXPARAM_INF, "[list]",

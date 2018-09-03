@@ -319,7 +319,7 @@ dicod_word_first(dico_stream_t stream, const char *word,
 
     itr = xdico_list_iterator(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
-	if (database_visible_p(db)) {
+	if (database_is_visible(db)) {
 	    struct dico_database_module *mp = db->instance->module;
 	    dico_result_t res = strat ?
 		            mp->dico_match(db->mod_handle, strat, word) :
@@ -384,7 +384,7 @@ dicod_word_all(dico_stream_t stream, const char *word,
 
     itr = xdico_list_iterator(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
-	if (database_visible_p(db)) {
+	if (database_is_visible(db)) {
 	    struct dico_database_module *mp = db->instance->module;
 	    dico_result_t res = strat ?
 		              mp->dico_match(db->mod_handle, strat, word) :

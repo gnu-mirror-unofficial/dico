@@ -164,7 +164,10 @@ typedef struct dicod_database {
     dico_list_t langlist[2]; /* List of "source/dest" languages */
     
     dicod_acl_t  acl;  /* ACL for this database */
-    int visible;       /* Result of the last dicod_acl_check */
+    int visible;         /* Is this database (administratively) visible */
+    int session_visible; /* Is this database visible in the current session.
+			    This depends on the value of visible and on the
+			    result of dicod_acl_check and dicod_lang_check */
     
     dico_handle_t mod_handle;        /* Dico module handle */
 
@@ -203,7 +206,11 @@ void dicod_log_encode_envar(void);
 char *get_full_hostname(void);
 void check_db_visibility(void);
 void reset_db_visibility(void);
-#define database_visible_p(db) ((db)->visible)
+static inline int
+database_is_visible(dicod_database_t const *db)
+{
+    return db->session_visible;
+}
 int dicod_any_lang_list_p(dico_list_t list);
 
 

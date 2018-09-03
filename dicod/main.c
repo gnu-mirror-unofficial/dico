@@ -602,7 +602,7 @@ cmp_database_name(const void *item, void *data)
     if (!db->name)
 	return 1;
     rc = strcmp(db->name, (const char*)data);
-    if (rc == 0 && !database_visible_p(db))
+    if (rc == 0 && !database_is_visible(db))
 	rc = 1;
     return rc;
 }    
@@ -620,6 +620,7 @@ set_database(enum grecs_callback_command cmd,
     switch (cmd) {
     case grecs_callback_section_begin:
 	dict = xzalloc(sizeof(*dict));
+	dict->visible = 1;
 	*pdata = dict;
 	break;
 	
@@ -800,6 +801,10 @@ struct grecs_keyword kwd_database[] = {
       grecs_type_string, GRECS_DFLT,
       NULL, offsetof(dicod_database_t, mime_headers),
       mime_headers_cb },
+    { "visible", N_("bool"),
+      N_("Set database visibility"),
+      grecs_type_bool, GRECS_DFLT,
+      NULL, offsetof(dicod_database_t, visible) },
     { NULL }
 };
 
@@ -1395,7 +1400,7 @@ reset_db_visibility(void)
 
     itr = xdico_list_iterator(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) 
-	db->visible = 1;
+	db->session_visible = db->visible;
     dico_iterator_destroy(&itr);
 }
 
@@ -1408,12 +1413,14 @@ check_db_visibility(void)
     
     itr = xdico_list_iterator(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
-	if (!dicod_acl_check(db->acl, global))
-	    db->visible = 0;
+	if (!db->visible)
+	    db->session_visible = 0;
+	else if (!dicod_acl_check(db->acl, global))
+	    db->session_visible = 0;
 	else {
 	    dico_list_t list[2];
 	    dicod_get_database_languages(db, list);
-	    db->visible = dicod_lang_check(list);
+	    db->session_visible = dicod_lang_check(list);
 	}
     }
     dico_iterator_destroy(&itr);
@@ -1431,7 +1438,7 @@ _count_databases(void *item, void *data)
 {
     const dicod_database_t *db = item;
     size_t *pcount = data;
-    if (database_visible_p(db))
+    if (database_is_visible(db))
 	++*pcount;
     return 0;
 }
@@ -1453,7 +1460,7 @@ database_iterate(dico_list_iterator_t fun, void *data)
     
     for (db = dico_iterator_first(itr); rc == 0 && db;
 	 db = dico_iterator_next(itr)) {
-	if (database_visible_p(db)) 
+	if (database_is_visible(db)) 
 	    rc = fun(db, data);
     }
     dico_iterator_destroy(&itr);

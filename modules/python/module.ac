@@ -24,6 +24,7 @@ case "${withval}" in
   *)   AC_MSG_ERROR(bad value ${withval} for --without-python) ;;
 esac],[status_python=yes])
 
+PYTHON3_COND=0
 if test "$status_python" = yes; then
   AC_ARG_VAR([PYTHON], [The name of python binary])
   AC_PATH_PROG([PYTHON], python)
@@ -37,9 +38,10 @@ if test "$status_python" = yes; then
 import sys
 exit(1 if sys.version_info[[0]] == 3 else 0)
 EOT
-    AM_CONDITIONAL([PYTHON3_COND],[test $? -eq 1])
+    PYTHON3_COND=$?
   else
     status_python=no     
   fi	
 fi
 AM_CONDITIONAL([PYTHON_COND],[test $status_python = yes])
+AM_CONDITIONAL([PYTHON3_COND],[test $PYTHON3_COND -eq 1])

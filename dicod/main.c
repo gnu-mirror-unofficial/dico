@@ -1419,7 +1419,7 @@ check_db_visibility(void)
 	    db->session_visible = 0;
 	else {
 	    dico_list_t list[2];
-	    dicod_get_database_languages(db, list);
+	    dicod_database_get_languages(db, list);
 	    db->session_visible = dicod_lang_check(list);
 	}
     }

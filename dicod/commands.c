@@ -65,12 +65,12 @@ dicod_show_info(dico_stream_t str, int argc, char **argv)
 	stream_writez(str, "550 invalid database, use SHOW DB for a list\n");
     else {
 	dico_stream_t ostr;
-	char *info = dicod_get_database_info(dict);
+	char *info = dicod_database_get_info(dict);
 	stream_printf(str, "112 information for %s\n", dbname);
 	ostr = dicod_ostream_create(str, NULL);
 	if (info) {
 	    stream_write_multiline(ostr, info);
-	    dicod_free_database_info(dict, info);
+	    dicod_database_free_info(dict, info);
 	} else
 	    stream_writez(ostr, "No information available.\n");
 	stream_writez(ostr, "\n");
@@ -87,13 +87,13 @@ _show_database(void *item, void *data)
 {
     dicod_database_t *dict = item;
     dico_stream_t str = data;
-    char *descr = dicod_get_database_descr(dict);
+    char *descr = dicod_database_get_descr(dict);
     char *pdescr;
 
     if (utf8_quote(descr ? descr : "", &pdescr))
 	xalloc_die();
     stream_printf(str, "%s \"%s\"\n", dict->name, pdescr);
-    dicod_free_database_descr(dict, descr);
+    dicod_database_free_descr(dict, descr);
     free(pdescr);
     return 0;
 }

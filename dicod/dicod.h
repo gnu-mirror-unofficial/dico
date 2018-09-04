@@ -196,7 +196,6 @@ int get_input_line(dico_stream_t str, char **buf, size_t *size,
 
 dicod_database_t *find_database(const char *name);
 void database_remove_dependent(dicod_module_instance_t *inst);
-void dicod_database_free(dicod_database_t *dp);
 size_t database_count(void);
 int database_iterate(dico_list_iterator_t fun, void *data);
 int show_sys_info_p(void);
@@ -273,18 +272,7 @@ void init_auth_data(void);
 /* loader.c */
 void dicod_loader_init(void);
 int dicod_load_module(dicod_module_instance_t *hptr);
-int dicod_init_database(dicod_database_t *dp);
-int dicod_open_database(dicod_database_t *dp);
-int dicod_close_database(dicod_database_t *dp);
-int dicod_free_database(dicod_database_t *dp);
 
-int dicod_database_get_strats(dicod_database_t *dp);
-
-char *dicod_get_database_descr(dicod_database_t *db);
-void dicod_free_database_descr(dicod_database_t *db, char *descr);
-char *dicod_get_database_info(dicod_database_t *db);
-void dicod_free_database_info(dicod_database_t *db, char *info);
-void dicod_get_database_languages(dicod_database_t *db, dico_list_t list[]);
 dico_list_t dicod_langlist_copy(dico_list_t src);
 
 void dicod_match_word_db(dicod_database_t *db, dico_stream_t stream,
@@ -299,6 +287,40 @@ void dicod_define_word_first(dico_stream_t stream, const char *word);
 void dicod_define_word_all(dico_stream_t stream, const char *word);
 
 int dicod_module_test(int argc, char **argv);
+
+/* database.c */
+int dicod_database_init(dicod_database_t *dp);
+int dicod_database_open(dicod_database_t *dp);
+int dicod_database_close(dicod_database_t *dp);
+int dicod_database_deinit(dicod_database_t *dp);
+
+void dicod_database_free(dicod_database_t *dp);
+
+char *dicod_database_get_descr(dicod_database_t *db);
+void dicod_database_free_descr(dicod_database_t *db, char *descr);
+char *dicod_database_get_info(dicod_database_t *db);
+void dicod_database_free_info(dicod_database_t *db, char *info);
+void dicod_database_get_languages(dicod_database_t *db, dico_list_t list[]);
+
+size_t dicod_database_result_count(dicod_database_t *db, dico_result_t res);
+size_t dicod_database_compare_count(dicod_database_t *db, dico_result_t res);
+void dicod_database_result_free(dicod_database_t *db, dico_result_t res);
+int dicod_database_result_output(dicod_database_t *db, dico_result_t res,
+				 size_t n, dico_stream_t str);
+    
+dico_result_t dicod_database_match(dicod_database_t *db,
+				   const dico_strategy_t strat,
+				   const char *word);
+dico_result_t dicod_database_define(dicod_database_t *db, const char *word);
+
+char *dicod_database_get_info(dicod_database_t *db);
+void dicod_database_free_info(dicod_database_t *db, char *info);
+
+char *dicod_database_get_descr(dicod_database_t *db);
+void dicod_database_free_descr(dicod_database_t *db, char *descr);
+
+dico_assoc_list_t dicod_database_mime_header(dicod_database_t *db,
+					     dico_result_t res);
 
 /* ostream.c */
 extern off_t total_bytes_out;

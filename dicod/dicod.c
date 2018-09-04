@@ -115,7 +115,7 @@ init_databases(void)
     dicod_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
-	if (dicod_init_database(dp)) {
+	if (dicod_database_init(dp)) {
 	    dico_log(L_NOTICE, 0, _("removing database %s"), dp->name);
 	    dico_iterator_remove_current(itr, NULL);
 	    dicod_database_free(dp);
@@ -131,7 +131,7 @@ open_databases(void)
     dicod_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
-	if (dicod_open_database(dp)) {
+	if (dicod_database_open(dp)) {
 	    dico_log(L_NOTICE, 0, _("removing database %s"), dp->name);
 	    dico_iterator_remove_current(itr, NULL);
 	    dicod_database_free(dp);
@@ -147,7 +147,7 @@ close_databases(void)
     dicod_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
-	if (dicod_close_database(dp))
+	if (dicod_database_close(dp))
 	    dico_log(L_NOTICE, 0, _("error closing database %s"), dp->name);
     }
     dico_iterator_destroy(&itr);
@@ -285,7 +285,7 @@ dicod_server_cleanup(void)
     dicod_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
-	if (dicod_free_database(dp)) 
+	if (dicod_database_deinit(dp)) 
 	    dico_log(L_NOTICE, 0, _("error freeing database %s"), dp->name);
     }
     dico_iterator_destroy(&itr);

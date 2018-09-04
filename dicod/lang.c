@@ -120,7 +120,7 @@ dicod_show_lang_info(dico_stream_t str, int argc, char **argv)
     } else {
 	dico_list_t langlist[2];
 
-	dicod_get_database_languages(db, langlist);
+	dicod_database_get_languages(db, langlist);
 	stream_writez(str, "280");
 	show_lang_lists(str, langlist);
     }
@@ -132,7 +132,7 @@ _show_database_lang(void *item, void *data)
     dicod_database_t *db = item;
     dico_stream_t str = data;
     dico_list_t langlist[2];
-    dicod_get_database_languages(db, langlist);
+    dicod_database_get_languages(db, langlist);
     stream_printf(str, "%s", db->name);
     show_lang_lists(str, langlist);
     return 0;

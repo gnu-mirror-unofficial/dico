@@ -25,6 +25,7 @@ dicod_SOURCES=\
  ckpass.c\
  cmdline.c\
  commands.c\
+ database.c\
  dbtext.c\
  dicod.c\
  gsasl.c\

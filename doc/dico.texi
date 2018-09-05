@@ -3389,6 +3389,22 @@ If you are going to run this command in a source directory that has
 been previously configured, it is advisable to run @samp{make distclean}
 beforehand.
 
+@cindex wordnet-dev
+@cindex libwordnet
+@opindex --with-libWN, @command{configure} option
+Debian-based systems provide a package @samp{wordnet-dev}, which contains
+a properly built shared library.  However, this library is named
+@samp{libwordnet.so}, instead of the expected @samp{libWN.so}.  On
+such systems you will have to use the @option{--with-libWN} option to
+configure, in order to inform it about the change:
+
+@example
+  ./configure --with-libWN=wordnet
+@end example
+
+Argument to this option is the new basename for the libWN library,
+without file suffix. Optionally, the @samp{lib} prefix is allowed,
+
 @findex wn.h
 @opindex --with-wordnet, @command{configure} option.
 The @command{wordnet} module is compiled automatically if the

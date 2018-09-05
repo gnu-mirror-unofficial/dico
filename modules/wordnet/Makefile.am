@@ -19,7 +19,7 @@ moddir=@DICO_MODDIR@
 mod_LTLIBRARIES=wordnet.la
 
 wordnet_la_SOURCES = wordnet.c
-wordnet_la_LIBADD = ../../lib/libdico.la @WORDNET_LOPT@ -lWN
+wordnet_la_LIBADD = ../../lib/libdico.la @WORDNET_LOPT@ -l@WORDNET_LIBWN@
 AM_LDFLAGS = -module -avoid-version -no-undefined
 AM_CPPFLAGS = \
  -I$(top_srcdir)/include\

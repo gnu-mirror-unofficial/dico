@@ -190,7 +190,7 @@ find_option(const char *text)
 }
 
 static dico_handle_t
-wn_init_db(const char *dbname, int argc, char **argv)
+wn_init_db(const char *dbname, int argc, char **argv, char *extra)
 {
     struct wndb *wndb;
     int pos = 0;
@@ -205,9 +205,9 @@ wn_init_db(const char *dbname, int argc, char **argv)
 	
     
     struct dico_option init_db_option[] = {
-	{ DICO_OPTSTR(pos), dico_opt_enum, &pos, { enumstr: pos_choice } },
+	{ DICO_OPTSTR(pos), dico_opt_enum, &pos, { .enumstr = pos_choice } },
 	{ DICO_OPTSTR(merge-defs), dico_opt_bool, &flags,
-	  { value: WNDB_MERGE_DEFS } },
+	  { .value = WNDB_MERGE_DEFS } },
 	{ NULL }
     };
 

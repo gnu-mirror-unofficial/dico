@@ -26,6 +26,19 @@ Example of defining a virtual database:
 
 See the GNU dico manual, subsection 4.3.12.2 "Virtual Databases" for a
 detailed discussion.
+
+* Support for building with WordNet on Debian-based systems
+
+Debian-based systems provide a package "wordnet-dev", which contains
+a properly built shared wordnet library.  However, this library is named
+"libwordnet.so", instead of the expected "libWN.so".  Use the
+--with-libWN option to configure, in order to inform it about the
+change, e.g.:
+
+  ./configure --with-libWN=wordnet
+
+Argument to this option is the new basename for the libWN library,
+without the suffix. Optionally, the "lib" prefix is allowed,
 
 Version 2.6, 2018-08-27
 

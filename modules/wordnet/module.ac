@@ -31,13 +31,19 @@ case "${withval}" in
   *)   AC_MSG_ERROR([argument for --with-wordnet must be an absoulute directory name]) ;;
 esac],[status_wordnet=maybe])
 
+AC_SUBST([WORDNET_LIBWN],[WN])
+AC_ARG_WITH([libWN],
+            AC_HELP_STRING([--with-libWN@<:@=NAME@:>@],
+                           [use libNAME instead of libWN]),
+            [WORDNET_LIBWN=${withval#lib}])
+
 if test $status_wordnet != no; then
   save_LIBS=$LIBS
   save_CPPFLAGS=$CPPFLAGS
   LIBS="$LIBS $WORDNET_LOPT"
   CPPFLAGS="$CPPFLAGS $WORDNET_IOPT"
   AC_CHECK_HEADER([wn.h],
-      [AC_CHECK_LIB(WN, findtheinfo, status_wordnet=yes)])
+      [AC_CHECK_LIB($WORDNET_LIBWN, findtheinfo, status_wordnet=yes)])
   case $status_wordnet in
   req) AC_MSG_ERROR([required module wordnet cannot be built because of missing prerequisites]);;
   maybe) status_wordnet=no;;

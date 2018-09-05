@@ -393,7 +393,7 @@ open_stream(struct dictdb *db)
 static int compare_entry(const void *a, const void *b);
 
 static dico_handle_t
-mod_init_db(const char *dbname, int argc, char **argv)
+mod_init_db(const char *dbname, int argc, char **argv, void *extra)
 {
     struct dictdb *db;
     char *filename = NULL;

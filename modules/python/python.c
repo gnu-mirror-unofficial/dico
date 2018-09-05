@@ -480,7 +480,7 @@ dico_module_init (void)
 }
 
 static dico_handle_t
-mod_init_db (const char *dbname, int argc, char **argv)
+mod_init_db (const char *dbname, int argc, char **argv, void *extra)
 {
     int pindex;
     struct _python_database *db;

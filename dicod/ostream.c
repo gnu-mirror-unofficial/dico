@@ -16,8 +16,6 @@
 
 #include <dicod.h>
 
-extern int option_mime;
-
 off_t total_bytes_out;
 
 #define OSTREAM_INITIALIZED       0x01

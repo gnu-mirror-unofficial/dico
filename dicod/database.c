@@ -30,8 +30,9 @@ dicod_database_init(dicod_database_t *db)
     
     if (inst->module->dico_init_db) {
 	db->mod_handle = inst->module->dico_init_db(db->name,
-						     db->argc,
-						     db->argv);
+						    db->argc,
+						    db->argv,
+	                                            db->extra);
 	if (!db->mod_handle) {
 	    dico_log(L_ERR, 0, _("cannot initialize database `%s'"),
 		     db->command);
@@ -48,8 +49,7 @@ dicod_database_open(dicod_database_t *db)
 
     if (inst->module->dico_open) {
 	if (inst->module->dico_open(db->mod_handle)) {
-	    dico_log(L_ERR, 0, _("cannot open database `%s'"),
-		     db->command);
+	    dico_log(L_ERR, 0, _("cannot open database `%s'"), db->command);
 	    return 1;
 	}
     }

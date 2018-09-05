@@ -27,7 +27,7 @@ static int
 }
     
 static dico_handle_t
-<MODNAME>_init_db(const char *dbname, int argc, char **argv)
+<MODNAME>_init_db(const char *dbname, int argc, char **argv, void *extra)
 {
     /* FIXME */
     return NULL;
@@ -130,6 +130,13 @@ static int
     return 1;
 }
 
+char *
+<MODNAME>_db_mime_header(dico_handle_t hp)
+{
+    /* FIXME */
+    return NULL;
+}
+
 struct dico_database_module DICO_EXPORT(<MODNAME>, module) = {
     .dico_version        =  DICO_MODULE_VERSION,
     .dico_capabilities   =  DICO_CAPA_NONE,
@@ -148,5 +155,6 @@ struct dico_database_module DICO_EXPORT(<MODNAME>, module) = {
     .dico_compare_count  =  <MODNAME>_compare_count,
     .dico_free_result    =  <MODNAME>_free_result,
     .dico_result_headers =  <MODNAME>_result_headers,
-    .dico_run_test       =  <MODNAME>_run_test
+    .dico_run_test       =  <MODNAME>_run_test,
+    .dico_db_mime_header =  <MODNAME>_db_mime_header
 };

@@ -43,7 +43,8 @@ dicod_SOURCES=\
  stat.c\
  stratcl.c\
  xidle.c\
- xversion.c
+ xversion.c\
+ virtual.c
 
 noinst_HEADERS=dicod.h
 

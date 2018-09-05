@@ -43,9 +43,9 @@ unsigned int shutdown_timeout = 5;
 /* Inactivity timeout */
 unsigned int inactivity_timeout = 0;
 
-/* Syslog parameters: */ 
+/* Syslog parameters: */
 int log_to_stderr;  /* Log to stderr */
-const char *log_tag; 
+const char *log_tag;
 int log_facility = LOG_FACILITY;
 int log_print_severity;
 int transcript;
@@ -126,7 +126,7 @@ grecs_list_iterate(struct grecs_list *list, grecs_list_iterator_t fun,
 	    break;
     }
 }
-	
+
 
 
 /* Configuration */
@@ -183,7 +183,7 @@ cb_dico_sockaddr_list(enum grecs_callback_command cmd,
 {
     dico_list_t *plist = varptr, list;
     struct grecs_sockaddr *sp;
-    
+
     if (*plist)
 	list = *plist;
     else {
@@ -191,7 +191,7 @@ cb_dico_sockaddr_list(enum grecs_callback_command cmd,
 //FIXME	dico_list_set_free_item(list, dicod_free_item, NULL);
 	*plist = list;
     }
-    
+
     switch (value->type) {
     case GRECS_TYPE_STRING:
 	if (grecs_string_convert(&sp, grecs_type_sockaddr,
@@ -278,10 +278,10 @@ acl_cb(enum grecs_callback_command cmd,
 {
     void **pdata = cb_data;
     dicod_acl_t acl;
-    
+
     switch (cmd) {
     case grecs_callback_section_begin:
-	if (value->type != GRECS_TYPE_STRING) 
+	if (value->type != GRECS_TYPE_STRING)
 	    grecs_error(locus, 0, _("ACL name must be a string"));
 	else if (!value->v.string)
 	    grecs_error(locus, 0, _("missing ACL name"));
@@ -303,7 +303,7 @@ acl_cb(enum grecs_callback_command cmd,
     case grecs_callback_section_end:
     case grecs_callback_set_value:
 	break;
-    }	
+    }
     return 0;
 }
 
@@ -354,7 +354,7 @@ set_user(enum grecs_callback_command cmd,
 {
     struct passwd *pw;
     char *s;
-    
+
     if (cmd != grecs_callback_set_value) {
 	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
@@ -396,7 +396,7 @@ set_supp_group_iter(grecs_value_t *value, void *data)
     return set_supp_group(grecs_callback_set_value,
 			  &value->locus, NULL, value, NULL);
 }
-	
+
 static int
 set_supp_group(enum grecs_callback_command cmd,
 	       grecs_locus_t *locus,
@@ -413,13 +413,13 @@ set_supp_group(enum grecs_callback_command cmd,
 	group_list = xdico_list_create();
 	dico_list_set_free_item(group_list, dicod_free_item, NULL);
     }
-    
+
     if (value->type == GRECS_TYPE_LIST)
 	grecs_list_iterate(value->v.list, set_supp_group_iter, NULL);
     else {
 	char *s = value->v.string;
 	gid_t gid, *gp;
-    
+
 	if (*s == '+') {
 	    char *q;
 	    unsigned long n = strtoul(s + 1, &q, 0);
@@ -436,7 +436,7 @@ set_supp_group(enum grecs_callback_command cmd,
 	    }
 	    gid = group->gr_gid;
 	}
-	
+
 	gp = xmalloc(sizeof(*gp));
 	*gp = gid;
 	xdico_list_append(group_list, gp);
@@ -456,7 +456,7 @@ set_mode(enum grecs_callback_command cmd,
 	{ "inetd", MODE_INETD },
 	{ NULL }
     };
-	
+
     if (cmd != grecs_callback_set_value) {
 	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
@@ -474,7 +474,7 @@ set_mode(enum grecs_callback_command cmd,
 }
 
 static struct xlat_tab syslog_facility_tab[] = {
-    { "USER",    LOG_USER },   
+    { "USER",    LOG_USER },
     { "DAEMON",  LOG_DAEMON },
     { "AUTH",    LOG_AUTH },
     { "AUTHPRIV",LOG_AUTHPRIV },
@@ -530,9 +530,9 @@ cmp_modinst_ident(const void *item, void *data)
 static int
 _add_simple_module(grecs_value_t *value, void *unused_data)
 {
-    if (value->type != GRECS_TYPE_STRING) 
+    if (value->type != GRECS_TYPE_STRING)
 	grecs_error(&value->locus, 0, _("tag must be a string"));
-    else if (value->v.string == NULL) 
+    else if (value->v.string == NULL)
 	grecs_error(&value->locus, 0, _("missing tag"));
     else {
 	dicod_module_instance_t *inst = xzalloc(sizeof(*inst));
@@ -552,30 +552,25 @@ load_module_cb(enum grecs_callback_command cmd,
 {
     dicod_module_instance_t *inst;
     void **pdata = cb_data;
-    
-    if (!modinst_list) {
-	modinst_list = xdico_list_create();
-	dico_list_set_comparator(modinst_list, cmp_modinst_ident);
-    }
-    
+
     switch (cmd) {
     case grecs_callback_section_begin:
 	inst = xzalloc(sizeof(*inst));
-	if (value->type != GRECS_TYPE_STRING) 
+	if (value->type != GRECS_TYPE_STRING)
 	    grecs_error(locus, 0, _("tag must be a string"));
-	else if (value->v.string == NULL) 
+	else if (value->v.string == NULL)
 	    grecs_error(locus, 0, _("missing tag"));
 	else
 	    inst->ident = xstrdup(value->v.string);
 	*pdata = inst;
 	break;
-	
+
     case grecs_callback_section_end:
 	inst = *pdata;
 	xdico_list_append(modinst_list, inst);
 	*pdata = NULL;
 	break;
-	
+
     case grecs_callback_set_value:
 	switch (value->type) {
 	case GRECS_TYPE_STRING:
@@ -598,14 +593,14 @@ cmp_database_name(const void *item, void *data)
 {
     const dicod_database_t *db = item;
     int rc;
-    
+
     if (!db->name)
 	return 1;
     rc = strcmp(db->name, (const char*)data);
     if (rc == 0 && !database_is_visible(db))
 	rc = 1;
     return rc;
-}    
+}
 
 static int
 set_database(enum grecs_callback_command cmd,
@@ -616,19 +611,36 @@ set_database(enum grecs_callback_command cmd,
 {
     dicod_database_t *dict;
     void **pdata = cb_data;
-    
+
     switch (cmd) {
     case grecs_callback_section_begin:
 	dict = xzalloc(sizeof(*dict));
 	dict->visible = 1;
 	*pdata = dict;
 	break;
-	
+
     case grecs_callback_section_end:
 	dict = *pdata;
 	if (!dict->name) {
 	    grecs_error(locus, 0, _("database name not supplied"));
 	    break;
+	}
+
+	if (!dict->instance) {
+	    grecs_error(locus, 0,
+			_("no handler defined for the database"));
+	    dicod_database_free(dict);
+	    return 1;
+	}
+	
+	if (dict->extra) {
+  	    if (strcmp(dict->instance->ident, "virtual")) {
+		grecs_error(locus, 0,
+	                    _("expected handler \"virtual\", but found \"%s\""),
+	                    dict->instance->ident);
+		dicod_database_free(dict);
+		return 1;
+	    }
 	}
 
 	if (!database_list) {
@@ -638,11 +650,11 @@ set_database(enum grecs_callback_command cmd,
 	if (dict->langlist[0] || dict->langlist[1])
 	     /* Prevent dico_db_lang from being called */
 	    dict->flags |= DICOD_DBF_LANG;
-	
+
 	xdico_list_append(database_list, dict);
 	*pdata = NULL;
 	break;
-	
+
     case grecs_callback_set_value:
 	grecs_error(locus, 0, _("invalid use of block statement"));
     }
@@ -659,7 +671,7 @@ set_dict_handler(enum grecs_callback_command cmd,
     dicod_module_instance_t *inst;
     dicod_database_t *db = varptr;
     struct wordsplit ws;
-    
+
     if (cmd != grecs_callback_set_value) {
 	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
@@ -673,9 +685,9 @@ set_dict_handler(enum grecs_callback_command cmd,
     if (wordsplit(value->v.string, &ws, WRDSF_DEFFLAGS)) {
 	grecs_error(locus, 0, _("cannot parse command line `%s': %s"),
 		    value->v.string, wordsplit_strerror (&ws));
-	dicod_database_free(db); 
+	dicod_database_free(db);
 	return 1;
-    } 
+    }
 
     db->argc = ws.ws_wordc;
     db->argv = ws.ws_wordv;
@@ -692,7 +704,7 @@ set_dict_handler(enum grecs_callback_command cmd,
 	return 1;
     }
     db->instance = inst;
-    
+
     return 0;
 }
 
@@ -722,7 +734,7 @@ enable_capability(enum grecs_callback_command cmd,
     }
     if (value->type == GRECS_TYPE_LIST)
 	grecs_list_iterate(value->v.list, set_capability, locus);
-    else if (dicod_capa_add(value->v.string)) 
+    else if (dicod_capa_add(value->v.string))
 	grecs_error(locus, 0, _("unknown capability: %s"), value->v.string);
     return 0;
 }
@@ -736,7 +748,7 @@ mime_headers_cb (enum grecs_callback_command cmd,
 {
     dico_assoc_list_t *pasc = varptr;
     const char *enc;
-    
+
     if (cmd != grecs_callback_set_value) {
 	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
@@ -747,17 +759,17 @@ mime_headers_cb (enum grecs_callback_command cmd,
 	return 1;
     }
 
-    if (dico_header_parse(pasc, value->v.string)) 
+    if (dico_header_parse(pasc, value->v.string))
 	grecs_error(locus, 0, _("cannot parse headers: %s"),
 		     strerror(errno));
 
     if ((enc = dico_assoc_find(*pasc, CONTENT_TRANSFER_ENCODING_HEADER))) {
-        if (!(strcmp(enc, "quoted-printable") == 0
+	if (!(strcmp(enc, "quoted-printable") == 0
 	      || strcmp(enc, "base64") == 0
 	      || strcmp(enc, "8bit") == 0))
 	    grecs_error(locus, 0, _("unknown encoding type: %s"), enc);
     }
-    
+
     return 0;
 }
 
@@ -767,6 +779,70 @@ struct grecs_keyword kwd_load_module[] = {
       NULL, offsetof(dicod_module_instance_t, command) },
     { NULL }
 };
+
+int
+member_database_cb(enum grecs_callback_command cmd,
+		   grecs_locus_t *locus,
+		   void *varptr,
+		   grecs_value_t *value,
+		   void *cb_data)
+{
+    dico_list_t *listptr = varptr;
+    char const *dbname;
+    enum mime_cond cond = cond_any;
+    grecs_value_t *vp;
+    struct vdb_member *memb;
+
+    if (cmd != grecs_callback_set_value) {
+	grecs_error(locus, 0, _("Unexpected block statement"));
+	return 1;
+    }
+
+    switch (value->type) {
+    case GRECS_TYPE_ARRAY:
+	if (value->v.arg.c != 2) {
+	    grecs_error(locus, 0, _("too many arguments"));
+	    return 1;
+	}
+	vp = value->v.arg.v[0];
+	if (vp->type != GRECS_TYPE_STRING) {
+	    grecs_error(locus, 0, _("first argument must be string"));
+	    return 1;
+	}
+	dbname = vp->v.string;
+	vp = value->v.arg.v[1];
+	if (vp->type != GRECS_TYPE_STRING) {
+	    grecs_error(locus, 0, _("second argument must be string"));
+	    return 1;
+	}
+	if (strcmp(vp->v.string, "mime") == 0)
+	    cond = cond_mime;
+	else if (strcmp(vp->v.string, "nomime") == 0)
+	    cond = cond_nomime;
+	else {
+	    grecs_error(locus, 0, _("condition must be mime or nomime"));
+	    return 1;
+	}
+	break;
+
+    case GRECS_TYPE_STRING:
+	dbname = value->v.string;
+	break;
+
+    default:
+	grecs_error(locus, 0, _("expected scalar value"));
+	return 1;
+    }
+
+    if (!*listptr)
+	*listptr = vdb_list_create();
+
+    memb = xzalloc(sizeof(memb[0]));
+    memb->name = xstrdup(dbname);
+    memb->cond = cond;
+    xdico_list_append(*listptr, memb);
+    return 0;
+}
 
 struct grecs_keyword kwd_database[] = {
     { "name", N_("word"), N_("Dictionary name (a single word)."),
@@ -805,6 +881,14 @@ struct grecs_keyword kwd_database[] = {
       N_("Set database visibility"),
       grecs_type_bool, GRECS_DFLT,
       NULL, offsetof(dicod_database_t, visible) },
+    { "database", N_("<name: string> [mime|nomime]"),
+      N_("For virtual database only: name of the member database."
+	 " Optional mime|nomime specifies the condition under which"
+	 " the database is to be used."),
+      grecs_type_string, GRECS_DFLT,
+      NULL, offsetof(dicod_database_t, extra),
+      member_database_cb },
+
     { NULL }
 };
 
@@ -843,13 +927,13 @@ user_db_config(enum grecs_callback_command cmd,
 {
     struct user_db_conf *cfg = varptr;
     void **pdata = cb_data;
-    
+
     switch (cmd) {
     case grecs_callback_section_begin:
 	cfg->locus = *locus;
 	cfg->locus.beg.file = xstrdup(cfg->locus.beg.file);
 	cfg->locus.end.file = xstrdup(cfg->locus.end.file);
-	if (value->type != GRECS_TYPE_STRING) 
+	if (value->type != GRECS_TYPE_STRING)
 	    grecs_error(locus, 0, _("URL must be a string"));
 	else if (!value->v.string)
 	    grecs_error(locus, 0, _("empty URL"));
@@ -857,15 +941,15 @@ user_db_config(enum grecs_callback_command cmd,
 	    cfg->url = xstrdup(value->v.string);
 	*pdata = cfg;
 	break;
-	
+
     case grecs_callback_section_end:
 	break;
-	
+
     case grecs_callback_set_value:
 	cfg->locus = *locus;
 	cfg->locus.beg.file = xstrdup(cfg->locus.beg.file);
 	cfg->locus.end.file = xstrdup(cfg->locus.end.file);
-	if (value->type != GRECS_TYPE_STRING) 
+	if (value->type != GRECS_TYPE_STRING)
 	    grecs_error(locus, 0, _("URL must be a string"));
 	else if (!value->v.string)
 	    grecs_error(locus, 0, _("empty URL"));
@@ -931,7 +1015,7 @@ sasl_cb(enum grecs_callback_command cmd,
 	void *cb_data)
 {
     if (cmd == grecs_callback_set_value) {
-	if (value->type != GRECS_TYPE_STRING) 
+	if (value->type != GRECS_TYPE_STRING)
 	    grecs_error(locus, 0, _("expected boolean value but found list"));
 	else
 	    grecs_string_convert(&sasl_enable, grecs_type_bool,
@@ -992,7 +1076,7 @@ strategy_cb(enum grecs_callback_command cmd,
 
     switch (cmd) {
     case grecs_callback_section_begin:
-	if (value->type != GRECS_TYPE_STRING) 
+	if (value->type != GRECS_TYPE_STRING)
 	    grecs_error(locus, 0, _("Section name must be a string"));
 	else if (!value->v.string)
 	    grecs_error(locus, 0, _("missing section name"));
@@ -1010,14 +1094,14 @@ strategy_cb(enum grecs_callback_command cmd,
 					    dico_strat_free, NULL);
 		}
 		xdico_list_append(strat_forward, strat);
-	    } 
+	    }
 	    *pdata = strat;
 	}
 	break;
-		
+
     case grecs_callback_section_end:
 	break;
-	
+
     case grecs_callback_set_value:
 	grecs_error(locus, 0, _("Unexpected statement"));
     }
@@ -1032,7 +1116,7 @@ strategy_deny_all_cb(enum grecs_callback_command cmd,
 		     void *cb_data)
 {
     int bool;
-    
+
     if (cmd != grecs_callback_set_value) {
 	grecs_error(locus, 0, _("Unexpected block statement"));
 	return 1;
@@ -1099,7 +1183,7 @@ strategy_deny_length(enum grecs_callback_command cmd,
     }
     if (value->type == GRECS_TYPE_STRING) {
 	size_t val;
-	
+
 	if (grecs_string_convert(&val, grecs_type_size,
 				 value->v.string, locus))
 	    return 0;
@@ -1358,6 +1442,11 @@ config_init(void)
     grecs_log_to_stderr = 1;
     grecs_default_port = htons(DICO_DICT_PORT);
     grecs_parser_options = GRECS_OPTION_QUOTED_STRING_CONCAT;
+
+    modinst_list = xdico_list_create();
+    dico_list_set_comparator(modinst_list, cmp_modinst_ident);
+
+    dicod_builtin_module_init();
 }
 
 void
@@ -1399,9 +1488,23 @@ reset_db_visibility(void)
     dico_iterator_t itr;
 
     itr = xdico_list_iterator(database_list);
-    for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) 
+    for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr))
 	db->session_visible = db->visible;
     dico_iterator_destroy(&itr);
+}
+
+int
+database_session_visibility(dicod_database_t *db)
+{
+    if (!dicod_acl_check(db->acl, dicod_acl_check(global_acl, 1)))
+	return 0;
+    else {
+	dico_list_t list[2];
+	dicod_database_get_languages(db, list);
+	if (!dicod_lang_check(list))
+	    return 0;
+    }
+    return 1;
 }
 
 void
@@ -1410,7 +1513,7 @@ check_db_visibility(void)
     dicod_database_t *db;
     dico_iterator_t itr;
     int global = dicod_acl_check(global_acl, 1);
-    
+
     itr = xdico_list_iterator(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
 	if (!db->visible)
@@ -1457,10 +1560,10 @@ database_iterate(dico_list_iterator_t fun, void *data)
     dico_iterator_t itr = xdico_list_iterator(database_list);
     dicod_database_t *db;
     int rc = 0;
-    
+
     for (db = dico_iterator_first(itr); rc == 0 && db;
 	 db = dico_iterator_next(itr)) {
-	if (database_is_visible(db)) 
+	if (database_is_visible(db))
 	    rc = fun(db, data);
     }
     dico_iterator_destroy(&itr);
@@ -1478,7 +1581,7 @@ database_remove_dependent(dicod_module_instance_t *inst)
 	if (dp->instance == inst) {
 	    dico_log(L_NOTICE, 0, _("removing database %s"), dp->name);
 	    dico_iterator_remove_current(itr, NULL);
-	    dicod_database_free(dp); 
+	    dicod_database_free(dp);
 	}
     }
     dico_iterator_destroy(&itr);
@@ -1498,28 +1601,28 @@ dicod_database_free(dicod_database_t *dp)
 
 void
 syslog_log_printer(int lvl, int exitcode, int errcode,
-                   const char *fmt, va_list ap)
+		   const char *fmt, va_list ap)
 {
     char *s;
     int prio = LOG_INFO;
     static struct {
-        char *prefix;
-        int priority;
+	char *prefix;
+	int priority;
     } loglevels[] = {
-        { "Debug",  LOG_DEBUG },
-        { "Info",   LOG_INFO },
-        { "Notice", LOG_NOTICE },
-        { "Warning",LOG_WARNING },
-        { "Error",  LOG_ERR },
-        { "CRIT",   LOG_CRIT },
-        { "ALERT",  LOG_ALERT },
-        { "EMERG",  LOG_EMERG },
+	{ "Debug",  LOG_DEBUG },
+	{ "Info",   LOG_INFO },
+	{ "Notice", LOG_NOTICE },
+	{ "Warning",LOG_WARNING },
+	{ "Error",  LOG_ERR },
+	{ "CRIT",   LOG_CRIT },
+	{ "ALERT",  LOG_ALERT },
+	{ "EMERG",  LOG_EMERG },
     };
     char buf[512];
     int level = 0;
 
     if (lvl & L_CONS)
-        _dico_stderr_log_printer(lvl, exitcode, errcode, fmt, ap);
+	_dico_stderr_log_printer(lvl, exitcode, errcode, fmt, ap);
 
     s    = loglevels[lvl & L_MASK].prefix;
     prio = loglevels[lvl & L_MASK].priority;
@@ -1528,8 +1631,8 @@ syslog_log_printer(int lvl, int exitcode, int errcode,
 	level += snprintf(buf + level, sizeof(buf) - level, "%s: ", s);
     level += vsnprintf(buf + level, sizeof(buf) - level, fmt, ap);
     if (errcode)
-        level += snprintf(buf + level, sizeof(buf) - level, ": %s",
-                          strerror(errcode));
+	level += snprintf(buf + level, sizeof(buf) - level, ": %s",
+			  strerror(errcode));
     syslog(prio, "%s", buf);
 }
 
@@ -1576,7 +1679,7 @@ dicod_log_setup(void)
 	dico_set_log_printer(syslog_log_printer);
     }
     grecs_print_diag_fun = _print_diag;
-}    
+}
 
 /* When requested restart by a SIGHUP, the daemon first starts
    a copy of itself with the `--lint' option to verify
@@ -1602,7 +1705,7 @@ dicod_log_pre_setup(void)
 	log_facility = strtoul(str, &p, 10);
 	if (*p == ':') {
 	    log_print_severity = strtoul(p + 1, &p, 10);
-	    if (*p == ':') 
+	    if (*p == ':')
 		log_tag = p + 1;
 	}
 	log_to_stderr = 0;
@@ -1623,7 +1726,6 @@ apply_conf_override(struct dicod_conf_override *ovr)
     if (ovr->transcript >= 0)
 	transcript = ovr->transcript;
 }
-
 
 static void
 udb_init(void)
@@ -1666,7 +1768,7 @@ main(int argc, char **argv)
     get_options(&argc, &argv, &ovr);
     if (!config_lint_option)
 	dicod_log_setup();
-    
+
     if (mode == MODE_PREPROC)
 	exit(grecs_preproc_run(config_file, grecs_preprocessor) ?
 	      EX_CONFIG : 0);
@@ -1681,7 +1783,7 @@ main(int argc, char **argv)
     dicod_log_setup();
 
     apply_conf_override(&ovr);
-    
+
     compile_access_log();
 
     dicod_loader_init();
@@ -1699,14 +1801,14 @@ main(int argc, char **argv)
 	exit(EX_SOFTWARE);
     if (config_lint_option)
 	exit(EX_OK);
-	
+
     markup_flush_capa();
 
     switch (mode) {
     case MODE_DAEMON:
 	dicod_server(argc, argv);
 	break;
-	
+
     case MODE_INETD:
 	if (dicod_inetd())
 	    rc = EX_UNAVAILABLE;

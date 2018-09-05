@@ -35,37 +35,16 @@ dicod_loader_init(void)
 
 #define MODULE_ASSERT(cond)					\
     if (!(cond)) {						\
-	lt_dlclose(handle);					\
 	dico_log(L_ERR, 0, _("%s: faulty module: (%s) failed"), \
 		 argv[0],					\
-	         #cond);					\
+		 #cond);					\
 	return 1;						\
     }
 
 static int
-dicod_load_module0(dicod_module_instance_t *inst, int argc, char **argv)
+module_init(dicod_module_instance_t *inst, struct dico_database_module *pmod,
+	    int argc, char **argv)
 {
-    lt_dlhandle handle = NULL;
-    lt_dladvise advise = NULL;
-    struct dico_database_module *pmod;    
-
-    if (inst->handle) {
-	dico_log(L_ERR, 0, _("module %s already loaded"), argv[0]);
-	return 1;
-    }
-	
-    if (!lt_dladvise_init(&advise) && !lt_dladvise_ext(&advise)
-        && !lt_dladvise_global(&advise))
-	handle = lt_dlopenadvise(argv[0], advise);
-    lt_dladvise_destroy(&advise);
-
-    if (!handle) {
-	dico_log(L_ERR, 0, _("cannot load module %s: %s"), argv[0],
-		 lt_dlerror());
-	return 1;
-    }
-    
-    pmod = (struct dico_database_module *) lt_dlsym(handle, "module");
     MODULE_ASSERT(pmod);
     MODULE_ASSERT(pmod->dico_version <= DICO_MODULE_VERSION);
     if (pmod->dico_capabilities & DICO_CAPA_NODB) {
@@ -78,19 +57,52 @@ dicod_load_module0(dicod_module_instance_t *inst, int argc, char **argv)
 	MODULE_ASSERT(pmod->dico_output_result);
 	MODULE_ASSERT(pmod->dico_result_count);
 	MODULE_ASSERT(pmod->dico_free_result);
-	
-	if (pmod->dico_open || pmod->dico_close)
-	    MODULE_ASSERT(pmod->dico_open && pmod->dico_close);
     }
-    
+
     if (pmod->dico_init && pmod->dico_init(argc, argv)) {
-	lt_dlclose(handle);
 	dico_log(L_ERR, 0, _("%s: initialization failed"), argv[0]);
 	return 1;
     }
 
-    inst->handle = handle;
     inst->module = pmod;
+    return 0;
+}
+
+static int
+module_load(dicod_module_instance_t *inst, int argc, char **argv)
+{
+    lt_dlhandle handle = NULL;
+    lt_dladvise advise = NULL;
+    struct dico_database_module *pmod;
+
+    if (inst->handle) {
+	dico_log(L_ERR, 0, _("module %s already loaded"), argv[0]);
+	return 1;
+    }
+    if (inst->module)
+	/* FIXME: Built-in module */
+	return 0;
+
+    if (!lt_dladvise_init(&advise) && !lt_dladvise_ext(&advise)
+	&& !lt_dladvise_global(&advise))
+	handle = lt_dlopenadvise(argv[0], advise);
+    lt_dladvise_destroy(&advise);
+
+    if (!handle) {
+	dico_log(L_ERR, 0, _("cannot load module %s: %s"), argv[0],
+		 lt_dlerror());
+	return 1;
+    }
+
+    pmod = (struct dico_database_module *) lt_dlsym(handle, "module");
+
+    if (module_init(inst, pmod, argc, argv)) {
+	lt_dlclose(handle);
+	return 1;
+    }
+
+    inst->handle = handle;
+
     return 0;
 }
 
@@ -99,20 +111,43 @@ dicod_load_module(dicod_module_instance_t *inst)
 {
     struct wordsplit ws;
     int rc;
-    
+
     if (wordsplit(inst->command, &ws, WRDSF_DEFFLAGS)) {
 	dico_log(L_ERR, 0, _("cannot parse command line `%s': %s"),
 		 inst->command, wordsplit_strerror (&ws));
 	return 1;
     }
-
-    rc = dicod_load_module0(inst, ws.ws_wordc, ws.ws_wordv);
-
+    rc = module_load(inst, ws.ws_wordc, ws.ws_wordv);
     wordsplit_free(&ws);
-    
     return rc;
 }
+
+static void
+builtin_module_load(char const *ident, struct dico_database_module *pmod)
+{
+    dicod_module_instance_t *inst = xzalloc(sizeof(*inst));
+    char *argv[2];
+    inst->ident = xstrdup(ident);
+    inst->command = xstrdup(ident);
+    argv[0] = inst->command;
+    argv[1] = NULL;
+    if (module_init(inst, pmod, 1, argv)) {
+	dico_log(L_CRIT, 0,
+		 "INTERNAL ERROR: failed to load built-in module %s",
+		 ident);
+	dico_log(L_CRIT, 0, "Please, report");
+	abort();
+    }
+    inst->handle = NULL;
+    xdico_list_append(modinst_list, inst);
+}
 
+void
+dicod_builtin_module_init(void)
+{
+    builtin_module_load("virtual", &virtual_builtin_module);
+}
+
 static int
 _dup_lang_item(void *item, void *data)
 {
@@ -173,11 +208,11 @@ dicod_word_first(dico_stream_t stream, const char *word,
 		? dicod_database_match(db, strat, word)
 		: dicod_database_define(db, word);
 	    size_t count;
-	    
+
 	    if (!res)
 		continue;
 	    count = dicod_database_result_count(db, res);
-	    
+
 	    if (count) {
 		if (strat)
 		    current_stat.matches = count;
@@ -220,7 +255,7 @@ dicod_word_all(dico_stream_t stream, const char *word,
     dico_list_t reslist = xdico_list_create();
     size_t total = 0;
     struct dbres *rp;
-    
+
     begin_timing(tid);
 
     if (strat && stratcl_check_word(strat->stratcl, word)) {
@@ -236,7 +271,7 @@ dicod_word_all(dico_stream_t stream, const char *word,
 		? dicod_database_match(db, strat, word)
 		: dicod_database_define(db, word);
 	    size_t count;
-	
+
 	    if (!res)
 		continue;
 	    count = dicod_database_result_count(db, res);
@@ -262,7 +297,7 @@ dicod_word_all(dico_stream_t stream, const char *word,
 	dico_stream_writeln(stream, nomatch, nomatch_len);
     } else {
 	itr = xdico_list_iterator(reslist);
-	
+
 	if (strat)
 	    current_stat.matches = total;
 	else
@@ -289,7 +324,7 @@ print_matches(dicod_database_t *db, dico_result_t res,
 {
     size_t i;
     dico_stream_t ostr = data;
-    
+
     for (i = 0; i < count; i++) {
 	stream_writez(ostr, db->name);
 	dico_stream_write(ostr, " \"", 2);
@@ -304,11 +339,11 @@ dicod_match_word_db(dicod_database_t *db, dico_stream_t stream,
 {
     dico_result_t res;
     size_t count;
-    
+
     begin_timing("match");
-    
+
     res = dicod_database_match(db, strat, word);
-    
+
     if (!res) {
 	access_log_status(nomatch, nomatch);
 	dico_stream_writeln(stream, nomatch, nomatch_len);
@@ -321,7 +356,7 @@ dicod_match_word_db(dicod_database_t *db, dico_stream_t stream,
 	dico_stream_writeln(stream, nomatch, nomatch_len);
     } else {
 	dico_stream_t ostr;
-	
+
 	current_stat.matches = count;
 	current_stat.compares = dicod_database_compare_count(db, res);
 	stream_printf(stream, "152 %lu matches found: list follows\n",
@@ -337,7 +372,7 @@ dicod_match_word_db(dicod_database_t *db, dico_stream_t stream,
 	dico_stream_write(stream, "\n", 1);
 	access_log_status("152", "250");
     }
-    
+
     dicod_database_result_free(db, res);
 }
 
@@ -368,8 +403,6 @@ dicod_match_word_all(dico_stream_t stream,
     dico_stream_close(ostr);
     dico_stream_destroy(&ostr);
 }
-
-
 
 static void
 print_definitions(dicod_database_t *db, dico_result_t res,
@@ -382,7 +415,7 @@ print_definitions(dicod_database_t *db, dico_result_t res,
     for (i = 0; i < count; i++) {
 	dico_stream_t ostr;
 	dico_assoc_list_t hdr;
-	
+
 	stream_printf(stream, "151 \"%s\" %s \"%s\"\n",
 		      word, db->name, descr ? descr : "");
 
@@ -404,7 +437,7 @@ dicod_define_word_db(dicod_database_t *db, dico_stream_t stream,
 {
     dico_result_t res;
     size_t count;
-    
+
     begin_timing("define");
 
     res = dicod_database_define(db, word);
@@ -429,7 +462,7 @@ dicod_define_word_db(dicod_database_t *db, dico_stream_t stream,
 	dico_stream_write(stream, "\n", 1);
 	access_log_status("150", "250");
     }
-    
+
     dicod_database_result_free(db, res);
 }
 
@@ -456,8 +489,8 @@ dicod_module_test(int argc, char **argv)
 {
     int i;
     dicod_module_instance_t inst;
-    struct dico_database_module *pmod;    
-    
+    struct dico_database_module *pmod;
+
     /* Split arguments in two parts: unit test arguments and
        optional module initialization arguments */
     for (i = 0; i < argc; i++)
@@ -467,18 +500,18 @@ dicod_module_test(int argc, char **argv)
 
     if (i == 0)
 	dico_die(EX_UNAVAILABLE, L_ERR, 0, _("no module name"));
-    
+
     memset(&inst, 0, sizeof(inst));
     if (i < argc) {
 	argv[i] = argv[0];
-	if (dicod_load_module0(&inst, argc - i, argv + i))
+	if (module_load(&inst, argc - i, argv + i))
 	    return 1;
 	argv[i] = NULL;
     } else {
 	char *null_argv[2];
 	null_argv[0] = argv[0];
 	null_argv[1] = NULL;
-	if (dicod_load_module0(&inst, 1, null_argv))
+	if (module_load(&inst, 1, null_argv))
 	    return 1;
     }
 

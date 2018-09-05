@@ -116,7 +116,7 @@ extern struct dico_stat current_stat, total_stat;
 
 #define DICTD_LOGGING_ENVAR "__DICTD_LOGGING__"
 
-#define MODE_DAEMON  0 
+#define MODE_DAEMON  0
 #define MODE_INETD   1
 #define MODE_PREPROC 2
 #define MODE_TEST    3
@@ -148,7 +148,7 @@ extern dicod_acl_t connect_acl;
 typedef struct dicod_module_instance {
     char *ident;
     char *command;
-    struct dico_database_module *module; 
+    struct dico_database_module *module;
     lt_dlhandle handle;
 } dicod_module_instance_t;
 
@@ -156,28 +156,29 @@ typedef struct dicod_module_instance {
 
 typedef struct dicod_database {
     int flags;
-    
+
     char *name;        /* Dictionary name */
     char *descr;       /* Description (SHOW DB) */
     char *info;        /* Info (SHOW INFO) */
-    
+
     dico_list_t langlist[2]; /* List of "source/dest" languages */
-    
+
     dicod_acl_t  acl;  /* ACL for this database */
     int visible;         /* Is this database (administratively) visible */
     int session_visible; /* Is this database visible in the current session.
 			    This depends on the value of visible and on the
 			    result of dicod_acl_check and dicod_lang_check */
-    
+
     dico_handle_t mod_handle;        /* Dico module handle */
 
     dico_assoc_list_t mime_headers;
-    
+
     dicod_module_instance_t *instance; /* Pointer to the module instance
 					  structure */
     int argc;                 /* Handler arguments: count */
     char **argv;              /*  ... and pointers */
     char *command;            /* Handler command line (for diagnostics) */
+    void *extra;
 } dicod_database_t;
 
 #define CONTENT_TRANSFER_ENCODING_HEADER "Content-transfer-encoding"
@@ -243,6 +244,7 @@ void register_lang(void);
 int dicod_lang_check(dico_list_t list[2]);
 
 /* mime.c */
+extern int option_mime;
 void register_mime(void);
 
 /* markup.c */
@@ -288,6 +290,8 @@ void dicod_define_word_all(dico_stream_t stream, const char *word);
 
 int dicod_module_test(int argc, char **argv);
 
+void dicod_builtin_module_init(void);
+
 /* database.c */
 int dicod_database_init(dicod_database_t *dp);
 int dicod_database_open(dicod_database_t *dp);
@@ -307,7 +311,7 @@ size_t dicod_database_compare_count(dicod_database_t *db, dico_result_t res);
 void dicod_database_result_free(dicod_database_t *db, dico_result_t res);
 int dicod_database_result_output(dicod_database_t *db, dico_result_t res,
 				 size_t n, dico_stream_t str);
-    
+
 dico_result_t dicod_database_match(dicod_database_t *db,
 				   const dico_strategy_t strat,
 				   const char *word);
@@ -399,4 +403,22 @@ int dicod_check_password(const char *db_pass, const char *pass);
 
 /* main.c */
 void config_help(void);
+int database_session_visibility(dicod_database_t *db);
 
+
+/* virtual.c */
+extern struct dico_database_module virtual_builtin_module;
+
+enum mime_cond {
+    cond_any = -1,
+    cond_mime,
+    cond_nomime
+};
+
+struct vdb_member {
+    char *name;
+    dicod_database_t *db;
+    int   cond;
+};
+
+dico_list_t vdb_list_create(void);

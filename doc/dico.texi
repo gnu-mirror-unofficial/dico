@@ -163,6 +163,15 @@ Authentication
 Databases
 
 * Database Visibility::
+* Virtual Databases::
+
+Dicod Invocation
+
+* Operation Mode::
+* Help Options::
+* Modifier Options::
+* Preprocessor Control::
+* Debugging Options::
 
 Modules
 
@@ -176,6 +185,7 @@ Modules
 * substr::
 * word::
 * nprefix::
+* metaphone2::
 * pcre::
 * ldap::
 * pam::
@@ -192,11 +202,23 @@ Modules
 * Dico Scheme Primitives::
 * Example Module::
 
+@command{Python}
+
+* Dictionary Class::
+* Dico Python Primitives::
+* Python Example::    An Example of Python Module
+
+Dico Python Primitives
+
+* DicoSelectionKey::
+* DicoStrategy::
+
 Dico Module Interface
 
 * dico_database_module::
 * Strategies::
 * Output::
+* Unit Testing::
 
 Strategies
 
@@ -260,6 +282,16 @@ The Libdico Library
 * utf8::
 * util::
 * xlat::
+
+UTF-8
+
+* Character sizes::
+* Iterating over UTF-8 strings::
+* Conversions::
+* Comparing UTF-8 strings::
+* Character lookups::
+* Functions for converting UTF-8 characters::
+* Additional functions::
 
 @end detailmenu
 @end menu
@@ -2220,6 +2252,15 @@ Defines a dictionary database.  At least two sub-statements must be
 defined for each database: @code{name} and @code{handler}.
 @end deffn
 
+@deffn {Database} visible @var{bool}
+Defines whether this database is visible or not.  By default, all
+databases are visible.  You will need this statement if you want to
+temporary hide the database without removing it from the
+configuration.  Another common use case is to hide a database that is
+used as a member of a virtual database, so that its contents is
+available only by querying the parent database (@pxref{Virtual Databases}).
+@end deffn
+
 @deffn {Database} name @var{string}
 Sets the name of this database (a single word).  This name will be used
 to identify this database in @acronym{DICT} commands.
@@ -2290,8 +2331,10 @@ encoding used when formatting replies from this database if
 Defines the headers to be sent with the replies from this
 database.  Argument is a here-document (@pxref{here-document}),
 containing the headers to be sent with each dictionary entry, if the
-client sent the @samp{OPTION MIME} command.  Normally, you would want
-to include at least the @samp{Content-Type} and
+client sent the @samp{OPTION MIME} command.  By default
+@command{dicod} uses MIME headers defined in the database itself.  Use
+this statement if these are not defined, or if you want to override them.
+In this case you would want to include at least the @samp{Content-Type} and
 @samp{Content-Transfer-Encoding} headers, as shown in the example below:
 
 @example
@@ -2324,6 +2367,7 @@ Non-printable characters will be encoded using the
 
 @menu
 * Database Visibility::
+* Virtual Databases::
 @end menu
 
 @node Database Visibility
@@ -2335,8 +2379,9 @@ dictionary database.  It determines whether the database appears in
 the output of @code{SHOW DB} command, and takes part in dictionary
 searches.
 
-  By default, all databases are defined as publicly visible.  You can,
-however, limit their visibility on global as well as on
+  By default, all databases are defined as publicly visible.  You can hide
+a database permanently by using the @samp{visible no} statement in its
+definition.  You can also limit its visibility on global as well as on
 per-directory basis.  This can be achieved using @dfn{visibility
 @acronym{ACL}s}.
 
@@ -2378,6 +2423,101 @@ everybody coming from the @samp{192.168.10.0/24} network and from
 the @acronym{UNIX} socket @file{/tmp/dicod.sock}, without
 authorization.  It is not visible to users coming from elsewhere,
 unless they authenticate themselves.
+
+@node Virtual Databases
+@subsubsection Virtual Databases
+@cindex virtual databases
+@cindex database, virtual
+A @dfn{virtual database} merges several regular databases into one.
+For example a virtual database may include all dictionaries
+translating from English to Norwegian.  Another one may include 
+thesauri for English.
+
+Yet another common use for virtual databases is to select different
+output markup depending on whether @samp{OPTION MIME} was requested by
+the user.
+
+Technically, a virtual database is defined by specifying
+
+@example
+  handler "virtual";
+@end example
+
+@noindent
+in the @code{database} definition.  This is a built-in module, so you
+must not use the @code{load-module} statement.
+
+The names of the member databases (the databases to be included to
+this one) are supplied using the @code{database} statements:
+
+@deffn {Database} database @var{name} [mime | nomime]
+Specifies the database to be included as a member of this virtual
+database.  The @var{name} argument supplies the name of the database
+(as set by the @code{name} statement in its definition).
+
+Optional second argument may be used to restrict the use of this
+database to the given state of the @samp{MIME} option.  Databases
+marked with @samp{mime} will be used only if the @code{OPTION MIME}
+command has been given for the current session.  Databases marked with
+@samp{nomime} will be used only if this command has not been issued.
+@end deffn
+
+The following example defines a virtual database for translations from
+English to several other languages:
+
+@example
+@group
+database @{
+  name "English Translating Database";
+  info "Translations from English to other languages";
+  handler "virtual";
+  database "en-sw";
+  database "en-no";
+  database "en-pl";
+@}  
+@end group
+@end example
+
+It is supposed, that databases @samp{en-sw}, @samp{en-no}, and
+@samp{en-pl} are defined elsewhere in the configuration.
+
+Another example illustrates how to define a database that will select
+the format of the articles depending on whether the client requests
+MIME output.  Suppose that the configuration defines two dictionaries:
+@samp{thes_plain}, with a thesaurus formatted in plaintext, and
+@samp{thes_html}, with the same thesaurus, but formatted in HTML.  The
+following database will return plaintext responses by default and HTML
+responses after the @code{OPTION MIME} command:
+
+@example
+@group
+database @{
+  name "thesaurus";
+  handler "virtual";
+  database thes_plain nomime;
+  database thes_html plain;
+@}
+@end group
+@end example
+
+Notice, that in this case member databases should not be visible, as
+they will duplicate the information from the @samp{thesaurus}
+database.  It will make sense to define them as invisible:
+
+@example
+@group
+database @{
+  name "thes_pain";
+  visible no;
+  ...
+@}  
+database @{
+  name "thes_html";
+  visible no;
+  ...
+@}  
+@end group
+@end example
 
 @node Strategies and Default Searches
 @subsection Strategies and Default Searches

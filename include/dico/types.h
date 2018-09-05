@@ -68,7 +68,8 @@ struct dico_database_module {
     unsigned dico_version;
     unsigned dico_capabilities;
     int (*dico_init) (int argc, char **argv);
-    dico_handle_t (*dico_init_db) (const char *db, int argc, char **argv);
+    dico_handle_t (*dico_init_db) (const char *db, int argc, char **argv,
+				   void *extra);
     int (*dico_free_db) (dico_handle_t hp);
     int (*dico_open) (dico_handle_t hp);
     int (*dico_close) (dico_handle_t hp);

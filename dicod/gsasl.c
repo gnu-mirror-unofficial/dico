@@ -339,7 +339,7 @@ init_sasl_0(void)
 }
 
 static int
-init_sasl_1(void)
+init_sasl_1(void *data)
 {
     static struct dicod_command cmd =
 	{ "SASLAUTH", 2, 3, "mechanism [initial-response]",

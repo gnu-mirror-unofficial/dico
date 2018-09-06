@@ -131,3 +131,41 @@ LOGGING = {
 
 DICT_SERVERS = ('gnu.org.ua',)
 DICT_TIMEOUT = 10
+
+# Optional ONERROR dict controls what to do if certain errors occur.
+# So far, only one key is defined:
+#
+# UNSUPPORTED_CONTENT_TYPE
+#    Specifies action to take if a DEFINE request returns article in
+#    unsupported content type (with OPTION MIME enabled).
+#    Value is a dict. The only mandatory key is 'action', indicating what
+#    action to take. Rest of keys depend on its value as shown in the table
+#    below:
+#
+#    'action': 'delete':
+#         The offending article will be removed, as if the server has
+#         never returned it. This can lead to inconsistencies where
+#         headwords returned by MATCH will not be returned by DEFINE.
+#         No additional keys are required.
+#
+#    'action': 'replace':
+#         The offending content will be replaced with the value of the
+#         'message' key. Keys:
+#           'message':     Text to use as a replacement [mandatory]
+#           'format_html': Boolean indicating whether to treat the text as HTML.
+#                          Optional. Defaults to False.
+#
+#    'action': 'display':
+#         Display the result anyway. Additional key:
+#           'format_html': Boolean indicating whether to treat the article as
+#                          HTML.
+#                          Optional. Defaults to False.
+#
+
+ONERROR = {
+    'UNSUPPORTED_CONTENT_TYPE' : {
+        'action': 'replace',
+        'message': 'Article cannot be displayed due to unsupported content type',
+        'format_html': False,
+    }
+}

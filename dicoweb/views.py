@@ -34,6 +34,12 @@ except ImportError:
     wiki2html = None
     print('WARNING: wikitrans is not installed.')
 
+def onerror(err, dfl=None):
+    try:
+        act = settings.ONERROR[err]
+    except:
+        act = dfl
+    return act
 
 def index(request):
     page = {
@@ -159,8 +165,11 @@ def index(request):
             cache.set('dicoweb/%s/last_match' % sid, key, timeout=3600)
         else:
             key = cache.get('dicoweb/%s/last_match' % sid)
+
         if key != None:
             mtc = cache.get('dicoweb/' + key)
+        if not mtc:
+            mtc = result
 
         mtc['dbnames'] = {}
         if 'matches' in mtc:
@@ -178,9 +187,9 @@ def index(request):
 
     if 'definitions' in result:
         rx1 = re.compile('{+(.*?)}+', re.DOTALL)
-        for df in result['definitions']:
+        for i, df in enumerate(result['definitions']):
             if 'content-type' in df:
-                if (df['content-type'].startswith('text/x-wiki') 
+                if (df['content-type'].startswith('text/x-wiki')
                     and wiki2html):
                     lang = df['x-wiki-language'] \
                           if 'x-wiki-language' in df else 'en'
@@ -193,9 +202,39 @@ def index(request):
                     df['format_html'] = True
                 elif df['content-type'].startswith('text/html'):
                     df['format_html'] = True
+                elif df['content-type'].startswith('text/'):
+                    df['format_html'] = False
+                else:
+                    act = onerror('UNSUPPORTED_CONTENT_TYPE',
+                                  { 'action': 'replace',
+                                    'message': 'Article cannot be displayed due to unsupported content type' })
+                    if act['action'] == 'delete':
+                        del(result['definitions'][i])
+                        result['count'] -= 1
+                    elif act['action'] == 'replace':
+                        df['desc'] = act['message']
+                        df['format_html'] = (
+                            act['format_html'] if 'format_html' in act
+                            else False)
+                        result['definitions'][i] = df
+                    elif act['action'] == 'display':
+                        df['format_html'] = (
+                            act['format_html'] if 'format_html' in act
+                            else False)
+                        result['definitions'][i] = df
+                    elif settings.DEBUG:
+                        raise AssertionError("""
+Article cannot be displayed due to unsupported content type (%s).
+Additionally, ONERROR['UNSUPPORTED_CONTENT_TYPE'] has unsupported value (%s).
+""" % (df['content-type'], act))
+                    else:
+                        del(result['definitions'][i])
+                        result['count'] -= 1
             else:
                 df['desc'] = re.sub('_(.*?)_', '<b>\\1</b>', df['desc'])
                 df['desc'] = re.sub(rx1, __subs1, df['desc'])
+        if result['count'] == 0:
+            result = { 'error': 552, 'msg': 'No match' }
 
     return render_to_response('index.html', {'page': page,
                                              'q': q,

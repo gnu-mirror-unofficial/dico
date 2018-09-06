@@ -203,7 +203,7 @@ dicod_word_first(dico_stream_t stream, const char *word,
 
     itr = xdico_list_iterator(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
-	if (database_is_visible(db)) {
+	if (database_is_visible(db) && !database_is_virtual(db)) {
 	    dico_result_t res = strat
 		? dicod_database_match(db, strat, word)
 		: dicod_database_define(db, word);
@@ -266,7 +266,7 @@ dicod_word_all(dico_stream_t stream, const char *word,
 
     itr = xdico_list_iterator(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
-	if (database_is_visible(db)) {
+	if (database_is_visible(db) && !database_is_virtual(db)) {
 	    dico_result_t res = strat
 		? dicod_database_match(db, strat, word)
 		: dicod_database_define(db, word);

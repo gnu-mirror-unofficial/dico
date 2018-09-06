@@ -649,7 +649,7 @@ set_database(enum grecs_callback_command cmd,
 	}
 	if (dict->langlist[0] || dict->langlist[1])
 	     /* Prevent dico_db_lang from being called */
-	    dict->flags |= DICOD_DBF_LANG;
+	    dict->flags |= DICO_DBF_LANG;
 
 	xdico_list_append(database_list, dict);
 	*pdata = NULL;

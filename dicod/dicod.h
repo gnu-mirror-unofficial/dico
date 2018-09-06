@@ -152,7 +152,7 @@ typedef struct dicod_module_instance {
     lt_dlhandle handle;
 } dicod_module_instance_t;
 
-#define DICOD_DBF_LANG 0x0001
+#define DICO_DBF_LANG    0x10000
 
 typedef struct dicod_database {
     int flags;
@@ -210,6 +210,11 @@ static inline int
 database_is_visible(dicod_database_t const *db)
 {
     return db->session_visible;
+}
+static inline int
+database_is_virtual(dicod_database_t const *db)
+{
+    return db->flags & DICO_DBF_VIRTUAL;
 }
 int dicod_any_lang_list_p(dico_list_t list);
 
@@ -325,6 +330,7 @@ void dicod_database_free_descr(dicod_database_t *db, char *descr);
 
 dico_assoc_list_t dicod_database_mime_header(dicod_database_t *db,
 					     dico_result_t res);
+int dicod_database_flags(dicod_database_t const *db);
 
 /* ostream.c */
 extern off_t total_bytes_out;

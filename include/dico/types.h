@@ -64,6 +64,10 @@ typedef int (*dico_select_t) (int, dico_key_t, const char *);
 #define DICO_CAPA_NODB 0x0001
 #define DICO_CAPA_DEFAULT DICO_CAPA_NONE
 
+#define DICO_DBF_DEFAULT 0
+#define DICO_DBF_VIRTUAL 0x01
+#define DICO_DBF_MASK    0xffff
+
 struct dico_database_module {
     unsigned dico_version;
     unsigned dico_capabilities;
@@ -88,6 +92,7 @@ struct dico_database_module {
     int (*dico_result_headers) (dico_result_t rp, dico_assoc_list_t hdr);
     int (*dico_run_test) (int argc, char **argv);
     char *(*dico_db_mime_header) (dico_handle_t hp);
+    int (*dico_db_flags) (dico_handle_t hp);
 };
 
 #endif

@@ -143,7 +143,7 @@ dicod_database_free_info(dicod_database_t *db, char *info)
 void
 dicod_database_get_languages(dicod_database_t *db, dico_list_t dlist[])
 {
-    if (!(db->flags & DICOD_DBF_LANG)) {
+    if (!(db->flags & DICO_DBF_LANG)) {
 	dicod_module_instance_t *inst = db->instance;
 	if (inst->module->dico_db_lang) {
 	    /* FIXME: Return code? */
@@ -159,7 +159,7 @@ dicod_database_get_languages(dicod_database_t *db, dico_list_t dlist[])
 	    if (dicod_any_lang_list_p(db->langlist[1]))
 		dico_list_destroy(&db->langlist[1]);
 	}
-	db->flags |= DICOD_DBF_LANG;
+	db->flags |= DICO_DBF_LANG;
     }
     dlist[0] = db->langlist[0];
     dlist[1] = db->langlist[1];
@@ -228,3 +228,13 @@ dicod_database_mime_header(dicod_database_t *db, dico_result_t res)
 
     return hdr;
 }
+
+int
+dicod_database_flags(dicod_database_t const *db)
+{
+    struct dico_database_module *mod = db->instance->module;
+    if (mod->dico_version > 2 && mod->dico_db_flags)
+	return mod->dico_db_flags(db->mod_handle) & DICO_DBF_MASK;
+    return DICO_DBF_DEFAULT;
+}
+    

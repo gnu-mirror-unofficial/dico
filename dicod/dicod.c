@@ -131,7 +131,9 @@ open_databases(void)
     dicod_database_t *dp;
 
     for (dp = dico_iterator_first(itr); dp; dp = dico_iterator_next(itr)) {
-	if (dicod_database_open(dp)) {
+	if (dicod_database_open(dp) == 0) {
+	    dp->flags |= dicod_database_flags(dp);
+	} else {
 	    dico_log(L_NOTICE, 0, _("removing database %s"), dp->name);
 	    dico_iterator_remove_current(itr, NULL);
 	    dicod_database_free(dp);

@@ -19,6 +19,7 @@
 struct virtual_database {
     char *name;
     unsigned int initialized:1;
+    unsigned int is_virtual:1;
     size_t vdb_count;
     struct vdb_member vdb_memb[1];
 };
@@ -136,6 +137,7 @@ virtual_open(dico_handle_t dp)
     if (!vdb->initialized) {
 	size_t i, j;
 	size_t n = vdb->vdb_count;
+	int is_virtual = 1;
 	
 	for (i = j = 0; i < n; i++) {
 	    dicod_database_t *db = find_database_all(vdb->vdb_memb[i].name);
@@ -143,13 +145,23 @@ virtual_open(dico_handle_t dp)
 		vdb->vdb_memb[i].db = db;
 		if (i > j)
 		    vdb->vdb_memb[j] = vdb->vdb_memb[i];
+		if (vdb->vdb_memb[j].cond != cond_any)
+		    is_virtual = 0;
 		j++;
 	    }
 	}
 	vdb->vdb_count = j;
 	vdb->initialized = 1;
+	vdb->is_virtual = is_virtual;
     }
     return 0;
+}
+
+static int
+virtual_db_flags(dico_handle_t dp)
+{
+    struct virtual_database *vdb = (struct virtual_database*)dp;
+    return vdb->is_virtual ? DICO_DBF_VIRTUAL : DICO_DBF_DEFAULT; 
 }
 
 static int
@@ -287,4 +299,5 @@ struct dico_database_module virtual_builtin_module = {
     .dico_result_count   =  virtual_result_count,
     .dico_compare_count  =  virtual_compare_count,
     .dico_free_result    =  virtual_free_result,
+    .dico_db_flags       =  virtual_db_flags
 };

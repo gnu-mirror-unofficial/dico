@@ -50,7 +50,11 @@ module_init(dicod_module_instance_t *inst, struct dico_database_module *pmod,
     if (pmod->dico_capabilities & DICO_CAPA_NODB) {
 	MODULE_ASSERT(pmod->dico_init);
     } else {
-	MODULE_ASSERT(pmod->dico_init_db);
+	if (pmod->dico_capabilities & DICO_CAPA_INIT_EXT) {
+	    MODULE_ASSERT(pmod->dico_init_db_ext);
+	} else {
+	    MODULE_ASSERT(pmod->dico_init_db);
+	}
 	MODULE_ASSERT(pmod->dico_free_db);
 	MODULE_ASSERT(pmod->dico_match);
 	MODULE_ASSERT(pmod->dico_define);

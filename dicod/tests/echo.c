@@ -39,7 +39,7 @@ echo_init(int argc, char **argv)
 }
 
 static dico_handle_t
-echo_init_db(const char *dbname, int argc, char **argv, void *extra)
+echo_init_db(const char *dbname, int argc, char **argv)
 {
     int null_mode = 0;
     struct echo_handle *hp;

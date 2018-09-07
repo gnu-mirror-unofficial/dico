@@ -62,6 +62,7 @@ typedef int (*dico_select_t) (int, dico_key_t, const char *);
 
 #define DICO_CAPA_NONE 0
 #define DICO_CAPA_NODB 0x0001
+#define DICO_CAPA_INIT_EXT 0x0002
 #define DICO_CAPA_DEFAULT DICO_CAPA_NONE
 
 #define DICO_DBF_DEFAULT 0
@@ -72,8 +73,7 @@ struct dico_database_module {
     unsigned dico_version;
     unsigned dico_capabilities;
     int (*dico_init) (int argc, char **argv);
-    dico_handle_t (*dico_init_db) (const char *db, int argc, char **argv,
-				   void *extra);
+    dico_handle_t (*dico_init_db) (const char *db, int argc, char **argv);
     int (*dico_free_db) (dico_handle_t hp);
     int (*dico_open) (dico_handle_t hp);
     int (*dico_close) (dico_handle_t hp);
@@ -92,6 +92,8 @@ struct dico_database_module {
     int (*dico_result_headers) (dico_result_t rp, dico_assoc_list_t hdr);
     int (*dico_run_test) (int argc, char **argv);
     char *(*dico_db_mime_header) (dico_handle_t hp);
+    dico_handle_t (*dico_init_db_ext) (const char *db, int argc, char **argv,
+				       void *extra);
     int (*dico_db_flags) (dico_handle_t hp);
 };
 

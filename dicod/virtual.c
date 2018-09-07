@@ -85,7 +85,7 @@ find_database_all(const char *name)
 }
 
 static dico_handle_t
-virtual_init_db(const char *dbname, int argc, char **argv, void *extra)
+virtual_init_db_ext(const char *dbname, int argc, char **argv, void *extra)
 {
     struct virtual_database *vdb;
     dico_iterator_t itr;
@@ -289,8 +289,8 @@ virtual_free_result(dico_result_t rp)
 
 struct dico_database_module virtual_builtin_module = {
     .dico_version        =  DICO_MODULE_VERSION,
-    .dico_capabilities   =  DICO_CAPA_NONE,
-    .dico_init_db        =  virtual_init_db,
+    .dico_capabilities   =  DICO_CAPA_INIT_EXT,
+    .dico_init_db_ext    =  virtual_init_db_ext,
     .dico_free_db        =  virtual_free_db,
     .dico_open           =  virtual_open,
     .dico_match          =  virtual_match,

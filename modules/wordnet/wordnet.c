@@ -190,7 +190,7 @@ find_option(const char *text)
 }
 
 static dico_handle_t
-wn_init_db(const char *dbname, int argc, char **argv, char *extra)
+wn_init_db(const char *dbname, int argc, char **argv)
 {
     struct wndb *wndb;
     int pos = 0;

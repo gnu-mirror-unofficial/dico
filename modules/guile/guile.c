@@ -815,7 +815,7 @@ mod_init(int argc, char **argv)
 }
 
 static dico_handle_t
-mod_init_db(const char *dbname, int argc, char **argv, void *extra)
+mod_init_db(const char *dbname, int argc, char **argv)
 {
     struct _guile_database *db;
     int i;

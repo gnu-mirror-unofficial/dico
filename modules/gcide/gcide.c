@@ -223,7 +223,7 @@ gcide_open_idx(struct gcide_db *db)
 }
 
 static dico_handle_t
-gcide_init_db(const char *dbname, int argc, char **argv, void *extra)
+gcide_init_db(const char *dbname, int argc, char **argv)
 {
     char *db_dir = NULL;
     char *idx_dir = NULL;

@@ -412,7 +412,7 @@ declare_constants(PyObject *module)
 }
 
 static dico_handle_t
-mod_init_db (const char *dbname, int argc, char **argv, void *extra)
+mod_init_db (const char *dbname, int argc, char **argv)
 {
     int pindex;
     struct _python_database *db;

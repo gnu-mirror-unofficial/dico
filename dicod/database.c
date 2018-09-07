@@ -27,17 +27,27 @@ dicod_database_init(dicod_database_t *db)
 		 db->command, inst->ident);
 	return 1;
     }
-    
-    if (inst->module->dico_init_db) {
-	db->mod_handle = inst->module->dico_init_db(db->name,
-						    db->argc,
-						    db->argv,
-	                                            db->extra);
-	if (!db->mod_handle) {
-	    dico_log(L_ERR, 0, _("cannot initialize database `%s'"),
-		     db->command);
+
+    if (inst->module->dico_capabilities & DICO_CAPA_INIT_EXT) {
+	db->mod_handle = inst->module->dico_init_db_ext(db->name,
+							db->argc,
+							db->argv,
+							db->extra);
+    } else {
+	if (db->extra) {
+	    dico_log(L_ERR, 0, _("cannot initialize database `%s': "
+				 "module `%s' does not support extended initialization"),
+		     db->command, inst->ident);
 	    return 1;
 	}
+	
+	db->mod_handle = inst->module->dico_init_db(db->name,
+						    db->argc,
+						    db->argv);
+    }
+    if (!db->mod_handle) {
+	dico_log(L_ERR, 0, _("cannot initialize database `%s'"), db->command);
+	return 1;
     }
     return 0;
 }

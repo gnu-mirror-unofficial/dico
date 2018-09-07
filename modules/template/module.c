@@ -27,7 +27,7 @@ static int
 }
     
 static dico_handle_t
-<MODNAME>_init_db(const char *dbname, int argc, char **argv, void *extra)
+<MODNAME>_init_db(const char *dbname, int argc, char **argv)
 {
     /* FIXME */
     return NULL;

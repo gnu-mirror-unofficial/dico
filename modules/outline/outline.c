@@ -463,7 +463,7 @@ outline_free_db (dico_handle_t hp)
 }
 
 static dico_handle_t
-outline_init_db(const char *dbname, int argc, char **argv, void *extra)
+outline_init_db(const char *dbname, int argc, char **argv)
 {
     FILE *fp;
     struct outline_file *file;

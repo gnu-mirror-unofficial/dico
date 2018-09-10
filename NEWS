@@ -1,4 +1,4 @@
-GNU Dico NEWS -- history of user-visible changes. 2018-09-06
+GNU Dico NEWS -- history of user-visible changes. 2018-09-07
 Copyright (C) 2008-2010, 2012-2018 Sergey Poznyakoff
 See the end of file for copying conditions.
 
@@ -31,9 +31,9 @@ detailed discussion.
 
 Debian-based systems provide a package "wordnet-dev", which contains
 a properly built shared wordnet library.  However, this library is named
-"libwordnet.so", instead of the expected "libWN.so".  Use the
---with-libWN option to configure, in order to inform it about the
-change, e.g.:
+"libwordnet.so", instead of the expected "libWN.so".  Due to this
+change, configure was unable to locate the library and wordnet module
+was not build.  To fix this. use the --with-libWN option, e.g.:
 
   ./configure --with-libWN=wordnet
 

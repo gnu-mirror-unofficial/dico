@@ -233,8 +233,15 @@ dicod_database_mime_header(dicod_database_t *db, dico_result_t res)
     else
 	dico_header_parse(&hdr, NULL);
     
-    if (mod->dico_result_headers)
-	mod->dico_result_headers(res, hdr);
+    if (mod->dico_result_headers) {
+	dico_assoc_list_t tmp = dico_assoc_dup(hdr);
+	if (mod->dico_result_headers(res, tmp) == 0) {
+	    dico_assoc_destroy(&hdr);
+	    hdr = tmp;
+	} else {
+	    dico_assoc_destroy(&tmp);
+	}
+    }
 
     return hdr;
 }

@@ -224,21 +224,47 @@ struct dico_assoc @{
 @deftypefn Function dico_assoc_list_t dico_assoc_create (void)
 @end deftypefn
 
+@deftypefn Function dico_assoc_list_t dico_assoc_dup(dico_assoc_list_t @var{src})
+@end deftypefn
+
 @deftypefn Function void dico_assoc_destroy (dico_assoc_list_t *@var{passoc})
+@end deftypefn
+
+@deftypefn int dico_assoc_clear(dico_assoc_list_t @var{assoc})
 @end deftypefn
 
 @deftypefn Function int dico_assoc_add (dico_assoc_list_t @var{assoc}, @
   const char *@var{key}, const char *@var{value})
 @end deftypefn
 
+@deftypefn Function int dico_assoc_append(dico_assoc_list_t @var{assoc}, @
+  const char *@var{key}, const char *@var{value})
+@end deftypefn
+
+@deftypefn Function {const char *}dico_assoc_find_n(@
+  dico_assoc_list_t @var{assoc}, @
+  const char *@var{key}, size_t @var{n})
+@end deftypefn
+  
 @deftypefn Function {const char *} dico_assoc_find (@
    dico_assoc_list_t @var{assoc},  const char *@var{key})
 @end deftypefn
 
+@deftypefn Function void dico_assoc_remove_n(@
+   dico_assoc_list_t @var{assoc}, const char *@var{key}, size_t @var{n})
+@end deftypefn
+   
 @deftypefn Function void dico_assoc_remove (@
    dico_assoc_list_t @var{assoc}, const char *@var{key})
 @end deftypefn
 
+@deftypefn Function size_t dico_assoc_count(dico_assoc_list_t @var{assoc})
+@end deftypefn
+
+@deftypefn Function dico_iterator_t dico_assoc_iterator(@
+   dico_assoc_list_t @var{assoc})
+@end deftypefn
+   
 @node diag
 @section Diagnostics Functions
 @UNREVISED

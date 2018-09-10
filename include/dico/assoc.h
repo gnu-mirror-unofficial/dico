@@ -43,6 +43,7 @@ const char *dico_assoc_find_n(dico_assoc_list_t assoc, const char *key,
 const char *dico_assoc_find(dico_assoc_list_t assoc, const char *key);
 void dico_assoc_remove_n(dico_assoc_list_t assoc, const char *key, size_t n);
 void dico_assoc_remove(dico_assoc_list_t assoc, const char *key);
+size_t dico_assoc_count(dico_assoc_list_t assoc);
 
 dico_iterator_t dico_assoc_iterator(dico_assoc_list_t assoc);
 

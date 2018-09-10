@@ -233,3 +233,11 @@ dico_assoc_iterator(dico_assoc_list_t assoc)
 	return NULL;
     return dico_list_iterator(assoc->list);
 }
+
+size_t
+dico_assoc_count(dico_assoc_list_t assoc)
+{
+    if (!assoc)
+	return 0;
+    return dico_list_count(assoc->list);
+}

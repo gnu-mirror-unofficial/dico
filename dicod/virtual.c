@@ -24,11 +24,6 @@ struct virtual_database {
     struct vdb_member vdb_memb[1];
 };
 
-struct vdb_result {
-    dicod_database_t *db;
-    dico_result_t res;
-};
-
 struct virtual_result {
     struct virtual_database *vdb;
     dico_result_t vdres[1];
@@ -287,6 +282,45 @@ virtual_free_result(dico_result_t rp)
     free(rp);
 }
 
+static int
+virtual_result_headers(dico_result_t rp, dico_assoc_list_t hdr)
+{  
+    struct virtual_result *result = (struct virtual_result *)rp;
+    size_t i;
+    int err = 0;
+    for (i = 0; i < result->vdb->vdb_count; i++) {
+	if (result->vdres[i]) {
+	    dico_assoc_list_t rhdr =
+		dicod_database_mime_header(result->vdb->vdb_memb[i].db,
+					   result->vdres[i]);
+	    if (rhdr) {
+		struct dico_assoc *p;
+		dico_iterator_t itr;
+
+		if (dico_assoc_count(rhdr) == 0) {
+		    err = 1;
+		    break;
+		}
+		
+		itr = dico_assoc_iterator(rhdr);
+		for (p = dico_iterator_first(itr); p;
+		     p = dico_iterator_next(itr)) {
+		    if (dico_assoc_append(hdr, p->key, p->value)) {
+			err = 1;
+			break;
+		    }
+		}
+		dico_iterator_destroy(&itr);
+		dico_assoc_destroy(&rhdr);
+	    } else
+		err = 1;
+	}
+	if (err)
+	    return err;
+    }
+    return 0;
+}
+
 struct dico_database_module virtual_builtin_module = {
     .dico_version        =  DICO_MODULE_VERSION,
     .dico_capabilities   =  DICO_CAPA_INIT_EXT,
@@ -299,5 +333,6 @@ struct dico_database_module virtual_builtin_module = {
     .dico_result_count   =  virtual_result_count,
     .dico_compare_count  =  virtual_compare_count,
     .dico_free_result    =  virtual_free_result,
-    .dico_db_flags       =  virtual_db_flags
+    .dico_db_flags       =  virtual_db_flags,
+    .dico_result_headers =  virtual_result_headers
 };

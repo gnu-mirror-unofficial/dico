@@ -58,7 +58,10 @@ module_init(dicod_module_instance_t *inst, struct dico_database_module *pmod,
 	MODULE_ASSERT(pmod->dico_free_db);
 	MODULE_ASSERT(pmod->dico_match);
 	MODULE_ASSERT(pmod->dico_define);
-	MODULE_ASSERT(pmod->dico_output_result);
+	MODULE_ASSERT((pmod->dico_version > 2
+		       && (pmod->dico_capabilities & DICO_CAPA_OUTPUT_ALL)
+		       && pmod->dico_result_output_all)
+		      || pmod->dico_output_result);
 	MODULE_ASSERT(pmod->dico_result_count);
 	MODULE_ASSERT(pmod->dico_free_result);
     }
@@ -408,20 +411,21 @@ dicod_match_word_all(dico_stream_t stream,
     dico_stream_destroy(&ostr);
 }
 
-static void
-print_definitions(dicod_database_t *db, dico_result_t res,
-		  const char *word,
-		  dico_stream_t stream, void *data, size_t count)
+void
+dicod_database_print_definitions(dicod_database_t *db,
+				 char const *dbname, char const *dbdescr,
+				 char const *word,
+				 dico_result_t res, size_t count,
+				 dico_stream_t stream)
 {
     size_t i;
-    char *descr = dicod_database_get_descr(db);
 
     for (i = 0; i < count; i++) {
 	dico_stream_t ostr;
 	dico_assoc_list_t hdr;
 
 	stream_printf(stream, "151 \"%s\" %s \"%s\"\n",
-		      word, db->name, descr ? descr : "");
+		      word, dbname, dbdescr ? dbdescr : "");
 
 	hdr = dicod_database_mime_header(db, res);
 	ostr = dicod_ostream_create(stream, hdr);
@@ -431,6 +435,21 @@ print_definitions(dicod_database_t *db, dico_result_t res,
 	dico_stream_destroy(&ostr);
 	dico_stream_write(stream, "\n.\n", 3);
 	dico_assoc_destroy(&hdr);
+    }
+}
+
+static void
+print_definitions(dicod_database_t *db, dico_result_t res,
+		  const char *word,
+		  dico_stream_t stream, void *data, size_t count)
+{
+    struct dico_database_module *mod = db->instance->module;
+    char *descr = dicod_database_get_descr(db);
+    if (mod->dico_capabilities & DICO_CAPA_OUTPUT_ALL) {
+	mod->dico_result_output_all(res, db->name, descr, word, stream);
+    } else {
+	dicod_database_print_definitions(db, db->name, descr,
+					 word, res, count, stream);
     }
     dicod_database_free_descr(db, descr);
 }

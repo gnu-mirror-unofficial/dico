@@ -219,26 +219,36 @@ virtual_define(dico_handle_t hp, const char *word)
 }
 
 static int
-virtual_output_result (dico_result_t rp, size_t n, dico_stream_t str)
+virtual_output(dico_result_t rp, char const *dbname, char const *dbdescr,
+	       char const *word, dico_stream_t str)
 {
     struct virtual_result *result = (struct virtual_result *)rp;
     size_t i = 0;
 
-    while (1) {
-	if (i == result->vdb->vdb_count)
-	    return 1;
+    for (i = 0; i < result->vdb->vdb_count; i++) {
 	if (result->vdres[i]) {
-	    size_t s = dicod_database_result_count(result->vdb->vdb_memb[i].db,
-						   result->vdres[i]);
-	    if (s > n)
-		break;
-	    n -= s;
+	    size_t count =
+		dicod_database_result_count(result->vdb->vdb_memb[i].db,
+					    result->vdres[i]);
+	    if (database_is_visible(result->vdb->vdb_memb[i].db)) {
+		char *descr =
+		    dicod_database_get_descr(result->vdb->vdb_memb[i].db);
+		dicod_database_print_definitions(result->vdb->vdb_memb[i].db,
+						 result->vdb->vdb_memb[i].name,
+						 descr,
+						 word,
+						 result->vdres[i], count, str);
+		dicod_database_free_descr(result->vdb->vdb_memb[i].db, descr);
+	    } else {
+		dicod_database_print_definitions(result->vdb->vdb_memb[i].db,
+						 dbname,
+						 dbdescr,
+						 word,
+						 result->vdres[i], count, str);
+	    }
 	}
-	i++;
     }
-    return dicod_database_result_output(result->vdb->vdb_memb[i].db,
-					result->vdres[i],
-					n, str);
+    return 0;/*FIXME*/
 }
 
 static size_t
@@ -282,57 +292,17 @@ virtual_free_result(dico_result_t rp)
     free(rp);
 }
 
-static int
-virtual_result_headers(dico_result_t rp, dico_assoc_list_t hdr)
-{  
-    struct virtual_result *result = (struct virtual_result *)rp;
-    size_t i;
-    int err = 0;
-    for (i = 0; i < result->vdb->vdb_count; i++) {
-	if (result->vdres[i]) {
-	    dico_assoc_list_t rhdr =
-		dicod_database_mime_header(result->vdb->vdb_memb[i].db,
-					   result->vdres[i]);
-	    if (rhdr) {
-		struct dico_assoc *p;
-		dico_iterator_t itr;
-
-		if (dico_assoc_count(rhdr) == 0) {
-		    err = 1;
-		    break;
-		}
-		
-		itr = dico_assoc_iterator(rhdr);
-		for (p = dico_iterator_first(itr); p;
-		     p = dico_iterator_next(itr)) {
-		    if (dico_assoc_append(hdr, p->key, p->value)) {
-			err = 1;
-			break;
-		    }
-		}
-		dico_iterator_destroy(&itr);
-		dico_assoc_destroy(&rhdr);
-	    } else
-		err = 1;
-	}
-	if (err)
-	    return err;
-    }
-    return 0;
-}
-
 struct dico_database_module virtual_builtin_module = {
     .dico_version        =  DICO_MODULE_VERSION,
-    .dico_capabilities   =  DICO_CAPA_INIT_EXT,
+    .dico_capabilities   =  DICO_CAPA_INIT_EXT|DICO_CAPA_OUTPUT_ALL,
     .dico_init_db_ext    =  virtual_init_db_ext,
     .dico_free_db        =  virtual_free_db,
     .dico_open           =  virtual_open,
     .dico_match          =  virtual_match,
     .dico_define         =  virtual_define,
-    .dico_output_result  =  virtual_output_result,
     .dico_result_count   =  virtual_result_count,
     .dico_compare_count  =  virtual_compare_count,
     .dico_free_result    =  virtual_free_result,
     .dico_db_flags       =  virtual_db_flags,
-    .dico_result_headers =  virtual_result_headers
+    .dico_result_output_all = virtual_output
 };

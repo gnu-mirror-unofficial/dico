@@ -332,6 +332,12 @@ dico_assoc_list_t dicod_database_mime_header(dicod_database_t *db,
 					     dico_result_t res);
 int dicod_database_flags(dicod_database_t const *db);
 
+void dicod_database_print_definitions(dicod_database_t *db,
+				      const char *dbname, const char *dbdescr,
+				      const char *word,
+				      dico_result_t res, size_t count,
+				      dico_stream_t stream);
+
 /* ostream.c */
 extern off_t total_bytes_out;
 dico_stream_t dicod_ostream_create(dico_stream_t str,

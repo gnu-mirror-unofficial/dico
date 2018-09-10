@@ -60,9 +60,10 @@ typedef int (*dico_select_t) (int, dico_key_t, const char *);
 
 #define DICO_MODULE_VERSION 3
 
-#define DICO_CAPA_NONE 0
-#define DICO_CAPA_NODB 0x0001
-#define DICO_CAPA_INIT_EXT 0x0002
+#define DICO_CAPA_NONE       0
+#define DICO_CAPA_NODB       0x0001
+#define DICO_CAPA_INIT_EXT   0x0002
+#define DICO_CAPA_OUTPUT_ALL 0x0004
 #define DICO_CAPA_DEFAULT DICO_CAPA_NONE
 
 #define DICO_DBF_DEFAULT 0
@@ -95,6 +96,10 @@ struct dico_database_module {
     dico_handle_t (*dico_init_db_ext) (const char *db, int argc, char **argv,
 				       void *extra);
     int (*dico_db_flags) (dico_handle_t hp);
+    int (*dico_result_output_all) (dico_result_t rp,
+				   char const *dbname, char const *dbdescr,
+				   char const *term,
+				   dico_stream_t str);
 };
 
 #endif

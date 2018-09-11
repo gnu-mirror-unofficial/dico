@@ -50,6 +50,9 @@
 
 #define DICTORG_ENTRY_MIME_HEADER   DICTORG_ENTRY_PREFIX"-mime-header"
 
+#define DICTORG_ALT_ENTRY_PREFIX        "00database"
+#define DICTORG_ALT_ENTRY_PREFIX_LEN    sizeof(DICTORG_ALT_ENTRY_PREFIX)-1
+
 #define DICTORG_UNKNOWN    0
 #define DICTORG_TEXT       1
 #define DICTORG_GZIP       2
@@ -112,8 +115,8 @@
 struct index_entry {
     char *word;             /* Word */
     char *orig;             /* Original headword (for four-column indices) */
-    size_t length;          /* Its length in bytes */
-    size_t wordlen;         /* Its length in characters */
+    size_t length;          /* Word length in bytes */
+    size_t wordlen;         /* Word length in characters */
     off_t offset;           /* Offset of the corresponding article in file */
     size_t size;            /* Size of the article */
 };

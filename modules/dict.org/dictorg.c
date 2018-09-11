@@ -128,6 +128,35 @@ b64_decode(const char *val, size_t len, size_t *presult)
     return 0;
 }
 
+struct special_headword_trans {
+    char *old;
+    size_t len;
+    char *new;
+};
+
+#define S(s) #s, sizeof(#s)-1
+static struct special_headword_trans special_headword_trans[] = {
+    { S(00databaseallchars), DICTORG_FLAG_ALLCHARS },
+    { S(00databasedefaultstrategy), DICTORG_FLAG_DEFAULT_STRAT },
+    { S(00databaseurl), "00-database-url" },
+    { S(00databaseshort), DICTORG_SHORT_ENTRY_NAME },
+    { S(00databaseinfo), DICTORG_INFO_ENTRY_NAME },
+    { S(00databaseutf8), DICTORG_FLAG_UTF8 },
+    { NULL }
+};
+#undef S
+
+static char const *
+special_translate(char const *in, size_t len)
+{
+    struct special_headword_trans *tp = special_headword_trans;
+    while (tp->old) {
+	if (len == tp->len && memcmp(tp->old, in, tp->len) == 0)
+	    return tp->new;
+	tp++;
+    }
+    return NULL;
+}
 
 static int
 parse_index_entry(const char *filename, size_t line,
@@ -155,7 +184,8 @@ parse_index_entry(const char *filename, size_t line,
       is used.
     */
     for (nfield = 0; nfield < 4; nfield++) {
-	char *start, *end;
+	char const *start;
+	char const *end;
 	size_t len;
 	
 	/* Skip whitespace */
@@ -181,11 +211,23 @@ parse_index_entry(const char *filename, size_t line,
 		while (len > 0 && start[len-1] == ' ')
 		    --len;
 	    }
+
+	    if (len > DICTORG_ALT_ENTRY_PREFIX_LEN
+		&& memcmp(start, DICTORG_ALT_ENTRY_PREFIX,
+			  DICTORG_ALT_ENTRY_PREFIX_LEN) == 0) {
+		char const *p = special_translate(start, len);
+		if (p) {
+		    start = p;
+		    len = strlen(p);
+		}
+	    }
+	    
 	    idx.word = malloc(len + 1);
 	    if (!idx.word) {
 		memerr("parse_index_entry");
 		return 1;
 	    }
+
 	    memcpy(idx.word, start, len);
 	    idx.word[len] = 0;
 	    idx.length = len;

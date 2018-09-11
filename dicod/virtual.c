@@ -292,6 +292,54 @@ virtual_free_result(dico_result_t rp)
     free(rp);
 }
 
+static char *
+virtual_descr(dico_handle_t hp)
+{
+    struct virtual_database *vdb = (struct virtual_database*)hp;
+    size_t i;
+    size_t n = vdb->vdb_count;
+    char *prev = NULL;
+    
+    for (i = 0; i < n; i++) {
+	if (vdb_member_ok(&vdb->vdb_memb[i])) {
+	    char *p = dicod_database_get_descr(vdb->vdb_memb[i].db);
+	    if (prev && strcmp(prev, p)) {
+		/* descriptions differ; too bad */
+		free(prev);
+		prev = NULL;
+		break;
+	    }
+	    prev = xstrdup(p);
+	}
+    }
+
+    return prev;
+}
+
+static char *
+virtual_info(dico_handle_t hp)
+{
+    struct virtual_database *vdb = (struct virtual_database*)hp;
+    size_t i;
+    size_t n = vdb->vdb_count;
+    char *prev = NULL;
+    
+    for (i = 0; i < n; i++) {
+	if (vdb_member_ok(&vdb->vdb_memb[i])) {
+	    char *p = dicod_database_get_info(vdb->vdb_memb[i].db);
+	    if (prev && strcmp(prev, p)) {
+		/* descriptions differ; too bad */
+		free(prev);
+		prev = NULL;
+		break;
+	    }
+	    prev = xstrdup(p);
+	}
+    }
+
+    return prev;
+}
+
 struct dico_database_module virtual_builtin_module = {
     .dico_version        =  DICO_MODULE_VERSION,
     .dico_capabilities   =  DICO_CAPA_INIT_EXT|DICO_CAPA_OUTPUT_ALL,
@@ -304,5 +352,7 @@ struct dico_database_module virtual_builtin_module = {
     .dico_compare_count  =  virtual_compare_count,
     .dico_free_result    =  virtual_free_result,
     .dico_db_flags       =  virtual_db_flags,
-    .dico_result_output_all = virtual_output
+    .dico_result_output_all = virtual_output,
+    .dico_db_info        =  virtual_info,
+    .dico_db_descr       =  virtual_descr    
 };

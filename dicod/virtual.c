@@ -310,6 +310,7 @@ virtual_descr(dico_handle_t hp)
 		break;
 	    }
 	    prev = xstrdup(p);
+	    dicod_database_free_descr(vdb->vdb_memb[i].db, p);
 	}
     }
 
@@ -334,6 +335,7 @@ virtual_info(dico_handle_t hp)
 		break;
 	    }
 	    prev = xstrdup(p);
+	    dicod_database_free_info(vdb->vdb_memb[i].db, p);
 	}
     }
 

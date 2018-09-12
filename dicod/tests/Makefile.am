@@ -95,6 +95,10 @@ TESTSUITE_AT = \
  vis00.at\
  vis01.at\
  vis02.at\
+ virt01.at\
+ virt02.at\
+ virt03.at\
+ virt04.at\
  testsuite.at
 
 TESTSUITE = $(srcdir)/testsuite

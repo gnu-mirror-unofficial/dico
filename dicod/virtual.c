@@ -16,7 +16,7 @@
 
 #include <dicod.h>
 
-struct virtual_database {
+struct dico_handle_struct {
     char *name;
     unsigned int initialized:1;
     unsigned int is_virtual:1;
@@ -24,9 +24,9 @@ struct virtual_database {
     struct vdb_member vdb_memb[1];
 };
 
-struct virtual_result {
-    struct virtual_database *vdb;
-    dico_result_t vdres[1];
+struct dico_result_struct {
+    struct dico_handle_struct *vdb;
+    dicod_db_result_t *vdres[1];
 };
 
 int
@@ -46,10 +46,10 @@ vdb_list_create(void)
     return lst;
 }
 
-static struct virtual_result *
-virtual_result_new(struct virtual_database *vdb)
+static struct dico_result_struct *
+virtual_result_new(struct dico_handle_struct *vdb)
 {
-    struct virtual_result *result;
+    struct dico_result_struct *result;
 
     result = xzalloc(sizeof(*result)
 		     + (vdb->vdb_count - 1) * sizeof(result->vdres[0]));
@@ -82,7 +82,7 @@ find_database_all(const char *name)
 static dico_handle_t
 virtual_init_db_ext(const char *dbname, int argc, char **argv, void *extra)
 {
-    struct virtual_database *vdb;
+    struct dico_handle_struct *vdb;
     dico_iterator_t itr;
     struct vdb_member *mp;
     int err = 0;
@@ -115,9 +115,8 @@ virtual_init_db_ext(const char *dbname, int argc, char **argv, void *extra)
 }
 
 static int
-virtual_free_db(dico_handle_t hp)
+virtual_free_db(dico_handle_t vdb)
 {
-    struct virtual_database *vdb = (struct virtual_database*)hp;
     /* DB list is associated with the dicod_dictionary_t structure and will
        be freed along with it. */
     free(vdb->name);
@@ -126,9 +125,8 @@ virtual_free_db(dico_handle_t hp)
 }
 
 static int
-virtual_open(dico_handle_t dp)
+virtual_open(dico_handle_t vdb)
 {
-    struct virtual_database *vdb = (struct virtual_database*)dp;
     if (!vdb->initialized) {
 	size_t i, j;
 	size_t n = vdb->vdb_count;
@@ -153,9 +151,8 @@ virtual_open(dico_handle_t dp)
 }
 
 static int
-virtual_db_flags(dico_handle_t dp)
+virtual_db_flags(dico_handle_t vdb)
 {
-    struct virtual_database *vdb = (struct virtual_database*)dp;
     return vdb->is_virtual ? DICO_DBF_VIRTUAL : DICO_DBF_DEFAULT; 
 }
 
@@ -182,12 +179,11 @@ vdb_member_ok(struct vdb_member const *memb)
 }
 	
 static dico_result_t
-virtual_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
+virtual_match(dico_handle_t vdb, const dico_strategy_t strat, const char *word)
 {
-    struct virtual_database *vdb = (struct virtual_database*)hp;
     size_t i;
     size_t n = vdb->vdb_count;
-    struct virtual_result *result = virtual_result_new(vdb);
+    struct dico_result_struct *result = virtual_result_new(vdb);
     
     for (i = 0; i < n; i++) {
 	if (vdb_member_ok(&vdb->vdb_memb[i])) {
@@ -197,16 +193,15 @@ virtual_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
 	    result->vdres[i] = NULL;
 	}
     } 
-    return (dico_result_t) result;
+    return result;
 }
 
 static dico_result_t
-virtual_define(dico_handle_t hp, const char *word)
+virtual_define(dico_handle_t vdb, const char *word)
 {
-    struct virtual_database *vdb = (struct virtual_database*)hp;
     size_t i;
     size_t n = vdb->vdb_count;
-    struct virtual_result *result = virtual_result_new(vdb);
+    struct dico_result_struct *result = virtual_result_new(vdb);
     
     for (i = 0; i < n; i++) {
 	if (vdb_member_ok(&vdb->vdb_memb[i])) {
@@ -215,87 +210,75 @@ virtual_define(dico_handle_t hp, const char *word)
 	    result->vdres[i] = NULL;
 	}
     } 
-    return (dico_result_t) result;
+    return result;
 }
 
 static int
-virtual_output(dico_result_t rp, char const *dbname, char const *dbdescr,
-	       char const *word, dico_stream_t str)
+vdres_locate(dico_result_t result, size_t *pn)
 {
-    struct virtual_result *result = (struct virtual_result *)rp;
     size_t i = 0;
 
-    for (i = 0; i < result->vdb->vdb_count; i++) {
+    while (1) {
+	if (i == result->vdb->vdb_count)
+	    return 1;
 	if (result->vdres[i]) {
-	    size_t count =
-		dicod_database_result_count(result->vdb->vdb_memb[i].db,
-					    result->vdres[i]);
-	    if (database_is_visible(result->vdb->vdb_memb[i].db)) {
-		char *descr =
-		    dicod_database_get_descr(result->vdb->vdb_memb[i].db);
-		dicod_database_print_definitions(result->vdb->vdb_memb[i].db,
-						 result->vdb->vdb_memb[i].name,
-						 descr,
-						 word,
-						 result->vdres[i], count, str);
-		dicod_database_free_descr(result->vdb->vdb_memb[i].db, descr);
-	    } else {
-		dicod_database_print_definitions(result->vdb->vdb_memb[i].db,
-						 dbname,
-						 dbdescr,
-						 word,
-						 result->vdres[i], count, str);
-	    }
+	    size_t s = dicod_db_result_count(result->vdres[i]);
+	    if (s > *pn)
+		break;
+	    *pn -= s;
 	}
+	i++;
     }
-    return 0;/*FIXME*/
+    return i;
+}
+
+static int
+virtual_output_result(dico_result_t result, size_t n, dico_stream_t str)
+{
+    size_t i = vdres_locate(result, &n);
+    return dicod_db_result_output(result->vdres[i], n, str);
 }
 
 static size_t
-virtual_result_count (dico_result_t rp)
+virtual_result_count (dico_result_t result)
 {
-    struct virtual_result *result = (struct virtual_result *)rp;
     size_t i;
     size_t count = 0;
     for (i = 0; i < result->vdb->vdb_count; i++) {
 	if (result->vdres[i])
-	    count += dicod_database_result_count(result->vdb->vdb_memb[i].db,
-						 result->vdres[i]);
+	    count += dicod_db_result_count(result->vdres[i]);
     }
     return count;
 }
 
 static size_t
-virtual_compare_count (dico_result_t rp)
+virtual_compare_count (dico_result_t result)
 {
-    struct virtual_result *result = (struct virtual_result *)rp;
     size_t i;
     size_t count = 0;
     for (i = 0; i < result->vdb->vdb_count; i++) {
 	if (result->vdres[i])
-	    count += dicod_database_compare_count(result->vdb->vdb_memb[i].db,
-						  result->vdres[i]);
+	    count += dicod_db_result_compare_count(result->vdres[i]);
     }
     return count;
 }
 
 static void
-virtual_free_result(dico_result_t rp)
+virtual_free_result(dico_result_t result)
 {
-    struct virtual_result *result = (struct virtual_result *)rp;
     size_t i;
     for (i = 0; i < result->vdb->vdb_count; i++) {
-	if (result->vdres[i])
-	    dicod_database_result_free(result->vdb->vdb_memb[i].db,
-				       result->vdres[i]);
+	if (result->vdres[i]) {
+	    dicod_db_result_free(result->vdres[i]);
+	    result->vdres[i] = NULL;
+	}
     }
-    free(rp);
+    free(result);
 }
 
 static char *
-virtual_descr(dico_handle_t hp)
+virtual_descr(dico_handle_t vdb)
 {
-    struct virtual_database *vdb = (struct virtual_database*)hp;
     size_t i;
     size_t n = vdb->vdb_count;
     char *prev = NULL;
@@ -318,9 +301,8 @@ virtual_descr(dico_handle_t hp)
 }
 
 static char *
-virtual_info(dico_handle_t hp)
+virtual_info(dico_handle_t vdb)
 {
-    struct virtual_database *vdb = (struct virtual_database*)hp;
     size_t i;
     size_t n = vdb->vdb_count;
     char *prev = NULL;
@@ -342,9 +324,16 @@ virtual_info(dico_handle_t hp)
     return prev;
 }
 
+static dicod_database_t *
+virtual_result_db(dico_result_t result, size_t n)
+{
+    size_t i = vdres_locate(result, &n);
+    return dicod_db_result_db(result->vdres[i], n, result_db_all);
+}
+
 struct dico_database_module virtual_builtin_module = {
     .dico_version        =  DICO_MODULE_VERSION,
-    .dico_capabilities   =  DICO_CAPA_INIT_EXT|DICO_CAPA_OUTPUT_ALL,
+    .dico_capabilities   =  DICO_CAPA_INIT_EXT,
     .dico_init_db_ext    =  virtual_init_db_ext,
     .dico_free_db        =  virtual_free_db,
     .dico_open           =  virtual_open,
@@ -354,7 +343,8 @@ struct dico_database_module virtual_builtin_module = {
     .dico_compare_count  =  virtual_compare_count,
     .dico_free_result    =  virtual_free_result,
     .dico_db_flags       =  virtual_db_flags,
-    .dico_result_output_all = virtual_output,
+    .dico_output_result  =  virtual_output_result,
     .dico_db_info        =  virtual_info,
-    .dico_db_descr       =  virtual_descr    
+    .dico_db_descr       =  virtual_descr,
+    .dico_result_db      =  virtual_result_db
 };

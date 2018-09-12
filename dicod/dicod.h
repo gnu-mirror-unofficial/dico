@@ -154,7 +154,7 @@ typedef struct dicod_module_instance {
 
 #define DICO_DBF_LANG    0x10000
 
-typedef struct dicod_database {
+struct dicod_database {
     int flags;
 
     char *name;        /* Dictionary name */
@@ -179,7 +179,7 @@ typedef struct dicod_database {
     char **argv;              /*  ... and pointers */
     char *command;            /* Handler command line (for diagnostics) */
     void *extra;
-} dicod_database_t;
+};
 
 #define CONTENT_TRANSFER_ENCODING_HEADER "Content-transfer-encoding"
 
@@ -297,6 +297,32 @@ int dicod_module_test(int argc, char **argv);
 
 void dicod_builtin_module_init(void);
 
+/* result.c */
+typedef struct dicod_db_result {
+    int flags;
+    dicod_database_t *db;
+    dico_result_t res;
+    size_t rcount;
+    size_t ccount;
+} dicod_db_result_t;
+
+dicod_db_result_t *dicod_db_result_alloc(dicod_database_t *db,
+					 dico_result_t res);
+void dicod_db_result_free(dicod_db_result_t *dbr);
+size_t dicod_db_result_count(dicod_db_result_t *dbr);
+size_t dicod_db_result_compare_count(dicod_db_result_t *dbr);
+int dicod_db_result_output(dicod_db_result_t *dbr, size_t n, dico_stream_t str);
+dico_assoc_list_t dicod_db_result_mime_header(dicod_db_result_t *dbr, size_t n);
+
+/* Flag values for dicod_db_result_db: */
+enum {
+    result_db_all,      /* Return the database no matter what its visibility */
+    result_db_visible   /* Return only visible databases */
+};
+
+dicod_database_t *dicod_db_result_db(dicod_db_result_t *dbr, size_t n,
+				     int flag);
+
 /* database.c */
 int dicod_database_init(dicod_database_t *dp);
 int dicod_database_open(dicod_database_t *dp);
@@ -311,16 +337,11 @@ char *dicod_database_get_info(dicod_database_t *db);
 void dicod_database_free_info(dicod_database_t *db, char *info);
 void dicod_database_get_languages(dicod_database_t *db, dico_list_t list[]);
 
-size_t dicod_database_result_count(dicod_database_t *db, dico_result_t res);
-size_t dicod_database_compare_count(dicod_database_t *db, dico_result_t res);
-void dicod_database_result_free(dicod_database_t *db, dico_result_t res);
-int dicod_database_result_output(dicod_database_t *db, dico_result_t res,
-				 size_t n, dico_stream_t str);
-
-dico_result_t dicod_database_match(dicod_database_t *db,
-				   const dico_strategy_t strat,
-				   const char *word);
-dico_result_t dicod_database_define(dicod_database_t *db, const char *word);
+dicod_db_result_t *dicod_database_match(dicod_database_t *db,
+					const dico_strategy_t strat,
+					const char *word);
+dicod_db_result_t *dicod_database_define(dicod_database_t *db,
+					 const char *word);
 
 char *dicod_database_get_info(dicod_database_t *db);
 void dicod_database_free_info(dicod_database_t *db, char *info);
@@ -328,14 +349,10 @@ void dicod_database_free_info(dicod_database_t *db, char *info);
 char *dicod_database_get_descr(dicod_database_t *db);
 void dicod_database_free_descr(dicod_database_t *db, char *descr);
 
-dico_assoc_list_t dicod_database_mime_header(dicod_database_t *db,
-					     dico_result_t res);
 int dicod_database_flags(dicod_database_t const *db);
 
-void dicod_database_print_definitions(dicod_database_t *db,
-				      const char *dbname, const char *dbdescr,
-				      const char *word,
-				      dico_result_t res, size_t count,
+void dicod_database_print_definitions(const char *word,
+				      dicod_db_result_t *res, size_t count,
 				      dico_stream_t stream);
 
 /* ostream.c */

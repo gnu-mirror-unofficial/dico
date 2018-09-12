@@ -53,6 +53,8 @@ typedef struct dico_result_struct *dico_result_t;
 typedef struct dico_strategy *dico_strategy_t;
 typedef struct dico_key *dico_key_t;
 
+typedef struct dicod_database dicod_database_t;
+
 #define DICO_SELECT_BEGIN 0
 #define DICO_SELECT_RUN   1
 #define DICO_SELECT_END   2
@@ -63,7 +65,6 @@ typedef int (*dico_select_t) (int, dico_key_t, const char *);
 #define DICO_CAPA_NONE       0
 #define DICO_CAPA_NODB       0x0001
 #define DICO_CAPA_INIT_EXT   0x0002
-#define DICO_CAPA_OUTPUT_ALL 0x0004
 #define DICO_CAPA_DEFAULT DICO_CAPA_NONE
 
 #define DICO_DBF_DEFAULT 0
@@ -96,10 +97,7 @@ struct dico_database_module {
     dico_handle_t (*dico_init_db_ext) (const char *db, int argc, char **argv,
 				       void *extra);
     int (*dico_db_flags) (dico_handle_t hp);
-    int (*dico_result_output_all) (dico_result_t rp,
-				   char const *dbname, char const *dbdescr,
-				   char const *term,
-				   dico_stream_t str);
+    dicod_database_t *(*dico_result_db)(dico_result_t rp, size_t n);
 };
 
 #endif

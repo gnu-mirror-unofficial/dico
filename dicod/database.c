@@ -175,75 +175,21 @@ dicod_database_get_languages(dicod_database_t *db, dico_list_t dlist[])
     dlist[1] = db->langlist[1];
 }
 
-dico_result_t
+dicod_db_result_t *
 dicod_database_match(dicod_database_t *db, const dico_strategy_t strat,
 		     const char *word)
 {
     struct dico_database_module *mod = db->instance->module;
-    return mod->dico_match(db->mod_handle, strat, word);
+    dico_result_t res = mod->dico_match(db->mod_handle, strat, word);
+    return dicod_db_result_alloc(db, res);
 }
 
-dico_result_t
+dicod_db_result_t *
 dicod_database_define(dicod_database_t *db, const char *word)
 {
     struct dico_database_module *mod = db->instance->module;
-    return mod->dico_define(db->mod_handle, word);
-}
-
-// FIXME: dico_result_t should contain a pointer to db
-size_t
-dicod_database_result_count(dicod_database_t *db, dico_result_t res)
-{
-    return db->instance->module->dico_result_count(res);
-}
-
-// FIXME: See above
-size_t
-dicod_database_compare_count(dicod_database_t *db, dico_result_t res)
-{
-    struct dico_database_module *mod = db->instance->module;
-    return mod->dico_compare_count ? mod->dico_compare_count(res) : 0;
-}
-
-// FIXME: See above
-void
-dicod_database_result_free(dicod_database_t *db, dico_result_t res)
-{
-    struct dico_database_module *mod = db->instance->module;
-    mod->dico_free_result(res);
-}
-
-// FIXME: See above
-int
-dicod_database_result_output(dicod_database_t *db, dico_result_t res,
-			     size_t n, dico_stream_t str)
-{
-    struct dico_database_module *mod = db->instance->module;
-    return mod->dico_output_result(res, n, str);
-}
-
-dico_assoc_list_t
-dicod_database_mime_header(dicod_database_t *db, dico_result_t res)
-{
-    dico_assoc_list_t hdr = NULL;
-    struct dico_database_module *mod = db->instance->module;
-
-    if (db->mime_headers)
-	hdr = dico_assoc_dup(db->mime_headers);
-    else
-	dico_header_parse(&hdr, NULL);
-    
-    if (mod->dico_result_headers) {
-	dico_assoc_list_t tmp = dico_assoc_dup(hdr);
-	if (mod->dico_result_headers(res, tmp) == 0) {
-	    dico_assoc_destroy(&hdr);
-	    hdr = tmp;
-	} else {
-	    dico_assoc_destroy(&tmp);
-	}
-    }
-
-    return hdr;
+    dico_result_t res = mod->dico_define(db->mod_handle, word);
+    return dicod_db_result_alloc(db, res);
 }
 
 int

@@ -58,10 +58,7 @@ module_init(dicod_module_instance_t *inst, struct dico_database_module *pmod,
 	MODULE_ASSERT(pmod->dico_free_db);
 	MODULE_ASSERT(pmod->dico_match);
 	MODULE_ASSERT(pmod->dico_define);
-	MODULE_ASSERT((pmod->dico_version > 2
-		       && (pmod->dico_capabilities & DICO_CAPA_OUTPUT_ALL)
-		       && pmod->dico_result_output_all)
-		      || pmod->dico_output_result);
+	MODULE_ASSERT(pmod->dico_output_result);
 	MODULE_ASSERT(pmod->dico_result_count);
 	MODULE_ASSERT(pmod->dico_free_result);
     }
@@ -186,7 +183,7 @@ static char nomatch[] = "552 No match";
 static size_t nomatch_len = (sizeof(nomatch)-1);
 
 
-typedef void (*outproc_t)(dicod_database_t *db, dico_result_t res,
+typedef void (*outproc_t)(dicod_db_result_t *res,
 			  const char *word, dico_stream_t stream,
 			  void *data,
 			  size_t count);
@@ -211,31 +208,31 @@ dicod_word_first(dico_stream_t stream, const char *word,
     itr = xdico_list_iterator(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
 	if (database_is_visible(db) && !database_is_virtual(db)) {
-	    dico_result_t res = strat
+	    dicod_db_result_t *res = strat
 		? dicod_database_match(db, strat, word)
 		: dicod_database_define(db, word);
 	    size_t count;
 
 	    if (!res)
 		continue;
-	    count = dicod_database_result_count(db, res);
+	    count = dicod_db_result_count(res);
 
 	    if (count) {
 		if (strat)
 		    current_stat.matches = count;
 		else
 		    current_stat.defines = count;
-		current_stat.compares = dicod_database_compare_count(db, res);
+		current_stat.compares = dicod_db_result_compare_count(res);
 		stream_printf(stream, begfmt, (unsigned long) count);
-		proc(db, res, word, stream, data, count);
+		proc(res, word, stream, data, count);
 		stream_writez(stream, (char*) endmsg);
 		report_current_timing(stream, tid);
 		dico_stream_write(stream, "\n", 1);
 		access_log_status(begfmt, endmsg);
-		dicod_database_result_free(db, res);
+		dicod_db_result_free(res);
 		break;
 	    } else
-		dicod_database_result_free(db, res);
+		dicod_db_result_free(res);
 	}
     }
     dico_iterator_destroy(&itr);
@@ -244,12 +241,6 @@ dicod_word_first(dico_stream_t stream, const char *word,
 	dico_stream_writeln(stream, nomatch, nomatch_len);
     }
 }
-
-struct dbres {
-    dicod_database_t *db;
-    dico_result_t res;
-    size_t count;
-};
 
 void
 dicod_word_all(dico_stream_t stream, const char *word,
@@ -261,7 +252,7 @@ dicod_word_all(dico_stream_t stream, const char *word,
     dico_iterator_t itr;
     dico_list_t reslist = xdico_list_create();
     size_t total = 0;
-    struct dbres *rp;
+    dicod_db_result_t *rp;
 
     begin_timing(tid);
 
@@ -274,26 +265,22 @@ dicod_word_all(dico_stream_t stream, const char *word,
     itr = xdico_list_iterator(database_list);
     for (db = dico_iterator_first(itr); db; db = dico_iterator_next(itr)) {
 	if (database_is_visible(db) && !database_is_virtual(db)) {
-	    dico_result_t res = strat
+	    dicod_db_result_t *res = strat
 		? dicod_database_match(db, strat, word)
 		: dicod_database_define(db, word);
 	    size_t count;
 
 	    if (!res)
 		continue;
-	    count = dicod_database_result_count(db, res);
+	    count = dicod_db_result_count(res);
 	    if (!count) {
-		dicod_database_result_free(db, res);
+		dicod_db_result_free(res);
 		continue;
 	    }
 
 	    total += count;
-	    current_stat.compares += dicod_database_compare_count(db, res);
-	    rp = xmalloc(sizeof(*rp));
-	    rp->db = db;
-	    rp->res = res;
-	    rp->count = count;
-	    xdico_list_append(reslist, rp);
+	    current_stat.compares += dicod_db_result_compare_count(res);
+	    xdico_list_append(reslist, res);
 	}
     }
 
@@ -311,9 +298,8 @@ dicod_word_all(dico_stream_t stream, const char *word,
 	    current_stat.defines = total;
 	stream_printf(stream, begfmt, (unsigned long) total);
 	for (rp = dico_iterator_first(itr); rp; rp = dico_iterator_next(itr)) {
-	    proc(rp->db, rp->res, word, stream, data, rp->count);
-	    dicod_database_result_free(rp->db, rp->res);
-	    free(rp);
+	    proc(rp, word, stream, data, dicod_db_result_count(rp));
+	    dicod_db_result_free(rp);
 	}
 	stream_writez(stream, (char*) endmsg);
 	report_current_timing(stream, tid);
@@ -325,7 +311,7 @@ dicod_word_all(dico_stream_t stream, const char *word,
 }
 
 static void
-print_matches(dicod_database_t *db, dico_result_t res,
+print_matches(dicod_db_result_t *res,
 	      const char *word,
 	      dico_stream_t stream, void *data, size_t count)
 {
@@ -333,9 +319,10 @@ print_matches(dicod_database_t *db, dico_result_t res,
     dico_stream_t ostr = data;
 
     for (i = 0; i < count; i++) {
+	dicod_database_t *db = dicod_db_result_db(res, i, result_db_visible);
 	stream_writez(ostr, db->name);
 	dico_stream_write(ostr, " \"", 2);
-	dicod_database_result_output(db, res, i, ostr);
+	dicod_db_result_output(res, i, ostr);
 	dico_stream_write(ostr, "\"\n", 2);
     }
 }
@@ -344,7 +331,7 @@ void
 dicod_match_word_db(dicod_database_t *db, dico_stream_t stream,
 		    const dico_strategy_t strat, const char *word)
 {
-    dico_result_t res;
+    dicod_db_result_t *res;
     size_t count;
 
     begin_timing("match");
@@ -357,7 +344,7 @@ dicod_match_word_db(dicod_database_t *db, dico_stream_t stream,
 	return;
     }
 
-    count = dicod_database_result_count(db, res);
+    count = dicod_db_result_count(res);
     if (count == 0) {
 	access_log_status(nomatch, nomatch);
 	dico_stream_writeln(stream, nomatch, nomatch_len);
@@ -365,11 +352,11 @@ dicod_match_word_db(dicod_database_t *db, dico_stream_t stream,
 	dico_stream_t ostr;
 
 	current_stat.matches = count;
-	current_stat.compares = dicod_database_compare_count(db, res);
+	current_stat.compares = dicod_db_result_compare_count(res);
 	stream_printf(stream, "152 %lu matches found: list follows\n",
 		      (unsigned long) count);
 	ostr = dicod_ostream_create(stream, NULL);
-	print_matches(db, res, word, stream, ostr, count);
+	print_matches(res, word, stream, ostr, count);
 	total_bytes_out += dico_stream_bytes_out(ostr);
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);
@@ -380,7 +367,7 @@ dicod_match_word_db(dicod_database_t *db, dico_stream_t stream,
 	access_log_status("152", "250");
     }
 
-    dicod_database_result_free(db, res);
+    dicod_db_result_free(res);
 }
 
 void
@@ -411,11 +398,10 @@ dicod_match_word_all(dico_stream_t stream,
     dico_stream_destroy(&ostr);
 }
 
+//FIXME
 void
-dicod_database_print_definitions(dicod_database_t *db,
-				 char const *dbname, char const *dbdescr,
-				 char const *word,
-				 dico_result_t res, size_t count,
+dicod_database_print_definitions(char const *word,
+				 dicod_db_result_t *res, size_t count,
 				 dico_stream_t stream)
 {
     size_t i;
@@ -423,13 +409,15 @@ dicod_database_print_definitions(dicod_database_t *db,
     for (i = 0; i < count; i++) {
 	dico_stream_t ostr;
 	dico_assoc_list_t hdr;
-
+	dicod_database_t *db = dicod_db_result_db(res, i, result_db_visible);
+	char *descr = dicod_database_get_descr(db);
 	stream_printf(stream, "151 \"%s\" %s \"%s\"\n",
-		      word, dbname, dbdescr ? dbdescr : "");
-
-	hdr = dicod_database_mime_header(db, res);
+		      word, db->name, descr ? descr : "");
+	dicod_database_free_descr(db, descr);
+	
+	hdr = dicod_db_result_mime_header(res, i);
 	ostr = dicod_ostream_create(stream, hdr);
-	dicod_database_result_output(db, res, i, ostr);
+	dicod_db_result_output(res, i, ostr);
 	total_bytes_out += dico_stream_bytes_out(ostr);
 	dico_stream_close(ostr);
 	dico_stream_destroy(&ostr);
@@ -439,26 +427,18 @@ dicod_database_print_definitions(dicod_database_t *db,
 }
 
 static void
-print_definitions(dicod_database_t *db, dico_result_t res,
+print_definitions(dicod_db_result_t *res,
 		  const char *word,
 		  dico_stream_t stream, void *data, size_t count)
 {
-    struct dico_database_module *mod = db->instance->module;
-    char *descr = dicod_database_get_descr(db);
-    if (mod->dico_capabilities & DICO_CAPA_OUTPUT_ALL) {
-	mod->dico_result_output_all(res, db->name, descr, word, stream);
-    } else {
-	dicod_database_print_definitions(db, db->name, descr,
-					 word, res, count, stream);
-    }
-    dicod_database_free_descr(db, descr);
+    dicod_database_print_definitions(word, res, count, stream);
 }
 
 void
 dicod_define_word_db(dicod_database_t *db, dico_stream_t stream,
 		     const char *word)
 {
-    dico_result_t res;
+    dicod_db_result_t *res;
     size_t count;
 
     begin_timing("define");
@@ -470,23 +450,23 @@ dicod_define_word_db(dicod_database_t *db, dico_stream_t stream,
 	return;
     }
 
-    count = dicod_database_result_count(db, res);
+    count = dicod_db_result_count(res);
     if (count == 0) {
 	access_log_status(nomatch, nomatch);
 	dico_stream_writeln(stream, nomatch, nomatch_len);
     } else {
 	current_stat.defines = count;
-	current_stat.compares = dicod_database_compare_count(db, res);
+	current_stat.compares = dicod_db_result_compare_count(res);
 	stream_printf(stream, "150 %lu definitions found: list follows\n",
 		      (unsigned long) count);
-	print_definitions(db, res, word, stream, NULL, count);
+	print_definitions(res, word, stream, NULL, count);
 	stream_writez(stream, "250 Command complete");
 	report_current_timing(stream, "define");
 	dico_stream_write(stream, "\n", 1);
 	access_log_status("150", "250");
     }
 
-    dicod_database_result_free(db, res);
+    dicod_db_result_free(res);
 }
 
 void

@@ -28,8 +28,10 @@ enum echo_mode {
     ECHO_NULL  /* Operate in null mode */
 };
 
-struct echo_handle {
+struct dico_handle_struct {
     enum echo_mode mode;
+    char *prefix;
+    size_t prefix_len;
 };
 
 static int
@@ -42,10 +44,12 @@ static dico_handle_t
 echo_init_db(const char *dbname, int argc, char **argv)
 {
     int null_mode = 0;
-    struct echo_handle *hp;
+    dico_handle_t hp;
+    char *prefix = NULL;
     
     struct dico_option init_db_option[] = {
 	{ DICO_OPTSTR(null), dico_opt_bool, &null_mode },
+	{ DICO_OPTSTR(prefix), dico_opt_string, &prefix },
 	{ NULL }
     };
 
@@ -53,11 +57,23 @@ echo_init_db(const char *dbname, int argc, char **argv)
 	return NULL;
 
     hp = malloc(sizeof(*hp));
-    if (hp)
+    if (hp) {
 	hp->mode = null_mode ? ECHO_NULL : ECHO_ECHO;
-    else
+	if (prefix) {
+	    hp->prefix = strdup(prefix);
+	    if (!hp->prefix) {
+		dico_log(L_ERR, 0, "not enough memory");
+		free(hp);
+		return NULL;
+	    }
+	    hp->prefix_len = strlen(prefix);
+	} else {
+	    hp->prefix = NULL;
+	    hp->prefix_len = 0;
+	}
+    } else
 	dico_log(L_ERR, 0, "not enough memory");
-    return (dico_handle_t)hp;
+    return hp;
 }
 
 static int
@@ -80,9 +96,8 @@ echo_close(dico_handle_t hp)
 }
 
 static char *
-echo_info(dico_handle_t hp)
+echo_info(dico_handle_t ep)
 {
-    struct echo_handle *ep = (struct echo_handle*)hp;
     static char *echo_info_str[2] = {
 	"\
 ECHO database.\n\n\
@@ -96,36 +111,56 @@ requests.\n"
 }
 
 static char *
-echo_descr(dico_handle_t hp)
+echo_descr(dico_handle_t ep)
 {
-    struct echo_handle *ep = (struct echo_handle*)hp;
     static char *echo_descr_str[2] = {
 	"GNU Dico ECHO database",
 	"GNU Dico NULL database"
     };
-    return strdup(echo_descr_str[ep->mode]);
+    char *res;
+    if (ep->mode == ECHO_ECHO && ep->prefix) {
+	size_t len = strlen(echo_descr_str[ep->mode]) + ep->prefix_len + 11;
+	res = malloc(len);
+	if (res)
+	    snprintf(res, len, "%s (prefix %s)",
+		     echo_descr_str[ep->mode], ep->prefix);
+    } else
+	res = strdup(echo_descr_str[ep->mode]);
+    return res;
 }
 
 static dico_result_t
-echo_match(dico_handle_t hp, const dico_strategy_t strat, const char *word)
+new_result(dico_handle_t ep, char const *word)
 {
-    struct echo_handle *ep = (struct echo_handle*)hp;
-    if (ep->mode == ECHO_NULL)
-	return NULL;
-    return (dico_result_t) strdup(word);
+    char *res = malloc(strlen(word) + ep->prefix_len + 1);
+    if (!res)
+	dico_log(L_ERR, 0, "not enough memory");
+    else {
+	if (ep->prefix)
+	    memcpy(res, ep->prefix, ep->prefix_len);
+	strcpy(res + ep->prefix_len, word);
+    }
+    return (dico_result_t) res;
 }
 
 static dico_result_t
-echo_define(dico_handle_t hp, const char *word)
+echo_match(dico_handle_t ep, const dico_strategy_t strat, const char *word)
 {
-    struct echo_handle *ep = (struct echo_handle*)hp;
     if (ep->mode == ECHO_NULL)
 	return NULL;
-    return (dico_result_t) strdup(word);
+    return new_result(ep, word);
+}
+
+static dico_result_t
+echo_define(dico_handle_t ep, const char *word)
+{
+    if (ep->mode == ECHO_NULL)
+	return NULL;
+    return new_result(ep, word);
 }
 
 static int
-echo_output_result (dico_result_t rp, size_t n, dico_stream_t str)
+echo_output_result(dico_result_t rp, size_t n, dico_stream_t str)
 {
     char *word = (char*)rp;
     dico_stream_write(str, word, strlen(word));
@@ -150,22 +185,28 @@ echo_free_result(dico_result_t rp)
     free(rp);
 }
 
+static char *
+echo_mime_header(dico_handle_t ep)
+{
+    return strdup("Content-Type: text/plain; charset=utf-8\n\
+Content-Transfer-Encoding: 8bit\n");
+}
+
 struct dico_database_module DICO_EXPORT(echo, module) = {
-    DICO_MODULE_VERSION,
-    DICO_CAPA_NONE,
-    echo_init,
-    echo_init_db,
-    echo_free_db,
-    echo_open,
-    echo_close,
-    echo_info,
-    echo_descr,
-    NULL, /* echo_lang */
-    echo_match,
-    echo_define,
-    echo_output_result,
-    echo_result_count,
-    echo_compare_count,
-    echo_free_result,
-    NULL /* echo_result_headers */
+    .dico_version = DICO_MODULE_VERSION,
+    .dico_capabilities = DICO_CAPA_NONE,
+    .dico_init = echo_init,
+    .dico_init_db = echo_init_db,
+    .dico_free_db = echo_free_db,
+    .dico_open = echo_open,
+    .dico_close = echo_close,
+    .dico_db_info = echo_info,
+    .dico_db_descr = echo_descr,
+    .dico_match = echo_match,
+    .dico_define = echo_define,
+    .dico_output_result = echo_output_result,
+    .dico_result_count = echo_result_count,
+    .dico_compare_count = echo_compare_count,
+    .dico_free_result = echo_free_result,
+    .dico_db_mime_header = echo_mime_header
 };

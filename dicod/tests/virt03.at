@@ -1,0 +1,243 @@
+# This file is part of GNU Dico -*- Autotest -*-
+# Copyright (C) 2018 Sergey Poznyakoff
+#
+# GNU Dico is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3, or (at your option)
+# any later version.
+#
+# GNU Dico is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
+
+AT_SETUP([define])
+AT_KEYWORDS([virtual virtual03])
+
+# Explicit define from a virtual database. Real source database names
+# are shown.
+AT_CHECK([
+DICOD_CONFIG([
+database {
+	name db1;
+	handler "echo prefix=1";
+}
+database {
+	name db2;
+	handler "echo prefix=2";
+}
+database {
+	name db3;
+	handler "echo prefix=3";
+}
+database {
+	name virt;
+	handler virtual;
+	database db1;
+	database db2;
+	database db3;
+}
+])
+
+AT_DATA([input],[define virt word
+quit
+])
+
+DICOD_RUN],
+[0],
+[220
+150 3 definitions found: list follows
+151 "word" db1 "GNU Dico ECHO database (prefix 1)"
+1word
+.
+151 "word" db2 "GNU Dico ECHO database (prefix 2)"
+2word
+.
+151 "word" db3 "GNU Dico ECHO database (prefix 3)"
+3word
+.
+250
+221
+])
+
+# Wildcard define. Virtual database is excluded.
+AT_CHECK([
+DICOD_CONFIG([
+database {
+	name db1;
+	handler "echo prefix=1";
+}
+database {
+	name db2;
+	handler "echo prefix=2";
+}
+database {
+	name db3;
+	handler "echo prefix=3";
+}
+database {
+	name virt;
+	handler virtual;
+	database db1;
+	database db2;
+	database db3;
+}
+])
+
+AT_DATA([input],[define * word
+quit
+])
+
+DICOD_RUN],
+[0],
+[220
+150 3 definitions found: list follows
+151 "word" db1 "GNU Dico ECHO database (prefix 1)"
+1word
+.
+151 "word" db2 "GNU Dico ECHO database (prefix 2)"
+2word
+.
+151 "word" db3 "GNU Dico ECHO database (prefix 3)"
+3word
+.
+250
+221
+])
+
+# Explicit define from a virtual database whose members are invisible.
+# Virtual database name and description is returned.
+AT_CHECK([
+DICOD_CONFIG([
+database {
+	name db1;
+	handler "echo prefix=1";
+	visible no;
+}
+database {
+	name db2;
+	handler "echo prefix=2";
+	visible no;
+}
+database {
+	name db3;
+	handler "echo prefix=3";
+	visible no;
+}
+database {
+	name virt;
+	handler virtual;
+	description "Example Virtual Database";
+	database db1;
+	database db2;
+	database db3;
+}
+])
+
+AT_DATA([input],[define virt word
+quit
+])
+
+DICOD_RUN],
+[0],
+[220
+150 3 definitions found: list follows
+151 "word" virt "Example Virtual Database"
+1word
+.
+151 "word" virt "Example Virtual Database"
+2word
+.
+151 "word" virt "Example Virtual Database"
+3word
+.
+250
+221
+])
+
+# Alternative databases: no mime
+AT_CHECK([
+DICOD_CONFIG([
+capability mime;
+database {
+	name db1;
+	handler "echo prefix=1";
+	visible no;
+}
+database {
+	name db2;
+	handler "echo prefix=2";
+	visible no;
+}
+database {
+	name virt;
+	handler virtual;
+	description "Example Virtual Database";	
+	database db1 mime;
+	database db2 nomime;
+}
+])
+
+AT_DATA([input],[define virt word
+quit
+])
+
+DICOD_RUN],
+[0],
+[220
+150 1 definitions found: list follows
+151 "word" virt "Example Virtual Database"
+2word
+.
+250
+221
+])
+
+# Alternative databases: OPTION MIME
+AT_CHECK([
+DICOD_CONFIG([
+capability mime;
+database {
+	name db1;
+	handler "echo prefix=1";
+	visible no;
+}
+database {
+	name db2;
+	handler "echo prefix=2";
+	visible no;
+}
+database {
+	name virt;
+	handler virtual;
+	database db1 mime;
+	database db2 nomime;
+}
+])
+
+AT_DATA([input],[option mime
+define virt word
+quit
+])
+
+DICOD_RUN],
+[0],
+[220
+250
+150 1 definitions found: list follows
+151 "word" virt "GNU Dico ECHO database (prefix 1)"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+1word
+.
+250
+221
+])
+
+
+AT_CLEANUP
+

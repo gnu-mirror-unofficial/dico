@@ -39,6 +39,7 @@ dicod_SOURCES=\
  mime.c\
  ostream.c\
  regex.c\
+ result.c\
  server.c\
  stat.c\
  stratcl.c\

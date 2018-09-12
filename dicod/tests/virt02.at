@@ -1,0 +1,225 @@
+# This file is part of GNU Dico -*- Autotest -*-
+# Copyright (C) 2012-2018 Sergey Poznyakoff
+#
+# GNU Dico is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3, or (at your option)
+# any later version.
+#
+# GNU Dico is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
+
+AT_SETUP([match])
+AT_KEYWORDS([virtual virtual02])
+
+# Explicit matching of a virtual database returns real names of its
+# visible members.
+AT_CHECK([
+DICOD_CONFIG([
+database {
+	name db1;
+	handler "echo prefix=1";
+}
+database {
+	name db2;
+	handler "echo prefix=2";
+}
+database {
+	name db3;
+	handler "echo prefix=3";
+}
+database {
+	name virt;
+	handler virtual;
+	database db1;
+	database db2;
+	database db3;
+}
+])
+
+AT_DATA([input],[match virt . word
+quit
+])
+
+DICOD_RUN],
+[0],
+[220
+152 3 matches found: list follows
+db1 "1word"
+db2 "2word"
+db3 "3word"
+.
+250
+221
+])
+
+# Virtual database is excluded from wildcard matching.
+AT_CHECK([
+DICOD_CONFIG([
+database {
+	name db1;
+	handler "echo prefix=1";
+}
+database {
+	name db2;
+	handler "echo prefix=2";
+}
+database {
+	name db3;
+	handler "echo prefix=3";
+}
+database {
+	name virt;
+	handler virtual;
+	database db1;
+	database db2;
+	database db3;
+}
+])
+
+AT_DATA([input],[match * . word
+quit
+])
+
+DICOD_RUN],
+[0],
+[220
+152 3 matches found: list follows
+db1 "1word"
+db2 "2word"
+db3 "3word"
+.
+250
+221
+])
+
+# Matches from a virtual db whose members are invisible, list the
+# name of the virtual db, not of its members.
+AT_CHECK([
+DICOD_CONFIG([
+database {
+	name db1;
+	handler "echo prefix=1";
+	visible no;
+}
+database {
+	name db2;
+	handler "echo prefix=2";
+	visible no;
+}
+database {
+	name db3;
+	handler "echo prefix=3";
+	visible no;
+}
+database {
+	name virt;
+	handler virtual;
+	database db1;
+	database db2;
+	database db3;
+}
+])
+
+AT_DATA([input],[match virt . word
+quit
+])
+
+DICOD_RUN],
+[0],
+[220
+152 3 matches found: list follows
+virt "1word"
+virt "2word"
+virt "3word"
+.
+250
+221
+])
+
+# Alternative databases: no mime
+AT_CHECK([
+DICOD_CONFIG([
+capability mime;
+database {
+	name db1;
+	handler "echo prefix=1";
+	visible no;
+}
+database {
+	name db2;
+	handler "echo prefix=2";
+	visible no;
+}
+database {
+	name virt;
+	handler virtual;
+	database db1 mime;
+	database db2 nomime;
+}
+])
+
+AT_DATA([input],[match virt . word
+quit
+])
+
+DICOD_RUN],
+[0],
+[220
+152 1 matches found: list follows
+virt "2word"
+.
+250
+221
+])
+
+# Alternative databases: OPTION MIME
+AT_CHECK([
+DICOD_CONFIG([
+capability mime;
+database {
+	name db1;
+	handler "echo prefix=1";
+	visible no;
+}
+database {
+	name db2;
+	handler "echo prefix=2";
+	visible no;
+}
+database {
+	name virt;
+	handler virtual;
+	database db1 mime;
+	database db2 nomime;
+}
+])
+
+AT_DATA([input],[match virt . word
+option mime
+match virt . word
+quit
+])
+
+DICOD_RUN],
+[0],
+[220
+152 1 matches found: list follows
+virt "2word"
+.
+250
+250
+152 1 matches found: list follows
+
+virt "1word"
+.
+250
+221
+])
+
+AT_CLEANUP

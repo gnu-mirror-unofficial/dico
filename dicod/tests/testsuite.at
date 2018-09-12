@@ -27,20 +27,38 @@ __EOT__
 AT_INIT
 DICO_VERSION(dicod)
 m4_include([startup.at])
+
+AT_BANNER([HELP output])
 m4_include([help00.at])
 m4_include([help01.at])
 m4_include([help02.at])
 m4_include([help03.at])
+
+AT_BANNER([SHOW commands])
 m4_include([showstrat.at])
 m4_include([showdb.at])
 m4_include([info.at])
 m4_include([descr.at])
+
+AT_BANNER([MATCH])
 m4_include([match.at])
 m4_include([nomatch.at])
+
+AT_BANNER([DEFINE])
 m4_include([def.at])
 m4_include([nodef.at])
-m4_include([apop.at])
+
+AT_BANNER([Visibility])
 m4_include([vis00.at])
 m4_include([vis01.at])
 m4_include([vis02.at])
+
+AT_BANNER([Other features])
+m4_include([apop.at])
 m4_include([alias.at])
+
+AT_BANNER([Virtual databases])
+m4_include([virt01.at])
+m4_include([virt02.at])
+m4_include([virt03.at])
+m4_include([virt04.at])

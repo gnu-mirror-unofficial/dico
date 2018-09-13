@@ -52,6 +52,8 @@ libdico_la_SOURCES=\
  udb.c\
  url.c\
  utf8.c\
+ utf8_is_alnum.c\
+ utf8_is_space.c\
  util.c\
  xlat.c
 

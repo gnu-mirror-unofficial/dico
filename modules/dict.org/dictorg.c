@@ -22,12 +22,21 @@ static int sort_index;
 static int trim_ws;
 static int show_dictorg_entries;
 
-static void
-memerr(const char *fname)
-{
-    dico_log(L_ERR, 0, _("%s: not enough memory"), fname);
-}
+#if __STDC_VERSION__ < 199901L
+# if __GNUC__ >= 2
+#  define __func__ __FUNCTION__
+# else
+#  define __func__ "<unknown>"
+# endif
+#endif
 
+#define MEMERR() \
+    dico_log(L_ERR, 0, _("%s:%d:%s: not enough memory"), \
+	     __FILE__, __LINE__, __func__)
+
+typedef int (*COMPARATOR) (const void *, const void *);
+static int get_db_flag(struct dictdb *db, const char *name);
+    
 static int register_strategies(void);
 
 static struct dico_option init_option[] = {
@@ -70,6 +79,13 @@ mod_init(int argc, char **argv)
 }
 
 static void
+dealloc_index_entry(struct index_entry *ent)
+{
+    free(ent->word);
+    free(ent->orig);
+}
+
+static void
 free_db(struct dictdb *db)
 {
     size_t i;
@@ -79,7 +95,7 @@ free_db(struct dictdb *db)
     for (i = 0; i < db->numwords; i++) {
 	if (!db->index[i].word)
 	    break;
-	free(db->index[i].word);
+	dealloc_index_entry(&db->index[i]);
     }
     if (db->suf_index) {
 	for (i = 0; i < db->numwords; i++) {
@@ -128,35 +144,7 @@ b64_decode(const char *val, size_t len, size_t *presult)
     return 0;
 }
 
-struct special_headword_trans {
-    char *old;
-    size_t len;
-    char *new;
-};
-
-#define S(s) #s, sizeof(#s)-1
-static struct special_headword_trans special_headword_trans[] = {
-    { S(00databaseallchars), DICTORG_FLAG_ALLCHARS },
-    { S(00databasedefaultstrategy), DICTORG_FLAG_DEFAULT_STRAT },
-    { S(00databaseurl), "00-database-url" },
-    { S(00databaseshort), DICTORG_SHORT_ENTRY_NAME },
-    { S(00databaseinfo), DICTORG_INFO_ENTRY_NAME },
-    { S(00databaseutf8), DICTORG_FLAG_UTF8 },
-    { NULL }
-};
-#undef S
-
-static char const *
-special_translate(char const *in, size_t len)
-{
-    struct special_headword_trans *tp = special_headword_trans;
-    while (tp->old) {
-	if (len == tp->len && memcmp(tp->old, in, tp->len) == 0)
-	    return tp->new;
-	tp++;
-    }
-    return NULL;
-}
+static COMPARATOR comparator(struct dictdb *db);
 
 static int
 parse_index_entry(const char *filename, size_t line,
@@ -212,19 +200,9 @@ parse_index_entry(const char *filename, size_t line,
 		    --len;
 	    }
 
-	    if (len > DICTORG_ALT_ENTRY_PREFIX_LEN
-		&& memcmp(start, DICTORG_ALT_ENTRY_PREFIX,
-			  DICTORG_ALT_ENTRY_PREFIX_LEN) == 0) {
-		char const *p = special_translate(start, len);
-		if (p) {
-		    start = p;
-		    len = strlen(p);
-		}
-	    }
-	    
 	    idx.word = malloc(len + 1);
 	    if (!idx.word) {
-		memerr("parse_index_entry");
+		MEMERR();
 		return 1;
 	    }
 
@@ -235,7 +213,7 @@ parse_index_entry(const char *filename, size_t line,
 	} else if (nfield == 3) {
 	    idx.orig = malloc(len + 1);
 	    if (!idx.orig) {
-		memerr("parse_index_entry");
+		MEMERR();
 		return 1;
 	    }
 	    memcpy(idx.orig, start, len);
@@ -265,7 +243,7 @@ parse_index_entry(const char *filename, size_t line,
 	} else {
 	    ep = malloc(sizeof(*ep));
 	    if (!ep) {
-		memerr("parse_index_entry");
+		MEMERR();
 		rc = 1;
 	    }
 	}
@@ -284,8 +262,7 @@ static int
 free_index_entry(void *item, void *data)
 {
     struct index_entry *ep = item;
-    free(ep->word);
-    free(ep->orig);
+    dealloc_index_entry(ep);
     free(ep);
     return 0;
 }
@@ -325,7 +302,7 @@ read_index(struct dictdb *db, const char *idxname, int tws)
 
     list = dico_list_create();
     if (!list) {
-	memerr("read_index");
+	MEMERR();
 	rc = 1;
     } else {
 	dico_iterator_t itr;
@@ -375,7 +352,7 @@ open_index(struct dictdb *db, int tws)
     int rc;
     
     if (!idxname) {
-	memerr("open_index");
+	MEMERR();
 	return 1;
     }
 
@@ -432,8 +409,6 @@ open_stream(struct dictdb *db)
     return 1;
 }
 
-static int compare_entry(const void *a, const void *b);
-
 static dico_handle_t
 mod_init_db(const char *dbname, int argc, char **argv)
 {
@@ -475,33 +450,47 @@ mod_init_db(const char *dbname, int argc, char **argv)
 	filename = strdup(filename);
 
     if (!filename) {
-	memerr("mod_init_db");
+	MEMERR();
 	return NULL;
     }
     
-    db = malloc(sizeof(*db));
+    db = calloc(1, sizeof(*db));
     if (!db) {
 	free(filename);
-	memerr("mod_init_db");
+	MEMERR();
 	return NULL;
     }
-    memset(db, 0, sizeof(*db));
 
     db->dbname = dbname;
     db->basename = filename;
     db->show_dictorg_entries = show_dictorg_option;
+    db->flag_allchars = 1;
     
     if (open_index(db, trimws_option)) {
 	free_db(db);
 	return NULL;
     }
 
-    if (sort_option)
-	qsort(db->index, db->numwords, sizeof(db->index[0]), compare_entry);
-    
     if (open_stream(db)) {
 	free_db(db);
 	return NULL;
+    }
+    
+    db->flag_allchars = get_db_flag(db, DICTORG_FLAG_ALLCHARS);
+    db->flag_casesensitive = get_db_flag(db, DICTORG_FLAG_CASESENSITIVE);
+    db->flag_utf8 = get_db_flag(db, DICTORG_FLAG_UTF8);
+    db->flag_8bit = get_db_flag(db, DICTORG_FLAG_8BIT_NEW);
+    if (get_db_flag(db, DICTORG_FLAG_8BIT_OLD)) {
+	dico_log(L_ERR, 0,
+		 _("mod_init_db(%s): index files in old 8-bit format are not supported"),
+		 argv[0]);
+	free_db(db);
+	return NULL;
+    }
+
+    if (sort_option) {
+	/* Sort index entries */
+	qsort(db->index, db->numwords, sizeof(db->index[0]), comparator(db));
     }
     
     return (dico_handle_t)db;
@@ -565,11 +554,14 @@ static int exact_match(struct dictdb *, const char *, struct result *);
 static int prefix_match(struct dictdb *, const char *, struct result *);
 static int suffix_match(struct dictdb *, const char *, struct result *);
 
-#define RESERVED_WORD(db, word)			            \
-    (!(db)->show_dictorg_entries                            \
-	&& strlen(word) >= sizeof(DICTORG_ENTRY_PREFIX)-1   \
-	&& memcmp(word, DICTORG_ENTRY_PREFIX,               \
-		  sizeof(DICTORG_ENTRY_PREFIX)-1) == 0)
+#define RESERVED_WORD(db, word)					    \
+    (!(db)->show_dictorg_entries				    \
+     && ((strlen(word) >= DICTORG_ENTRY_PREFIX_LEN		    \
+	 && memcmp(word, DICTORG_ENTRY_PREFIX,			    \
+		  DICTORG_ENTRY_PREFIX_LEN) == 0)		    \
+	|| (strlen(word) >= DICTORG_ALT_ENTRY_PREFIX_LEN	    \
+	&& memcmp(word, DICTORG_ALT_ENTRY_PREFIX,		    \
+		      DICTORG_ALT_ENTRY_PREFIX_LEN) == 0)))	    \
 
 
 static struct strategy_def strat_tab[] = {
@@ -598,7 +590,16 @@ register_strategies(void)
 }
 
 static int
-compare_entry(const void *a, const void *b)
+compare_allchars(const void *a, const void *b)
+{
+    const struct index_entry *epa = a;
+    const struct index_entry *epb = b;
+    compare_count++;
+    return utf8_strcmp(epa->word, epb->word);
+}
+
+static int
+compare_allchars_ci(const void *a, const void *b)
 {
     const struct index_entry *epa = a;
     const struct index_entry *epb = b;
@@ -607,16 +608,51 @@ compare_entry(const void *a, const void *b)
 }
 
 static int
+compare_alnumspace(const void *a, const void *b)
+{
+    const struct index_entry *epa = a;
+    const struct index_entry *epb = b;
+    compare_count++;
+    return utf8_strcmp_alnumspace(epa->word, epb->word);
+}
+
+static int
+compare_alnumspace_ci(const void *a, const void *b)
+{
+    const struct index_entry *epa = a;
+    const struct index_entry *epb = b;
+    compare_count++;
+    return utf8_strcasecmp_alnumspace(epa->word, epb->word);
+}
+
+static COMPARATOR
+comparator(struct dictdb *db)
+{
+    if (db->flag_allchars) {
+	if (db->flag_casesensitive)
+	    return compare_allchars;
+	else
+	    return compare_allchars_ci;
+    } else {
+	if (db->flag_casesensitive)
+	    return compare_alnumspace;
+	else
+	    return compare_alnumspace_ci;
+    }
+}
+
+//FIXME
+static int
 compare_entry_ptr(const void *a, const void *b)
 {
     const struct index_entry *epa = *(const struct index_entry **)a;
     const struct index_entry *epb = *(const struct index_entry **)b;
-    return compare_entry(epa, epb);
+    return compare_alnumspace_ci(epa, epb);
 }
 
 static int
 common_match(struct dictdb *db, const char *word,
-	     int (*compare) (const void *, const void *),
+	     COMPARATOR compare,
 	     int unique, struct result *res)
 {
     struct index_entry x, *ep;
@@ -638,14 +674,14 @@ common_match(struct dictdb *db, const char *word,
 	res->db = db;
 	res->list = dico_list_create();
 	if (!res->list) {
-	    memerr("common_match");
+	    MEMERR();
 	    return 0;
 	}
 	res->itr = NULL;
 	if (unique) {
 	    dico_list_set_comparator(res->list,
 				     (int (*)(const void *, void *))
-				          compare_entry);
+				     comparator(db));
 	    dico_list_set_flags(res->list, DICO_LIST_COMPARE_TAIL);
 	}
 	for (p++; p < ep; p++) 
@@ -661,7 +697,7 @@ common_match(struct dictdb *db, const char *word,
 static int
 exact_match(struct dictdb *db, const char *word, struct result *res)
 {
-    return common_match(db, word, compare_entry, 1, res);
+    return common_match(db, word, comparator(db), 1, res);
 }
 
 static int
@@ -702,14 +738,14 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
     int rc;
     
     if (init_suffix_index(db)) {
-	memerr("suffix_match");
+	MEMERR();
 	return 1;
     }
     
     ent.length = strlen(word);
     x.word = malloc(ent.length + 1);
     if (!x.word) {
-	memerr("suffix_match");
+	MEMERR();
 	return 1;
     }
     ent.wordlen = utf8_strlen(word);
@@ -739,7 +775,7 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
 
 	tmp = calloc(count, sizeof(*tmp));
 	if (!tmp) {
-	    memerr("suffix_match");
+	    MEMERR();
 	    free(x.word);
 	    return 1;
 	} 
@@ -753,14 +789,14 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
 
 	list = dico_list_create();
 	if (!list) {
-	    memerr("suffix_match");
+	    MEMERR();
 	    free(x.word);
 	    free(tmp);
 	    return 1;
 	}
 	dico_list_set_comparator(list,
 				 (int (*)(const void *, void *))
-				   compare_entry);
+				   comparator(db));
 	dico_list_set_flags(list, DICO_LIST_COMPARE_TAIL);
 	for (i = 0; i < count; i++) 
 	    dico_list_append(list, tmp[i]);
@@ -790,12 +826,12 @@ find_db_entry(struct dictdb *db, const char *name)
     x.length = strlen(name);
     x.wordlen = utf8_strlen(name);
     ep = bsearch(&x, db->index, db->numwords, sizeof(db->index[0]),
-		 compare_entry);
+		 comparator(db));
     if (!ep)
 	return NULL;
     buf = malloc(ep->size + 1);
     if (!buf) {
-	memerr("find_db_entry");
+	MEMERR();
 	return NULL;
     }
     dico_stream_seek(db->stream, ep->offset, DICO_SEEK_SET);
@@ -808,6 +844,18 @@ find_db_entry(struct dictdb *db, const char *name)
     } else 
 	buf[ep->size] = 0;
     return buf;
+}
+
+static int
+get_db_flag(struct dictdb *db, const char *name)
+{
+    struct index_entry x;
+    
+    x.word = (char*) name;
+    x.length = strlen(name);
+    x.wordlen = utf8_strlen(name);
+    return bsearch(&x, db->index, db->numwords, sizeof(db->index[0]),
+		   comparator(db)) != NULL;
 }
 
 static char *
@@ -875,13 +923,13 @@ _match_all(struct dictdb *db, dico_strategy_t strat, const char *word)
     list = dico_list_create();
 
     if (!list) {
-	memerr("_match_all");
+	MEMERR();
 	return NULL;
     }
 
     dico_list_set_comparator(list,
 			     (int (*)(const void *, void *))
-			       compare_entry);
+			       comparator(db));
     dico_list_set_flags(list, DICO_LIST_COMPARE_TAIL);
 
     if (dico_key_init(&key, strat, word)) {
@@ -941,12 +989,13 @@ mod_define(dico_handle_t hp, const char *word)
 
     if (RESERVED_WORD(db, word))
 	return NULL;
-    rc = common_match(db, word, compare_entry, 0, &res);
+    
+    rc = common_match(db, word, comparator(db), 0, &res);
     if (rc)
 	return NULL;
     rp = malloc(sizeof(*rp));
     if (!rp) {
-	memerr("mod_define");
+	MEMERR();
 	dico_list_destroy(&res.list);
 	return NULL;
     }

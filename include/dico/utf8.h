@@ -41,8 +41,16 @@ int utf8_wctomb (char *r, unsigned int wc);
 
 int utf8_symcmp(char *a, char *b);
 int utf8_symcasecmp(char *a, char *b);
+
+int utf8_strcmp_cc(char *a, char *b, int ci);
+
+int utf8_strcmp(char *a, char *b);
 int utf8_strcasecmp(char *a, char *b);
 int utf8_strncasecmp(char *a, char *b, size_t maxlen);
+
+int utf8_strcmp_alnumspace_cc(char *a, char *b, int ci);
+int utf8_strcmp_alnumspace(char *a, char *b);
+int utf8_strcasecmp_alnumspace(char *a, char *b);
 
 unsigned utf8_wc_toupper (unsigned wc);
 int utf8_toupper (char *s);
@@ -71,6 +79,12 @@ const unsigned *utf8_wc_strstr(const unsigned *haystack,
 
 void utf8_wc_strupper(unsigned *str);
 void utf8_wc_strlower(unsigned *str);
+
+int utf8_wc_is_alnum(unsigned wc);
+int utf8_wc_is_space(unsigned wc);
+
+int utf8_table_check(unsigned wc, unsigned const *start, int const *count,
+		     size_t size);
 
 #define DICO_LEV_NORM    0x1
 #define DICO_LEV_DAMERAU 0x2

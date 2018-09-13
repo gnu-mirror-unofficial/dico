@@ -288,6 +288,18 @@ dico_iterator_set_data(dico_iterator_t ip, void *data)
 }
 
 void *
+dico_list_head(struct dico_list *list)
+{
+    return list->head ? list->head->data : NULL;
+}
+
+void *
+dico_list_tail(struct dico_list *list)
+{
+    return list->tail ? list->tail->data : NULL;
+}
+
+void *
 dico_list_item(struct dico_list *list, size_t n)
 {
     struct list_entry *p;

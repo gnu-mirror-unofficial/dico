@@ -32,7 +32,7 @@
 #include <appi18n.h>
 
 #define DICTORG_ENTRY_PREFIX        "00-database"
-#define DICTORG_ENTRY_PREFIX_LEN    sizeof(DICTORG_ENTRY_PREFIX)-1
+#define DICTORG_ENTRY_PREFIX_LEN    (sizeof(DICTORG_ENTRY_PREFIX)-1)
 #define DICTORG_SHORT_ENTRY_NAME    DICTORG_ENTRY_PREFIX"-short"
 #define DICTORG_LONG_ENTRY_NAME     DICTORG_ENTRY_PREFIX"-long"
 #define DICTORG_INFO_ENTRY_NAME     DICTORG_ENTRY_PREFIX"-info"
@@ -44,14 +44,21 @@
 #define DICTORG_FLAG_VIRTUAL        DICTORG_ENTRY_PREFIX"-virtual"
 #define DICTORG_FLAG_ALPHABET       DICTORG_ENTRY_PREFIX"-alphabet"
 #define DICTORG_FLAG_DEFAULT_STRAT  DICTORG_ENTRY_PREFIX"-default-strategy"
+#define DICTORG_FLAG_CASESENSITIVE  DICTORG_ENTRY_PREFIX"-case-sensitive"
 
 #define DICTORG_ENTRY_PLUGIN        DICTORG_ENTRY_PREFIX"-plugin"
 #define DICTORG_ENTRY_PLUGIN_DATA   DICTORG_ENTRY_PREFIX"-plugin-data"
 
 #define DICTORG_ENTRY_MIME_HEADER   DICTORG_ENTRY_PREFIX"-mime-header"
 
+#define DICTORG_DICTFMT_PREFIX      DICTORG_ENTRY_PREFIX"-dictfmt-"
+#define DICTORG_DICTFMT_PREFIX_LEN  (sizeof(DICTORG_DICTFMT_PREFIX)-1)
+
 #define DICTORG_ALT_ENTRY_PREFIX        "00database"
 #define DICTORG_ALT_ENTRY_PREFIX_LEN    sizeof(DICTORG_ALT_ENTRY_PREFIX)-1
+
+#define DICTORG_ALT_DICTFMT_PREFIX      DICTORG_ALT_ENTRY_PREFIX"dictfmt"
+#define DICTORG_ALT_DICTFMT_PREFIX_LEN  (sizeof(DICTORG_ALT_DICTFMT_PREFIX)-1)
 
 #define DICTORG_UNKNOWN    0
 #define DICTORG_TEXT       1
@@ -129,6 +136,12 @@ struct rev_entry {
 struct dictdb {
     const char *dbname;
     char *basename;
+
+    unsigned flag_allchars:1;
+    unsigned flag_casesensitive:1;
+    unsigned flag_utf8:1;
+    unsigned flag_8bit:1;
+    
     size_t numwords;
     struct index_entry *index;
     struct rev_entry *suf_index;

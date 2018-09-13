@@ -42,6 +42,8 @@ dico_list_comp_t dico_list_get_comparator(dico_list_t list);
 
 void dico_list_iterate(dico_list_t list, dico_list_iterator_t itr, void *data);
 void *dico_list_item(dico_list_t list, size_t n);
+void *dico_list_head(struct dico_list *list);
+void *dico_list_tail(struct dico_list *list);
 size_t dico_list_count(dico_list_t list);
 int dico_list_append(dico_list_t list, void *data);
 int dico_list_prepend(dico_list_t list, void *data);

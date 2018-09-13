@@ -1,10 +1,10 @@
-GNU Dico NEWS -- history of user-visible changes. 2018-09-12
+GNU Dico NEWS -- history of user-visible changes. 2018-09-13
 Copyright (C) 2008-2010, 2012-2018 Sergey Poznyakoff
 See the end of file for copying conditions.
 
 Please send Dico bug reports to <bug-dico@gnu.org.ua>
 
-Version 2.6.93 (git)
+Version 2.6.94 (git)
 
 * Support for virtual databases
 
@@ -47,9 +47,7 @@ configure actions to take on certain types of errors. In particular,
 ONERROR['UNSUPPORTED_CONTENT_TYPE'] defines what to do when a DEFINE
 request returns article in unsupported content type.
 
-* The dictorg module
-
-Support for old-style keywords in index files.
+* The dictorg module improved
 
 
 Version 2.6, 2018-08-27

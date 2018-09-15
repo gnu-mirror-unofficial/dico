@@ -56,7 +56,7 @@ get_implemented_mechs(Gsasl *ctx)
 }
 
 static int
-str_str_cmp(const void *item, void *data)
+str_str_cmp(const void *item, const void *data, void *closure)
 {
     return c_strcasecmp(item, data);
 }
@@ -284,7 +284,7 @@ saslauth0(struct dict_connection *conn, struct auth_cred *cred,
 
     if (cred->mech)
 	mechlist = dico_list_intersect(cred->mech, authctx->mech,
-				       str_str_cmp);
+				       str_str_cmp, NULL);
     else
 	mechlist = cred->mech;
     if (!mechlist || dico_list_count(mechlist) == 0) {

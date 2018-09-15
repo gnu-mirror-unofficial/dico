@@ -519,7 +519,7 @@ set_log_facility(enum grecs_callback_command cmd,
 }
 
 static int
-cmp_modinst_ident(const void *item, void *data)
+cmp_modinst_ident(const void *item, const void *data, void *closure)
 {
     const dicod_module_instance_t *inst = item;
     if (!inst->ident)
@@ -589,7 +589,7 @@ load_module_cb(enum grecs_callback_command cmd,
 }
 
 static int
-cmp_database_name(const void *item, void *data)
+cmp_database_name(const void *item, const void *data, void *closure)
 {
     const dicod_database_t *db = item;
     int rc;
@@ -635,7 +635,7 @@ set_database(enum grecs_callback_command cmd,
 	
 	if (!database_list) {
 	    database_list = xdico_list_create();
-	    dico_list_set_comparator (database_list, cmp_database_name);
+	    dico_list_set_comparator (database_list, cmp_database_name, NULL);
 	}
 	if (dict->langlist[0] || dict->langlist[1])
 	     /* Prevent dico_db_lang from being called */
@@ -1079,7 +1079,8 @@ strategy_cb(enum grecs_callback_command cmd,
 		if (!strat_forward) {
 		    strat_forward = xdico_list_create();
 		    dico_list_set_comparator (strat_forward,
-					      dico_strat_name_cmp);
+					      dico_strat_name_cmp,
+					      NULL);
 		    dico_list_set_free_item(strat_forward,
 					    dico_strat_free, NULL);
 		}
@@ -1434,7 +1435,7 @@ config_init(void)
     grecs_parser_options = GRECS_OPTION_QUOTED_STRING_CONCAT;
 
     modinst_list = xdico_list_create();
-    dico_list_set_comparator(modinst_list, cmp_modinst_ident);
+    dico_list_set_comparator(modinst_list, cmp_modinst_ident, NULL);
 
     dicod_builtin_module_init();
 }

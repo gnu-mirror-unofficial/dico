@@ -84,7 +84,7 @@ dico_udb_get_groups(dico_udb_t db, const char *key, dico_list_t *groups)
 dico_list_t /* of struct dico_udb_def */ dico_udb_def_list;
 
 static int
-udb_def_cmp(const void *item, void *data)
+udb_def_cmp(const void *item, const void *data, void *ignore)
 {
     const struct dico_udb_def *def = item;
     const char *proto = data;
@@ -100,7 +100,7 @@ dico_udb_define(struct dico_udb_def *dptr)
 	    errno = ENOMEM;
 	    return 1;
 	}
-	dico_list_set_comparator(dico_udb_def_list, udb_def_cmp);
+	dico_list_set_comparator(dico_udb_def_list, udb_def_cmp, NULL);
     }
     return dico_list_append(dico_udb_def_list, dptr);
 }

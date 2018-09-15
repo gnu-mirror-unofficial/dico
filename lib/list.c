@@ -32,7 +32,8 @@ struct dico_list {
     struct list_entry *head, *tail;
     int flags;
     struct iterator *itr;
-    dico_list_comp_t comp;
+    dico_list_comp_t comp_fun;
+    void *comp_data;
     dico_list_iterator_t free_item;
     void *free_data;
 };
@@ -46,7 +47,7 @@ struct iterator {
 };
 
 static int
-cmp_ptr(const void *a, void *b)
+cmp_ptr(const void *a, const void *b, void *data)
 {
     return a != b;
 }
@@ -60,7 +61,8 @@ dico_list_create(void)
 	p->head = p->tail = NULL;
 	p->flags = 0;
 	p->itr = NULL;
-	p->comp = cmp_ptr;
+	p->comp_fun = cmp_ptr;
+	p->comp_data = NULL;
 	p->free_item = NULL;
 	p->free_data = NULL;
     }
@@ -331,19 +333,29 @@ dico_list_set_free_item(struct dico_list *list,
     return 0;
 }
 
-dico_list_comp_t
-dico_list_set_comparator(struct dico_list *list, dico_list_comp_t comp)
+int
+dico_list_set_comparator(struct dico_list *list, dico_list_comp_t comp,
+			 void *data)
 {
-    dico_list_comp_t prev;
-
     if (!list) {
 	errno = EINVAL;
-	return NULL;
+	return -1;
     }
-    prev = list->comp;
-    list->comp = comp;
-    return prev;
+    list->comp_fun = comp;
+    list->comp_data = data;
+    return 0;
 }
+
+int
+dico_list_set_comparator_data(dico_list_t list, void *data)
+{
+    if (!list) {
+	errno = EINVAL;
+	return -1;
+    }
+    list->comp_data = data;
+    return 0;
+}    
 
 int
 dico_list_set_flags(struct dico_list *list, int flags)
@@ -364,7 +376,6 @@ dico_list_get_flags(struct dico_list *list)
    return 0;
 }
 
-
 dico_list_comp_t
 dico_list_get_comparator(struct dico_list *list)
 {
@@ -372,7 +383,17 @@ dico_list_get_comparator(struct dico_list *list)
 	errno = EINVAL;
 	return NULL;
     }
-    return list->comp;
+    return list->comp_fun;
+}
+
+void *
+dico_list_get_comparator_data(struct dico_list *list)
+{
+    if (!list) {
+	errno = EINVAL;
+	return NULL;
+    }
+    return list->comp_data;
 }
 
 int
@@ -417,8 +438,10 @@ dico_list_append(struct dico_list *list, void *data)
 	errno = EINVAL;
 	return 1;
     }
-    if ((list->flags & DICO_LIST_COMPARE_TAIL) && list->comp
-	&& list->tail && list->comp(list->tail->data, data) == 0) {
+    if ((list->flags & DICO_LIST_COMPARE_TAIL)
+	&& list->comp_fun
+	&& list->tail
+	&& list->comp_fun(list->tail->data, data, list->comp_data) == 0) {
 	errno = EEXIST;
 	return 1;
     }
@@ -432,8 +455,10 @@ dico_list_prepend(struct dico_list *list, void *data)
 	errno = EINVAL;
 	return 1;
     }
-    if ((list->flags & DICO_LIST_COMPARE_HEAD) && list->comp
-	&& list->head && list->comp(list->head->data, data) == 0) {
+    if ((list->flags & DICO_LIST_COMPARE_HEAD)
+	&& list->comp_fun
+	&& list->head
+	&& list->comp_fun(list->head->data, data, list->comp_data) == 0) {
 	errno = EEXIST;
 	return 1;
     }
@@ -469,7 +494,8 @@ _dico_list_remove_item(struct dico_list *list, struct list_entry *p,
 }
 
 int
-_dico_list_remove(struct dico_list *list, void *data, dico_list_comp_t cmp,
+_dico_list_remove(struct dico_list *list, void *data,
+		  dico_list_comp_t cmp, void *cmpdata,
 		  void **pptr)
 {
     struct list_entry *p;
@@ -482,7 +508,7 @@ _dico_list_remove(struct dico_list *list, void *data, dico_list_comp_t cmp,
     if (!cmp)
 	cmp = cmp_ptr;
     for (p = list->head; p; p = p->next)
-	if (cmp(p->data, data) == 0)
+	if (cmp(p->data, data, cmpdata) == 0)
 	    break;
     
     if (!p) {
@@ -502,7 +528,7 @@ dico_list_remove(struct dico_list *list, void *data, void **pret)
 	errno = EINVAL;
 	return 1;
     }
-    return _dico_list_remove(list, data, list->comp, pret);
+    return _dico_list_remove(list, data, list->comp_fun, list->comp_data, pret);
 }
 
 void *
@@ -535,7 +561,8 @@ dico_list_iterate(struct dico_list *list, dico_list_iterator_t func,
 }
 
 void *
-_dico_list_locate(struct dico_list *list, void *data, dico_list_comp_t cmp)
+_dico_list_locate(struct dico_list *list, void *data,
+		  dico_list_comp_t cmp, void *cmpdata)
 {
     struct list_entry *cur;
     if (!list)
@@ -543,7 +570,7 @@ _dico_list_locate(struct dico_list *list, void *data, dico_list_comp_t cmp)
     if (!cmp)
 	cmp = cmp_ptr;
     for (cur = list->head; cur; cur = cur->next)
-	if (cmp(cur->data, data) == 0)
+	if (cmp(cur->data, data, cmpdata) == 0)
 	    break;
     return cur ? cur->data : NULL;
 }
@@ -553,12 +580,12 @@ dico_list_locate(struct dico_list *list, void *data)
 {
     if (!list)
 	return NULL;
-    return _dico_list_locate(list, data, list->comp);
+    return _dico_list_locate(list, data, list->comp_fun, list->comp_data);
 }
 
 int
 _dico_list_insert_sorted(struct dico_list *list, void *data,
-			 dico_list_comp_t cmp)
+			 dico_list_comp_t cmp, void *cmpdata)
 {
     int rc;
     struct list_entry *cur;
@@ -576,7 +603,7 @@ _dico_list_insert_sorted(struct dico_list *list, void *data,
 	return _dico_list_append(list, data);
     
     for (cur = list->head, i = 0; cur; cur = cur->next, i++) {
-	int res = cmp(cur->data, data);
+	int res = cmp(cur->data, data, cmpdata);
 	if (res > 0)
 	    break;
 	else if (res == 0 && list->flags)
@@ -617,7 +644,8 @@ dico_list_insert_sorted(struct dico_list *list, void *data)
 	errno = EINVAL;
 	return 1;
     }
-    return _dico_list_insert_sorted(list, data, list->comp);
+    return _dico_list_insert_sorted(list, data,
+				    list->comp_fun, list->comp_data);
 }
 
 /* Computes an intersection of the two lists. The resulting list
@@ -625,7 +653,8 @@ dico_list_insert_sorted(struct dico_list *list, void *data)
    in the list B. Elements are compared using function CMP.
    The resulting list preserves the ordering of A. */
 dico_list_t 
-dico_list_intersect(dico_list_t a, dico_list_t b, dico_list_comp_t cmp)
+dico_list_intersect(dico_list_t a, dico_list_t b,
+		    dico_list_comp_t cmp, void *cmpdata)
 {
     dico_list_t res;
     dico_iterator_t itr = dico_list_iterator(a);
@@ -637,7 +666,7 @@ dico_list_intersect(dico_list_t a, dico_list_t b, dico_list_comp_t cmp)
     if (!res)
 	return NULL;
     for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) {
-	if (_dico_list_locate(b, p, cmp))
+	if (_dico_list_locate(b, p, cmp, cmpdata))
 	    _dico_list_append(res, p); /* FIXME: check return, and? */
     }
     dico_iterator_destroy (&itr);
@@ -646,14 +675,15 @@ dico_list_intersect(dico_list_t a, dico_list_t b, dico_list_comp_t cmp)
 
 /* Return true if there exists a non-empty intersection of lists A and B. */
 int
-dico_list_intersect_p(dico_list_t a, dico_list_t b, dico_list_comp_t cmp)
+dico_list_intersect_p(dico_list_t a, dico_list_t b,
+		      dico_list_comp_t cmp, void *cmpdata)
 {
     dico_iterator_t itr = dico_list_iterator(a);
     void *p;
     int rc = 0;
     
     for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) {
-	if (_dico_list_locate(b, p, cmp)) {
+	if (_dico_list_locate(b, p, cmp, cmpdata)) {
 	    rc = 1;
 	    break;
 	}

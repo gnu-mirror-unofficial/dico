@@ -433,7 +433,7 @@ find_matcher(const char *strat)
 }
 
 static int
-compare_ref(const void *a, void *b)
+compare_ref(const void *a, const void *b, void *closure)
 {
     struct gcide_ref const *aref = a;
     struct gcide_ref const *bref = b;
@@ -461,8 +461,7 @@ gcide_create_result_list(int unique)
 	return NULL;
     }
     if (unique) {
-	dico_list_set_comparator(list,
-				 (int (*)(const void *, void *)) compare_ref);
+	dico_list_set_comparator(list, compare_ref, NULL);
 	dico_list_set_flags(list, DICO_LIST_COMPARE_TAIL);
     }
     dico_list_set_free_item(list, free_ref, NULL);

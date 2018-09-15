@@ -29,7 +29,7 @@ static dico_strategy_t default_strategy;
 #define DEFSTRATNAME(s) ((s)[0] == '.' && (s)[1] == 0)
 
 int
-dico_strat_name_cmp(const void *item, void *data)
+dico_strat_name_cmp(const void *item, const void *data, void *unused)
 {
     dico_strategy_t strat = (dico_strategy_t) item;
     const char *name = data;
@@ -87,7 +87,7 @@ dico_strategy_add(const dico_strategy_t strat)
 	strategy_list = dico_list_create();
 	if (!strategy_list)
 	    return 1;
-	dico_list_set_comparator(strategy_list, dico_strat_name_cmp);
+	dico_list_set_comparator(strategy_list, dico_strat_name_cmp, NULL);
 	dico_list_set_free_item(strategy_list, dico_strat_free, NULL);
     }
     if (!dico_strategy_find(strat->name)) {

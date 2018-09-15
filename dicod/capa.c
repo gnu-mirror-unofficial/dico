@@ -28,7 +28,7 @@ struct dicod_capa {
 static dico_list_t /* of struct dicod_capa */ capa_list;
 
 static int
-_cmp_capa_name(const void *item, void *data)
+_cmp_capa_name(const void *item, const void *data, void *unused)
 {
     const struct dicod_capa *cp = item;
     return strcmp(cp->name, (char*)data);
@@ -46,7 +46,7 @@ dicod_capa_register(const char *name, struct dicod_command *cmd,
     cp->enabled = 0;
     if (!capa_list) {
 	capa_list = xdico_list_create();
-	dico_list_set_comparator(capa_list, _cmp_capa_name);
+	dico_list_set_comparator(capa_list, _cmp_capa_name, NULL);
     }
     xdico_list_append(capa_list, cp);
 }

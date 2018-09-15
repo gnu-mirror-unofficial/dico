@@ -60,7 +60,7 @@ virtual_result_new(struct dico_handle_struct *vdb)
 static int virtual_free_db(dico_handle_t hp);
 
 static int
-db_name_cmp(const void *item, void *data)
+db_name_cmp(const void *item, const void *data, void *closure)
 {
     const dicod_database_t *db = item;
     
@@ -72,10 +72,12 @@ db_name_cmp(const void *item, void *data)
 dicod_database_t *
 find_database_all(const char *name)
 {
-    dico_list_comp_t oldcmp = dico_list_set_comparator(database_list,
-						       db_name_cmp);
-    dicod_database_t *res = dico_list_locate(database_list, (void*) name);
-    dico_list_set_comparator(database_list, oldcmp);
+    dicod_database_t *res;
+    dico_list_comp_t oldcmp = dico_list_get_comparator(database_list);
+    void *olddata = dico_list_get_comparator_data(database_list);
+    dico_list_set_comparator(database_list, db_name_cmp, NULL);
+    res = dico_list_locate(database_list, (void*) name);
+    dico_list_set_comparator(database_list, oldcmp, olddata);
     return res;
 }
 

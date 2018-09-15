@@ -28,25 +28,26 @@ struct dico_assoc_list {
 
 struct find_closure {
     size_t count;
-    const char *str;
 };
     
 static int
-assoc_key_cmp(const void *item, void *data)
+assoc_key_cmp(const void *item, const void *data, void *closure)
 {
     const struct dico_assoc *aptr = item;
-    struct find_closure *clos = data;
-    if (strcmp(aptr->key, clos->str) == 0 && --clos->count == 0)
+    char const *str = data;
+    struct find_closure *clos = closure;
+    if (strcmp(aptr->key, str) == 0 && --clos->count == 0)
 	return 0;
     return 1;
 }
 
 static int
-assoc_key_cmp_ci(const void *item, void *data)
+assoc_key_cmp_ci(const void *item, const void *data, void *closure)
 {
     const struct dico_assoc *aptr = item;
-    struct find_closure *clos = data;
-    if (strcasecmp(aptr->key, clos->str) == 0 && --clos->count == 0)
+    char const *str = data;
+    struct find_closure *clos = closure;
+    if (strcasecmp(aptr->key, str) == 0 && --clos->count == 0)
 	return 0;
     return 1;
 }
@@ -75,7 +76,8 @@ dico_assoc_create(int flags)
 	} else {
 	    dico_list_set_comparator(assoc->list,
 				     (flags & DICO_ASSOC_CI) ?
-				       assoc_key_cmp_ci : assoc_key_cmp);
+				       assoc_key_cmp_ci : assoc_key_cmp,
+				     NULL);
 	    dico_list_set_free_item(assoc->list, assoc_free, NULL);
 	}
     }
@@ -119,11 +121,15 @@ struct dico_assoc *
 _dico_assoc_find_n(dico_assoc_list_t assoc, const char *key, size_t n)
 {
     struct find_closure clos;
+    struct dico_assoc *res;
+    
     if (!assoc || n == 0)
 	return NULL;
     clos.count = n;
-    clos.str = key;
-    return dico_list_locate(assoc->list, &clos);
+    dico_list_set_comparator_data(assoc->list, &clos);
+    res = dico_list_locate(assoc->list, (void*)key);
+    dico_list_set_comparator_data(assoc->list, NULL);
+    return res;
 }
 
 const char *
@@ -146,8 +152,9 @@ dico_assoc_remove_n(dico_assoc_list_t assoc, const char *key, size_t n)
     if (n == 0)
 	return;
     clos.count = n;
-    clos.str = key;
-    dico_list_remove(assoc->list, &clos, NULL);
+    dico_list_set_comparator_data(assoc->list, &clos);
+    dico_list_remove(assoc->list, (void*)key, NULL);
+    dico_list_set_comparator_data(assoc->list, NULL);
 }
 
 void

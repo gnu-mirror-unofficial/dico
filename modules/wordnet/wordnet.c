@@ -395,7 +395,7 @@ free_string(void *item, void *data)
 }
 
 static int
-compare_words(const void *a, void *b)
+compare_words(const void *a, const void *b, void *closure)
 {
     return utf8_strcasecmp((char*)a, (char*)b);
 }
@@ -419,7 +419,7 @@ wn_create_match_result(struct wndb *wndb)
 	return NULL;
     }
     dico_list_set_free_item(res->list, free_string, NULL);
-    dico_list_set_comparator(res->list, compare_words);
+    dico_list_set_comparator(res->list, compare_words, NULL);
     dico_list_set_flags(res->list, DICO_LIST_COMPARE_TAIL);
     return res;
 }
@@ -860,7 +860,7 @@ search_defns(struct wndb *wndb, int pos, struct result *res,
 		dp->synset[i] = ssp;
 	}
 	dico_list_append(res->list, dp);
-    } while (sp = sp->nextss);
+    } while ((sp = sp->nextss));
 
     return 1;
 }

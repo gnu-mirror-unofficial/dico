@@ -304,7 +304,7 @@ struct locate_data {
 };
 
 static int
-_cmd_arg_cmp(const void *item, void *data)
+_cmd_arg_cmp(const void *item, const void *data, void *unused)
 {
     const struct dicod_command *p = item;
     const struct locate_data *datptr = data;
@@ -333,13 +333,13 @@ dicod_add_command(struct dicod_command *cmd)
 {
     if (!command_list) {
 	command_list = xdico_list_create();
-	dico_list_set_comparator(command_list, _cmd_arg_cmp);
+	dico_list_set_comparator(command_list, _cmd_arg_cmp, NULL);
     }
     xdico_list_append(command_list, cmd);
 }
 
 static int
-cmd_comp(const void *a, void *b)
+cmd_comp(const void *a, const void *b, void *closure)
 {
     const struct dicod_command *ca = a;
     const struct dicod_command *cb = b;
@@ -351,7 +351,7 @@ dicod_remove_command(const char *name)
 {
     struct dicod_command cmd;
     cmd.keyword = name;
-    _dico_list_remove(command_list, &cmd, cmd_comp, NULL);
+    _dico_list_remove(command_list, &cmd, cmd_comp, NULL, NULL);
 }
 
 void

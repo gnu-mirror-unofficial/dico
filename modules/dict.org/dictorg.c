@@ -34,7 +34,7 @@ static int show_dictorg_entries;
     dico_log(L_ERR, 0, _("%s:%d:%s: not enough memory"), \
 	     __FILE__, __LINE__, __func__)
 
-typedef int (*COMPARATOR) (const void *, const void *);
+typedef int (*COMPARATOR) (const void *, const void *, void *closure);
 static int get_db_flag(struct dictdb *db, const char *name);
     
 static int register_strategies(void);
@@ -145,6 +145,7 @@ b64_decode(const char *val, size_t len, size_t *presult)
 }
 
 static COMPARATOR comparator(struct dictdb *db);
+static COMPARATOR case_comparator(struct dictdb *db);
 
 static int
 parse_index_entry(const char *filename, size_t line,
@@ -490,7 +491,8 @@ mod_init_db(const char *dbname, int argc, char **argv)
 
     if (sort_option) {
 	/* Sort index entries */
-	qsort(db->index, db->numwords, sizeof(db->index[0]), comparator(db));
+	dico_sort(db->index, db->numwords, sizeof(db->index[0]),
+		  comparator(db), NULL);
     }
     
     return (dico_handle_t)db;
@@ -590,7 +592,7 @@ register_strategies(void)
 }
 
 static int
-compare_allchars(const void *a, const void *b)
+compare_allchars(const void *a, const void *b, void *closure)
 {
     const struct index_entry *epa = a;
     const struct index_entry *epb = b;
@@ -599,7 +601,7 @@ compare_allchars(const void *a, const void *b)
 }
 
 static int
-compare_allchars_ci(const void *a, const void *b)
+compare_allchars_ci(const void *a, const void *b, void *closure)
 {
     const struct index_entry *epa = a;
     const struct index_entry *epb = b;
@@ -608,7 +610,7 @@ compare_allchars_ci(const void *a, const void *b)
 }
 
 static int
-compare_alnumspace(const void *a, const void *b)
+compare_alnumspace(const void *a, const void *b, void *closure)
 {
     const struct index_entry *epa = a;
     const struct index_entry *epb = b;
@@ -617,7 +619,7 @@ compare_alnumspace(const void *a, const void *b)
 }
 
 static int
-compare_alnumspace_ci(const void *a, const void *b)
+compare_alnumspace_ci(const void *a, const void *b, void *closure)
 {
     const struct index_entry *epa = a;
     const struct index_entry *epb = b;
@@ -641,24 +643,32 @@ comparator(struct dictdb *db)
     }
 }
 
+static COMPARATOR
+case_comparator(struct dictdb *db)
+{
+    if (db->flag_casesensitive)
+	return compare_allchars;
+    else
+	return compare_allchars_ci;
+}
+
 static int
-compare_entry_ptr(const void *a, const void *b)
+compare_entry_ptr(const void *a, const void *b, void *closure)
 {
     const struct index_entry *epa = *(const struct index_entry **)a;
     const struct index_entry *epb = *(const struct index_entry **)b;
-    /* FIXME: This should use comparator(db) instead. But that would
-       need using qsort_r */
-    return compare_alnumspace_ci(epa, epb);
+    COMPARATOR cmp = closure;
+    return cmp(epa, epb, NULL);
 }
 
-/* FIXME: This should use comparator(db) instead of utf8_strcasecmp.
-   Will need a customized bsearch version for that. */
 static int
-uniq_comp(const void *a, void *b)
+uniq_comp(const void *a, const void *b, void *closure)
 {
     const struct index_entry *epa = a;
     const struct index_entry *epb = b;
-
+    COMPARATOR cmp = closure;
+    struct index_entry atmp, btmp;
+    
     /* Entries differ if their headwords differ */
     if (utf8_strcasecmp(epa->word, epb->word))
 	return 1;
@@ -670,7 +680,9 @@ uniq_comp(const void *a, void *b)
     if (!epa->orig || !epb->orig)
 	return 1;
     /* We have both original headwords. Compare them to decide. */
-    return utf8_strcasecmp(epa->orig, epb->orig);
+    atmp.word = epa->orig;
+    btmp.word = epb->orig;
+    return cmp(&atmp, &btmp, NULL);
 }
 
 static int
@@ -684,15 +696,9 @@ common_match(struct dictdb *db, const char *word,
     x.length = strlen(word);
     x.wordlen = utf8_strlen(word);
     compare_count = 0;
-    ep = bsearch(&x, db->index, db->numwords, sizeof(db->index[0]),
-		 compare);
+    ep = dico_bsearch(&x, db->index, db->numwords, sizeof(db->index[0]),
+		      compare, NULL);
     if (ep) {
-	struct index_entry *p;
-	for (p = ep - 1; p > db->index && compare(&x, p) == 0; p--)
-	    ;
-	for (ep++; ep < db->index + db->numwords
-		 && compare(&x, ep) == 0; ep++)
-	    ;
 	res->type = result_match;
 	res->db = db;
 	res->list = dico_list_create();
@@ -702,12 +708,13 @@ common_match(struct dictdb *db, const char *word,
 	}
 	res->itr = NULL;
 	if (unique) {
-	    dico_list_set_comparator(res->list, uniq_comp);
+	    dico_list_set_comparator(res->list, uniq_comp, case_comparator(db));
 	    dico_list_set_flags(res->list, DICO_LIST_COMPARE_TAIL);
 	}
-	for (p++; p < ep; p++) 
-	    if (!RESERVED_WORD(db, p->word))
-		dico_list_append(res->list, p);
+	for (; ep < db->index + db->numwords
+		 && compare(&x, ep, NULL) == 0; ep++)
+	    if (!RESERVED_WORD(db, ep->word))
+		dico_list_append(res->list, ep);
 	res->compare_count = compare_count;
 	return 0;
     }
@@ -722,7 +729,7 @@ exact_match(struct dictdb *db, const char *word, struct result *res)
 }
 
 static int
-compare_prefix(const void *a, const void *b)
+compare_prefix(const void *a, const void *b, void *closure)
 {
     const struct index_entry *pkey = a;
     const struct index_entry *pelt = b;
@@ -740,7 +747,7 @@ prefix_match(struct dictdb *db, const char *word, struct result *res)
 }
 
 static int
-compare_rev_prefix(const void *a, const void *b)
+compare_rev_prefix(const void *a, const void *b, void *closure)
 {
     const struct rev_entry *pkey = a;
     const struct rev_entry *pelt = b;
@@ -775,8 +782,8 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
     x.ptr = &ent;
     
     compare_count = 0;
-    ep = bsearch(&x, db->suf_index, db->numwords, sizeof(db->suf_index[0]),
-		 compare_rev_prefix);
+    ep = dico_bsearch(&x, db->suf_index, db->numwords, sizeof(db->suf_index[0]),
+		      compare_rev_prefix, NULL);
     if (ep) {
 	struct rev_entry *p;
 	struct index_entry **tmp;
@@ -784,14 +791,9 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
 	size_t count = 1;
 	dico_list_t list;
 
-	for (p = ep - 1;
-	     p > db->suf_index && compare_rev_prefix(&x, p) == 0;
-	     p--) 
-	    count++;
-
-	for (ep++;
-	     ep < db->suf_index + db->numwords
-		 && compare_rev_prefix(&x, ep) == 0; ep++)
+	for (p = ep;
+	     p < db->suf_index + db->numwords
+		 && compare_rev_prefix(&x, ep, NULL) == 0; p++)
 	    count++;
 
 	tmp = calloc(count, sizeof(*tmp));
@@ -806,7 +808,8 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
 		tmp[j++] = p->ptr;
 	
 	count = j;
-	qsort(tmp, count, sizeof(tmp[0]), compare_entry_ptr);
+	dico_sort(tmp, count, sizeof(tmp[0]), compare_entry_ptr,
+		  case_comparator(db));
 
 	list = dico_list_create();
 	if (!list) {
@@ -815,7 +818,7 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
 	    free(tmp);
 	    return 1;
 	}
-	dico_list_set_comparator(list, uniq_comp);
+	dico_list_set_comparator(list, uniq_comp, case_comparator(db));
 	dico_list_set_flags(list, DICO_LIST_COMPARE_TAIL);
 	for (i = 0; i < count; i++) 
 	    dico_list_append(list, tmp[i]);
@@ -844,8 +847,8 @@ find_db_entry(struct dictdb *db, const char *name)
     x.word = (char*) name;
     x.length = strlen(name);
     x.wordlen = utf8_strlen(name);
-    ep = bsearch(&x, db->index, db->numwords, sizeof(db->index[0]),
-		 comparator(db));
+    ep = dico_bsearch(&x, db->index, db->numwords, sizeof(db->index[0]),
+		      comparator(db), NULL);
     if (!ep)
 	return NULL;
     buf = malloc(ep->size + 1);
@@ -873,8 +876,8 @@ get_db_flag(struct dictdb *db, const char *name)
     x.word = (char*) name;
     x.length = strlen(name);
     x.wordlen = utf8_strlen(name);
-    return bsearch(&x, db->index, db->numwords, sizeof(db->index[0]),
-		   comparator(db)) != NULL;
+    return dico_bsearch(&x, db->index, db->numwords, sizeof(db->index[0]),
+			comparator(db), NULL) != NULL;
 }
 
 static char *
@@ -946,7 +949,7 @@ _match_all(struct dictdb *db, dico_strategy_t strat, const char *word)
 	return NULL;
     }
 
-    dico_list_set_comparator(list, uniq_comp);
+    dico_list_set_comparator(list, uniq_comp, case_comparator(db));
     dico_list_set_flags(list, DICO_LIST_COMPARE_TAIL);
 
     if (dico_key_init(&key, strat, word)) {

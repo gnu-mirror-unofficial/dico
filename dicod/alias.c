@@ -74,7 +74,7 @@ alias_install(const char *kw, int argc, char **argv, grecs_locus_t *ploc)
 }
 
 static int
-list_alias_cmp(const void *a, void *b)
+list_alias_cmp(const void *a, const void *b, void *ignore)
 {
     const struct alias *ap1 = a;
     const struct alias *ap2 = b;
@@ -96,7 +96,7 @@ alias_expand(int argc, char **argv, int *pargc, char ***pargv)
 	sample.kw = (char*) ap->argv[0];
 	if (!alist) {
 	    alist = xdico_list_create();
-	    dico_list_set_comparator (alist, list_alias_cmp);
+	    dico_list_set_comparator (alist, list_alias_cmp, NULL);
 	}
 	xdico_list_append(alist, ap);
     }

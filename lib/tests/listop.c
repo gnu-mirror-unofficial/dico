@@ -139,7 +139,7 @@ number(void *object, int argc, char **argv)
 }
 
 static int
-string_comp(const void *item, void *value)
+string_comp(const void *item, const void *value, void *ignored)
 {
     return strcmp(item, value);
 }
@@ -188,7 +188,7 @@ main(int argc, char **argv)
 	perror("dico_list_create");
 	exit(1);
     }
-    dico_list_set_comparator(list, string_comp);
+    dico_list_set_comparator(list, string_comp, NULL);
     
     while (argc--) {
 	if (dico_list_append(list, *argv++)) {

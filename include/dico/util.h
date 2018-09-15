@@ -21,5 +21,11 @@ char *dico_full_file_name(const char *dir, const char *file);
 size_t dico_string_trim(char *buf, size_t len, int (*pred)(int c));
 size_t dico_trim_nl(char *buf);
 size_t dico_trim_ws(char *buf);
+int dico_sort(void *base, size_t nmemb, size_t size,
+	      int (*comp)(const void *, const void *, void *),
+	      void *closure);
+void *dico_bsearch(void *key, const void *base, size_t nelem, size_t elsize,
+		   int (*comp) (const void *, const void *, void *),
+		   void *closure);
 
 #endif

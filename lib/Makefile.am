@@ -27,6 +27,7 @@ libdico_la_SOURCES=\
  argcv.c\
  assoc.c\
  base64.c\
+ bsearch.c\
  crlfstr.c\
  dbgstream.c\
  diag.c\
@@ -43,6 +44,7 @@ libdico_la_SOURCES=\
  logstream.c\
  mapstream.c\
  markup.c\
+ mergesort.c\
  parseopt.c\
  qp.c\
  soundex.c\
@@ -57,7 +59,7 @@ libdico_la_SOURCES=\
  util.c\
  xlat.c
 
-libdico_la_LDFLAGS = -version-info 1:0:0
+libdico_la_LDFLAGS = -version-info 2:0:0
 libdico_la_LIBADD = ../grecs/src/libgrecs.la
 
 libxdico_a_SOURCES=\

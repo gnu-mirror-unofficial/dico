@@ -20,7 +20,7 @@ dico_list_t dicod_lang_lazy_prefs;
 dico_list_t dicod_lang_prefs[2];
 
 static int
-cmp_string_ci(const void *a, void *b)
+cmp_string_ci(const void *a, const void *b, void *closure)
 {
     return c_strcasecmp(a, b);
 }
@@ -33,19 +33,21 @@ dicod_lang_check(dico_list_t list[2])
     
     if (dicod_lang_lazy_prefs) {
 	if (list[0] && dico_list_intersect_p(dicod_lang_lazy_prefs, list[0],
-					     cmp_string_ci))
+					     cmp_string_ci, NULL))
 	    return 1;
 	if (list[1] && dico_list_intersect_p(dicod_lang_lazy_prefs, list[1],
-					     cmp_string_ci))
+					     cmp_string_ci, NULL))
 	    return 1;
 	return 0;
     } 
 
     if (dicod_lang_prefs[0] && list[0]
-	&& !dico_list_intersect_p(dicod_lang_prefs[0], list[0], cmp_string_ci))
+	&& !dico_list_intersect_p(dicod_lang_prefs[0], list[0],
+				  cmp_string_ci, NULL))
 	return 0;
     if (dicod_lang_prefs[1] && list[1]
-	&& !dico_list_intersect_p(dicod_lang_prefs[1], list[1], cmp_string_ci))
+	&& !dico_list_intersect_p(dicod_lang_prefs[1], list[1],
+				  cmp_string_ci, NULL))
 	return 0;
     return 1;
 }

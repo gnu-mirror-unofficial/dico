@@ -310,7 +310,7 @@ parse_acl_line(grecs_locus_t *locus, int allow, dicod_acl_t acl,
 /* ACL verification */
 
 static int
-cmp_group_name(const void *item, void *data)
+cmp_group_name(const void *item, const void *data, void *ignore)
 {
     return strcmp((char*)item, (char*)data);
 }
@@ -366,7 +366,7 @@ _acl_check(struct acl_entry *ent)
 
     if (ent->groups) {
 	result = dico_list_intersect_p(ent->groups, user_groups,
-				       cmp_group_name);
+				       cmp_group_name, NULL);
 	if (!result)
 	    return 0;
     }	

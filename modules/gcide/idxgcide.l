@@ -66,7 +66,7 @@ static void
 full_write(void *data, size_t size)
 {
     if (fwrite(data, size, 1, idxfile) != 1) {
-	dico_log(L_ERR, errno, _("write error"));
+        DICO_LOG_ERRNO();
 	exit(EX_UNAVAILABLE);
     }
 }
@@ -292,7 +292,7 @@ main(int argc, char **argv)
     
     idx_page = malloc(idx_header.ihdr_pagesize);
     if (!idx_page) {
-	dico_log(L_ERR, 0, _("not enough memory"));
+	DICO_LOG_ERRNO();
 	exit(EX_UNAVAILABLE);
     }
     idx_page->ipg_header.hdr.phdr_numentries = 0;
@@ -318,7 +318,7 @@ main(int argc, char **argv)
 
     infile = dico_full_file_name(dictdir, "CIDE.A");
     if (!infile) {
-        dico_log(L_ERR, 0, _("not enough memory"));
+        DICO_LOG_MEMERR();
         exit(EX_UNAVAILABLE);
     }    
     suf = infile + strlen(infile) - 1;
@@ -328,7 +328,7 @@ main(int argc, char **argv)
     else 
 	idxname = dico_full_file_name(idxdir, "GCIDE.IDX");
     if (!idxname) {
-        dico_log(L_ERR, 0, _("not enough memory"));
+        DICO_LOG_MEMERR();
         exit(EX_UNAVAILABLE);
     }
     

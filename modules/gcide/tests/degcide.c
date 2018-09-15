@@ -208,7 +208,7 @@ main(int argc, char **argv)
     
     textbuf = malloc(size);
     if (!textbuf) {
-	dico_log(L_ERR, 0, "not enough memory");
+	DICO_LOG_ERRNO();
 	exit(EX_UNAVAILABLE);
     }
     

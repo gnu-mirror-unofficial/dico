@@ -116,12 +116,12 @@ gcide_idx_file_open(const char *name, size_t cachesize)
     
     file = calloc(1, sizeof(*file));
     if (!file) {
-	dico_log(L_ERR, errno, "gcide_idx_file_open");
+        DICO_LOG_ERRNO();
 	return NULL;
     }
     file->name = strdup(name);
     if (!file->name) {
-	dico_log(L_ERR, errno, "gcide_idx_file_open");
+        DICO_LOG_ERRNO();
 	free(file);
 	return NULL;
     }
@@ -168,7 +168,7 @@ _cache_alloc(struct gcide_idx_file *file)
     if (!file->cache) {
 	file->cache = calloc(file->cache_size, sizeof(file->cache[0]));
 	if (!file->cache) {
-	    dico_log(L_ERR, ENOMEM, "gcide _cache_alloc");
+            DICO_LOG_ERRNO();
 	    return NULL;
 	}
     }
@@ -178,12 +178,12 @@ _cache_alloc(struct gcide_idx_file *file)
 	    return file->cache[file->cache_used - 1];
 	cp = calloc(1, sizeof(*cp));
 	if (!cp) {
-	    dico_log(L_ERR, ENOMEM, "gcide _cache_alloc");
+            DICO_LOG_ERRNO();
 	    return NULL;
 	}
 	cp->page = malloc(file->header.ihdr_pagesize);
 	if (!cp->page) {
-	    dico_log(L_ERR, ENOMEM, "gcide _cache_alloc");
+            DICO_LOG_ERRNO();
 	    free(cp);
 	    return NULL;
 	}
@@ -413,7 +413,7 @@ gcide_idx_locate(struct gcide_idx_file *file, char *headword, size_t hwlen)
     
     itr = malloc(sizeof(*itr));
     if (!itr) {
-	dico_log(L_ERR, errno, "gcide_idx_locate");
+        DICO_LOG_ERRNO();
 	return NULL;
     }
     if (hwlen) {
@@ -424,7 +424,7 @@ gcide_idx_locate(struct gcide_idx_file *file, char *headword, size_t hwlen)
 	itr->headword = strdup(headword);
 
     if (!itr->headword) {
-	dico_log(L_ERR, errno, "gcide_idx_locate");
+        DICO_LOG_ERRNO();
 	free(itr);
 	return NULL;
     }

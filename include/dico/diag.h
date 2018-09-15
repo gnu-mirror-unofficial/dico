@@ -60,5 +60,12 @@ dico_stream_t dico_dbg_stream_create(void);
 	dico_stream_ioctl(str, DICO_DBG_CTL_SET_FILE, __FILE__);	\
 	dico_stream_ioctl(str, DICO_DBG_CTL_SET_LINE, &n);		\
     } while (0)
-    
+
+#define DICO_LOG_ERRNO() \
+    dico_log(L_ERR, errno, "%s:%d:%s", \
+	     __FILE__, __LINE__, __func__)
+#define DICO_LOG_MEMERR() \
+    dico_log(L_ERR, ENOMEM, "%s:%d:%s", \
+	     __FILE__, __LINE__, __func__)
+
 #endif

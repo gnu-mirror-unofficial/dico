@@ -22,18 +22,6 @@ static int sort_index;
 static int trim_ws;
 static int show_dictorg_entries;
 
-#if __STDC_VERSION__ < 199901L
-# if __GNUC__ >= 2
-#  define __func__ __FUNCTION__
-# else
-#  define __func__ "<unknown>"
-# endif
-#endif
-
-#define MEMERR() \
-    dico_log(L_ERR, 0, _("%s:%d:%s: not enough memory"), \
-	     __FILE__, __LINE__, __func__)
-
 typedef int (*COMPARATOR) (const void *, const void *, void *closure);
 static int get_db_flag(struct dictdb *db, const char *name);
     
@@ -203,7 +191,7 @@ parse_index_entry(const char *filename, size_t line,
 
 	    idx.word = malloc(len + 1);
 	    if (!idx.word) {
-		MEMERR();
+		DICO_LOG_MEMERR();
 		return 1;
 	    }
 
@@ -214,7 +202,7 @@ parse_index_entry(const char *filename, size_t line,
 	} else if (nfield == 3) {
 	    idx.orig = malloc(len + 1);
 	    if (!idx.orig) {
-		MEMERR();
+		DICO_LOG_MEMERR();
 		return 1;
 	    }
 	    memcpy(idx.orig, start, len);
@@ -244,7 +232,7 @@ parse_index_entry(const char *filename, size_t line,
 	} else {
 	    ep = malloc(sizeof(*ep));
 	    if (!ep) {
-		MEMERR();
+		DICO_LOG_MEMERR();
 		rc = 1;
 	    }
 	}
@@ -303,7 +291,7 @@ read_index(struct dictdb *db, const char *idxname, int tws)
 
     list = dico_list_create();
     if (!list) {
-	MEMERR();
+	DICO_LOG_MEMERR();
 	rc = 1;
     } else {
 	dico_iterator_t itr;
@@ -353,7 +341,7 @@ open_index(struct dictdb *db, int tws)
     int rc;
     
     if (!idxname) {
-	MEMERR();
+	DICO_LOG_MEMERR();
 	return 1;
     }
 
@@ -451,14 +439,14 @@ mod_init_db(const char *dbname, int argc, char **argv)
 	filename = strdup(filename);
 
     if (!filename) {
-	MEMERR();
+	DICO_LOG_MEMERR();
 	return NULL;
     }
     
     db = calloc(1, sizeof(*db));
     if (!db) {
 	free(filename);
-	MEMERR();
+	DICO_LOG_MEMERR();
 	return NULL;
     }
 
@@ -703,7 +691,7 @@ common_match(struct dictdb *db, const char *word,
 	res->db = db;
 	res->list = dico_list_create();
 	if (!res->list) {
-	    MEMERR();
+	    DICO_LOG_MEMERR();
 	    return 0;
 	}
 	res->itr = NULL;
@@ -766,14 +754,14 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
     int rc;
     
     if (init_suffix_index(db)) {
-	MEMERR();
+	DICO_LOG_MEMERR();
 	return 1;
     }
     
     ent.length = strlen(word);
     x.word = malloc(ent.length + 1);
     if (!x.word) {
-	MEMERR();
+	DICO_LOG_MEMERR();
 	return 1;
     }
     ent.wordlen = utf8_strlen(word);
@@ -798,7 +786,7 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
 
 	tmp = calloc(count, sizeof(*tmp));
 	if (!tmp) {
-	    MEMERR();
+	    DICO_LOG_MEMERR();
 	    free(x.word);
 	    return 1;
 	} 
@@ -813,7 +801,7 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
 
 	list = dico_list_create();
 	if (!list) {
-	    MEMERR();
+	    DICO_LOG_MEMERR();
 	    free(x.word);
 	    free(tmp);
 	    return 1;
@@ -853,7 +841,7 @@ find_db_entry(struct dictdb *db, const char *name)
 	return NULL;
     buf = malloc(ep->size + 1);
     if (!buf) {
-	MEMERR();
+	DICO_LOG_MEMERR();
 	return NULL;
     }
     dico_stream_seek(db->stream, ep->offset, DICO_SEEK_SET);
@@ -945,7 +933,7 @@ _match_all(struct dictdb *db, dico_strategy_t strat, const char *word)
     list = dico_list_create();
 
     if (!list) {
-	MEMERR();
+	DICO_LOG_MEMERR();
 	return NULL;
     }
 
@@ -1015,7 +1003,7 @@ mod_define(dico_handle_t hp, const char *word)
 	return NULL;
     rp = malloc(sizeof(*rp));
     if (!rp) {
-	MEMERR();
+	DICO_LOG_MEMERR();
 	dico_list_destroy(&res.list);
 	return NULL;
     }

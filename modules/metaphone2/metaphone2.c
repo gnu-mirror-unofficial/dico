@@ -224,7 +224,7 @@ double_metaphone_add(double_metaphone_code code,
 	if (!code[1]) {
 	    code[1] = metaph_code_dup(code[0]);
 	    if (!code[1]) {
-		dico_log(L_ERR, 0, _("%s: not enough memory"), __func__);
+                DICO_LOG_MEMERR();
 		return -1;
 	    }
 	}

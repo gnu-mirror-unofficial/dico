@@ -431,7 +431,7 @@ mod_init_db (const char *dbname, int argc, char **argv)
 
     db = malloc (sizeof (*db));
     if (!db) {
-	dico_log (L_ERR, 0, _("%s: not enough memory"), "mod_init_db");
+        DICO_LOG_ERRNO();
 	return NULL;
     }
     db->dbname = dbname;

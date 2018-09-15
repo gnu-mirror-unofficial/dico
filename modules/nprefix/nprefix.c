@@ -54,7 +54,7 @@ nprefix_sel(int cmd, dico_key_t key, const char *dict_word)
 	
 	np = calloc(1, sizeof(np[0]));
 	if (!np) {
-	    dico_log(L_ERR, errno, "nprefix_sel");
+            DICO_LOG_MEMERR();
 	    return 1;
 	}
 	np->prefix = (char*)key_word;

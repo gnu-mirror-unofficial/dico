@@ -221,7 +221,7 @@ wn_init_db(const char *dbname, int argc, char **argv)
     optc = argc + 1;
     optv = calloc(optc, sizeof(optv[0]));
     if (!optv) {
-	dico_log(L_ERR, ENOMEM, "wn_init_db");
+        DICO_LOG_ERRNO();
 	return NULL;
     }
 
@@ -247,13 +247,13 @@ wn_init_db(const char *dbname, int argc, char **argv)
     
     wndb = calloc(1, sizeof(*wndb));
     if (!wndb) {
-	dico_log(L_ERR, ENOMEM, "wn_init_db");
+        DICO_LOG_ERRNO();
 	free(optv);
 	return NULL;
     }
     wndb->dbname = strdup(dbname);
     if (!wndb->dbname) {
-	dico_log(L_ERR, ENOMEM, "wn_init_db");
+        DICO_LOG_ERRNO();
 	free(wndb);
 	return NULL;
     }
@@ -307,7 +307,7 @@ wordbuf_expand(struct wordbuf *wb, size_t len)
 	size_t size = ((len + WORDBUFINC - 1) /  WORDBUFINC ) * WORDBUFINC;
 	char *newword = realloc(wb->word, size);
 	if (!newword) {
-	    dico_log(L_ERR, ENOMEM, "wordbuf_expand");
+            DICO_LOG_ERRNO();
 	    return 1;
 	}
 	wb->word = newword;
@@ -407,14 +407,14 @@ wn_create_match_result(struct wndb *wndb)
 
     res = calloc(1, sizeof(*res));
     if (!res) {
-	dico_log(L_ERR, ENOMEM, "wn_create_match_result");
+        DICO_LOG_ERRNO();
 	return NULL;
     }
     res->type = result_match;
     res->wndb = wndb;
     res->list = dico_list_create();
     if (!res) {
-	dico_log(L_ERR, ENOMEM, "wn_create_match_result");
+        DICO_LOG_ERRNO();
 	free(res);
 	return NULL;
     }
@@ -431,14 +431,14 @@ wn_create_define_result(struct wndb *wndb, const char *searchword)
 
     res = calloc(1, sizeof(*res));
     if (!res) {
-	dico_log(L_ERR, ENOMEM, "wn_create_define_result");
+        DICO_LOG_ERRNO();
 	return NULL;
     }
     res->type = result_define;
     res->wndb = wndb;
     res->list = dico_list_create();
     if (!res) {
-	dico_log(L_ERR, ENOMEM, "wn_create_match_result");
+        DICO_LOG_ERRNO();
 	free(res);
 	return NULL;
     }
@@ -446,13 +446,13 @@ wn_create_define_result(struct wndb *wndb, const char *searchword)
 
     res->searchword = strdup(searchword);
     if (!res->searchword) {
-	dico_log(L_ERR, ENOMEM, "wn_create_match_result");
+        DICO_LOG_ERRNO();
 	wn_free_result((dico_result_t) res);
     }
 
     res->rootlist = dico_list_create();
     if (!res->rootlist) {
-	dico_log(L_ERR, ENOMEM, "wn_create_match_result");
+        DICO_LOG_ERRNO();
 	wn_free_result((dico_result_t) res);
     }
     dico_list_set_free_item(res->rootlist, free_root_synset, NULL);
@@ -467,14 +467,14 @@ wn_match_result_add(struct result *res, const char *hw)
     char *s = strdup(hw);
 
     if (!s) {
-	dico_log(L_ERR, ENOMEM, "wn_result_add_key");
+        DICO_LOG_ERRNO();
 	return -1;
     }
     rc = dico_list_insert_sorted(res->list, s);
     if (rc) {
 	free(s);
 	if (rc != EEXIST) {
-	    dico_log(L_ERR, ENOMEM, "wn_foreach_db");
+            DICO_LOG_MEMERR();
 	    return -1;
 	}
     }
@@ -610,13 +610,13 @@ wn_foreach(struct wndb *wndb, const dico_strategy_t strat, const char *word)
     strtolower(strsubst(searchword, ' ', '_'));
 
     if (!searchword) {
-	dico_log(L_ERR, ENOMEM, "wn_foreach");
+        DICO_LOG_MEMERR();
 	wn_free_result((dico_result_t) res);
 	return NULL;
     }
 	       
     if (dico_key_init(&key, strat, word)) {
-	dico_log(L_ERR, 0, _("wn_foreach: key initialization failed"));
+	dico_log(L_ERR, 0, _("%s: key initialization failed"), __func__);
 	wn_free_result((dico_result_t) res);
 	free(searchword);
 	return NULL;
@@ -780,7 +780,7 @@ nornmalize_search_word(const char *word)
 
     copy = malloc(strlen(word) + 1);
     if (!copy) {
-	dico_log(L_ERR, ENOMEM, "nornmalize_search_word");
+        DICO_LOG_ERRNO();
 	return NULL;
     }
     for (p = copy, q = word; *q; ) {
@@ -815,12 +815,12 @@ create_defn(struct wndb *wndb, int pos)
 {
     struct defn *p = malloc(sizeof(*p));
     if (!p) {
-	dico_log(L_ERR, ENOMEM, "create_defn");
+        DICO_LOG_ERRNO();
 	return NULL;
     }
     p->synset = calloc(wndb->optc, sizeof(p->synset[0]));
     if (!p->synset) {
-	dico_log(L_ERR, ENOMEM, "create_defn");
+        DICO_LOG_ERRNO();
 	free(p);
 	return NULL;
     }

@@ -281,7 +281,7 @@ _dico_ldap_search(struct _dico_ldap_handle *lp, const char *filter_pat,
     if (filter_pat) {
 	filter = _dico_ldap_expand_user(filter_pat, user);
 	if (!filter) {
-	    dico_log(L_ERR, ENOMEM, "_dico_ldap_expand_user");
+            DICO_LOG_MEMERR();
 	    return NULL;
 	}
     } else

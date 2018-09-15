@@ -641,13 +641,36 @@ comparator(struct dictdb *db)
     }
 }
 
-//FIXME
 static int
 compare_entry_ptr(const void *a, const void *b)
 {
     const struct index_entry *epa = *(const struct index_entry **)a;
     const struct index_entry *epb = *(const struct index_entry **)b;
+    /* FIXME: This should use comparator(db) instead. But that would
+       need using qsort_r */
     return compare_alnumspace_ci(epa, epb);
+}
+
+/* FIXME: This should use comparator(db) instead of utf8_strcasecmp.
+   Will need a customized bsearch version for that. */
+static int
+uniq_comp(const void *a, void *b)
+{
+    const struct index_entry *epa = a;
+    const struct index_entry *epb = b;
+
+    /* Entries differ if their headwords differ */
+    if (utf8_strcasecmp(epa->word, epb->word))
+	return 1;
+    /* Otherwise, if neither entry has the original headword, they
+       are equal */
+    if (!epa->orig && !epb->orig)
+	return 0;
+    /* If only one original headword is present, entries differ */
+    if (!epa->orig || !epb->orig)
+	return 1;
+    /* We have both original headwords. Compare them to decide. */
+    return utf8_strcasecmp(epa->orig, epb->orig);
 }
 
 static int
@@ -679,9 +702,7 @@ common_match(struct dictdb *db, const char *word,
 	}
 	res->itr = NULL;
 	if (unique) {
-	    dico_list_set_comparator(res->list,
-				     (int (*)(const void *, void *))
-				     comparator(db));
+	    dico_list_set_comparator(res->list, uniq_comp);
 	    dico_list_set_flags(res->list, DICO_LIST_COMPARE_TAIL);
 	}
 	for (p++; p < ep; p++) 
@@ -697,7 +718,7 @@ common_match(struct dictdb *db, const char *word,
 static int
 exact_match(struct dictdb *db, const char *word, struct result *res)
 {
-    return common_match(db, word, comparator(db), 1, res);
+    return common_match(db, word, comparator(db), 0, res);
 }
 
 static int
@@ -794,9 +815,7 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
 	    free(tmp);
 	    return 1;
 	}
-	dico_list_set_comparator(list,
-				 (int (*)(const void *, void *))
-				   comparator(db));
+	dico_list_set_comparator(list, uniq_comp);
 	dico_list_set_flags(list, DICO_LIST_COMPARE_TAIL);
 	for (i = 0; i < count; i++) 
 	    dico_list_append(list, tmp[i]);
@@ -927,9 +946,7 @@ _match_all(struct dictdb *db, dico_strategy_t strat, const char *word)
 	return NULL;
     }
 
-    dico_list_set_comparator(list,
-			     (int (*)(const void *, void *))
-			       comparator(db));
+    dico_list_set_comparator(list, uniq_comp);
     dico_list_set_flags(list, DICO_LIST_COMPARE_TAIL);
 
     if (dico_key_init(&key, strat, word)) {

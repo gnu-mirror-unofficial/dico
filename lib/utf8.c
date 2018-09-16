@@ -1748,120 +1748,43 @@ urf8_symcasecmp(char *a, char *b)
 	return 1;
     return 0;
 }
-
-enum {
-    case_sensitive,
-    case_insensitive
-};
-
-int
-utf8_strcmp_cc(char *a, char *b, int ci)
-{
-    int alen, blen;
-
-    for (; *a; a += alen, b += blen) {
-	unsigned wa, wb;
-
-	if (*b == 0)
-	    return 1;
-
-	alen = utf8_char_width(a);
-	if (alen == 0)
-	    return -1;
-	utf8_mbtowc(&wa, a, alen);
-	blen = utf8_char_width(b);
-	if (blen == 0)
-	    return 1;
-	utf8_mbtowc(&wb, b, blen);
-	if (ci == case_insensitive) {
-	    wa = utf8_wc_toupper(wa);
-	    wb = utf8_wc_toupper(wb);
-	}
-	if (wa < wb)
-	    return -1;
-	if (wa > wb)
-	    return 1;
-
-    }
-    if (*b)
-	return -1;
-    return 0;
-}
-
-int
-utf8_strcmp(char *a, char *b)
-{
-    return utf8_strcmp_cc(a, b, case_sensitive);
-}
-
-int
-utf8_strcasecmp(char *a, char *b)
-{
-    return utf8_strcmp_cc(a, b, case_insensitive);
-}
-
-int
-utf8_strncasecmp(char *a, char *b, size_t maxlen)
-{
-    int alen, blen;
-    unsigned asz = 0, bsz = 0;
-
-    while (asz < maxlen) {
-	unsigned wa, wb;
-
-	if (*a == 0)
-	    return (*b == 0) ? 0 : -1;
-
-	if (*b == 0)
-	    return 1;
-
-	alen = utf8_char_width(a);
-	if (alen == 0)
-	    return -1;
-	utf8_mbtowc(&wa, a, alen);
-	blen = utf8_char_width(b);
-	if (blen == 0)
-	    return 1;
-	utf8_mbtowc(&wb, b, blen);
-	wa = utf8_wc_toupper(wa);
-	wb = utf8_wc_toupper(wb);
-	if (wa < wb)
-	    return -1;
-	if (wa > wb)
-	    return 1;
-	a += alen;
-	b += blen;
-	asz ++;
-	bsz ++;
-    }
-    return 0;
-}
 
-#define is_alnumspace(c) (utf8_wc_is_alnum(c) || utf8_wc_is_space(c))
 int
-utf8_strcmp_alnumspace_cc(char *a, char *b, int ci)
+utf8_compare(char const *a, char const *b,
+	     int ci, size_t maxlen, int (*wcsel)(unsigned))
 {
     int alen, blen;
+    size_t an = 0, bn = 0;
     unsigned wa, wb;
 
-    while (*a) {	
+    while (1) {
+	if (maxlen != 0 && an == maxlen)
+	    return 0;
+	if (*a == 0)
+	    break;
+	
 	alen = utf8_char_width(a);
 	if (alen == 0)
 	    return -1;
+	
 	utf8_mbtowc(&wa, a, alen);
 	a += alen;
+	an++;
 
-	if (is_alnumspace(wa)) {
+	if (!wcsel || wcsel(wa)) {
 	    if (*b == 0)
 		return 1;
 	    while (*b) {
+		if (maxlen != 0 && bn == maxlen)
+		    return 0;
 		blen = utf8_char_width(b);
 		if (blen == 0)
 		    return 1;
 		utf8_mbtowc(&wb, b, blen);
 		b += blen;
+		bn++;
 		
-		if (is_alnumspace(wb)) {
+		if (!wcsel || wcsel(wb)) {
 		    if (ci == case_insensitive) {
 			wa = utf8_wc_toupper(wa);
 			wb = utf8_wc_toupper(wb);
@@ -1882,23 +1805,29 @@ utf8_strcmp_alnumspace_cc(char *a, char *b, int ci)
 	    return 1;
 	utf8_mbtowc(&wb, b, blen);
 	b += blen;
-	if (is_alnumspace(wb))
+	if (!wcsel || wcsel(wb))
 	    return -1;
     }
     
     return 0;
 }
-
+
 int
-utf8_strcmp_alnumspace(char *a, char *b)
+utf8_strcmp(char const *a, char const *b)
 {
-    return utf8_strcmp_alnumspace_cc(a, b, case_sensitive);
+    return utf8_compare(a, b, case_sensitive, 0, NULL);
 }
 
 int
-utf8_strcasecmp_alnumspace(char *a, char *b)
+utf8_strcasecmp(char const *a, char const *b)
 {
-    return utf8_strcmp_alnumspace_cc(a, b, case_insensitive);
+    return utf8_compare(a, b, case_insensitive, 0, NULL);
+}
+
+int
+utf8_strncasecmp(char const *a, char const *b, size_t maxlen)
+{
+    return utf8_compare(a, b, case_insensitive, maxlen, NULL);
 }
 
 unsigned

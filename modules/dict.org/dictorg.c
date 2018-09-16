@@ -22,7 +22,42 @@ static int sort_index;
 static int trim_ws;
 static int show_dictorg_entries;
 
-typedef int (*COMPARATOR) (const void *, const void *, void *closure);
+static int
+is_alnumspace(unsigned c)
+{
+    return utf8_wc_is_alnum(c) || utf8_wc_is_space(c);
+}
+
+static inline int
+headword_compare(char const *a, char const *b, struct dictdb *db)
+{
+    return utf8_compare(a, b,
+			db->flag_casesensitive
+			  ? case_sensitive : case_insensitive,
+			0,
+			db->flag_allchars ? NULL : is_alnumspace);
+}
+
+static inline int
+headword_compare_allchars(char const *a, char const *b, struct dictdb *db,
+			  size_t len)
+{
+    return utf8_compare(a, b,
+			db->flag_casesensitive
+			  ? case_sensitive : case_insensitive,
+			len,
+			NULL);
+}
+
+static int
+compare_index_entry(const void *a, const void *b, void *closure)
+{
+    const struct index_entry *epa = a;
+    const struct index_entry *epb = b;
+    compare_count++;
+    return headword_compare(epa->word, epb->word, (struct dictdb *)closure);
+}
+
 static int get_db_flag(struct dictdb *db, const char *name);
     
 static int register_strategies(void);
@@ -131,9 +166,6 @@ b64_decode(const char *val, size_t len, size_t *presult)
     *presult = v;
     return 0;
 }
-
-static COMPARATOR comparator(struct dictdb *db);
-static COMPARATOR case_comparator(struct dictdb *db);
 
 static int
 parse_index_entry(const char *filename, size_t line,
@@ -480,12 +512,11 @@ mod_init_db(const char *dbname, int argc, char **argv)
     if (sort_option) {
 	/* Sort index entries */
 	dico_sort(db->index, db->numwords, sizeof(db->index[0]),
-		  comparator(db), NULL);
+		  compare_index_entry, db);
     }
     
     return (dico_handle_t)db;
 }
-
 
 static void
 revert_word(char *dst, const char *src, size_t len)
@@ -505,11 +536,11 @@ revert_word(char *dst, const char *src, size_t len)
 }
 
 static int
-compare_rev_entry(const void *a, const void *b)
+compare_rev_entry(const void *a, const void *b, void *closure)
 {
     struct rev_entry const *epa = a;
     struct rev_entry const *epb = b;
-    return utf8_strcasecmp(epa->word, epb->word);
+    return headword_compare_allchars(epa->word, epb->word, closure, 0);
 }
 
 static int
@@ -533,8 +564,8 @@ init_suffix_index(struct dictdb *db)
 	    db->suf_index[i].word = p;
 	    db->suf_index[i].ptr = &db->index[i];
 	}
-        qsort(db->suf_index, db->numwords, sizeof(db->suf_index[0]),
-	      compare_rev_entry);
+        dico_sort(db->suf_index, db->numwords, sizeof(db->suf_index[0]),
+		  compare_rev_entry, db);
     }
     return 0;
 }    
@@ -580,73 +611,12 @@ register_strategies(void)
 }
 
 static int
-compare_allchars(const void *a, const void *b, void *closure)
-{
-    const struct index_entry *epa = a;
-    const struct index_entry *epb = b;
-    compare_count++;
-    return utf8_strcmp(epa->word, epb->word);
-}
-
-static int
-compare_allchars_ci(const void *a, const void *b, void *closure)
-{
-    const struct index_entry *epa = a;
-    const struct index_entry *epb = b;
-    compare_count++;
-    return utf8_strcasecmp(epa->word, epb->word);
-}
-
-static int
-compare_alnumspace(const void *a, const void *b, void *closure)
-{
-    const struct index_entry *epa = a;
-    const struct index_entry *epb = b;
-    compare_count++;
-    return utf8_strcmp_alnumspace(epa->word, epb->word);
-}
-
-static int
-compare_alnumspace_ci(const void *a, const void *b, void *closure)
-{
-    const struct index_entry *epa = a;
-    const struct index_entry *epb = b;
-    compare_count++;
-    return utf8_strcasecmp_alnumspace(epa->word, epb->word);
-}
-
-static COMPARATOR
-comparator(struct dictdb *db)
-{
-    if (db->flag_allchars) {
-	if (db->flag_casesensitive)
-	    return compare_allchars;
-	else
-	    return compare_allchars_ci;
-    } else {
-	if (db->flag_casesensitive)
-	    return compare_alnumspace;
-	else
-	    return compare_alnumspace_ci;
-    }
-}
-
-static COMPARATOR
-case_comparator(struct dictdb *db)
-{
-    if (db->flag_casesensitive)
-	return compare_allchars;
-    else
-	return compare_allchars_ci;
-}
-
-static int
 compare_entry_ptr(const void *a, const void *b, void *closure)
 {
     const struct index_entry *epa = *(const struct index_entry **)a;
     const struct index_entry *epb = *(const struct index_entry **)b;
-    COMPARATOR cmp = closure;
-    return cmp(epa, epb, NULL);
+    struct dictdb *db = closure;
+    return headword_compare_allchars(epa->word, epb->word, db, 0);
 }
 
 static int
@@ -654,11 +624,10 @@ uniq_comp(const void *a, const void *b, void *closure)
 {
     const struct index_entry *epa = a;
     const struct index_entry *epb = b;
-    COMPARATOR cmp = closure;
-    struct index_entry atmp, btmp;
+    struct dictdb *db = closure;
     
     /* Entries differ if their headwords differ */
-    if (utf8_strcasecmp(epa->word, epb->word))
+    if (headword_compare(epa->word, epb->word, db))
 	return 1;
     /* Otherwise, if neither entry has the original headword, they
        are equal */
@@ -668,14 +637,12 @@ uniq_comp(const void *a, const void *b, void *closure)
     if (!epa->orig || !epb->orig)
 	return 1;
     /* We have both original headwords. Compare them to decide. */
-    atmp.word = epa->orig;
-    btmp.word = epb->orig;
-    return cmp(&atmp, &btmp, NULL);
+    return headword_compare(epa->orig, epb->orig, db);
 }
 
 static int
 common_match(struct dictdb *db, const char *word,
-	     COMPARATOR compare,
+	     int (*compare)(const void *, const void *, void *),
 	     int unique, struct result *res)
 {
     struct index_entry x, *ep;
@@ -685,7 +652,7 @@ common_match(struct dictdb *db, const char *word,
     x.wordlen = utf8_strlen(word);
     compare_count = 0;
     ep = dico_bsearch(&x, db->index, db->numwords, sizeof(db->index[0]),
-		      compare, NULL);
+		      compare, db);
     if (ep) {
 	res->type = result_match;
 	res->db = db;
@@ -696,7 +663,7 @@ common_match(struct dictdb *db, const char *word,
 	}
 	res->itr = NULL;
 	if (unique) {
-	    dico_list_set_comparator(res->list, uniq_comp, case_comparator(db));
+	    dico_list_set_comparator(res->list, uniq_comp, db);
 	    dico_list_set_flags(res->list, DICO_LIST_COMPARE_TAIL);
 	}
 	for (; ep < db->index + db->numwords
@@ -713,7 +680,7 @@ common_match(struct dictdb *db, const char *word,
 static int
 exact_match(struct dictdb *db, const char *word, struct result *res)
 {
-    return common_match(db, word, comparator(db), 0, res);
+    return common_match(db, word, compare_index_entry, 0, res);
 }
 
 static int
@@ -721,11 +688,12 @@ compare_prefix(const void *a, const void *b, void *closure)
 {
     const struct index_entry *pkey = a;
     const struct index_entry *pelt = b;
+    struct dictdb *db = closure;
     size_t wordlen = pkey->wordlen;
     compare_count++;
     if (pelt->wordlen < wordlen)
 	return -1;
-    return utf8_strncasecmp(pkey->word, pelt->word, wordlen);
+    return headword_compare_allchars(pkey->word, pelt->word, db, wordlen);
 }
 
 static int
@@ -739,11 +707,12 @@ compare_rev_prefix(const void *a, const void *b, void *closure)
 {
     const struct rev_entry *pkey = a;
     const struct rev_entry *pelt = b;
+    struct dictdb *db = closure;
     size_t wordlen = pkey->ptr->wordlen;
     if (pelt->ptr->wordlen < wordlen)
 	wordlen = pelt->ptr->wordlen;
     compare_count++;
-    return utf8_strncasecmp(pkey->word, pelt->word, wordlen);
+    return headword_compare_allchars(pkey->word, pelt->word, db, wordlen);
 }
 
 static int
@@ -771,7 +740,7 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
     
     compare_count = 0;
     ep = dico_bsearch(&x, db->suf_index, db->numwords, sizeof(db->suf_index[0]),
-		      compare_rev_prefix, NULL);
+		      compare_rev_prefix, db);
     if (ep) {
 	struct rev_entry *p;
 	struct index_entry **tmp;
@@ -796,8 +765,7 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
 		tmp[j++] = p->ptr;
 	
 	count = j;
-	dico_sort(tmp, count, sizeof(tmp[0]), compare_entry_ptr,
-		  case_comparator(db));
+	dico_sort(tmp, count, sizeof(tmp[0]), compare_entry_ptr, db);
 
 	list = dico_list_create();
 	if (!list) {
@@ -806,7 +774,7 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
 	    free(tmp);
 	    return 1;
 	}
-	dico_list_set_comparator(list, uniq_comp, case_comparator(db));
+	dico_list_set_comparator(list, uniq_comp, db);
 	dico_list_set_flags(list, DICO_LIST_COMPARE_TAIL);
 	for (i = 0; i < count; i++) 
 	    dico_list_append(list, tmp[i]);
@@ -836,7 +804,7 @@ find_db_entry(struct dictdb *db, const char *name)
     x.length = strlen(name);
     x.wordlen = utf8_strlen(name);
     ep = dico_bsearch(&x, db->index, db->numwords, sizeof(db->index[0]),
-		      comparator(db), NULL);
+		      compare_index_entry, db);
     if (!ep)
 	return NULL;
     buf = malloc(ep->size + 1);
@@ -865,7 +833,7 @@ get_db_flag(struct dictdb *db, const char *name)
     x.length = strlen(name);
     x.wordlen = utf8_strlen(name);
     return dico_bsearch(&x, db->index, db->numwords, sizeof(db->index[0]),
-			comparator(db), NULL) != NULL;
+			compare_index_entry, db) != NULL;
 }
 
 static char *
@@ -937,7 +905,7 @@ _match_all(struct dictdb *db, dico_strategy_t strat, const char *word)
 	return NULL;
     }
 
-    dico_list_set_comparator(list, uniq_comp, case_comparator(db));
+    dico_list_set_comparator(list, uniq_comp, db);
     dico_list_set_flags(list, DICO_LIST_COMPARE_TAIL);
 
     if (dico_key_init(&key, strat, word)) {
@@ -998,7 +966,7 @@ mod_define(dico_handle_t hp, const char *word)
     if (RESERVED_WORD(db, word))
 	return NULL;
     
-    rc = common_match(db, word, comparator(db), 0, &res);
+    rc = common_match(db, word, compare_index_entry, 0, &res);
     if (rc)
 	return NULL;
     rp = malloc(sizeof(*rp));

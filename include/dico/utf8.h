@@ -42,15 +42,19 @@ int utf8_wctomb (char *r, unsigned int wc);
 int utf8_symcmp(char *a, char *b);
 int utf8_symcasecmp(char *a, char *b);
 
-int utf8_strcmp_cc(char *a, char *b, int ci);
+int utf8_strcmp_cc(char const *a, char const *b, int ci);
 
-int utf8_strcmp(char *a, char *b);
-int utf8_strcasecmp(char *a, char *b);
-int utf8_strncasecmp(char *a, char *b, size_t maxlen);
+enum {
+    case_sensitive,
+    case_insensitive
+};
 
-int utf8_strcmp_alnumspace_cc(char *a, char *b, int ci);
-int utf8_strcmp_alnumspace(char *a, char *b);
-int utf8_strcasecmp_alnumspace(char *a, char *b);
+int utf8_compare(char const *a, char const *b, int ci, size_t maxlen,
+		 int (*wcsel)(unsigned));
+
+int utf8_strcmp(char const *a, char const *b);
+int utf8_strcasecmp(char const *a, char const *b);
+int utf8_strncasecmp(char const *a, char const *b, size_t maxlen);
 
 unsigned utf8_wc_toupper (unsigned wc);
 int utf8_toupper (char *s);

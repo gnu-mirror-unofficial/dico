@@ -625,19 +625,9 @@ uniq_comp(const void *a, const void *b, void *closure)
     const struct index_entry *epa = a;
     const struct index_entry *epb = b;
     struct dictdb *db = closure;
-    
-    /* Entries differ if their headwords differ */
-    if (headword_compare(epa->word, epb->word, db))
-	return 1;
-    /* Otherwise, if neither entry has the original headword, they
-       are equal */
-    if (!epa->orig && !epb->orig)
-	return 0;
-    /* If only one original headword is present, entries differ */
-    if (!epa->orig || !epb->orig)
-	return 1;
-    /* We have both original headwords. Compare them to decide. */
-    return headword_compare(epa->orig, epb->orig, db);
+    /* Prefer original headword over the indexed one. */
+    return headword_compare(epa->orig ? epa->orig : epa->word,
+			    epb->orig ? epb->orig : epb->word, db);
 }
 
 static int
@@ -667,7 +657,7 @@ common_match(struct dictdb *db, const char *word,
 	    dico_list_set_flags(res->list, DICO_LIST_COMPARE_TAIL);
 	}
 	for (; ep < db->index + db->numwords
-		 && compare(&x, ep, NULL) == 0; ep++)
+		 && compare(&x, ep, db) == 0; ep++)
 	    if (!RESERVED_WORD(db, ep->word))
 		dico_list_append(res->list, ep);
 	res->compare_count = compare_count;

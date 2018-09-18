@@ -1,1 +1,2 @@
 ## module name: dictorg
+AC_CONFIG_FILES([modules/dict.org/tests/db/Makefile])

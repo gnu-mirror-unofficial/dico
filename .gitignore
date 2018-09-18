@@ -46,3 +46,6 @@ libtool
 local-tests
 m4
 stamp-h1
+patches/
+tmp/
+.gdbinit

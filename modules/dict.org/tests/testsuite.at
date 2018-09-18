@@ -1,0 +1,71 @@
+# This file is part of GNU Dico. -*- Autotest -*-
+# Copyright (C) 2018 Sergey Poznyakoff
+#
+# GNU Dico is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3, or (at your option)
+# any later version.
+#
+# GNU Dico is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
+
+m4_include([testsuite.inc])
+
+m4_define([DICTORG_CONFIG],[dnl
+cat > dicod.conf <<__EOT__
+prepend-load-path "$abs_top_builddir/modules/dict.org";
+load-module dictorg {
+    command "dictorg dbdir=$abs_srcdir/db";
+}
+
+$*
+__EOT__
+])
+
+# DICTORG_TEST(config, command, result)
+m4_define([DICTORG_TEST],
+ [AT_CHECK([DICTORG_CONFIG($1)
+AT_DATA([input],[$2
+quit
+])
+DICOD_RUN
+],
+[0],
+[220
+$3[]221
+])])
+
+AT_INIT
+
+# -----------------------------------------------------------------------
+AT_BANNER([SHOW])
+m4_include([showdb.at])
+m4_include([showinfo.at])
+
+AT_BANNER([MATCH])
+m4_include([exact.at])
+m4_include([alnum.at])
+m4_include([allchars.at])
+m4_include([prefix.at])
+m4_include([suffix.at])
+m4_include([word.at])
+
+AT_BANNER([DEFINE])
+m4_include([define.at])
+
+AT_BANNER([Option-governed virtual databases])
+m4_include([ovshowdb.at])
+m4_include([ovexact.at])
+m4_include([ovdefnomime.at])
+m4_include([ovdefmime.at])
+
+AT_BANNER([Virtual databases (collections)])
+m4_include([vshowdb.at])
+m4_include([vexact.at])
+m4_include([vdefine.at])
+

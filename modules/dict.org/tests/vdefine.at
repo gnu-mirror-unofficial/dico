@@ -1,5 +1,5 @@
-# This file is part of GNU Dico
-# Copyright (C) 1998-2018 Sergey Poznyakoff
+# This file is part of GNU Dico. -*- Autotest -*-
+# Copyright (C) 2018 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,20 +14,37 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-SUBDIRS = . tests
-moddir=@DICO_MODDIR@
+AT_SETUP([define])
+AT_KEYWORDS([virtual define])
+DICTORG_TEST([
+database {
+	name num-eng;
+        handler "dictorg database=num-eng";
+}
+database {
+	name num-ell;
+        handler "dictorg database=num-ell";
+}
+database {
+	name num;
+	handler "virtual";
+	description "Numerals";
+	database num-eng;
+	database num-ell;
+}
+],
+[define * "20"],
+[150 2 definitions found: list follows
+151 "20" num-eng "Numbers to English numerals"
+20
+   twenty
 
-mod_LTLIBRARIES=dictorg.la
+.
+151 "20" num-ell "Numbers to Greek numerals"
+20
+   είκοσι
 
-dictorg_la_SOURCES = \
- crc.c\
- dictorg.c\
- dictstr.c
-
-noinst_HEADERS = \
- crc.h\
- dictorg.h
-dictorg_la_LIBADD = ../../lib/libdico.la @LIBZ@
-AM_LDFLAGS = -module -avoid-version -no-undefined
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include
-EXTRA_DIST=module.ac
+.
+250
+])
+AT_CLEANUP

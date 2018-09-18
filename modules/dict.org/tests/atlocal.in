@@ -1,0 +1,1 @@
+PATH=@abs_builddir@:@abs_top_builddir@/dicod:$top_srcdir:$srcdir:$PATH

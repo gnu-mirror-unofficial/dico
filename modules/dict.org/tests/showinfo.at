@@ -1,5 +1,5 @@
-# This file is part of GNU Dico
-# Copyright (C) 1998-2018 Sergey Poznyakoff
+# This file is part of GNU Dico. -*- Autotest -*-
+# Copyright (C) 2018 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,20 +14,25 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-SUBDIRS = . tests
-moddir=@DICO_MODDIR@
+AT_SETUP([show info])
+AT_KEYWORDS([showinfo show])
+DICTORG_TEST([
+database {
+	name eng-num;
+        handler "dictorg database=eng-num";
+}],
+[show info eng-num],
+[112 information for eng-num
+The original data is available from:
+     http://git.gnu.org.ua/cgit/dico.git
 
-mod_LTLIBRARIES=dictorg.la
+Mock dictionary
+   Mock dictionary for GNU dicod dictorg module.
+   This dictionary contains English numerals from 1 to 200
+License:
+   Public domain.
 
-dictorg_la_SOURCES = \
- crc.c\
- dictorg.c\
- dictstr.c
-
-noinst_HEADERS = \
- crc.h\
- dictorg.h
-dictorg_la_LIBADD = ../../lib/libdico.la @LIBZ@
-AM_LDFLAGS = -module -avoid-version -no-undefined
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include
-EXTRA_DIST=module.ac
+.
+250
+])
+AT_CLEANUP

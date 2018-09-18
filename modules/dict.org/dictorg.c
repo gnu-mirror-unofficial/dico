@@ -734,13 +734,13 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
     if (ep) {
 	struct rev_entry *p;
 	struct index_entry **tmp;
-	size_t i,j;
-	size_t count = 1;
+	size_t i;
+	size_t count = 0;
 	dico_list_t list;
 
 	for (p = ep;
 	     p < db->suf_index + db->numwords
-		 && compare_rev_prefix(&x, ep, NULL) == 0; p++)
+		 && compare_rev_prefix(&x, p, db) == 0; p++)
 	    count++;
 
 	tmp = calloc(count, sizeof(*tmp));
@@ -750,11 +750,11 @@ suffix_match(struct dictdb *db, const char *word, struct result *res)
 	    return 1;
 	} 
 
-	for (i = j = 0, p++; i < count; i++, p++) 
-	    if (!RESERVED_WORD(db, p->ptr->word)) 
-		tmp[j++] = p->ptr;
+	for (i = 0; i < count; i++) 
+	    if (!RESERVED_WORD(db, ep[i].ptr->word)) 
+		tmp[i] = ep[i].ptr;
 	
-	count = j;
+	count = i;
 	dico_sort(tmp, count, sizeof(tmp[0]), compare_entry_ptr, db);
 
 	list = dico_list_create();

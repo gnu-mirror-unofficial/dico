@@ -44,7 +44,7 @@ dico_bsearch(void *key, const void *base, size_t nelem, size_t elsize,
     char const *l = (char const*)base;
     char const *r = l + nelem * elsize;
     char const *s;
-    int found = 0;
+    void *found = NULL;
     
     while (l < r) {
 	s = l + (((r - l) / elsize) >> 1) * elsize;
@@ -53,9 +53,9 @@ dico_bsearch(void *key, const void *base, size_t nelem, size_t elsize,
 	    l = s + elsize;
 	else {
 	    if (rc == 0)
-		found = 1;
+		found = (void*) s;
 	    r = s;
 	}
     }
-    return found ? (void*) l : NULL;
+    return found;
 }

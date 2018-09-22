@@ -214,7 +214,6 @@ _guile_dico_key_free(SCM message_smob)
 {
     struct dico_key *kp = (struct dico_key *) SCM_CDR (message_smob);
     dico_key_deinit(kp);
-    free(kp);
     return 0;
 }
 
@@ -288,7 +287,6 @@ _guile_strategy_free(SCM message_smob)
 {
     struct _guile_strategy *sp =
 	(struct _guile_strategy *) SCM_CDR (message_smob);
-    free(sp);
     return 0;
 }
 

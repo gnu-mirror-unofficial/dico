@@ -1,7 +1,3 @@
-ifneq (,$(wildcard Makefile))
- include Makefile
-endif
-
 DICTFMT=dictfmt
 
 all: $(DICTS)

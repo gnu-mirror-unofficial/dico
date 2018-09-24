@@ -62,6 +62,13 @@ dicod_capa_add(const char *name)
 }
 
 int
+dicod_capa_is_enabled(const char *name)
+{
+    struct dicod_capa *cp = dico_list_locate(capa_list, (void*)name);
+    return cp ? cp->enabled : 0;
+}
+
+int
 dicod_capa_flush(void)
 {
     dico_iterator_t itr;

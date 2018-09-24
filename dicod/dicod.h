@@ -243,6 +243,7 @@ void dicod_capa_register(const char *name, struct dicod_command *cmd,
 int dicod_capa_add(const char *name);
 void dicod_capa_iterate(int (*fun)(const char*, int, void *), void *closure);
 int dicod_capa_flush(void);
+int dicod_capa_is_enabled(const char *name);
 
 /* lang.c */
 void register_lang(void);

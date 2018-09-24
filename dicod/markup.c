@@ -49,16 +49,18 @@ register_markup(void)
 void
 markup_flush_capa(void)
 {
-    dico_iterator_t itr;
-    const char *p;
-    
-    itr = xdico_list_iterator(dico_markup_list);
-    for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) {
-	size_t len = sizeof(MARKUP_CAPA_PREFIX) + strlen(p);
-	char *str = xmalloc(len);
-	strcat(strcpy(str, MARKUP_CAPA_PREFIX), p);
-	dicod_capa_register(str, NULL, NULL, NULL);
-	dicod_capa_add(str);
+    if (dicod_capa_is_enabled("markup")) {
+	dico_iterator_t itr;
+	const char *p;
+
+	itr = xdico_list_iterator(dico_markup_list);
+	for (p = dico_iterator_first(itr); p; p = dico_iterator_next(itr)) {
+	    size_t len = sizeof(MARKUP_CAPA_PREFIX) + strlen(p);
+	    char *str = xmalloc(len);
+	    strcat(strcpy(str, MARKUP_CAPA_PREFIX), p);
+	    dicod_capa_register(str, NULL, NULL, NULL);
+	    dicod_capa_add(str);
+	}
+	dico_iterator_destroy(&itr);
     }
-    dico_iterator_destroy(&itr);
 }

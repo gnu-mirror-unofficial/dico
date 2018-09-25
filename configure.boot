@@ -117,13 +117,6 @@ AM_GNU_GETTEXT([external], [need-formatstring-macros])
 AM_GNU_GETTEXT_VERSION([0.18])
 AC_CONFIG_LINKS(include/gettext.h:gnu/gettext.h)
 
-# Check for zlib
-AC_CHECK_HEADER(zlib.h,
-                AC_CHECK_LIB(z, inflate,
-                             [AC_DEFINE_UNQUOTED([USE_LIBZ], 1,
-			              [Define this if you have libz library])
-	                      AC_SUBST(LIBZ, -lz)]))
-
 LOG_FACILITY="LOG_DAEMON"
 
 AC_ARG_VAR([LOG_FACILITY],

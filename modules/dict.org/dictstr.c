@@ -39,7 +39,6 @@ struct _dict_stream {
     int type;                    /* Stream type (see DICTORG_ constants) */
     dico_stream_t transport;     /* Underlying transport stream */
     int transport_error;         /* Last error on transport stream */
-#ifdef USE_LIBZ    
     /* Gzip/dict.org header */ 
     size_t header_length;        /* Header length. */ 
     int method;                  /* Compression method */
@@ -66,11 +65,9 @@ struct _dict_stream {
     size_t cache_size;                /* Max. number of elements in cache */
     size_t cache_used;                /* Actual number of elements in cache */
     struct _dict_chunk_cache **cache; /**/
-#endif
 };
 
 
-#ifdef USE_LIBZ    
 static struct _dict_chunk_cache *
 cache_create_chunk(struct _dict_stream *str)
 {
@@ -270,23 +267,6 @@ _dict_seek_dzip(struct _dict_stream *str, off_t needle, int whence,
     *presult = str->offset = offset;
     return 0;
 }
-
-#else
-# define cache_destroy(s)
-static int
-_dict_read_dzip(struct _dict_stream *str, char *buf, size_t size, size_t *pret)
-{
-    return DE_UNSUPPORTED_FORMAT;
-}
-
-static int
-_dict_seek_dzip(struct _dict_stream *str, off_t needle, int whence,
-		off_t *presult)
-{
-    return DE_UNSUPPORTED_FORMAT;
-}
-
-#endif    
 
 
 static int

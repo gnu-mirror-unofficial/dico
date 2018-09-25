@@ -27,7 +27,7 @@ dictorg_la_SOURCES = \
 noinst_HEADERS = \
  crc.h\
  dictorg.h
-dictorg_la_LIBADD = ../../lib/libdico.la @LIBZ@
+dictorg_la_LIBADD = ../../lib/libdico.la -lz
 AM_LDFLAGS = -module -avoid-version -no-undefined
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include
 EXTRA_DIST=module.ac

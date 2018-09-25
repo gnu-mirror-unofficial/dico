@@ -26,9 +26,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
-#ifdef USE_LIBZ
-# include <zlib.h>
-#endif
+#include <zlib.h>
 #include <appi18n.h>
 
 #define DICTORG_ENTRY_PREFIX        "00-database"

@@ -285,8 +285,8 @@ _make_strategy(const dico_strategy_t strat)
 static size_t
 _guile_strategy_free(SCM message_smob)
 {
-    struct _guile_strategy *sp =
-	(struct _guile_strategy *) SCM_CDR (message_smob);
+    /* Nothing to free in struct _guile_strategy: the strat member is
+       constant */
     return 0;
 }
 

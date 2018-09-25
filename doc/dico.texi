@@ -2429,8 +2429,8 @@ unless they authenticate themselves.
 @cindex virtual databases
 @cindex database, virtual
 A @dfn{virtual database} is a collection of several regular databases.
-When a search is performed on a virtual database, it returns the
-matches from all constituent databases.
+When a search is performed on a virtual database, it returns matches
+from the constituent databases.
 
 Virtual databases can be used for grouping. For example a virtual
 database may include all dictionaries translating from English to
@@ -2520,6 +2520,23 @@ database @{
 @}  
 @end group
 @end example
+
+To determine description (whether short or long) for a virtual
+database, the following algorithm is used. If the @samp{description}
+(or, for long description, @samp{info}) statement is present in the
+@samp{database} block, its value is used. Otherwise, the server obtains 
+descriptions of each member database that is visible in the current
+@samp{OPTION MIME} state. If all databases return the same value, it
+is used.  Otherwise, empty string is used.
+
+Practically, that means that when defining a collection virtual
+database (as in the first example above), you are better off supplying
+both @samp{description} and @samp{info} statements.
+
+On the other hand, when defining a mime-switching virtual database
+with two members (as in the second example), you can safely omit both
+statements: @command{dicod} will pick the value from the currently
+active member database.
 
 @node Strategies and Default Searches
 @subsection Strategies and Default Searches

@@ -4,7 +4,7 @@ See the end of file for copying conditions.
 
 Please send Dico bug reports to <bug-dico@gnu.org.ua>
 
-Version 2.6.95 (git)
+Version 2.7, 2018-09-25
 
 * Support for virtual databases
 
@@ -34,8 +34,8 @@ a shared wordnet library. However, this library is named "libwordnet.so",
 instead of the expected "libWN.so". Due to this change, previous
 versions of dico were unable to locate the library and build the
 wordnet database module. To fix this. the --with-libWN configure
-option was introduced. Argument to this option is the base name of 
-shared libWN library, without the suffix. Optionally, the "lib" prefix
+option was introduced. Argument to this option is the base name of the
+shared libWN library, without suffix. Optionally, the "lib" prefix
 is allowed. For example, to configure on Debian:
 
   ./configure --with-libWN=wordnet
@@ -51,6 +51,8 @@ request returns article in unsupported content type.
 
 The code has been thorougly revisited to ensure correct handling of
 databases in dictd database format. Testsuite is included.
+
+* Default m4 quoting characters changed to [ ]
 
 
 Version 2.6, 2018-08-27

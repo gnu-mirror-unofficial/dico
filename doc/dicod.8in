@@ -14,7 +14,7 @@
 .\" You should have received a copy of the GNU General Public License    
 .\" along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.    
 .so config.man
-.TH DICOD 8 "August 20, 2018" "GNU DICO" "GNU Dico Reference"
+.TH DICOD 8 "September 25, 2018" "GNU DICO" "GNU Dico Reference"
 .SH NAME
 dicod \- GNU dictionary server
 .SH SYNOPSIS
@@ -249,14 +249,18 @@ file.  This can be used to provide macros and constants for the
 configuration.
 .PP
 The default
-.B pp\-setup file renames all
+.B pp\-setup
+file changes the quote characters to
+.BR [ " and " ] ,
+and renames all
 .B m4
 built-in macros so they start with the prefix
 .BR m4_ .
-This is similar to
+The latterr has the effect similar to that of
 .B GNU m4 \-\-prefix\-builtin
 option, but has an advantage that it works with other
-.B m4 implementations as well.
+.B m4
+implementations as well.
 .PP
 Additional definitions can also be provided from the command line
 using the \fB\-D\fR (\fB\-\-define\fR) option.

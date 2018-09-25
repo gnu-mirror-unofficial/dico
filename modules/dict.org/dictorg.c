@@ -196,12 +196,14 @@ parse_index_entry(const char *filename, size_t line,
 	char const *start;
 	char const *end;
 	size_t len;
-	
-	/* Skip whitespace */
-	for (; !utf8_iter_end_p(&itr)
-		 && utf8_iter_isascii(itr) && ISWS(*itr.curptr);
-	     utf8_iter_next(&itr))
-	    ;
+
+	if (nfield) {
+	    /* Skip whitespace */
+	    for (; !utf8_iter_end_p(&itr)
+		     && utf8_iter_isascii(itr) && ISWS(*itr.curptr);
+		 utf8_iter_next(&itr))
+		;
+	}
 	
 	if (utf8_iter_end_p(&itr))
 	    break;

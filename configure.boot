@@ -152,7 +152,7 @@ if test -z "$DEFAULT_VERSION_INCLUDE_DIR"; then
 fi   
 
 # Grecs configuration system
-GRECS_SETUP(grecs, [shared tests getopt git2chg std-pp-setup sockaddr-list])
+GRECS_SETUP(grecs, [shared tests getopt git2chg sockaddr-list])
 GRECS_HOST_PROJECT_INCLUDES='-I$(top_srcdir)/gnu -I$(top_builddir)/gnu'
 
 # Tcl/tk

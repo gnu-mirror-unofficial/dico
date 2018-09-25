@@ -82,4 +82,7 @@ SUFFIXES=.opt .c
 	$(AM_V_GEN)m4 -s $(top_srcdir)/@GRECS_SUBDIR@/build-aux/getopt.m4 $< > $@
 
 BUILT_SOURCES=cmdline.c 
-EXTRA_DIST=cmdline.opt
+EXTRA_DIST=cmdline.opt pp-setup
+
+incdir=$(pkgdatadir)/$(VERSION)/include
+inc_DATA = pp-setup

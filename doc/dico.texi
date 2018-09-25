@@ -2716,11 +2716,11 @@ diagnostic.  An initial set of macro definitions is supplied by the
 @file{@var{$prefix}/share/dico/@var{version}/include} directory (where
 @var{version} means the version of GNU Dico package).
 
-The default @file{pp-setup} file renames all @command{m4} built-in
-macros so they all start with the prefix @samp{m4_}.  This
-is similar to GNU m4 @option{--prefix-builtin} option, but has an
-advantage that it works with non-GNU @command{m4} implementations as
-well.  
+The default @file{pp-setup} file changes quote characters to @samp{[}
+and @samp{]}, and renames all @command{m4} built-in macros so they all
+start with the prefix @samp{m4_}.  The latter has an effect similar 
+to GNU @command{m4} @option{--prefix-builtin} option, but has an
+advantage that it works with non-GNU @command{m4} implementations as well.  
 
 As an example of how the use of preprocessor may improve
 @command{dicod} configuration, consider the following fragment taken
@@ -2735,14 +2735,14 @@ repeating the same text over again, we define the following macro:
 # defdb(@sc{name}[, @sc{descr}])
 # @r{Produce a standard definition for a database @sc{name}}.
 # @r{If @sc{descr} is given, use it as a description}.
-m4_define(`defdb', `
+m4_define([defdb], [
 database @{
         name "$1";
         handler "dictorg database=$1";m4_dnl
-m4_ifelse(`$2',,,`
-        description "$2";')
+m4_ifelse([$2],,,[
+        description "$2";])
 @}
-')
+])
 @end group
 @end example
 

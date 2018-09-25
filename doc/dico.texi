@@ -2428,10 +2428,13 @@ unless they authenticate themselves.
 @subsubsection Virtual Databases
 @cindex virtual databases
 @cindex database, virtual
-A @dfn{virtual database} merges several regular databases into one.
-For example a virtual database may include all dictionaries
-translating from English to Norwegian.  Another one may include 
-thesauri for English.
+A @dfn{virtual database} is a collection of several regular databases.
+When a search is performed on a virtual database, it returns the
+matches from all constituent databases.
+
+Virtual databases can be used for grouping. For example a virtual
+database may include all dictionaries translating from English to
+Norwegian.  Another one may include thesauri for English.
 
 Yet another common use for virtual databases is to select different
 output markup depending on whether @samp{OPTION MIME} was requested by
@@ -2495,14 +2498,13 @@ database @{
   name "thesaurus";
   handler "virtual";
   database thes_plain nomime;
-  database thes_html plain;
+  database thes_html mime;
 @}
 @end group
 @end example
 
-Notice, that in this case member databases should not be visible, as
-they will duplicate the information from the @samp{thesaurus}
-database.  It will make sense to define them as invisible:
+Notice, that in this case it makes sense to define member databases
+as invisible, to avoid duplicate matches. E.g.:
 
 @example
 @group

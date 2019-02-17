@@ -484,13 +484,14 @@ _dico_list_remove_item(struct dico_list *list, struct list_entry *p,
     else
 	list->tail = prev;
     
-    free(p);
     list->count--;
 
     if (pptr)
 	*pptr = p->data;
     else if (list->free_item)
 	list->free_item (p->data, list->free_data);
+
+    free(p);
 }
 
 int

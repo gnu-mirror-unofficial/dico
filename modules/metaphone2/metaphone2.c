@@ -238,13 +238,19 @@ double_metaphone_add(double_metaphone_code code,
     return 0;
 }
 
-/* Return true if the substring at STR[POS] matches one of the
-   alternatives in PAT.  Alternatives are delimited by | characters.
+/* Return true if POS + OFF is within the STR and the substring at
+   STR[POS + OFF] matches one of the alternatives in PAT.  Alternatives
+   are delimited by | characters.
 */
 static int
-looking_at(unsigned const *str, size_t pos, char const *pat)
+looking_at(unsigned const *str, size_t pos, int off, char const *pat)
 {
-    size_t i = pos;
+    size_t i;
+
+    if (off < 0 && pos < -off)
+	return 0;
+    pos += off;
+    i = pos;
     while (*pat) {
 	if (*pat == str[i]) {
 	    ++i;
@@ -270,7 +276,7 @@ double_metaphone_free(double_metaphone_code code)
     metaph_code_free(code[1]);
 }
 
-#define ISVOWEL(s,p) looking_at(s, p, "A|E|I|O|U|Y")
+#define ISVOWEL(s,p,i) looking_at(s, p, i, "A|E|I|O|U|Y")
 
 static int
 is_slavo_germanic(unsigned const *str)
@@ -328,7 +334,7 @@ double_metaphone_encode(double_metaphone_code code,
     utf8_wc_strupper(buf);
     
     current = 0;
-    if (looking_at(buf, 0, "GN|KN|PN|WR|PS"))
+    if (looking_at(buf, current, 0, "GN|KN|PN|WR|PS"))
 	++current;
 
     while (current < length
@@ -363,33 +369,33 @@ double_metaphone_encode(double_metaphone_code code,
 	case 'C':
 	    /* Various Germanic */
 	    if (current > 1
-		&& !ISVOWEL(buf, current - 2) 
-		&& looking_at(buf, current - 1, "ACH") 
+		&& !ISVOWEL(buf, current, -2) 
+		&& looking_at(buf, current, -1, "ACH") 
 		&& buf[current + 2] != 'I'
 		&& (buf[current + 2] != 'E'
-		    || looking_at(buf, current - 2, "BACHER|MACHER"))) {       
+		    || looking_at(buf, current, -2, "BACHER|MACHER"))) {       
 		DMETAPH_ADD(code, "K", NULL);
 		current += 2;
 		break;
 	    }
 
 	    /* Special case 'caesar' */
-	    if (current == 0 && looking_at(buf, current, "CAESAR")) {
+	    if (current == 0 && looking_at(buf, current, 0, "CAESAR")) {
 		DMETAPH_ADD(code, "S", NULL);
 		current += 2;
 		break;
 	    }
 
 	    /* Italian 'chianti' */
-	    if (looking_at(buf, current, "CHIA")) {
+	    if (looking_at(buf, current, 0, "CHIA")) {
 		DMETAPH_ADD(code, "K", NULL);
 		current += 2;
 		break;
 	    }
 
-	    if (looking_at(buf, current, "CH")) {       
+	    if (looking_at(buf, current, 0, "CH")) {       
 		/* 'michael'? */
-		if (current > 0 && looking_at(buf, current, "CHAE")) {
+		if (current > 0 && looking_at(buf, current, 0, "CHAE")) {
 		    DMETAPH_ADD(code, "K", "X");
 		    current += 2;
 		    break;
@@ -397,28 +403,28 @@ double_metaphone_encode(double_metaphone_code code,
 
 		/* Greek roots e.g. 'chemistry', 'chorus' */
 		if (current == 0
-		    && (looking_at(buf, current + 1,
+		    && (looking_at(buf, current, 1,
 				   "HARAC|HARIS|HOR|HYM|HIA|HEM")) 
-		    && !looking_at(buf, 0, "CHORE")) {
+		    && !looking_at(buf, 0, 0, "CHORE")) {
 		    DMETAPH_ADD(code, "K", NULL);
 		    current += 2;
 		    break;
 		}
 
 		/* Germanic, greek, or otherwise 'ch' for 'kh' sound */
-		if ((looking_at(buf, 0, "VAN |VON ")
-		     || looking_at(buf, 0, "SCH"))
+		if ((looking_at(buf, 0, 0, "VAN |VON ")
+		     || looking_at(buf, 0, 0, "SCH"))
 		    /* 'architect but not 'arch', 'orchestra', 'orchid' */
-		    || looking_at(buf, current - 2, "ORCHES|ARCHIT|ORCHID")
-		    || looking_at(buf, current + 2, "T|S")
-		    || ((looking_at(buf, current - 1, "A|O|U|E") || current == 0)
+		    || looking_at(buf, current, -2, "ORCHES|ARCHIT|ORCHID")
+		    || looking_at(buf, current, +2, "T|S")
+		    || ((looking_at(buf, current, -1, "A|O|U|E") || current == 0)
 			/* e.g., 'wachtler', 'wechsler', but not 'tichner' */
-			&& looking_at(buf, current + 2,
+			&& looking_at(buf, current, +2,
 				      "L|R|N|M|B|H|F|V|W| "))) {
 		    DMETAPH_ADD(code, "K", NULL);
 		} else {  
 		    if (current > 0) {
-			if (looking_at(buf, 0, "MC"))
+			if (looking_at(buf, 0, 0, "MC"))
 			    /* e.g., "McHugh" */
 			    DMETAPH_ADD(code, "K", NULL);
 			else
@@ -430,29 +436,29 @@ double_metaphone_encode(double_metaphone_code code,
 		break;
 	    }
 	    /* E.g, 'czerny' */
-	    if (looking_at(buf, current, "CZ")
-		&& !looking_at(buf, current - 2, "WICZ")) {
+	    if (looking_at(buf, current, 0, "CZ")
+		&& !looking_at(buf, current, -2, "WICZ")) {
 		DMETAPH_ADD(code, "S", "X");
 		current += 2;
 		break;
 	    }
 
 	    /* E.g., 'focaccia' */
-	    if (looking_at(buf, current + 1, "CIA")) {
+	    if (looking_at(buf, current, +1, "CIA")) {
 		DMETAPH_ADD(code, "X", NULL);
 		current += 3;
 		break;
 	    }
 
 	    /* Double 'C', but not if e.g. 'McClellan' */
-	    if (looking_at(buf, current, "CC") &&
+	    if (looking_at(buf, current, 0, "CC") &&
 		!(current == 1 && buf[0] == 'M')) {
 		/* 'bellocchio' but not 'bacchus' */
-		if (looking_at(buf, current + 2, "I|E|H")
-		    && !looking_at(buf, current + 2, "HU")) {
+		if (looking_at(buf, current, +2, "I|E|H")
+		    && !looking_at(buf, current, +2, "HU")) {
 		    /* 'accident', 'accede' 'succeed' */
 		    if ((current == 1 && buf[current - 1] == 'A') 
-			|| looking_at(buf, current - 1, "UCCEE|UCCES"))
+			|| looking_at(buf, current, -1, "UCCEE|UCCES"))
 			DMETAPH_ADD(code, "KS", NULL);
 		    /* 'bacci', 'bertucci', other italian */
 		    else
@@ -467,15 +473,15 @@ double_metaphone_encode(double_metaphone_code code,
 		}
 	    }
 	    
-	    if (looking_at(buf, current, "CK|CG|CQ")) {
+	    if (looking_at(buf, current, 0, "CK|CG|CQ")) {
 		DMETAPH_ADD(code, "K", NULL);
 		current += 2;
 		break;
 	    }
 
-	    if (looking_at(buf, current, "CI|CE|CY")) {
+	    if (looking_at(buf, current, 0, "CI|CE|CY")) {
 		/* Italian vs. english */
-		if (looking_at(buf, current, "CIO|CIE|CIA"))
+		if (looking_at(buf, current, 0, "CIO|CIE|CIA"))
 		    DMETAPH_ADD(code, "S", "X");
 		else
 		    DMETAPH_ADD(code, "S", NULL);
@@ -486,19 +492,19 @@ double_metaphone_encode(double_metaphone_code code,
 	    DMETAPH_ADD(code, "K", NULL);
                                 
 	    /* Name sent in 'mac caffrey', 'mac gregor' */
-	    if (looking_at(buf, current + 1, " C| Q| G"))
+	    if (looking_at(buf, current, +1, " C| Q| G"))
 		current += 3;
 	    else
-		if (looking_at(buf, current + 1, "C|K|Q") 
-		    && !looking_at(buf, current + 1, "CE|CI"))
+		if (looking_at(buf, current, +1, "C|K|Q") 
+		    && !looking_at(buf, current, +1, "CE|CI"))
 		    current += 2;
 		else
 		    current++;
 	    break;
 
 	case 'D':
-	    if (looking_at(buf, current, "DG")) {
-		if (looking_at(buf, current + 2, "I|E|Y")) {
+	    if (looking_at(buf, current, 0, "DG")) {
+		if (looking_at(buf, current, +2, "I|E|Y")) {
 		    /* E.g. 'edge' */
 		    DMETAPH_ADD(code, "J", NULL);
 		    current += 3;
@@ -511,7 +517,7 @@ double_metaphone_encode(double_metaphone_code code,
 		}
 	    }
 	    
-	    if (looking_at(buf, current, "DT|DD")) {
+	    if (looking_at(buf, current, 0, "DT|DD")) {
 		DMETAPH_ADD(code, "T", NULL);
 		current += 2;
 		break;
@@ -529,7 +535,7 @@ double_metaphone_encode(double_metaphone_code code,
 
 	case 'G':
 	    if (buf[current + 1] == 'H') {
-		if ((current > 0) && !ISVOWEL(buf, current - 1)) {
+		if ((current > 0) && !ISVOWEL(buf, current, -1)) {
 		    DMETAPH_ADD(code, "K", NULL);
 		    current += 2;
 		    break;
@@ -549,11 +555,11 @@ double_metaphone_encode(double_metaphone_code code,
 		/* Parker's rule (with some further refinements) - e.g., 'hugh'
 		 */
 		if ((current > 1
-		     && looking_at(buf, current - 2, "B|H|D"))
+		     && looking_at(buf, current, -2, "B|H|D"))
 		    /* e.g., 'bough' */
-		    || (current > 2 && looking_at(buf, current - 3, "B|H|D"))
+		    || (current > 2 && looking_at(buf, current, -3, "B|H|D"))
 		    /* e.g., 'broughton' */
-		    || (current > 3 && looking_at(buf, current - 4, "B|H"))) {
+		    || (current > 3 && looking_at(buf, current, -4, "B|H"))) {
 		    current += 2;
 		    break;
 		} else {
@@ -562,7 +568,7 @@ double_metaphone_encode(double_metaphone_code code,
 		    */
 		    if (current > 2
 			&& buf[current - 1] == 'U'
-			&& looking_at(buf, current - 3, "C|G|L|R|T")) {
+			&& looking_at(buf, current, -3, "C|G|L|R|T")) {
 			DMETAPH_ADD(code, "F", NULL);
 		    } else if (current > 0 && buf[current - 1] != 'I')
 			DMETAPH_ADD(code, "K", NULL);
@@ -573,11 +579,11 @@ double_metaphone_encode(double_metaphone_code code,
 	    }
 
 	    if (buf[current + 1] == 'N') {
-		if (current == 1 && ISVOWEL(buf, 0) && !IS_SLAVO_GERMANIC()) {
+		if (current == 1 && ISVOWEL(buf, 0, 0) && !IS_SLAVO_GERMANIC()) {
 		    DMETAPH_ADD(code, "KN", "N");
 		} else
 		    /* not e.g. 'cagney' */
-		    if (!looking_at(buf, current + 2, "EY")
+		    if (!looking_at(buf, current, +2, "EY")
 			&& (buf[current + 1] != 'Y') && !IS_SLAVO_GERMANIC()) {
 			DMETAPH_ADD(code, "N", "KN");
 		    } else
@@ -586,7 +592,7 @@ double_metaphone_encode(double_metaphone_code code,
 		break;
 	    }
 	    /* 'tagliaro' */
-	    if (looking_at(buf, current + 1, "LI") && !IS_SLAVO_GERMANIC()) {
+	    if (looking_at(buf, current, +1, "LI") && !IS_SLAVO_GERMANIC()) {
 		DMETAPH_ADD(code, "KL", "L");
 		current += 2;
 		break;
@@ -594,32 +600,32 @@ double_metaphone_encode(double_metaphone_code code,
 	    /* -ges-,-gep-,-gel-, -gie- at the beginning */
 	    if (current == 0
 		&& (buf[current + 1] == 'Y'
-		    || looking_at(buf, current + 1, 
+		    || looking_at(buf, current, +1, 
 				  "ES|EP|EB|EL|EY|IB|IL|IN|IE|EI|ER"))) {
 		DMETAPH_ADD(code, "K", "J");
 		current += 2;
 		break;
 	    }
 	    /* -ger-,  -gy- */
-	    if ((looking_at(buf, current + 1, "ER")
+	    if ((looking_at(buf, current, +1, "ER")
 		 || (buf[current + 1] == 'Y'))
-		&& !looking_at(buf, 0, "DANGER|RANGER|MANGER")
-		&& !looking_at(buf, current - 1, "E|I|RGY|OGY")) {
+		&& !looking_at(buf, 0, 0, "DANGER|RANGER|MANGER")
+		&& !looking_at(buf, current, -1, "E|I|RGY|OGY")) {
 		DMETAPH_ADD(code, "K", "J");
 		current += 2;
 		break;
 	    }
 	    /* italian e.g, 'biaggi' */
-	    if (looking_at(buf, current + 1, "E|I|Y")
-		|| looking_at(buf, current - 1, "AGGI|OGGI")) {
+	    if (looking_at(buf, current, +1, "E|I|Y")
+		|| looking_at(buf, current, -1, "AGGI|OGGI")) {
 		/* obvious germanic */
-		if ((looking_at(buf, 0, "VAN |VON ")
-		     || looking_at(buf, 0, "SCH"))
-		    || looking_at(buf, current + 1, "ET"))
+		if ((looking_at(buf, 0, 0, "VAN |VON ")
+		     || looking_at(buf, 0, 0, "SCH"))
+		    || looking_at(buf, current, +1, "ET"))
 		    DMETAPH_ADD(code, "K", NULL);
 		else
 		    /* always soft if french ending */
-		    if (looking_at(buf, current + 1, "IER "))
+		    if (looking_at(buf, current, +1, "IER "))
 			DMETAPH_ADD(code, "J", NULL);
 		    else
 			DMETAPH_ADD(code, "J", "K");
@@ -635,8 +641,8 @@ double_metaphone_encode(double_metaphone_code code,
 
 	case 'H':
 	    /* only keep if first & before vowel or btw. 2 vowels */
-	    if ((current == 0 || ISVOWEL(buf, current - 1))
-		&& ISVOWEL(buf, current + 1)) {
+	    if ((current == 0 || ISVOWEL(buf, current, -1))
+		&& ISVOWEL(buf, current, +1)) {
 		DMETAPH_ADD(code, "H", NULL);
 		current += 2;
 	    } else /* also takes care of 'HH' */
@@ -645,10 +651,10 @@ double_metaphone_encode(double_metaphone_code code,
 
 	case 'J':
 	    /* obvious spanish, 'jose', 'san jacinto' */
-	    if (looking_at(buf, current, "JOSE")
-		|| looking_at(buf, 0, "SAN ")) {
+	    if (looking_at(buf, current, 0, "JOSE")
+		|| looking_at(buf, 0, 0, "SAN ")) {
 		if ((current == 0 && buf[current + 4] == ' ')
-		    || looking_at(buf, 0, "SAN "))
+		    || looking_at(buf, 0, 0, "SAN "))
 		    DMETAPH_ADD(code, "H", NULL);
 		else
 		    DMETAPH_ADD(code, "J", "H");
@@ -657,18 +663,18 @@ double_metaphone_encode(double_metaphone_code code,
 		break;
 	    }
 
-	    if (current == 0 && !looking_at(buf, current, "JOSE"))
+	    if (current == 0 && !looking_at(buf, current, 0, "JOSE"))
 		DMETAPH_ADD(code, "J", "A"); /* Yankelovich | Jankelowicz */
 	    else
 		/* spanish pron. of e.g. 'bajador' */
-		if (ISVOWEL(buf, current - 1)
+		if (ISVOWEL(buf, current, -1)
 		    && !IS_SLAVO_GERMANIC()
 		    && (buf[current + 1] == 'A' || buf[current + 1] == 'O'))
 		    DMETAPH_ADD(code, "J", "H");
 		else if (current == last)
 		    DMETAPH_ADD(code, "J", " ");
-		else if (!looking_at(buf, current + 1, "L|T|K|S|N|M|B|Z")
-			 && !looking_at(buf, current - 1, "S|K|L"))
+		else if (!looking_at(buf, current, +1, "L|T|K|S|N|M|B|Z")
+			 && !looking_at(buf, current, -1, "S|K|L"))
 		    DMETAPH_ADD(code, "J", NULL);
 	    
 	    ++current;
@@ -687,10 +693,10 @@ double_metaphone_encode(double_metaphone_code code,
 	    if (buf[current + 1] == 'L') {
 		/* spanish e.g. 'cabrillo', 'gallegos' */
 		if ((current == length - 3
-		     && looking_at(buf, current - 1, "ILLO|ILLA|ALLE"))
-		    || ((looking_at(buf, last - 1, "AS|OS")
-			 || looking_at(buf, last, "A|O"))
-			&& looking_at(buf, current - 1, "ALLE"))) {
+		     && looking_at(buf, current, -1, "ILLO|ILLA|ALLE"))
+		    || ((looking_at(buf, last, -1, "AS|OS")
+			 || looking_at(buf, last, 0, "A|O"))
+			&& looking_at(buf, current, -1, "ALLE"))) {
 		    DMETAPH_ADD(code, "L", " ");
 		    current += 2;
 		    break;
@@ -702,9 +708,9 @@ double_metaphone_encode(double_metaphone_code code,
 	    break;
 
 	case 'M':
-	    if ((looking_at(buf, current - 1, "UMB")
+	    if ((looking_at(buf, current, -1, "UMB")
 		 && (current + 1 == last
-		     || looking_at(buf, current + 2, "ER")))
+		     || looking_at(buf, current, +2, "ER")))
 		/* 'dumb','thumb' */
 		|| (buf[current + 1] == 'M'))
 		current += 2;
@@ -733,7 +739,7 @@ double_metaphone_encode(double_metaphone_code code,
 		break;
 	    }
 	    /* also account for "campbell", "raspberry" */
-	    if (looking_at(buf, current + 1, "P|B"))
+	    if (looking_at(buf, current, +1, "P|B"))
 		current += 2;
 	    else
 		current++;
@@ -751,8 +757,8 @@ double_metaphone_encode(double_metaphone_code code,
 	    /* french e.g. 'rogier', but exclude 'hochmeier' */
 	    if (current == last
 		&& !IS_SLAVO_GERMANIC()
-		&& looking_at(buf, current - 2, "IE")
-		&& !looking_at(buf, current - 4, "ME|MA"))
+		&& looking_at(buf, current, -2, "IE")
+		&& !looking_at(buf, current, -4, "ME|MA"))
 		DMETAPH_ADD(code, NULL, "R");
 	    else
 		DMETAPH_ADD(code, "R", NULL);
@@ -764,20 +770,20 @@ double_metaphone_encode(double_metaphone_code code,
 	    
 	case 'S':
 	    /* special cases 'island', 'isle', 'carlisle', 'carlysle' */
-	    if (looking_at(buf, current - 1, "ISL|YSL")) {
+	    if (looking_at(buf, current, -1, "ISL|YSL")) {
 		current++;
 		break;
 	    }
 	    /* special case 'sugar-' */
-	    if (current == 0 && looking_at(buf, current, "SUGAR")) {
+	    if (current == 0 && looking_at(buf, current, 0, "SUGAR")) {
 		DMETAPH_ADD(code, "X", "S");
 		current++;
 		break;
 	    }
 	    
-	    if (looking_at(buf, current, "SH")) {
+	    if (looking_at(buf, current, 0, "SH")) {
 		/* germanic */
-		if (looking_at(buf, current + 1, "HEIM|HOEK|HOLM|HOLZ"))
+		if (looking_at(buf, current, +1, "HEIM|HOEK|HOLM|HOLZ"))
 		    DMETAPH_ADD(code, "S", NULL);
 		else
 		    DMETAPH_ADD(code, "X", NULL);
@@ -785,8 +791,8 @@ double_metaphone_encode(double_metaphone_code code,
 		break;
 	    }
 	    /* italian & armenian */
-	    if (looking_at(buf, current, "SIO|SIA")
-		|| looking_at(buf, current, "SIAN")) {
+	    if (looking_at(buf, current, 0, "SIO|SIA")
+		|| looking_at(buf, current, 0, "SIAN")) {
 		if (!IS_SLAVO_GERMANIC())
 		    DMETAPH_ADD(code, "S", "X");
 		else
@@ -800,30 +806,30 @@ double_metaphone_encode(double_metaphone_code code,
 	       pronounced 's'
 	    */
 	    if ((current == 0
-		 && looking_at(buf, current + 1, "M|N|L|W"))
-		|| looking_at(buf, current + 1, "Z")) {
+		 && looking_at(buf, current, +1, "M|N|L|W"))
+		|| looking_at(buf, current, +1, "Z")) {
 		DMETAPH_ADD(code, "S", "X");
-		if (looking_at(buf, current + 1, "Z"))
+		if (looking_at(buf, current, +1, "Z"))
 		    current += 2;
 		else
 		    current++;
 		break;
 	    }
 	    
-	    if (looking_at(buf, current, "SC")) {
+	    if (looking_at(buf, current, 0, "SC")) {
 		/* Schlesinger's rule */
 		if (buf[current + 2] == 'H') {
 		    /* Dutch origin, e.g. 'school', 'schooner' */
-		    if (looking_at(buf, current + 3, "OO|ER|EN|UY|ED|EM")) {
+		    if (looking_at(buf, current, +3, "OO|ER|EN|UY|ED|EM")) {
 			/* 'schermerhorn', 'schenker' */
-			if (looking_at(buf, current + 3, "ER|EN"))
+			if (looking_at(buf, current, +3, "ER|EN"))
 			    DMETAPH_ADD(code, "X", "SK");
 			else
 			    DMETAPH_ADD(code, "SK", NULL);
 			current += 3;
 			break;
 		    } else {
-			if (current == 0 && !ISVOWEL(buf, 3) && buf[3] != 'W')
+			if (current == 0 && !ISVOWEL(buf, 3, 0) && buf[3] != 'W')
 			    DMETAPH_ADD(code, "X", "S");
 			else
 			    DMETAPH_ADD(code, "X", NULL);
@@ -832,7 +838,7 @@ double_metaphone_encode(double_metaphone_code code,
 		    }
 		}
 		
-		if (looking_at(buf, current + 2, "I|E|Y")) {
+		if (looking_at(buf, current, +2, "I|E|Y")) {
 		    DMETAPH_ADD(code, "S", NULL);
 		    current += 3;
 		    break;
@@ -842,34 +848,34 @@ double_metaphone_encode(double_metaphone_code code,
 		break;
 	    }
 	    /* french e.g. 'resnais', 'artois' */
-	    if (current == last && looking_at(buf, current - 2, "AI|OI"))
+	    if (current == last && looking_at(buf, current, -2, "AI|OI"))
 		DMETAPH_ADD(code, NULL, "S");
 	    else
 		DMETAPH_ADD(code, "S", NULL);
 	    
-	    if (looking_at(buf, current + 1, "S|Z"))
+	    if (looking_at(buf, current, +1, "S|Z"))
 		current += 2;
 	    else
 		current++;
 	    break;
 	    
 	case 'T':
-	    if (looking_at(buf, current, "TION")) {
+	    if (looking_at(buf, current, 0, "TION")) {
 		DMETAPH_ADD(code, "X", NULL);
 		current += 3;
 		break;
 	    }
 	    
-	    if (looking_at(buf, current, "TIA|TCH")) {
+	    if (looking_at(buf, current, 0, "TIA|TCH")) {
 		DMETAPH_ADD(code, "X", NULL);
 		current += 3;
 		break;
 	    }
 	    
-	    if (looking_at(buf, current, "TH|TTH")) {
+	    if (looking_at(buf, current, 0, "TH|TTH")) {
 		/* special case 'thomas', 'thames' or germanic */
-		if (looking_at(buf, current + 2, "OM|AM")
-		    || looking_at(buf, 0, "VAN |VON |SCH")) {
+		if (looking_at(buf, current, +2, "OM|AM")
+		    || looking_at(buf, 0, 0, "VAN |VON |SCH")) {
 		    DMETAPH_ADD(code, "T", NULL);
 		} else {
 		    DMETAPH_ADD(code, "0", "T");
@@ -878,7 +884,7 @@ double_metaphone_encode(double_metaphone_code code,
 		break;
 	    }
 	    
-	    if (looking_at(buf, current + 1, "T|D"))
+	    if (looking_at(buf, current, +1, "T|D"))
 		current += 2;
 	    else
 		current++;
@@ -895,32 +901,32 @@ double_metaphone_encode(double_metaphone_code code,
 	    
 	case 'W':
 	    /* can also be in middle of word */
-	    if (looking_at(buf, current, "WR")) {
+	    if (looking_at(buf, current, 0, "WR")) {
 		DMETAPH_ADD(code, "R", NULL);
 		current += 2;
 		break;
 	    }
 	    
 	    if (current == 0
-		&& (ISVOWEL(buf, current + 1)
-		    || looking_at(buf, current, "WH"))) {
+		&& (ISVOWEL(buf, current, +1)
+		    || looking_at(buf, current, 0, "WH"))) {
 		/* Wasserman should match Vasserman */
-		if (ISVOWEL(buf, current + 1))
+		if (ISVOWEL(buf, current, +1))
 		    DMETAPH_ADD(code, "A", "F");
 		else
 		    /* need Uomo to match Womo */
 		    DMETAPH_ADD(code, "A", NULL);
 	    }
 	    /* Arnow should match Arnoff */
-	    if ((current == last && ISVOWEL(buf, current - 1))
-		|| looking_at(buf, current - 1, "EWSKI|EWSKY|OWSKI|OWSKY")
-		|| looking_at(buf, 0, "SCH")) {
+	    if ((current == last && ISVOWEL(buf, current, -1))
+		|| looking_at(buf, current, -1, "EWSKI|EWSKY|OWSKI|OWSKY")
+		|| looking_at(buf, 0, 0, "SCH")) {
 		DMETAPH_ADD(code, NULL, "F");
 		current++;
 		break;
 	    }
 	    /* polish e.g. 'filipowicz' */
-	    if (looking_at(buf, current, "WICZ|WITZ")) {
+	    if (looking_at(buf, current, 0, "WICZ|WITZ")) {
 		DMETAPH_ADD(code, "TS", "FX");
 		current += 4;
 		break;
@@ -932,11 +938,11 @@ double_metaphone_encode(double_metaphone_code code,
 	case 'X':
 	    /* french e.g. breaux */
 	    if (!(current == last
-		  && (looking_at(buf, current - 3, "IAU|EAU")
-		      || looking_at(buf, current - 2, "AU|OU"))))
+		  && (looking_at(buf, current, -3, "IAU|EAU")
+		      || looking_at(buf, current, -2, "AU|OU"))))
 		DMETAPH_ADD(code, "KS", NULL);
 	    
-	    if (looking_at(buf, current + 1, "C|X"))
+	    if (looking_at(buf, current, +1, "C|X"))
 		current += 2;
 	    else
 		current++;
@@ -948,7 +954,7 @@ double_metaphone_encode(double_metaphone_code code,
 		DMETAPH_ADD(code, "J", NULL);
 		current += 2;
 		break;
-	    } else if (looking_at(buf, current + 1, "ZO|ZI|ZA")
+	    } else if (looking_at(buf, current, +1, "ZO|ZI|ZA")
 		       || (IS_SLAVO_GERMANIC()
 			   && (current > 0 && buf[current - 1] != 'T'))) {
 		DMETAPH_ADD(code, "S", "TS");

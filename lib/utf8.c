@@ -1540,9 +1540,19 @@ utf8_strlen(const char *s)
 static int
 utf8_iter0(struct utf8_iterator *itr)
 {
-    size_t n = utf8_char_width(itr->curptr);
-    if (n == 0)
+    size_t n;
+
+    if (itr->length == 0) {
+	itr->end = 1;
 	return 1;
+    }
+    n = utf8_char_width(itr->curptr);
+    if (n > itr->length) {
+	itr->end = 1;
+	itr->err = 1;
+	return 1;
+    }
+    
     itr->curwidth = n;
     return 0;
 }
@@ -1550,23 +1560,40 @@ utf8_iter0(struct utf8_iterator *itr)
 int
 utf8_iter_end_p(struct utf8_iterator *itr)
 {
-    return *itr->curptr == 0;
+    return itr->end;
+}
+
+int
+utf8_iter_err_p(struct utf8_iterator *itr)
+{
+    return itr->end;
+}
+
+int
+utf8_iter_init(struct utf8_iterator *itr, char *ptr, size_t size)
+{
+    itr->string = ptr;
+    itr->curptr = ptr;
+    itr->length = size;
+    itr->curwidth = 0;
+    itr->err = 0;
+    itr->end = 0;
+    return utf8_iter0(itr);
 }
 
 int
 utf8_iter_first(struct utf8_iterator *itr, char *ptr)
 {
-    itr->string = ptr;
-    itr->curptr = ptr;
-    return utf8_iter0(itr);
+    return utf8_iter_init(itr, ptr, strlen(ptr));
 }
 
 int
 utf8_iter_next(struct utf8_iterator *itr)
 {
-    if (*itr->curptr == 0)
+    if (utf8_iter_end_p(itr))
 	return -1;
     itr->curptr += itr->curwidth;
+    itr->length -= itr->curwidth;
     return utf8_iter0(itr);
 }
 

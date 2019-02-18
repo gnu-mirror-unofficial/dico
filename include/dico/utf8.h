@@ -27,12 +27,17 @@ struct utf8_iterator {
     char *string;
     char *curptr;
     unsigned curwidth;
+    size_t length;
+    int end:1;
+    int err:1;
 };
 
 #define utf8_iter_isascii(itr) \
  ((itr).curwidth == 1 && isascii((itr).curptr[0]))
 
 int utf8_iter_end_p(struct utf8_iterator *itr);
+int utf8_iter_err_p(struct utf8_iterator *itr);
+int utf8_iter_init(struct utf8_iterator *itr, char *ptr, size_t size);
 int utf8_iter_first(struct utf8_iterator *itr, char *ptr);
 int utf8_iter_next(struct utf8_iterator *itr);
 

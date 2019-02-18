@@ -527,7 +527,7 @@ revert_word(char *dst, const char *src, size_t len)
     char *p = dst + len;
 
     *p = 0;
-    for (utf8_iter_first(&itr, (char *)src);
+    for (utf8_iter_init(&itr, (char *)src, len);
 	 !utf8_iter_end_p(&itr);
 	 utf8_iter_next(&itr)) {
 	p -= itr.curwidth;

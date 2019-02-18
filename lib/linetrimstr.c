@@ -37,18 +37,14 @@ static size_t
 _linetrimstr_find_end(struct _linetrimstr *s, const char *buf, size_t size,
 		      size_t *psize)
 {
-    const char *end = buf + size;
     struct utf8_iterator itr;
     const char *wordstart = buf;
 
-    utf8_iter_first(&itr, (char*)buf);
-    do {    
-	for (; utf8_iter_isascii(itr) && ISWS(*itr.curptr);
+    utf8_iter_init(&itr, (char*)buf, size);
+    while (!utf8_iter_end_p(&itr)) {
+	for (; !utf8_iter_end_p(&itr)
+		 && utf8_iter_isascii(itr) && ISWS(*itr.curptr);
 	     utf8_iter_next(&itr)) {
-	    if (itr.curptr >= end) {
-		*psize = itr.curptr - buf;
-		return 0;
-	    }
 	    if (*itr.curptr == '\n')
 		s->linelen = 0;
 	    else if (++s->linelen >= s->maxlen) {
@@ -59,12 +55,9 @@ _linetrimstr_find_end(struct _linetrimstr *s, const char *buf, size_t size,
 	}
 
 	wordstart = itr.curptr;
-	for (; !(utf8_iter_isascii(itr) && ISWS(*itr.curptr));
+	for (; !utf8_iter_end_p(&itr)
+		 && !(utf8_iter_isascii(itr) && ISWS(*itr.curptr));
 	     utf8_iter_next(&itr)) {
-	    if (itr.curptr >= end) {
-		*psize = itr.curptr - buf;
-		return 0;
-	    }
 	    if (++s->linelen >= s->maxlen) {
 		size_t size = itr.string == wordstart ?
 		    itr.curptr - buf : wordstart - itr.string;
@@ -75,7 +68,7 @@ _linetrimstr_find_end(struct _linetrimstr *s, const char *buf, size_t size,
 		}
 	    }
 	}
-    } while (itr.curptr < end);
+    }
     *psize = itr.curptr - buf;
     return 0;
 }

@@ -1,8 +1,12 @@
-GNU Dico NEWS -- history of user-visible changes. 2018-09-25
-Copyright (C) 2008-2010, 2012-2018 Sergey Poznyakoff
+GNU Dico NEWS -- history of user-visible changes. 2019-02-19
 See the end of file for copying conditions.
 
 Please send Dico bug reports to <bug-dico@gnu.org.ua>
+
+Version 2.7.90 (git)
+
+* Fix memory access errors
+
 
 Version 2.7, 2018-09-25
 
@@ -236,7 +240,7 @@ Initial version.
 =========================================================================
 Copyright information:
 
-Copyright (C) 2008-2010, 2012-2017 Sergey Poznyakoff
+Copyright (C) 2008-2019 Sergey Poznyakoff
 
    Permission is granted to anyone to make or distribute verbatim copies
    of this document as received, in any medium, provided that the

@@ -154,7 +154,7 @@ fi
 # Grecs configuration system
 GRECS_SETUP(grecs, [shared tests getopt git2chg sockaddr-list])
 GRECS_HOST_PROJECT_INCLUDES='-I$(top_srcdir)/gnu -I$(top_builddir)/gnu'
-GRECS_HOST_PROJECT_LDADD='$(top_srcdir)/gnu/libgnu.la'
+GRECS_HOST_PROJECT_LDADD='$(top_builddir)/gnu/libgnu.la'
 
 # Tcl/tk
 AC_ARG_WITH([tk],

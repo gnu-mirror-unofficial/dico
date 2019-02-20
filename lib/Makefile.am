@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 1998-2018 Sergey Poznyakoff
+# Copyright (C) 1998-2019 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,12 +16,13 @@
 
 SUBDIRS = . tests
 
-AM_CPPFLAGS = -I${top_srcdir}/include -I${top_srcdir}/gnu -I../gnu
+AM_CPPFLAGS = \
+ @DICO_LIB_CONFIG@\
+ -I${top_srcdir}/include\
+ -I${top_builddir}/include\
+ -DLOCALEDIR=\"$(localedir)\"
 
 lib_LTLIBRARIES = libdico.la
-
-noinst_LIBRARIES=libxdico.a libextra.a @BUILD_LIBDICOSASL@
-EXTRA_LIBRARIES=libdicosasl.a
 
 libdico_la_SOURCES=\
  argcv.c\
@@ -62,25 +63,3 @@ libdico_la_SOURCES=\
 libdico_la_LDFLAGS = -version-info 2:0:0
 libdico_la_LIBADD = ../grecs/src/libgrecs.la
 
-libxdico_a_SOURCES=\
- appi18n.c\
- iputil.c\
- jiscvt.c\
- timer.c\
- userprivs.c\
- xhostname.c\
- xscript.c\
- xstream.c\
- xtkn.c\
- xutil.c
-
-libextra_a_SOURCES=xalloc-die.c
-
-libdicosasl_a_SOURCES=\
- gsaslstr.c
-
-noinst_HEADERS=\
- cursor.xbm\
- bushu.h
-
-EXTRA_DIST=bushu.dat

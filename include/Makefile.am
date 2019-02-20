@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 1998-2018 Sergey Poznyakoff
+# Copyright (C) 1998-2019 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,6 +26,4 @@ pkginclude_HEADERS = dico.h
 
 SUBDIRS = dico
 
-#pkgdata_DATA = gjdict.xbm
-#EXTRA_DIST = gjdict.xbm
 

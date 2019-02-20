@@ -1,5 +1,5 @@
 /* This file is part of GNU Dico
-   Copyright (C) 2007-2008, 2010, 2012, 2016-2018 Sergey Poznyakoff
+   Copyright (C) 2007-2019 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,9 +14,7 @@
    You should have received a copy of the GNU General Public License
    along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include <config.h>
 #include <dico.h>
 #include <limits.h>
 #include <errno.h>
@@ -2100,6 +2098,8 @@ utf8_wc_strstr(const unsigned *text, const unsigned *pattern)
     size_t text_len = utf8_wc_strlen(text);
     size_t pattern_len = utf8_wc_strlen(pattern);
     size_t *nextab;
+
+    errno = 0;
 
     /* Handle corner cases */
     if (pattern_len > text_len)

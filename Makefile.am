@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 1998-2000, 2008-2010, 2012, 2016-2018 Sergey Poznyakoff
+# Copyright (C) 1998-2019 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,14 +17,13 @@
 ACLOCAL_AMFLAGS = -I m4 -I am -I grecs/am -I gint -I imprimatur
 
 SUBDIRS=\
+ .\
  include\
- utils\
  examples\
  gint\
- gnu\
  grecs\
+ xdico\
  lib\
- libltdl\
  dicod\
  modules\
  dico\
@@ -32,7 +31,6 @@ SUBDIRS=\
  imprimatur\
  doc\
  po
-#FIXME: add these when ready: makedict client fonts
 
 EXTRA_DIST = ChangeLog.2008 configure.boot bootstrap DISTFILES
 
@@ -40,6 +38,22 @@ dist-hook:
 	tar -C $(srcdir) -c -f - --no-recursion --exclude-vcs \
            -T $(abs_top_srcdir)/DISTFILES | \
 	      tar -C $(distdir) -x -f -
+
+BUILT_SOURCES      =
+
+AM_CPPFLAGS        = @DICO_LIB_CONFIG@
+#LT_CONFIG_H        = config.h
+AM_LDFLAGS         =
+
+include_HEADERS    =
+noinst_LTLIBRARIES =
+lib_LTLIBRARIES    =
+EXTRA_LTLIBRARIES  =
+
+CLEANFILES         =
+MOSTLYCLEANFILES   =
+
+include libltdl/Makefile.inc
 
 #  Start Git ChangeLog from this date.
 gen_start_date = 2008-05-05

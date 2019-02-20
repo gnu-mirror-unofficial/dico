@@ -1,5 +1,5 @@
 /* This file is part of GNU Dico.
-   Copyright (C) 1998-2018 Sergey Poznyakoff
+   Copyright (C) 1998-2019 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,14 +14,11 @@
    You should have received a copy of the GNU General Public License
    along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include <config.h>
 #include <dico.h>
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
-#include <size_max.h>
 
 #define _STR_DIRTY         0x1000    /* Buffer dirty */
 #define _STR_ERR           0x2000    /* Permanent error state */
@@ -572,26 +569,19 @@ dico_stream_getdelim(dico_stream_t stream, char **pbuf, size_t *psize,
 	
 	/* Make enough space for len+1 (for final NUL) bytes.  */
 	if (cur_len + 1 >= n) {
-	    size_t needed_max =
-		SSIZE_MAX < SIZE_MAX ? (size_t) SSIZE_MAX + 1 : SIZE_MAX;
-	    size_t needed = 2 * n + 1;   /* Be generous. */
 	    char *new_lineptr;
-
-	    if (needed_max < needed)
-		needed = needed_max;
-	    if (cur_len + 1 >= needed) {
+	    
+	    if ((size_t) -1 / 3 * 2 <= n) {
 		rc = EOVERFLOW;
 		break;
 	    }
-	    
-	    new_lineptr = realloc(lineptr, needed);
+	    n += (n + 1) / 2;
+	    new_lineptr = realloc(lineptr, n);
 	    if (new_lineptr == NULL) {
 		rc = ENOMEM;
 		break;
 	    }
-	    
 	    lineptr = new_lineptr;
-	    n = needed;
 	}
 
 	lineptr[cur_len] = c;

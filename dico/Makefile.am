@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 1998-2018 Sergey Poznyakoff
+# Copyright (C) 1998-2019 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,22 +28,17 @@ dico_SOURCES = \
  shell.c
 
 LDADD=\
- ../lib/libxdico.a\
- ../gnu/libgnu.la\
- ../lib/libextra.a\
+ ../xdico/libxdico.la\
  ../lib/libdico.la\
  $(READLINE_LIBS)\
  @LIBINTL@ @LIBICONV@\
  @LIBDICOSASL@\
- @GSASL_LIBS@\
- @LIBLTDL@  
+ @GSASL_LIBS@
 
 AM_CPPFLAGS=\
  -DDEFAULT_DICT_SERVER="\"$(DEFAULT_DICT_SERVER)\""\
- -I$(top_srcdir)/include\
- -I$(top_srcdir)/gnu\
- -I../gnu\
- @GRECS_INCLUDES@ @LTDLINCL@
+ -I${srcdir}\
+ @DICO_PROG_INCLUDES@
 
 SUFFIXES=.opt .c
 

@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 1998-2018 Sergey Poznyakoff
+# Copyright (C) 1998-2019 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,10 @@ mod_LTLIBRARIES=guile.la
 guile_la_SOURCES = guile.c
 guile_la_LIBADD = ../../lib/libdico.la @GUILE_LIBS@
 AM_LDFLAGS = -module -avoid-version -no-undefined -rpath $(moddir)
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include @GRECS_INCLUDES@ @GUILE_INCLUDES@
+AM_CPPFLAGS = \
+ -I$(builddir)\
+ @DICO_MODULE_INCLUDES@\
+ @GUILE_INCLUDES@
 
 SUFFIXES =
 BUILT_SOURCES =

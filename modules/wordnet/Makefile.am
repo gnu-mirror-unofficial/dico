@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 2012-2018 Sergey Poznyakoff
+# Copyright (C) 2012-2019 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,9 +21,5 @@ mod_LTLIBRARIES=wordnet.la
 wordnet_la_SOURCES = wordnet.c
 wordnet_la_LIBADD = ../../lib/libdico.la @WORDNET_LOPT@ -l@WORDNET_LIBWN@
 AM_LDFLAGS = -module -avoid-version -no-undefined
-AM_CPPFLAGS = \
- -I$(top_srcdir)/include\
- -I$(top_builddir)/include\
- @WORDNET_IOPT@\
- @GRECS_INCLUDES@
+AM_CPPFLAGS = @DICO_MODULE_INCLUDES@ @WORDNET_IOPT@
 EXTRA_DIST=module.ac

@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 1998-2018 Sergey Poznyakoff
+# Copyright (C) 1998-2019 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,9 +55,7 @@ echo_la_LDFLAGS = -module -avoid-version -no-undefined
 noinst_PROGRAMS=apopauth
 apopauth_SOURCES=apopauth.c
 apopauth_LDADD=\
- ../../lib/libxdico.a\
- ../../gnu/libgnu.la\
- ../../lib/libextra.a\
+ ../../xdico/libxdico.la\
  ../../lib/libdico.la\
  $(READLINE_LIBS)\
  @LIBINTL@ @LIBICONV@\
@@ -66,11 +64,7 @@ apopauth_LDADD=\
  @LIBLTDL@
 
 AM_CPPFLAGS = \
- -I$(top_srcdir)/include\
- -I$(top_builddir)/include\
- -I$(top_srcdir)/gnu\
- -I$(top_builddir)/gnu\
- @GRECS_INCLUDES@
+ @DICO_PROG_INCLUDES@
 
 ## ------------ ##
 ## Test suite.  ##

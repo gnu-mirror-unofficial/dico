@@ -2,7 +2,7 @@
 # Mediawiki module for Python 
 # This file is part of GNU Dico.
 # Copyright (C) 2008-2010, 2012 Wojciech Polak
-#               2018 Sergey Poznyakoff
+# Copyright (C) 2018-2019 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

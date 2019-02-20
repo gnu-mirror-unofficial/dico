@@ -28,12 +28,12 @@ dnl Process this file with -*- autoconf -*- to produce a configure script.
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
 AC_PREREQ(2.63)
-AC_INIT([GNU dico], 2.7.90, [bug-dico@gnu.org])
+AC_INIT([GNU dico], 2.7.91, [bug-dico@gnu.org])
 AC_CONFIG_SRCDIR([dicod/main.c])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(include/prog/config.h include/lib/config.h)
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR(m4)	
-AM_INIT_AUTOMAKE([1.11 gnits tar-ustar dist-bzip2 dist-xz std-options subdir-objects])
+AM_INIT_AUTOMAKE([1.11 nostdinc gnits tar-ustar dist-bzip2 dist-xz std-options subdir-objects])
 
 dnl Enable silent rules by default:
 AM_SILENT_RULES([yes])
@@ -52,9 +52,7 @@ AC_PROG_LEX
 LT_PREREQ(2.4)
 LT_CONFIG_LTDL_DIR([libltdl])
 LT_INIT([dlopen])
-LTDL_INIT([recursive])
-LT_WITH_LTDL
-AC_CONFIG_FILES([libltdl/Makefile])
+LTDL_INIT([nonrecursive])
 
 dnl Checks for libraries.
 AC_CHECK_LIB(socket, socket)
@@ -115,7 +113,7 @@ AC_CHECK_LIB(crypt, crypt)
 AM_ICONV
 AM_GNU_GETTEXT([external], [need-formatstring-macros])
 AM_GNU_GETTEXT_VERSION([0.18])
-AC_CONFIG_LINKS(include/gettext.h:gnu/gettext.h)
+AC_CONFIG_LINKS(include/gettext.h:xdico/gnu/gettext.h)
 
 LOG_FACILITY="LOG_DAEMON"
 
@@ -151,10 +149,27 @@ if test -z "$DEFAULT_VERSION_INCLUDE_DIR"; then
    DEFAULT_VERSION_INCLUDE_DIR='$(pkgdatadir)/$(VERSION)/include'
 fi   
 
+AC_SUBST([DICO_PROG_CONFIG],['-I$(top_builddir)/include/prog'])
+AC_SUBST([DICO_LIB_CONFIG],['-I$(top_builddir)/include/lib'])
+
+AC_SUBST([DICO_PROG_INCLUDES],[dnl
+'$(DICO_PROG_CONFIG)\
+ -I$(top_srcdir)/include\
+ -I$(top_builddir)/include\
+ -I$(top_srcdir)/xdico/gnu\
+ -I$(top_builddir)/xdico/gnu\
+ $(GRECS_INCLUDES)'])
+
+AC_SUBST([DICO_MODULE_INCLUDES],[dnl
+'-I$(srcdir)\
+ $(DICO_LIB_CONFIG)\
+ -I$(top_srcdir)/include\
+ -I$(top_builddir)/include\
+ $(GRECS_INCLUDES)'])
+
 # Grecs configuration system
 GRECS_SETUP(grecs, [shared tests getopt git2chg sockaddr-list])
-GRECS_HOST_PROJECT_INCLUDES='-I$(top_srcdir)/gnu -I$(top_builddir)/gnu'
-GRECS_HOST_PROJECT_LDADD='$(top_builddir)/gnu/libgnu.la'
+GRECS_HOST_PROJECT_INCLUDES='$(DICO_LIB_CONFIG) -I$(top_builddir)/include'
 
 # Tcl/tk
 AC_ARG_WITH([tk],
@@ -250,8 +265,8 @@ status_gsasl=no
 MU_CHECK_GSASL(0.2.5, [
     AC_DEFINE(WITH_GSASL,1,[Define if GNU SASL is present])
     status_gsasl=yes
-    AC_SUBST(BUILD_LIBDICOSASL,'libdicosasl.a')
-    AC_SUBST(LIBDICOSASL,'$(top_builddir)/lib/libdicosasl.a')])
+    AC_SUBST(LIBDICOSASL,'$(top_builddir)/xdico/libdicosasl.a')])
+AM_CONDITIONAL([COND_LIBDICOSASL],[test "$status_gsasl" = yes])
 
 <MODULES>
     
@@ -295,9 +310,9 @@ AC_CONFIG_FILES([Makefile
                  include/Makefile
                  include/dico/Makefile
 		 examples/Makefile 
-                 utils/Makefile
 		 gint/Makefile
-		 gnu/Makefile
+		 xdico/gnu/Makefile
+		 xdico/Makefile
                  lib/Makefile
                  dicod/Makefile
 		 modules/Makefile

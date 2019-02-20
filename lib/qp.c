@@ -1,6 +1,5 @@
 /* This file is part of GNU Dico
-   Copyright (C) 1999-2001, 2004-2005, 2007-2008, 2012 Free Software
-   Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
   
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,9 +14,7 @@
    You should have received a copy of the GNU General Public License
    along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include <config.h>
 #include <dico.h>
 #include <string.h>
 

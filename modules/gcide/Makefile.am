@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 2012-2018 Sergey Poznyakoff
+# Copyright (C) 2012-2019 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,27 +25,25 @@ libgcide_la_SOURCES=webchr.c ent.c markup.l grk.c
 gcide_la_SOURCES = gcide.c idx.c 
 gcide_la_LIBADD = libgcide.la ../../lib/libdico.la $(LIBICONV) @LTLIBINTL@
 gcide_la_LDFLAGS = -module -avoid-version -no-undefined
+AM_CPPFLAGS =\
+ -DLIBEXECDIR=\"${libexecdir}\"\
+ @DICO_MODULE_INCLUDES@
 
 libexec_PROGRAMS=idxgcide 
 idxgcide_SOURCES=idxgcide.l idxgcide-cli.h
 idxgcide_LDADD = \
- ../../gnu/libgnu.la\
  libgcide.la\
- ../../lib/libxdico.a\
+ ../../xdico/libxdico.la\
  ../../lib/libdico.la\
  $(LIBICONV) \
  @LIBINTL@
+idxgcide_CPPFLAGS =\
+ -DLIBEXECDIR=\"${libexecdir}\"\
+ @DICO_PROG_INCLUDES@
 
 noinst_HEADERS = gcide.h
 
 AM_LFLAGS=-d
-AM_CPPFLAGS=\
- -DLIBEXECDIR=\"${libexecdir}\"\
- -I$(top_srcdir)/include\
- -I$(top_builddir)/include\
- @GRECS_INCLUDES@\
- -I$(top_srcdir)/gnu\
- -I$(top_builddir)/gnu
 
 SUFFIXES=.opt .h
 

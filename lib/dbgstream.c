@@ -1,5 +1,5 @@
 /* This file is part of GNU Dico.
-   Copyright (C) 2008-2018 Sergey Poznyakoff
+   Copyright (C) 2008-2019 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,9 +17,7 @@
 /* Implementation of a "debug stream", a write-only stream useful
    for printing debugging diagnostics.  */
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include <config.h>
 #include <dico.h>
 #include <string.h>
 #include <errno.h>

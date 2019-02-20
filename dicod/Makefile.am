@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 1998-2018 Sergey Poznyakoff
+# Copyright (C) 1998-2019 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,18 +56,14 @@ AM_CPPFLAGS = \
  -DDEFAULT_VERSION_INCLUDE_DIR=\"$(DEFAULT_VERSION_INCLUDE_DIR)\"\
  -DDEFAULT_INCLUDE_DIR=\"$(DEFAULT_INCLUDE_DIR)\"\
  -DDEFAULT_PREPROCESSOR="$(DEFAULT_PREPROCESSOR)"\
- -I$(top_srcdir)/include\
- -I$(top_srcdir)/gnu\
- -I../gnu\
- @GRECS_INCLUDES@ @LTDLINCL@
+ -I$(srcdir)\
+ @DICO_PROG_INCLUDES@ @LTDLINCL@
 
 AM_YFLAGS = -dtv
 AM_LFLAGS = -dvp
 
 LDADD=\
- ../lib/libxdico.a\
- ../gnu/libgnu.la\
- ../lib/libextra.a\
+ ../xdico/libxdico.la\
  ../lib/libdico.la\
  @LIBINTL@ @LIBICONV@\
  @LIBDICOSASL@\

@@ -1,5 +1,6 @@
 /* This file is part of GNU Dico.
    Copyright (C) 2008, 2012 Wojciech Polak
+   Copyright (C) 2019 Sergey Poznyakoff
  
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,9 +15,7 @@
    You should have received a copy of the GNU General Public License
    along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include <config.h>
 #include <Python.h>
 #include <dico.h>
 #include <string.h>

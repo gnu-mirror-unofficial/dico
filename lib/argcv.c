@@ -1,6 +1,5 @@
 /* argcv.c - simple functions for parsing input based on whitespace
-   Copyright (C) 1999-2001, 2003-2006, 2008, 2012 Free Software
-   Foundation, Inc.
+   Copyright (C) 1999-2019 Free Software Foundation, Inc.
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -17,10 +16,7 @@
    Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
    Boston, MA 02110-1301 USA */
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
-
+#include <config.h>
 #include <ctype.h>
 #include <errno.h>
 #include <unistd.h>

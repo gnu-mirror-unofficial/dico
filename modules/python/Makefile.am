@@ -28,5 +28,5 @@ endif
 
 python_la_LIBADD = ../../lib/libdico.la @PYTHON_LIBS@
 AM_LDFLAGS = -module -avoid-version -no-undefined -rpath $(moddir)
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include @PYTHON_INCLUDES@
+AM_CPPFLAGS = @DICO_MODULE_INCLUDES@ @PYTHON_INCLUDES@
 EXTRA_DIST=module.ac

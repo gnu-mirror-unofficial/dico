@@ -1,6 +1,12 @@
 # List of gnulib modules needed for GNU Dico.
 # A module name per line. Empty lines and comments are ignored.
 
+# Lines starting with '--' are treated as gnulib-tool options. Surplus
+# whitespace is removed.
+--libtool
+--lib         = libgnu
+--source-base = xdico/gnu
+
 c-strcase
 crypto/des
 crypto/md5
@@ -28,3 +34,5 @@ vasprintf
 xalloc
 xgetdomainname
 xgethostname
+!xalloc-die
+!openat-die

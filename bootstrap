@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # This file is part of GNU Dico
-# Copyright (C) 2014, 2016-2018 Sergey Poznyakoff
+# Copyright (C) 2014-2019 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,18 +18,20 @@
 =head1 NAME
 
 bootstrap - Bootstrap the Dico project
-    
+
 =head1 SYNOPSIS
 
 B<bootstrap>
-[B<-ahmnv>]    
+[B<-ahmnv>]
 [B<--add>]
 [B<--dry-run>]
-[B<--help>]    
+[B<--help>]
 [B<--new>]
 [B<--modules>]
-[B<--skip-reconfig>]    
+[B<--skip-reconfig>]
 [B<--verbose>]
+[B<--quiet>]
+[B<--skip-po>]
 [I<NAME>...]
 
 =head1 DESCRIPTION
@@ -44,7 +46,9 @@ When run without arguments performs the following actions:
 
 =item 1. Pulls in git submodules.
 
-=item 2. Creates autoconf/automake sources for building Dico modules.
+=item 2. Creates directories and placeholders for automatically generated files
+
+=item 3. Creates autoconf/automake sources for building Dico modules.
 
 Recreates F<configure.ac> and F<modules/Makefile.am> from stub files
 F<configure.boot> and F<modules/stub.am>.  The list of modules is obtained
@@ -55,19 +59,42 @@ Additional F<configure.ac> code for each module is obtained from
 file F<module.ac> in each module directory.  See the description of
 this file in section B<FILES>.
 
-=item 3. Bootstraps the B<gnulib> submodule.
+=item 4. Bootstraps the B<gnulib> submodule.
 
-=back    
+The F<gnulib-tool> is run with arguments deduced from files
+F<configure.ac> and F<maint/gnulib.modules>.
+
+=item 5. Creates the file F<po/Makevars>
+
+This file is created from F<po/Makevsrs.template> using the information
+obtained from F<configure.ac> and F<maint/printflike>.
+
+=item 6. Downloads new translations (F<*.po> files) into the F<po> directory.
+
+This step can be skipped using the B<--skip-po> option.
+
+=item 7. Creates a pristine configuration header file
+
+The pristine configuration header file is a version of F<config.h>
+stripped off any defines added by B<gnulib>. It is used by library
+source files to avoid introducing dependency on B<gnulib>.
+
+The name of the pristine header file is taken from the second argument
+of the B<AC_CONFIG_HEADERS> statement in the F<configure.boot> file.
+
+=item 8. Reconfigures the project.
+
+=back
 
 The program must be run from the Dico source tree topmost directory.
-    
+
 When given the B<-m> (B<--modules>) option, only the second step is
 performed.
 
 When the B<-a> (B<--add>, B<--new>) option is given, the program creates
 basic infrastructure for modules named in the command line.  For each
 I<NAME> from the command line it creates directory F<modules/I<NAME>>
-and populates it with files from the directory F<modules/template>.  To    
+and populates it with files from the directory F<modules/template>.  To
 this effect, it reads the list of file names from the section B<FILE LIST>
 of the file F<modules/template/README>.  This file is in Emacs outline format.
 The B<FILE LIST> section lists file names relative to the F<modules/template>
@@ -84,19 +111,18 @@ are replaced with their actual values in the destination file.  This process
 is discussed in detail in section B<FILES>, below.
 
 Finally, the files F<configure.ac> and F<modules/Makefile.am> are recreated
-to take into account the newly created modules.    
-    
-By default, the program prints only error diagnostics.  That means that
-upon success, it will terminate quietly, without producing a single line
-on output.  This can be changed using the B<-v> (or B<--verbose>) option.
-When the option is given once, the program prints general description before
-running each of the three steps described above.  Two B<-v> options instruct
-it to also print whatever output that was generated when running auxiliary
-commands.  Finally, three B<-v>'s produce additional debugging information.    
+to take into account the newly created modules.
+
+By default, the program prints a succint report of what is being done.
+This can be changed using the B<-q> (B<--quiet>) and B<-v> (or B<--verbose>)
+options.  The B<-q> (B<--quiet>) option instructs the program to suppress
+any output excepting error messages. The B<-v> (or B<--verbose>) option,
+on the contrary, instructs it to also print whatever output that was
+generated when running auxiliary commands.
 
 The B<-n> (B<--dry-run>) option instructs the tool to print what would have
 been done without actually doing it.
-    
+
 =head1 OPTIONS
 
 =over 4
@@ -105,24 +131,28 @@ been done without actually doing it.
 
 Create basic infrastructure for modules named in the command line and
 add them to F<configure.ac> and F<modules/Makefile.am>
-    
+
 =item B<-n>, B<--dry-run>
 
-Don't do anything, just print what would have been done.    
+Don't do anything, just print what would have been done.
 
 =item B<-m>, B<--modules>
 
 Run only the second step: creation of autoconf/automake sources for
-Dico modules.     
+Dico modules.
+
+=item B<--skip-po>
+
+Don't synchronize localization files with the Translation Project.
 
 =item B<-s>, B<--skip-reconfigure>
 
 Don't run B<autoreconf>.  Takes effect only with B<--add> (B<--new>) or
-B<--modules>.    
-    
+B<--modules>.
+
 =item B<-v>, B<--verbose>
 
-Increase output verbosity.  Multiple options accumulate.    
+Increase output verbosity.  Multiple options accumulate.
 
 =back
 
@@ -132,7 +162,7 @@ verbatim:
 =over 4
 
 =item B<--gnulib-srcdir=>I<DIRNAME>
-    
+
 Specifies the local directory where B<gnulib> sources reside.  Use this if
 you already have gnulib sources on your machine, and do not want to waste
 your bandwidth downloading them again.
@@ -145,29 +175,29 @@ to a correct gnulib snapshot.
 =item B<--skip-po>
 
 Do not download po files.
-    
-=back    
-    
+
+=back
+
 The following options cause the program to display informative text and
-exit:    
-    
-=over 4    
-    
+exit:
+
+=over 4
+
 =item B<-h>
 
 Show a short usage summary.
 
 =item B<--help>
 
-Show man page.    
+Show man page.
 
 =item B<--usage>
 
-Show a concise command line syntax reminder.     
-    
+Show a concise command line syntax reminder.
+
 =back
-    
-=head1 FILES    
+
+=head1 FILES
 
 The following files are used as templates to create output files.  When
 creating output file, each line from the corresponding template is read,
@@ -194,7 +224,7 @@ and the input file contains:
 
     dnl <HEADING#>
 
-Then, the resulting expansion will be:    
+Then, the resulting expansion will be:
 
     dnl This file is generated automatically.
     dnl Please, do not edit.
@@ -203,8 +233,8 @@ Then, the resulting expansion will be:
 The macro variables are specific for each file, and are described below.
 
 For each file, a special comment sequence is defined.  Lines beginning
-with that sequence are omitted from the output.    
-    
+with that sequence are omitted from the output.
+
 =over 4
 
 =item F<configure.boot>
@@ -236,9 +266,9 @@ where MODNAME is the module name and STATUS is the module status variable
 (which produces B<yes> or B<no> at configure time, depending on whether
 the module is enabled or not).
 
-This is intended for use in B<AC_CONFIG_COMMANDS>.    
+This is intended for use in B<AC_CONFIG_COMMANDS>.
 
-=item B<STATUS_DEFN>    
+=item B<STATUS_DEFN>
 
 A list of assignments for module status variables, intended
 for use in B<AC_CONFIG_COMMANDS>.
@@ -248,10 +278,10 @@ for use in B<AC_CONFIG_COMMANDS>.
 The following code illustrates the use of the latter two variables:
 
   AC_CONFIG_COMMANDS([status],[
-echo<STATUS_OUTPUT>                    
+echo<STATUS_OUTPUT>
 ],
-                     [<STATUS_DEFN>])
-    
+		     [<STATUS_DEFN>])
+
 =item F<modules/*/module.ac>
 
 This file is optional.  If present, it contains the B<autoconf> code for
@@ -273,7 +303,7 @@ Use I<NAME> as module name when creating variable names for that module.  This
 is useful when the module name contains symbols that cannot be used in variable
 names (as in, e.g. B<dict.org>).
 
-=item B<## module description: I<TEXT>>    
+=item B<## module description: I<TEXT>>
 
 Use I<TEXT> as module description in B<STATUS_OUTPUT> (see F<configure.boot>).
 
@@ -284,7 +314,7 @@ Reserved for future use.
 =back
 
 As well as other B<##> comments, these comments do not appear in the output.
-    
+
 =item F<modules/stub.am>
 
 Produces the file F<modules/Makefile.am>.  Comment marker is B<##>.
@@ -292,14 +322,14 @@ Produces the file F<modules/Makefile.am>.  Comment marker is B<##>.
 Macro variables:
 
 =over 8
-    
+
 =item B<HEADING>
 
 Same as in F<configure.boot>.
 
 =item B<MODULES>
 
-Produces B<Makefille.am> code for the B<SUBDIRS> variable.    
+Produces B<Makefille.am> code for the B<SUBDIRS> variable.
 
 =item B<TEMPLATE>
 
@@ -308,12 +338,22 @@ F<modules/template/README>.
 
 =back
 
-=back    
-    
+=item F<maint/gnulib.modules>
+
+List of B<gnulib> modules to be imported to the package and additional
+options to B<gnulib-tool>.
+
+=item maint/printflike
+
+List of I<printf-like> programs for generating the C<XGETTEXT_OPTIONS>
+variable in F<po/Makevars>.
+
+=back
+
 The following template files are processed when creating new modules:
 
-=over 4    
-    
+=over 4
+
 =item F<modules/template/module.c>
 
 produces the file F<modules/I<NAME>/I<NAME>.c>.  Comment marker is B<//>.
@@ -326,12 +366,12 @@ Macro variables:
 
 Expands to the name of the module.
 
-=back    
-    
+=back
+
 =item Any F<Makefile.am> files in the F<modules/template> directory
 
 Comment marker is B<##>.
-    
+
 Macro variables:
 
 =over 8
@@ -342,12 +382,12 @@ Expands to the name of the module.
 
 =back
 
-=back    
+=back
 
-The files F<modules/template/tests/atlocal.in> and 
+The files F<modules/template/tests/atlocal.in> and
 F<modules/template/tests/testsuite.at> follow the same rules as
 F<Makefile.am>.
-    
+
 =head1 EXIT CODES
 
 =over 4
@@ -362,19 +402,19 @@ Command line usage error.
 
 =item B<66>
 
-Can't open input file.    
-    
+Can't open input file.
+
 =item B<73>
 
-Can't create output file.    
+Can't create output file.
 
 =back
 
 =head1 BUGS
 
 Error handling can be made better.
-    
-=cut    
+
+=cut
 
 use strict;
 use Getopt::Long qw(:config gnu_getopt no_ignore_case);
@@ -399,15 +439,16 @@ my $progdescr = "Recreate Dico module autoconf structure";
 my $addmod;
 my $dry_run;
 my $verbose;
+my $quiet;
 my $modules;
 my $skip_reconf;
-my @gnulib_options;
+my $skip_po;
 my $autoconf = "module.ac";
 my $config_stub = "configure.boot";
 my $makefile_stub = "modules/stub.am";
 my $makefile = "modules/Makefile.am";
 my %outfile;
-
+my %pkg_info;
 my %categories; # not used now
 
 sub error {
@@ -430,7 +471,7 @@ my $status = 0;
 
 sub rewrite_configure_ac {
     my $ref = shift;
-    
+
     my %vartab = (
 	'overwrite' => 1,
 	'tempfile' => 1,
@@ -441,7 +482,7 @@ To recreate, run $progname from the top of Dico source tree.
 ",
 	'MODULES' => sub {
 	    my $s;
-	    
+
 	    foreach my $name (sort keys %{$ref}) {
 		my $h = $ref->{$name};
 		$s .= "# Module $name\n";
@@ -557,7 +598,7 @@ if ${acname}_COND
   ${acname}_DIR=$name
 endif
 EOT
-;		
+;
 		$ref->{$name}{SUBDIRS} = "\$(${acname}_DIR)";
 	    }
 	    $ref->{$name}{status} = 1
@@ -594,8 +635,8 @@ EOT
 	    $status = EX_DATAERR;
 	    return;
 	}
-    } 
-    
+    }
+
     if ($verbose>2) {
 	print STDERR "module $name:\n";
 	print STDERR Dumper($ref->{$name});
@@ -612,7 +653,7 @@ sub replace_macro {
 	if (ref($ref->{$name}) eq 'CODE') {
 	    $s = &{$ref->{$name}};
 	} else {
-	    $s = $ref->{$name};     
+	    $s = $ref->{$name};
 	}
     } else {
 	$s = "<$name>";
@@ -633,11 +674,11 @@ sub make_file {
 	    make_path($dir, {error=>\my $err});
 	    if (@$err) {
 		for my $diag (@$err) {
-                    my ($file, $message) = %$diag;
-                    $file = $dir if ($file eq '');
-                    error("error creating $file: $message");
-                }
-	        exit(EX_CANTCREAT);
+		    my ($file, $message) = %$diag;
+		    $file = $dir if ($file eq '');
+		    error("error creating $file: $message");
+		}
+		exit(EX_CANTCREAT);
 	    }
 	}
     }
@@ -676,7 +717,7 @@ sub make_file {
 	close($ifd);
 	close($ofd);
     }
-}    
+}
 
 sub read_file_list {
     open(my $fd, '<', 'modules/template/README') or die;
@@ -707,7 +748,8 @@ sub read_file_list {
 sub create_module {
     my $modname = shift;
 
-    error("Creating framework for module $modname", fd => \*STDOUT) if $verbose;
+    error("Creating framework for module $modname", fd => \*STDOUT)
+	unless $quiet;
     my %variables = (
 	'./module.c' => { rename => sub { s/module/${modname}/; },
 			  ignorecomm => '//',
@@ -728,7 +770,7 @@ sub create_module {
     }
 
     my $template_dir = 'modules/template';
-    
+
     foreach my $file (read_file_list) {
 	# my $subdir = $dir . '/' . dirname($file);
 	# unless (-d $subdir) {
@@ -744,18 +786,18 @@ sub create_module {
 	do {
 	    if (exists($variables{$key})
 		|| exists($variables{$key = basename($file)})) {
-	        $vartab = $variables{$key};
+		$vartab = $variables{$key};
 	    }
 	    if ($vartab && exists($vartab->{ref})) {
-	        $key = $vartab->{ref};
-	        goto VARTAB;
+		$key = $vartab->{ref};
+		goto VARTAB;
 	    }
 	};
 
-        my $outfile = $file;
-        if ($vartab && exists($vartab->{rename})) {
+	my $outfile = $file;
+	if ($vartab && exists($vartab->{rename})) {
 	    local $_ = $outfile;
-  	    &{$vartab->{rename}};
+	    &{$vartab->{rename}};
 	    $outfile = $_;
 	}
 	make_file("$template_dir/$file", "$dir/$outfile", $vartab);
@@ -791,8 +833,9 @@ sub modproc {
     my %modtab;
     my @modnames = map { s#modules/##; $_; } grep { $_ ne 'modules/template' && -d $_; } glob "modules/*";
 
-    error("Bootstrapping dico modules", fd => \*STDOUT) if $verbose;
-    
+    error("Bootstrapping dico modules", fd => \*STDOUT)
+	unless $quiet;
+
     foreach my $m (@modnames) {
 	add_module($m, \%modtab);
     }
@@ -808,8 +851,21 @@ sub modproc {
     }
 }
 
+sub get_command_name {
+    my $cmd = shift;
+    if ($cmd =~ /\s/) {
+	unshift @_, split /\s+/, $cmd;
+	$cmd = shift;
+    }
+    if ($cmd =~ /^(sh|perl)$/) {
+	$cmd = shift;
+    }
+    return $cmd;
+}
+
 sub run {
-    error("running @_", prefix=>'DEBUG') if $verbose>2; 
+    my $id = get_command_name(@_);
+    error("running @_", prefix=>'DEBUG') if $verbose>2;
     return if $dry_run;
     my $out = gensym;
     my $err = gensym;
@@ -817,21 +873,21 @@ sub run {
     open(my $in, "<&", \*STDIN) or die "can't dup STDIN: $!";
     my $pid = open3($in, $out, $err, @_);
     my $logpid;
-    if ($verbose > 1) {
+    if ($verbose) {
 	$logpid = fork();
 	if ($logpid == 0) {
 	    while (<$out>) {
 		chomp;
-		error($_, fd => \*STDOUT, prefix => "[@_]");
+		error($_, fd => \*STDOUT, prefix => "[$id]");
 	    }
 	    exit;
-	} 
+	}
     }
-    
+
     while (<$err>) {
 	chomp;
 	next if /^(libtoolize|autoreconf):/ && !$verbose;
-	error($_, prefix => "[@_]");
+	error($_, prefix => "[$id]");
     }
     waitpid($pid, 0);
     my $ret = $?;
@@ -843,23 +899,279 @@ sub run {
 	abend(EX_CANTCREAT, "@_ exited with status $e");
     }
     waitpid($logpid, 0) if defined $logpid;
-}    
+}
+
+sub gnulib_modlist {
+    my @options;
+    my @include;
+    my @exclude;
+    open(my $fd, '<', 'maint/gnulib.modules')
+	or abend(EX_NOINPUT, "can't open maint/gnulib.modules: $!");
+    while (<$fd>) {
+	chomp;
+	s/\s+$//;
+	s/^\s+//;
+	next if /^#/ or /^$/;
+	if (/^(--.+?)\s*(?:=\s*(.+))/) {
+	    push @options, "$1".($2 ? "=$2" : '');
+	} elsif (/^[!](.+)/) {
+	    push @exclude, $1;
+	} else {
+	    push @include, $_;
+	}
+    }
+    close $fd;
+    return (
+	@options,
+	(map { "--avoid=$_" } @exclude),
+	@include
+	);
+}
+
 
 sub gnulib_init {
-    my $gnulib = 'gnulibinit';
-    unless (-l $gnulib) {
-    	symlink('gnulib/build-aux/bootstrap', $gnulib)
-    	    or abend(EX_CANTCREAT, "can't symlink gnulib/build-aux/bootstrap: $!");
+    error("Bootstrapping gnulib", fd => \*STDOUT) unless $quiet;
+    my @import_options = qw(
+	--import
+	--local-dir=gl
+	--m4-base=m4
+	--doc-base=doc
+	--tests-base=tests
+	--aux-dir=build-aux
+	--makefile-name=gnulib.am
+	--no-conditional-dependencies
+	--macro-prefix=gl);
+    push @import_options, '--verbose' if $verbose;
+    run("sh", "gnulib/gnulib-tool",
+	@import_options,
+	gnulib_modlist);
+}
+
+sub po_makevars_template {
+    my $file = shift;
+    return if -f $file;
+    open(my $fd, '>', $file)
+	or abend(EX_CANTCREAT, "cannot create $file: $!");
+    print $fd <<'EOT';
+# Makefile variables for PO directory in any package using GNU gettext.
+
+# Usually the message domain is the same as the package name.
+DOMAIN = $(PACKAGE)
+
+# These two variables depend on the location of this directory.
+subdir = po
+top_builddir = ..
+
+# These options get passed to xgettext.
+XGETTEXT_OPTIONS = --keyword=_ --keyword=N_
+
+# This is the copyright holder that gets inserted into the header of the
+# $(DOMAIN).pot file.  Set this to the copyright holder of the surrounding
+# package.  (Note that the msgstr strings, extracted from the package's
+# sources, belong to the copyright holder of the package.)  Translators are
+# expected to transfer the copyright for their translations to this person
+# or entity, or to disclaim their copyright.  The empty string stands for
+# the public domain; in this case the translators are expected to disclaim
+# their copyright.
+COPYRIGHT_HOLDER = Free Software Foundation, Inc.
+
+# This is the email address or URL to which the translators shall report
+# bugs in the untranslated strings:
+# - Strings which are not entire sentences, see the maintainer guidelines
+#   in the GNU gettext documentation, section 'Preparing Strings'.
+# - Strings which use unclear terms or require additional context to be
+#   understood.
+# - Strings which make invalid assumptions about notation of date, time or
+#   money.
+# - Pluralisation problems.
+# - Incorrect English spelling.
+# - Incorrect formatting.
+# It can be your email address, or a mailing list address where translators
+# can write to without being subscribed, or the URL of a web page through
+# which the translators can contact you.
+MSGID_BUGS_ADDRESS =
+
+# This is the list of locale categories, beyond LC_MESSAGES, for which the
+# message catalogs shall be used.  It is usually empty.
+EXTRA_LOCALE_CATEGORIES =
+EOT
+}
+
+sub make_tree {
+    error("Creating placeholders", fd => \*STDOUT) unless $quiet;
+    return if $dry_run;
+    my %dirs;
+    $dirs{$pkg_info{AC_CONFIG_MACRO_DIR}} = 1
+	if exists $pkg_info{AC_CONFIG_MACRO_DIR};
+    if (exists($pkg_info{AC_CONFIG_HEADERS})) {
+	my @d = map { dirname($_) } @{$pkg_info{AC_CONFIG_HEADERS}};
+	@dirs{@d} = (1) x @d;
     }
-    error("Bootstrapping gnulib", fd => \*STDOUT) if $verbose;
-    run('sh', $gnulib, @gnulib_options);
+
+    foreach my $dir (keys %dirs) {
+	unless (-d $dir) {
+	    mkdir $dir
+		or abend(EX_CANTCREAT, "cannot create directory $dir: $!");
+	}
+    }
+
+    foreach my $cf (map { "$_.in" } @{$pkg_info{AC_CONFIG_HEADERS}}) {
+	unless (-f $cf) {
+	    open(my $fd, '>', $cf)
+		or abend(EX_CANTCREAT, "can't create placeholder file $cf: $!");
+	    close($fd);
+	}
+    }
+
+    # FIXME    include/lib/config.h
+    po_makevars_template('po/Makevars.template');
+
+    unless (-f 'ChangeLog') {
+	open(my $fd, '>', 'ChangeLog')
+	    or abend(EX_CANTCREAT, "cannot create ChangeLog: $!");
+	print $fd <<EOT;
+This file is a placeholder. It will be replaced with the actual ChangeLog
+by make dist.  Run make ChangeLog if you wish to create it earlier.
+EOT
+    }
+}
+
+sub make_pristine_conf {
+    my $cfname;
+    my ($ofd, $tempname) = tempfile(DIR => '.',
+				    TEMPLATE => 'configure.XXXXXX');
+    open(my $ifd, '<', 'configure.ac')
+	or abend(EX_DATAERR, "can't open configure.ac for reading: $!");
+    while (<$ifd>) {
+	next if /^gl_/;
+	if (s/^AC_CONFIG_HEADERS\(\[?(.+?)\]?\).*/$1/) {
+	    my @cf = split;
+	    if (@cf > 1) {
+		$cfname = $cf[1];
+		print $ofd "AC_CONFIG_HEADERS($cfname)\n";
+		next;
+	    }
+	}
+	print $ofd $_;
+    }
+    close $ofd;
+    close $ifd;
+    if ($cfname) {
+	error("Generating pristine config header in ${cfname}.in",
+	      fd => \*STDOUT) unless $quiet;
+	run("autoheader --force $tempname");
+    }
+    unlink $tempname;
 }
 
 sub reconf {
     return if $status || $skip_reconf;
-    error("Reconfiguring", fd => \*STDOUT) if $verbose;
-    run("autoreconf -i -s");
-}    
+    error("Reconfiguring", fd => \*STDOUT) unless $quiet;
+    run("autoreconf -i -s -f");
+    make_pristine_conf();
+}
+
+sub get_pkg_info {
+	my $m4_prog = q{divert(-1)
+changequote([,])
+define([X_PRINT],[divert(0)$1divert(-1)])
+define([AC_INIT],[X_PRINT([PACKAGE_NAME:$1
+PACKAGE_BUGREPORT:$3
+])])
+define([AC_CONFIG_HEADERS],
+[X_PRINT([[$0]:$1
+])])
+define([AC_CONFIG_MACRO_DIR],[X_PRINT([[$0]:$1
+])])
+	};
+
+	my $tmp = File::Temp->new();
+	print $tmp $m4_prog;
+	close $tmp;
+	open(my $fh, '-|', 'm4', $tmp->filename, 'configure.boot')
+	    or abend(EX_NOINPUT, "Can't run m4: $!");
+	while (<$fh>) {
+	    chomp;
+	    my ($k,$v) = split /:/, $_, 2;
+	    $pkg_info{$k} = $v;
+	}
+	close $fh;
+
+	($pkg_info{PACKAGE_TARNAME} = $pkg_info{PACKAGE_NAME}) =~ s/^GNU\s+//;
+	$pkg_info{PACKAGE_BUGREPORT} =
+	    "bug-$pkg_info{PACKAGE_TARNAME}\@gnu.org.ua"
+	    unless $pkg_info{PACKAGE_BUGREPORT};
+	if (exists($pkg_info{AC_CONFIG_HEADERS})) {
+	    $pkg_info{AC_CONFIG_HEADERS} = [split /\s+/, $pkg_info{AC_CONFIG_HEADERS}]
+	}
+}
+
+my %po_var = (
+    COPYRIGHT_HOLDER => "Sergey Poznyakoff",  # FIXME
+);
+
+sub fill_xgettext_options {
+    my $file = shift;
+    open(my $ifd, '<', $file)
+	or abend(EX_NOINPUT, "Can't open $file: $!");
+    $po_var{XGETTEXT_OPTIONS} = [map {
+	chomp;
+	s/\s+$//;
+	s/^\s+//;
+	if (/^(.+?):(\d)$/) {
+	    "--flag=$1:$2:pass-c-format"
+	} else {
+	    ()
+	}
+    } <$ifd>];
+    close $ifd;
+}
+
+sub po_init {
+    my $template = "po/Makevars.template";
+    error("Creating po/Makevars", fd => \*STDOUT) unless $quiet;
+    return if $dry_run;
+
+    $po_var{MSGID_BUGS_ADDRESS} = $pkg_info{PACKAGE_BUGREPORT};
+    fill_xgettext_options('maint/printflike') if -f 'maint/printflike';
+
+    open(my $ifd, '<', $template)
+	or abend(EX_NOINPUT, "Can't open $template: $!");
+    open(my $ofd, '>', 'po/Makevars')
+	or abend(EX_CANTCREAT, "Can't create po/Makevars: $!");
+    while (<$ifd>) {
+	chomp;
+	if (/^\s*([A-Za-z_][A-Za-z_0-9]+)\s*=/) {
+	    if (exists($po_var{$1})) {
+		if (ref($po_var{$1}) eq 'ARRAY') {
+		    print $ofd join("\\\n ", $_, @{$po_var{$1}})
+			. "\n";
+		} else {
+		    print $ofd "$1 = $po_var{$1}\n";
+		}
+		next;
+	    }
+	}
+	print $ofd "$_\n";
+    }
+    close $ifd;
+    close $ofd;
+    po_sync($pkg_info{PACKAGE_TARNAME}) unless $skip_po
+}
+
+sub po_sync {
+    my $domain = shift;
+    error("Updating po files", fd => \*STDOUT) unless $quiet;
+    my @rsync_options = qw(
+	--copy-links
+	--recursive
+	--times
+	--compress);
+    push @rsync_options, '--verbose' if $verbose;
+    run('rsync',
+	@rsync_options,
+	"rsync://translationproject.org/tp/latest/$domain/", 'po');
+}
 
 END {
     cleanup;
@@ -869,28 +1181,31 @@ $SIG{HUP} = $SIG{INT} = $SIG{QUIT} = $SIG{TERM} = \&cleanup;
 
 #
 GetOptions("h" => sub {
-                    pod2usage(-message => "$progname: $progdescr",
-                              -exitstatus => 0);
-           },
-           "help" => sub {
-                    pod2usage(-exitstatus => EX_OK, -verbose => 2);
-           },
+		    pod2usage(-message => "$progname: $progdescr",
+			      -exitstatus => 0);
+	   },
+	   "help" => sub {
+		    pod2usage(-exitstatus => EX_OK, -verbose => 2);
+	   },
 	   "usage" => sub {
-                    pod2usage(-exitstatus => EX_OK, -verbose => 0);
-           },
+		    pod2usage(-exitstatus => EX_OK, -verbose => 0);
+	   },
 	   "add|new|a" => \$addmod,
-           "dry-run|n" => \$dry_run,
-           "verbose|v+" => \$verbose,
+	   "dry-run|n" => \$dry_run,
+	   "verbose|v+" => \$verbose,
+	   "quiet|q" => \$quiet,
 	   "modules|m" => \$modules,
 	   "skip-reconfigure|s" => \$skip_reconf,
-	   "gnulib-srcdir=s" => sub { push @gnulib_options, "--$_[0]=$_[1]" },
-	   "skip-po|no-git" => sub { push @gnulib_options, "--$_[0]" }
+	   "skip-po" => \$skip_po
 ) or exit(EX_USAGE);
 
 abend(EX_USAGE, "must run from the Dico source tree topmost directory")
     unless checksrc();
 
 ++$verbose if $dry_run;
+$verbose = 0 if $quiet;
+
+get_pkg_info();
 
 if ($addmod) {
     abend(EX_USAGE, "not enough arguments") unless @ARGV;
@@ -906,11 +1221,14 @@ if ($addmod) {
 } elsif ($#ARGV >= 0) {
     abend(EX_USAGE, "too many arguments; did you mean --new?");
 } elsif (-d '.git') {
-    error("Initializing submodules", fd => \*STDOUT) if $verbose;
+    error("Initializing submodules", fd => \*STDOUT) unless $quiet;
     run('git submodule init');
     run('git submodule update');
+    make_tree();
     modproc();
     gnulib_init();
+    po_init();
+    reconf();
 } else {
     error("this does not look like a clone of the Dico repository");
     error("did you mean --modules?");
@@ -918,4 +1236,3 @@ if ($addmod) {
 }
 
 exit($status);
-

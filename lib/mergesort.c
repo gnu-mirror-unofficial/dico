@@ -1,5 +1,5 @@
 /* This file is part of GNU Dico
-   Copyright (C) 2018 Sergey Poznyakoff
+   Copyright (C) 2018-2019 Sergey Poznyakoff
 
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,13 +14,11 @@
    You should have received a copy of the GNU General Public License
    along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include <config.h>
 #include "dico.h"
 #include <string.h>
 
-static void *mergesort(void *a, void *b, size_t nmemb, size_t size,
+static void *dico_mergesort(void *a, void *b, size_t nmemb, size_t size,
 		       int (*comp)(const void *, const void *, void *),
 		       void *closure);
 static void merge(void *source, void *work, size_t size,
@@ -38,7 +36,7 @@ dico_sort(void *base, size_t nmemb, size_t size,
     tmp = calloc(nmemb, size);
     if (!tmp)
 	return -1;
-    res = mergesort(base, tmp, nmemb, size, comp, closure);
+    res = dico_mergesort(base, tmp, nmemb, size, comp, closure);
     if (res != base)
 	memcpy(base, res, nmemb * size);
     free(tmp);
@@ -52,9 +50,9 @@ min(size_t a, size_t b)
 }
 
 static void *
-mergesort(void *a, void *b, size_t nmemb, size_t size,
-	  int (*comp)(const void *, const void *, void *),
-	  void *closure)
+dico_mergesort(void *a, void *b, size_t nmemb, size_t size,
+	       int (*comp)(const void *, const void *, void *),
+	       void *closure)
 {
     size_t width;
 

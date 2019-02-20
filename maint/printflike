@@ -1,0 +1,9 @@
+_:1
+N_:1
+error:3
+asprintf:2
+vasprintf:2
+config_error:3
+config_warning:3
+dico_log:3\
+dico_die:4"

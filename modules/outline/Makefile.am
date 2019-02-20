@@ -1,5 +1,5 @@
 # This file is part of GNU Dico
-# Copyright (C) 1998-2018 Sergey Poznyakoff
+# Copyright (C) 1998-2019 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,4 +22,4 @@ mod_LTLIBRARIES=outline.la
 outline_la_SOURCES = outline.c
 outline_la_LIBADD = ../../lib/libdico.la
 AM_LDFLAGS = -module -avoid-version -no-undefined
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include @GRECS_INCLUDES@
+AM_CPPFLAGS = @DICO_MODULE_INCLUDES@

@@ -1,5 +1,5 @@
 ## This file is part of GNU Dico
-## Copyright (C) 2014-2018 Sergey Poznyakoff
+## Copyright (C) 2014-2019 Sergey Poznyakoff
 ##
 ## GNU Dico is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -48,7 +48,8 @@ if test $status_wordnet != no; then
   req) AC_MSG_ERROR([required module wordnet cannot be built because of missing prerequisites]);;
   maybe) status_wordnet=no;;
   esac
-  AM_CONDITIONAL([WORDNET_COND],[test $status_wordnet = yes])
   LIBS=$save_LIBS
   CPPFLAGS=$save_CPPFLAGS
 fi
+
+AM_CONDITIONAL([WORDNET_COND],[test $status_wordnet = yes])

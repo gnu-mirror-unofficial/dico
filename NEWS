@@ -1,11 +1,17 @@
-GNU Dico NEWS -- history of user-visible changes. 2019-02-22
+GNU Dico NEWS -- history of user-visible changes. 2019-02-26
 See the end of file for copying conditions.
 
 Please send Dico bug reports to <bug-dico@gnu.org.ua>
 
-Version 2.7.91 (git)
+Version 2.8, 2019-02-26
 
-* Fix memory access errors
+* Fix out-of-boundary memory access in metaphone2 encoder
+
+* Fix eventual access to freed memory block
+
+* Rewrite utf8_iterator to work with non zero terminated strings.
+
+* Fix the build on OpenBSD
 
 
 Version 2.7, 2018-09-25

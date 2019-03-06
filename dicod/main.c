@@ -24,7 +24,7 @@ int single_process; /* Single process mode */
 char *config_file = SYSCONFIG "/dicod.conf" ;
 int config_lint_option; /* Check configuration file syntax and exit. */
 /* Location of the pidfile */
-char *pidfile_name = LOCALSTATEDIR "/run/dicod.pid";
+char *pidfile_name = DEFAULT_PIDFILE_NAME;
 
 /* Operation mode */
 int mode = MODE_DAEMON;

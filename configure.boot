@@ -148,7 +148,11 @@ AC_ARG_VAR([DEFAULT_VERSION_INCLUDE_DIR],
 if test -z "$DEFAULT_VERSION_INCLUDE_DIR"; then
    DEFAULT_VERSION_INCLUDE_DIR='$(pkgdatadir)/$(VERSION)/include'
 fi   
-
+AC_ARG_VAR([DEFAULT_PIDFILE_NAME],
+           [Default name for the dicod pid file])
+if test -z "$DEFAULT_PIDFILE_NAME"; then
+   DEFAULT_PIDFILE_NAME='$(localstatedir)/run/dicod.pid'
+fi
 AC_SUBST([DICO_PROG_CONFIG],['-I$(top_builddir)/include/prog'])
 AC_SUBST([DICO_LIB_CONFIG],['-I$(top_builddir)/include/lib'])
 

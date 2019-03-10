@@ -1,7 +1,16 @@
-GNU Dico NEWS -- history of user-visible changes. 2019-02-26
+GNU Dico NEWS -- history of user-visible changes. 2019-03-10
 See the end of file for copying conditions.
 
 Please send Dico bug reports to <bug-dico@gnu.org.ua>
+
+Version 2.8.90 (Git)
+
+* New configuration variable DEFAULT_PIDFILE_NAME
+
+Use it to alter the default pidfile location, e.g.:
+
+   ./configure DEFAULT_PIDFILE_NAME=/var/dico/dicod.pid
+
 
 Version 2.8, 2019-02-26
 

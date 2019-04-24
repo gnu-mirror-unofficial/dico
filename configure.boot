@@ -28,7 +28,7 @@ dnl Process this file with -*- autoconf -*- to produce a configure script.
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
 AC_PREREQ(2.63)
-AC_INIT([GNU dico], 2.8.90, [bug-dico@gnu.org])
+AC_INIT([GNU dico], 2.9, [bug-dico@gnu.org])
 AC_CONFIG_SRCDIR([dicod/main.c])
 AC_CONFIG_HEADERS(include/prog/config.h include/lib/config.h)
 AC_CONFIG_AUX_DIR([build-aux])

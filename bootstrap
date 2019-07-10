@@ -1222,8 +1222,7 @@ if ($addmod) {
     abend(EX_USAGE, "too many arguments; did you mean --new?");
 } elsif (-d '.git') {
     error("Initializing submodules", fd => \*STDOUT) unless $quiet;
-    run('git submodule init');
-    run('git submodule update');
+    run('git submodule update --init --recursive');
     make_tree();
     modproc();
     gnulib_init();

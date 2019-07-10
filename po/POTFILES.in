@@ -82,4 +82,4 @@ grecs/src/preproc.c
 grecs/src/sockaddr.c
 grecs/src/symtab.c
 grecs/src/tree.c
-grecs/src/wordsplit.c
+grecs/wordsplit/wordsplit.c

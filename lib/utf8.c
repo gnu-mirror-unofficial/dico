@@ -1545,7 +1545,7 @@ utf8_iter0(struct utf8_iterator *itr)
 	return 1;
     }
     n = utf8_char_width(itr->curptr);
-    if (n > itr->length) {
+    if (n == 0 || n > itr->length) {
 	itr->end = 1;
 	itr->err = 1;
 	return 1;

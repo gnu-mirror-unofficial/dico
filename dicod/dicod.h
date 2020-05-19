@@ -269,7 +269,7 @@ void register_lev(void);
 void register_regex(void);
 
 /* dbtext.c */
-struct dico_udb_def text_udb_def;
+extern struct dico_udb_def text_udb_def;
 extern dico_udb_t user_db;
 
 /* auth.c */

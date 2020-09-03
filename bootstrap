@@ -32,6 +32,7 @@ B<bootstrap>
 [B<--verbose>]
 [B<--quiet>]
 [B<--skip-po>]
+[B<--update-po>]
 [I<NAME>...]
 
 =head1 DESCRIPTION
@@ -175,6 +176,10 @@ to a correct gnulib snapshot.
 =item B<--skip-po>
 
 Do not download po files.
+
+=item B<--update-po>
+
+Update only the translation files in the F<po> directory.
 
 =back
 
@@ -443,6 +448,7 @@ my $quiet;
 my $modules;
 my $skip_reconf;
 my $skip_po;
+my $update_po;
 my $autoconf = "module.ac";
 my $config_stub = "configure.boot";
 my $makefile_stub = "modules/stub.am";
@@ -1171,6 +1177,12 @@ sub po_sync {
     run('rsync',
 	@rsync_options,
 	"rsync://translationproject.org/tp/latest/$domain/", 'po');
+    my @linguas = sort map { my ($name) = fileparse($_, ".po"); $name }
+                       glob "po/*.po";
+    open(my $fh, '>', 'po/LINGUAS')
+	or abend(EX_CANTCREAT, "can't open po/LINGUAS for writing: $!");
+    print $fh join("\n", @linguas), "\n";
+    close $fh;
 }
 
 END {
@@ -1196,7 +1208,8 @@ GetOptions("h" => sub {
 	   "quiet|q" => \$quiet,
 	   "modules|m" => \$modules,
 	   "skip-reconfigure|s" => \$skip_reconf,
-	   "skip-po" => \$skip_po
+	   "skip-po" => \$skip_po,
+	   "update-po" => \$update_po
 ) or exit(EX_USAGE);
 
 abend(EX_USAGE, "must run from the Dico source tree topmost directory")
@@ -1209,6 +1222,7 @@ get_pkg_info();
 
 if ($addmod) {
     abend(EX_USAGE, "not enough arguments") unless @ARGV;
+    abend(EX_USAGE, "--update-po conflicts with --add or --new") if $update_po;
     foreach my $mod (@ARGV) {
 	create_module($mod);
     }
@@ -1216,10 +1230,13 @@ if ($addmod) {
     reconf();
 } elsif ($modules) {
     abend(EX_USAGE, "too many arguments") if @ARGV;
+    abend(EX_USAGE, "--update-po conflicts with --modules") if $update_po;
     modproc();
     reconf();
 } elsif ($#ARGV >= 0) {
     abend(EX_USAGE, "too many arguments; did you mean --new?");
+} elsif ($update_po) {
+    po_sync($pkg_info{PACKAGE_TARNAME});
 } elsif (-d '.git') {
     error("Initializing submodules", fd => \*STDOUT) unless $quiet;
     run('git submodule update --init --recursive');

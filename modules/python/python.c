@@ -1,6 +1,6 @@
 /* This file is part of GNU Dico.
    Copyright (C) 2008, 2012 Wojciech Polak
-   Copyright (C) 2019 Sergey Poznyakoff
+   Copyright (C) 2019-2020 Sergey Poznyakoff
  
    GNU Dico is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
 # testdir.m4 serial 1
 # This file is part of GNU Dico
-# Copyright (C) 2012-2020 Sergey Poznyakoff
+# Copyright (C) 2012-2021 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

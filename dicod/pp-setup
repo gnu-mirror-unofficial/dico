@@ -1,6 +1,6 @@
 divert(-1) dnl -*- m4 -*-
 # This file is part of GNU Dico
-# Copyright (C) 2018-2020 Sergey Poznyakoff
+# Copyright (C) 2018-2021 Sergey Poznyakoff
 #
 # GNU Dico is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

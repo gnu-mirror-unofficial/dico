@@ -24,7 +24,6 @@
 #include <config.h>
 #include <xdico.h>
 #include <string.h>
-#include <xalloc.h>
 #include <errno.h>
 
 #define TRANS_READ 0x1

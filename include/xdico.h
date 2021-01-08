@@ -22,6 +22,12 @@
 #endif
 #include <dico.h>
 
+/* Starting from gnulib commit 52ab50a7ebc469b542bca0063430db71aefb67af,
+   xalloc.h declares xalloc_die only if GNULIB_XALLOC_DIE is defined.
+   Without this define each inclusion of xalloc.h will spit out one or
+   more warnings about this function not being declared. */
+#define GNULIB_XALLOC_DIE 1
+#include "xalloc.h"
 
 struct sockaddr;
 void sockaddr_to_str(const struct sockaddr *sa, int salen,

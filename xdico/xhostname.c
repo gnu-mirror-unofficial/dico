@@ -19,7 +19,6 @@
 #include <string.h>
 #include <netdb.h> 
 #include <xdico.h>
-#include <xalloc.h>
 #include <xgethostname.h>
 #include <xgetdomainname.h>
 

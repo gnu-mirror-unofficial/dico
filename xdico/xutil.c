@@ -16,7 +16,6 @@
 
 #include <config.h>
 #include <xdico.h>
-#include <xalloc.h>
 #include <string.h>
 #include <errno.h>
 #include <c-strcase.h>

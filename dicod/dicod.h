@@ -26,7 +26,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include <xalloc.h>
 #include <ctype.h>
 #include <syslog.h>
 #include <inttypes.h>

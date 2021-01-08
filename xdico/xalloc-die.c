@@ -22,4 +22,7 @@ void
 xalloc_die(void)
 {
     dico_die(EX_OSERR, L_CRIT, 0, "Not enough memory");
+    /* dico_die never returns.  The call below prevents the spurions 'noreturn'
+       warning from gcc and serves as an extra safety measure. */
+    abort();
 }

@@ -20,7 +20,6 @@
 #include <unistd.h>
 #include <grp.h>
 #include <errno.h>
-#include <xalloc.h>
 #include <xdico.h>
 #include <libi18n.h>
 

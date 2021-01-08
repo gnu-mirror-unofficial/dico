@@ -22,7 +22,6 @@
 #include <string.h>
 #include <hash.h>
 #include <ctype.h>
-#include <xalloc.h>
 
 struct timer_slot {
     char *name;

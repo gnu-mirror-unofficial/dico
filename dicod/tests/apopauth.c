@@ -24,7 +24,6 @@
 #include <unistd.h>
 #include <assert.h>
 #include <errno.h>
-#include "xalloc.h"
 #include "md5.h"
 
 dico_stream_t iostr;    

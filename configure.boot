@@ -27,13 +27,13 @@ dnl Process this file with -*- autoconf -*- to produce a configure script.
 # You should have received a copy of the GNU General Public License
 # along with GNU Dico.  If not, see <http://www.gnu.org/licenses/>.
 
-AC_PREREQ(2.63)
-AC_INIT([GNU dico], 2.10, [bug-dico@gnu.org])
+AC_PREREQ(2.64)
+AC_INIT([GNU dico], 2.10.90, [bug-dico@gnu.org])
 AC_CONFIG_SRCDIR([dicod/main.c])
 AC_CONFIG_HEADERS(include/prog/config.h include/lib/config.h)
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR(m4)	
-AM_INIT_AUTOMAKE([1.11 nostdinc gnits tar-ustar dist-bzip2 dist-xz std-options subdir-objects])
+AM_INIT_AUTOMAKE([1.15 nostdinc gnits tar-ustar dist-bzip2 dist-xz std-options subdir-objects])
 
 dnl Enable silent rules by default:
 AM_SILENT_RULES([yes])
@@ -113,7 +113,7 @@ AC_CHECK_LIB(crypt, crypt)
 # Gettext.
 AM_ICONV
 AM_GNU_GETTEXT([external], [need-formatstring-macros])
-AM_GNU_GETTEXT_VERSION([0.18])
+AM_GNU_GETTEXT_VERSION([0.19])
 AC_CONFIG_LINKS(include/gettext.h:xdico/gnu/gettext.h)
 
 LOG_FACILITY="LOG_DAEMON"

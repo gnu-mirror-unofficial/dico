@@ -30,7 +30,6 @@
 #include <inttostr.h>
 
 #include <xdico.h>
-#include <xalloc.h>
 
 static size_t
 mu_stpcpy (char **pbuf, size_t *psize, const char *src)

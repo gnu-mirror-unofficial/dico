@@ -90,8 +90,11 @@ _show_database(void *item, void *data)
     char *descr = dicod_database_get_descr(dict);
     char *pdescr;
 
-    if (utf8_quote(descr ? descr : "", &pdescr))
-	xalloc_die();
+    if (utf8_quote(descr ? descr : "", &pdescr)) {
+	dico_log(L_ERR, errno, _("cannot quote database description"));
+	if (errno == ENOMEM) exit(EX_OSERR);
+	pdescr = xstrdup("[description cannot be rendered]");
+    }
     stream_printf(str, "%s \"%s\"\n", dict->name, pdescr);
     dicod_database_free_descr(dict, descr);
     free(pdescr);

@@ -72,7 +72,7 @@ The package comes with the following modules:
 
 - python
   An abstract layer for interfacing with database modules written in
-  Python.
+  Python (version 3.6 or newer).
  
 - substr
   Defines the "substr" lookup strategy, which matches a supplied

@@ -23,7 +23,7 @@ try:
 except ImportError:
     from django.urls import reverse
 from django.core.cache import cache
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.utils.encoding import force_bytes
 from django.utils.translation import ugettext as _
 
@@ -103,7 +103,7 @@ def index(request):
             strategies = dc.show_strategies()['strategies']
             dc.close()
         except (socket.timeout, socket.error, dicoclient.DicoNotConnectedError):
-            return render_to_response('index.html', {'selects': selects})
+            return render(request, 'index.html', {'selects': selects})
 
         cache.set(key_databases, databases, timeout=86400)
         cache.set(key_strategies, strategies, timeout=86400)
@@ -157,8 +157,7 @@ def index(request):
 
             except (socket.timeout, socket.error,
                     dicoclient.DicoNotConnectedError):
-                return render_to_response('index.html',
-                                          {'selects': selects})
+                return render(request, 'index.html', {'selects': selects})
 
         # get last match results
         if sid and type == 'search':
@@ -236,18 +235,18 @@ Additionally, ONERROR['UNSUPPORTED_CONTENT_TYPE'] has unsupported value (%s).
         if result['count'] == 0:
             result = { 'error': 552, 'msg': 'No match' }
 
-    return render_to_response('index.html', {'page': page,
-                                             'q': q,
-                                             'mtc': mtc,
-                                             'result': result,
-                                             'selects': selects, })
+    return render(request, 'index.html', {'page': page,
+                                          'q': q,
+                                          'mtc': mtc,
+                                          'result': result,
+                                          'selects': selects, })
 
 
 def opensearch(request):
     url_query = request.build_absolute_uri(reverse('index'))
     url_media = request.build_absolute_uri(settings.MEDIA_URL)
-    return render_to_response('opensearch.xml', {'url_query': url_query,
-                                                 'url_media': url_media},
+    return render(request, 'opensearch.xml', {'url_query': url_query,
+                                              'url_media': url_media},
                               content_type='application/xml')
 
 

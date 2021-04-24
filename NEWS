@@ -1,9 +1,12 @@
-GNU Dico NEWS -- history of user-visible changes. 2021-01-08
+GNU Dico NEWS -- history of user-visible changes. 2021-04-24
 See the end of file for copying conditions.
 
 Please send Dico bug reports to <bug-dico@gnu.org.ua>
 
 Version 2.10.90 (git)
+
+* Support for Python 2 has been withdrawn
+
 
 Version 2.10, 2020-09-04
 

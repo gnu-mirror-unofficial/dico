@@ -53,16 +53,15 @@ follows:
      ServerName dict.example.org
      DocumentRoot /var/www/dicoweb
 
-     # Ensure proper encoding (for Python 3)
-     SetEnv LC_ALL en_US.utf8
-
      # Configure virtual environment.
      # (If not using virtual environment, omit the WSGIDaemonProcess and
      # WSGIProcessGroup statements).
     
-     # Make sure to edit the statement below to match to the actual
-     # path to the site-packages directory.
-     WSGIDaemonProcess dicoweb python-path=/var/www/dicoweb/venv/lib/python3.5/site-packages
+     # Edit the statement below to match to the actual virtual
+     # environment location.
+     # Notice the 'locale=' setting.  It is necessary to force the
+     # UTF-8 locale.
+     WSGIDaemonProcess dicoweb python-home=/var/www/dicoweb/venv locale=en_US.UTF-8
      WSGIProcessGroup dicoweb
 
      # Start up the module.
@@ -89,7 +88,7 @@ the following output:
  Validating models...
  0 errors found.
 
- Django version 1.11.5, using settings 'dicoweb.settings'
+ Django version 3.2.0, using settings 'dicoweb.settings'
  Development server is running at http://127.0.0.1:8000/
  Quit the server with CONTROL-C.
 

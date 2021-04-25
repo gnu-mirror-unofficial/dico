@@ -1630,7 +1630,7 @@ proc matchword_lazy {headword} {
 }
 
 proc matchword {word} {
-    if {[docmd matchreedword_lazy $word] == 1} {
+    if {[docmd matchword_lazy $word] == 1} {
 	.c.matches configure -state normal
 	.c.matches delete 0 end
 	.c.matches configure -state disabled 

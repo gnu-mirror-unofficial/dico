@@ -95,6 +95,7 @@ memerr(const char *text)
 	size_t __n = (max_size) > input_len ? input_len : (max_size);	\
 	if (__n)							\
 	    memcpy((buf), input_buf, __n);				\
+	input_buf += __n;                                               \
 	input_len -= __n;						\
 	(result) = __n;							\
     } while(0)

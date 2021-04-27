@@ -16,7 +16,7 @@
 
 AT_SETUP(Greek transliteration)
 AT_KEYWORDS([greek transliteration xlit])
-# These string has been extracted from the GCIDE files with exgrk:
+# These strings has been extracted from the GCIDE files with exgrk:
 AT_DATA([input],
 ['a
 'a-
